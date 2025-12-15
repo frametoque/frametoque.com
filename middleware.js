@@ -4,8 +4,6 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 const isPublicRoute = createRouteMatcher([
   "/",
   "/login",  // Make sure your custom login page is public
-  "/signin",
-  "/signup", 
   "/sso-callback",
   "/api/webhooks(.*)",
 ]);
@@ -23,7 +21,7 @@ export default clerkMiddleware(async (auth, req) => {
   domain: process.env.NODE_ENV === 'production' ? 'frame-toque.vercel.app' : 'localhost',
   // Force Clerk to use your custom pages:
   signInUrl: '/login',  // This tells Clerk to use YOUR /login page, not theirs
-  signUpUrl: '/signup',
+  signUpUrl: '/login',
   // Allow Clerk to work with your Vercel domain:
   allowedRedirectOrigins: [
     'http://localhost:3000',
