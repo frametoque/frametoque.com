@@ -19,7 +19,6 @@ export default function CustomLogin({ scrolled }) {
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Check for redirect error
   useEffect(() => {
     const error = searchParams.get("error");
     if (error) {
@@ -27,7 +26,6 @@ export default function CustomLogin({ scrolled }) {
     }
   }, [searchParams]);
 
-  // Redirect if already signed in
   useEffect(() => {
     if (userLoaded && isSignedIn) {
       router.replace("/dashboard");
@@ -58,7 +56,6 @@ export default function CustomLogin({ scrolled }) {
     }
   }
 
-  // Only show loading if already signed in (redirecting)
   if (userLoaded && isSignedIn) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
