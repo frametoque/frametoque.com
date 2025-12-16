@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 
-import Navbar from "@/components/Navbar.jsx";
-import Footer from "@/components/Footer.jsx";
 import { Check, Star } from "lucide-react";
 import Link from "next/link";
 
@@ -156,9 +154,9 @@ export default function ServicesMain() {
         <div className="mt-8 sm:mt-12 text-center">
           <p className="text-gray-400 text-base text-xl">
             Need a custom plan? &nbsp;
-            <a href="/contact" className="text-green-600 hover:text-green-500 font-semibold">
+            <Link href="/contact" className="text-green-600 hover:text-green-500 font-semibold">
               Contact Us
-            </a>
+            </Link>
           </p>
         </div>
       </div>

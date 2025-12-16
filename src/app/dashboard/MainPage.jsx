@@ -19,7 +19,7 @@ function getGreeting() {
 
 export default function DashboardHome() {
   const router = useRouter();
-  const { isSignedIn, isLoaded, user } = useUser(); // <-- add isLoaded
+  const { isSignedIn, isLoaded, user } = useUser();
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -45,7 +45,6 @@ export default function DashboardHome() {
   ];
 
   if (!isLoaded || !isSignedIn) {
-    // render nothing until auth state is loaded
     return null;
   }
 

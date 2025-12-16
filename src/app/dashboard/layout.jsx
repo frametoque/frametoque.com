@@ -31,7 +31,7 @@ export default function DashboardLayout({ children }) {
     const links = [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { name: "My Requests", href: "/dashboard/requests", icon: ClipboardList },
-      { name: "Services", href: "/dashboard/services", icon: Briefcase },
+      { name: "Our Services", href: "/dashboard/services", icon: Briefcase },
       { name: "Settings", href: "/dashboard/settings", icon: Settings },
     ];
 

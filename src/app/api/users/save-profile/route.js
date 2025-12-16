@@ -6,7 +6,9 @@ export const dynamic = 'force-dynamic';
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { clerkId, email, fullName, phone, company, website, address } = body;
+    
+    const clerkId = body.clerkId || body.clerk_id;
+    const { email, fullName, phone, company, website, address } = body;
 
     if (!clerkId) {
       return NextResponse.json(

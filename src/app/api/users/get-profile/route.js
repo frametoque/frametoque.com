@@ -48,6 +48,7 @@ export async function GET(request) {
         address: user.address || '',
         fullName: user.full_name || '',
         email: user.email || '',
+        clerk_id: user.clerk_id || '',
       }
     });
 

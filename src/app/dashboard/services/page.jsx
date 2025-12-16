@@ -1,5 +1,25 @@
+export const metadata = {
+  title: "Our Services | Frame Toque",
+  description: "Browse and discover all available services. Find what you need, compare options, and request with one click.",
+  openGraph: {
+    title: "Our Services | Frame Toque",
+    description: "Browse and discover all available services. Find what you need, compare options, and request with one click.",
+    url: "https://frametoque.online/dashboard/services", 
+    siteName: "Frame Toque",
+    images: [
+      {
+        url: "https://frametoque.online/images/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Frame Toque",
+      },
+    ],
+    type: "website",
+  },
+};
+
 import React from 'react'
-import Services from "@/components/services/Services.jsx";
+import MainPage from "@/app/dashboard/services/MainPage.jsx"
 
 function page() {
   return (
@@ -17,7 +37,7 @@ function page() {
             From websites to videos, we make your brand look amazing everywhere.
           </p>
         </div>
-         <Services/>
+         <MainPage/>
         
         </>
    

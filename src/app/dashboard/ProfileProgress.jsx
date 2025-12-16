@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Loader2, UserCheck } from "lucide-react";
 import Link from "next/link";
 
 export default function ProfileProgress() {
@@ -43,7 +43,6 @@ export default function ProfileProgress() {
 
           setData(finalData);
 
-          // Required fields only
           const required = [
             { key: "fullName", label: "Full Name" },
             { key: "email", label: "Email" },
@@ -80,17 +79,15 @@ export default function ProfileProgress() {
     );
   }
 
-  // Hide component if profile is 100%
   if (progress === 100) return null;
 
   return (
     <div className="p-6 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl relative overflow-hidden">
-      {/* Glow */}
+     
       <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-3xl" />
 
-      {/* Greeting */}
       <div className="flex items-center gap-2 mb-2">
-        <Sparkles className="w-6 h-6 text-green-400" />
+        <UserCheck className="w-6 h-6 text-green-400" />
         <span className="text-green-400 font-semibold">Profile Status</span>
       </div>
 
@@ -117,7 +114,6 @@ export default function ProfileProgress() {
         </div>
       </div>
 
-      {/* Missing Fields */}
       {missingFields.length > 0 && (
         <p className="text-sm text-gray-400 mb-4">
           You still need to complete:
@@ -125,10 +121,9 @@ export default function ProfileProgress() {
         </p>
       )}
 
-      {/* Complete Profile Button */}
       <Link
         href="/dashboard/settings"
-        className="inline-block px-5 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-colors"
+        className="inline-block px-5 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:opacity-90 text-white font-semibold rounded-lg transition-colors"
       >
         Complete Profile
       </Link>
