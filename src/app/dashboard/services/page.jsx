@@ -19,7 +19,7 @@ export const metadata = {
 };
 
 import React from 'react'
-import MainPage from "@/app/dashboard/services/MainPage.jsx"
+import Services from "@/components/services/Services.jsx"
 
 function page() {
   return (
@@ -37,7 +37,7 @@ function page() {
             From websites to videos, we make your brand look amazing everywhere.
           </p>
         </div>
-         <MainPage/>
+         <Services/>
         
         </>
    
