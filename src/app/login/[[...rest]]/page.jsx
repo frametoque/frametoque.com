@@ -19,7 +19,7 @@ export const metadata = {
 };
 
 import React from 'react'
-import Login from "../MainPage"
+import Login from "./MainPage"
 
 function page() {
   return (
