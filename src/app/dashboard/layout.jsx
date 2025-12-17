@@ -136,7 +136,9 @@ export default function DashboardLayout({ children }) {
                   <div>
                     <p className="text-sm font-semibold">{user.fullName}</p>
                     <p className="text-xs text-gray-400">
-                      {user.emailAddresses[0]?.emailAddress}
+                      {user.emailAddresses[0]?.emailAddress?.length > 20 
+                        ? `${user.emailAddresses[0].emailAddress.substring(0, 20)}...`
+                        : user.emailAddresses[0]?.emailAddress}
                     </p>
                   </div>
                 )}

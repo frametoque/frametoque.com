@@ -17,7 +17,7 @@ export default function CustomLogin({ scrolled }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [errorMsg, setErrorMsg] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState(null);
 
   useEffect(() => {
     const error = searchParams.get("error");
@@ -39,22 +39,23 @@ export default function CustomLogin({ scrolled }) {
   ];
 
   async function handleSignIn(provider) {
-    if (!isLoaded || loading) return;
-    setLoading(true);
-    setErrorMsg("");
-    
-    try {
-      await signIn.authenticateWithRedirect({
-        strategy: provider,
-        redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/dashboard",
-      });
-    } catch (err) {
-      console.error("Sign in error:", err);
-      setErrorMsg(err.errors?.[0]?.message || "Something went wrong. Please try again.");
-      setLoading(false);
-    }
+  if (!isLoaded || loadingProvider) return; // Changed from `loading` to `loadingProvider`
+  setLoadingProvider(provider);
+  setErrorMsg("");
+  
+  try {
+    await signIn.authenticateWithRedirect({
+      strategy: provider,
+      redirectUrl: "/sso-callback",
+      redirectUrlComplete: "/dashboard",
+    });
+
+  } catch (err) {
+    console.error("Sign in error:", err);
+    setErrorMsg(err.errors?.[0]?.message || "Something went wrong. Please try again.");
+    setLoadingProvider(null);
   }
+}
 
   if (userLoaded && isSignedIn) {
     return (
@@ -111,28 +112,32 @@ export default function CustomLogin({ scrolled }) {
             )}
 
             <div className="flex flex-col gap-3">
-              {socialProviders.map((btn) => (
-                <button
-                  key={btn.provider}
-                  onClick={() => handleSignIn(btn.provider)}
-                  disabled={btn.disabled || loading}
-                  className={`relative w-full flex items-center justify-center gap-3 px-6 py-3 bg-white/5 border border-white/10 text-gray-100 rounded-lg font-medium shadow-sm hover:bg-white/20 transition-all duration-200 ${
-                    btn.disabled || loading ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                >
-                  {loading && !btn.disabled ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Connecting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex-shrink-0">{btn.icon}</div>
-                      <span>{btn.label}</span>
-                    </>
-                  )}
-                </button>
-              ))}
+              {socialProviders.map((btn) => {
+                const isLoading = loadingProvider === btn.provider;
+                
+                return (
+                  <button
+                    key={btn.provider}
+                    onClick={() => handleSignIn(btn.provider)}
+                    disabled={btn.disabled || isLoading}
+                    className={`relative w-full flex items-center justify-center gap-3 px-6 py-3 bg-white/5 border border-white/10 text-gray-100 rounded-lg font-medium shadow-sm hover:bg-white/20 transition-all duration-200 ${
+                      btn.disabled || isLoading ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>Connecting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex-shrink-0">{btn.icon}</div>
+                        <span>{btn.label}</span>
+                      </>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="my-6 border-t border-white/10"></div>
