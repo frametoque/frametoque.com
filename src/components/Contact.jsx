@@ -77,7 +77,7 @@ export default function ContactPage() {
           <div className="flex justify-start sm:justify-between flex-wrap gap-4 pt-2">
             {[
               { href: "https://instagram.com/frame.toque", icon: <Instagram />, label: "Instagram" },
-              { href: "https://linkedin.com/company/frametoque", icon: <Linkedin />, label: "LinkedIn" },
+              { href: "https://www.linkedin.com/company/frametoque/", icon: <Linkedin />, label: "LinkedIn" },
               { href: "https://tiktok.com/@ft.media0", icon: <Music2 />, label: "TikTok" },
               { href: "https://t.me/FrameToque", icon: <Send />, label: "Telegram" },
             ].map((item, idx) => (

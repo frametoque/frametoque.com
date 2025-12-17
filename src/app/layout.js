@@ -3,6 +3,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import Script from "next/script";
 import "./globals.css";
 
+import SnowfallWrapper from '@/components/SnowfallWrapper';
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -38,6 +40,7 @@ export default function RootLayout({ children }) {
       >
         <ClerkProvider>
           {children}
+          <SnowfallWrapper />
         </ClerkProvider>
       </body>
     </html>

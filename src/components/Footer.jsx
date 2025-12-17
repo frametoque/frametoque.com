@@ -9,7 +9,7 @@ const footerLinks = {
 const urls = [
   "https://t.me/frametoque",
   "https://tiktok.com/@ft.media0",
-  "https://linkedin.com/in/company/frametoque",
+  "https://www.linkedin.com/company/frametoque/",
   "https://instagram.com/frame.toque",
   "mailto:contact@frametoque.online"
 ];
