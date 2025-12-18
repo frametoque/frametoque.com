@@ -1,7 +1,7 @@
 export const GET = async () => {
   const content = `
 User-agent: *
-Disallow:
+Allow: /
 
 Sitemap: https://frametoque.online/sitemap
   `.trim();
