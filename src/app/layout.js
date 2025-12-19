@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 
 import SnowfallWrapper from '@/components/SnowfallWrapper';
+import AIChatbot from "@/components/AIChatbot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({ children }) {
       >
         <ClerkProvider>
           {children}
+          <AIChatbot />
           <SnowfallWrapper />
         </ClerkProvider>
       </body>

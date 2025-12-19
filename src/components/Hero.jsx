@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, ChevronDown, Play, Zap, Sparkles, FolderKanban } from "lucide-react";
+import { ArrowRight, ChevronDown, Play, Zap, Layers, FolderKanban } from "lucide-react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { nightOwl } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
@@ -85,7 +85,7 @@ export default function Hero() {
                   className="group w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg font-semibold text-sm sm:text-base hover:bg-white/10 transition-all duration-300 flex items-center justify-center space-x-2"
                 >
                   <div className="flex items-center justify-center w-6 h-6 sm:w-6 sm:h-6 bg-white/10 rounded-full group-hover:bg-white/20 transition-colors duration-300">
-                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
                   <span>What We Do</span>
                 </Link>

@@ -61,3 +61,57 @@
     trasnform: translateY(0);
   }
 }
+
+
+
+html {
+  scroll-behavior: smooth;
+}
+
+.scrollbar-custom::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background: rgba(12, 25, 55, 0.1);
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background: rgba(5, 223, 114, 0.3);
+  border-radius: 4px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+  background: rgba(5, 223, 114, 0.5);
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.prose {
+  color: inherit;
+}
+
+.prose p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.prose strong {
+  color: #05df72;
+  font-weight: 600;
+}
+
+.prose code {
+  background: rgba(5, 223, 114, 0.1);
+  color: #05df72;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
