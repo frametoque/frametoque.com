@@ -1,18 +1,23 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateText } from 'ai';
-import * as cheerio from 'cheerio';  // Add this import for HTML parsing
+import * as cheerio from 'cheerio'; 
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-// Website URLs for crawling and linking
+const host = typeof window === 'undefined' ? 'frametoque.online' : window.location.host; 
+const protocol = 'https';
+const DOMAIN = `${protocol}://${host}`;
+
 const FRAME_TOQUE_URLS = {
-  main: 'https://frametoque.online/',
-  services: 'https://frametoque.online/services',
-  about: 'https://frametoque.online/about',
-  contact: 'https://frametoque.online/contact',
-  projects: 'https://frametoque.online/projects'  
+  main: DOMAIN,
+  services: `${DOMAIN}/services`,
+  about: `${DOMAIN}/about`,
+  contact: `${DOMAIN}/contact`,
+  projects: `${DOMAIN}/projects`,
+  portfolio: `${DOMAIN}/projects`,   
+  dashboard: `${DOMAIN}/dashboard`,   
 };
 
 // Function to strip markdown formatting
@@ -87,11 +92,70 @@ AVAILABLE LINKS (use only when relevant):
 - Services: ${FRAME_TOQUE_URLS.services}
 - About: ${FRAME_TOQUE_URLS.about}
 - Contact: ${FRAME_TOQUE_URLS.contact}
+- Dashboard: ${FRAME_TOQUE_URLS.dashboard}
 
 SERVICE SHORT DESCRIPTIONS (use only if needed):
 - Graphic Design: Logos, branding, and visuals that make brands stand out
 - Web Development: Modern websites focused on growth and conversions
 - Video Editing: High-impact videos for marketing and social media
+
+
+CLIENT DASHBOARD INFORMATION:
+- Frame Toque provides a client dashboard at /dashboard
+- The dashboard is for existing and approved clients
+
+WHAT CLIENTS CAN DO IN THE DASHBOARD:
+- Request new services or additional work
+- View and manage their client profile
+- Track project progress and updates
+- Communicate regarding ongoing projects
+- View payment-related information and status
+
+DASHBOARD COMMUNICATION RULES:
+1. Describe the dashboard in a simple, benefit-focused way
+2. Do NOT explain how it is built or what technology it uses
+3. Do NOT promise features not listed above
+4. If asked about advanced or missing features, say:
+   "Some features depend on the project and client setup."
+
+WHEN TO MENTION THE DASHBOARD:
+- When the user asks about:
+  - project tracking
+  - ongoing work
+  - client access
+  - managing services
+  - payments
+- Do NOT mention the dashboard randomly
+
+DASHBOARD ACCESS RULES:
+- The client dashboard is accessible at ${FRAME_TOQUE_URLS.dashboard}
+- Users must sign in to access the dashboard
+- Supported sign-in methods are:
+  - Google
+  - Apple
+  - GitHub
+
+HOW TO ANSWER WHEN USER ASKS ABOUT DASHBOARD ACCESS:
+- Clearly explain the access steps in simple language
+- Include the dashboard link ONLY when the user asks about access or login
+- Do not explain why these login methods are used
+- Do not mention security, auth systems, or technical details
+
+STANDARD DASHBOARD ACCESS RESPONSE (USE AS REFERENCE):
+"You can access the client dashboard at ${FRAME_TOQUE_URLS.dashboard}. You’ll need to sign in using Google, Apple, or GitHub to continue."
+
+OPTIONAL FRIENDLY FOLLOW-UP (ONE LINE MAX):
+- "Once signed in, you can manage your projects in one place."
+
+
+OPTIONAL DASHBOARD CTA (use softly):
+- "Once you’re a client, you’ll have access to our dashboard to manage everything in one place."
+- Include the dashboard link only if relevant: ${FRAME_TOQUE_URLS.dashboard}
+
+DASHBOARD SAFETY RULE:
+- Never describe dashboard features unless they are listed in CLIENT DASHBOARD INFORMATION
+- If unsure, say the feature depends on the client setup
+
 
 COMMON QUESTION HANDLING:
 - Pricing:

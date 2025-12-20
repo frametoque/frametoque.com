@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, X, Maximize2, Minimize2, Bot, User, MessageSquare } from "lucide-react";
 import ReactMarkdown from 'react-markdown';  
+import Link from 'next/link';
 
 export default function AIChatbot() {
   const [open, setOpen] = useState(false);
@@ -395,14 +396,13 @@ export default function AIChatbot() {
                       <ReactMarkdown
                         components={{
                           a: ({ children, href }) => (
-                            <a 
+                            <Link 
                               href={href} 
                               className="text-[#05df72] hover:text-[#05df72]/80 underline transition-colors" 
-                              target="_blank" 
                               rel="noopener noreferrer"
                             >
                               {children}
-                            </a>
+                            </Link>
                           )
                         }}
                       >
