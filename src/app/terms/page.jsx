@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Terms & Conditions | Frame Toque",
+  title: "Terms & Conditions",
   description:
     "Read the terms and conditions for using Frame Toque's web development, graphic designing, and video editing services.",
     openGraph: {

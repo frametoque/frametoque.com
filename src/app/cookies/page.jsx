@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Cookie Policy | Frame Toque",
+  title: "Cookie Policy",
   description:
     "Read the cookie policy for Frame Toque, explaining how we use cookies and similar technologies on our website.",
     openGraph: {

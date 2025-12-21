@@ -48,17 +48,17 @@ export default function Hero() {
 
             <h1 className="text-5xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold mb-4 sm:mb-6 animate-in slide-in-from-bottom duration-700 delay-100 leading-tight">
               <span className="bg-gradient-to-r from-white via-green-100 to-[#44ed15]-100 bg-clip-text text-transparent block mb-1 sm:mb-2">
-                Do it Faster
+                Your Brand Deserves
               </span>
               <span className="bg-gradient-to-b from-green-400 via-[#44ed15]-400 to-green-400 bg-clip-text text-transparent block mb-1 sm:mb-2">
-                & Better
+                Better
               </span>
               <span className="bg-gradient-to-r from-white via-green-100 to-[#44ed15]-100 bg-clip-text text-transparent block mb-1 sm:mb-2">
-                With Us
+                Visuals.
               </span>
             </h1>
             <p className="text-md sm:text-base lg:text-lg text-gray-400 max-w-2xl mx-auto lg:mx-0 mb-6 sm:mb-8 animate-in slide-in-from-bottom duration-700 delay-200 leading-relaxed">
-              We create websites, graphics, and videos that make your brand shine. Simple, fast, and crafted to grab attention.
+              We make brands look serious. 
             </p>
            
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 mb-8 sm:mb-12 animate-in slide-in-from-bottom duration-700 delay-300">

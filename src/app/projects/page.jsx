@@ -1,9 +1,9 @@
 export const metadata = {
-  title: "Our Projects | Frame Toque",
+  title: "What We Did",
   description:
     "Discover Frame Toque's portfolio showcasing our expertise in web development, graphic designing, and video editing services that elevate brands.",
     openGraph: {
-    title: "Our Projects | Frame Toque",
+    title: "What We Did | Frame Toque",
     description: "Discover Frame Toque's portfolio showcasing our expertise in web development, graphic designing, and video editing services that elevate brands.",
     url: "https://frametoque.online/projects", 
     siteName: "Frame Toque",

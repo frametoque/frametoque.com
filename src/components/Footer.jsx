@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 const footerLinks = {
-  Company: ["About", "Projects", "Contact"],
+  Company: ["About", "Works", "Contact"],
   Legal: ["Privacy", "Terms", "Cookies"],
 };
 const urls = [
@@ -76,7 +76,7 @@ export default function Footer() {
                   Reg No:
                 </h3>
                 <p className="text-gray-300 text-xs sm:text-sm max-w-xs">
-                  We craft websites, graphics, and videos that help your brand stand out. <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 via-[#44ed15] to-green-400 font-semibold">Do it Faster & Better With Us.</span>
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 via-[#44ed15] to-green-400 font-semibold">Your brand deserves better visuals.</span> We make brands look serious. 
                 </p>
               </div>
             </div>

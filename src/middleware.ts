@@ -1,4 +1,3 @@
-
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 const isProtectedRoute = createRouteMatcher([
@@ -15,7 +14,7 @@ const getDomain = () => {
   ) {
     return "frame-toque.vercel.app";
   }
-  return "localhost";
+  return undefined;
 };
 
 export default clerkMiddleware(
@@ -25,9 +24,7 @@ export default clerkMiddleware(
     }
   },
   {
-    
-    
-    domain: getDomain(),
+    ...(getDomain() ? { domain: getDomain() } : {}),
     signInUrl: "/login",
     signUpUrl: "/login",
     allowedRedirectOrigins: [

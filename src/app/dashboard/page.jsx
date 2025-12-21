@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Dashboard | Frame Toque",
+  title: "Dashboard",
   description: "We craft fast websites, bold graphics, and pro videos that make your brand shine.",
   openGraph: {
     title: "Dashboard | Frame Toque",

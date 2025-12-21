@@ -10,11 +10,11 @@ export default function Navbar({ scrolled }) {
   const pathname = usePathname();
 
    const links = [
-    { href: "/about", label: "About Us" },
-    { href: "/projects", label: "Our Projects" },
-    { href: "/services", label: "Our Services" },
-    { href: "/contact", label: "Contact Us" },
-    { href: "/dashboard", label: "Start Your Project", special: true },
+    { href: "/about", label: "About" },
+    { href: "/projects", label: "Work" },
+    { href: "/services", label: "Services" },
+    { href: "/contact", label: "Contact" },
+    { href: "/dashboard", label: "Start a Project", special: true },
   ];
 
   return (
@@ -83,7 +83,7 @@ export default function Navbar({ scrolled }) {
       {mobileMenuIsOpen && (
         <div className="md:hidden bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 animate-in slide-in-from-top duration-300">
           <div className="px-4 py-4 sm:py-6 space-y-3 sm:space-y-4">
-            {["about", "projects", "services", "contact"].map((link) => (
+            {["about", "work", "services", "contact"].map((link) => (
               <Link
                 key={link}
                 href={`${link}`}

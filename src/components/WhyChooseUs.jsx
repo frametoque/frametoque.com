@@ -3,10 +3,10 @@
 import { Check } from "lucide-react";
 
 const whyChooseData = [
-  "Creative Experts ready to boost your brand",
-  "Fast & Reliable work delivered on time",
-  "Customer-Focused - your satisfaction comes first",
-  "End-to-End Solutions: Web, Graphics & Video",
+  "We Think Like a Brand, Not Just Designers",
+  "Clean, Modern & Purpose-Driven Work",
+  "Fast, Clear & Stress-Free Communication",
+  "Built for Growth, Not Just Delivery",
 ];
 
 export default function WhyChooseUs() {
@@ -22,7 +22,7 @@ export default function WhyChooseUs() {
           </span>
         </h2>
         <p className="text-center text-gray-400 mb-12 max-w-2xl mx-auto">
-          We deliver top-notch websites, graphics, and videos that help your brand shine. Here's why our clients love working with us.
+          Because simple ideas, done right, stand out forever.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {whyChooseData.map((item, idx) => (

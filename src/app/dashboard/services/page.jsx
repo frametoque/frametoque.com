@@ -1,8 +1,8 @@
 export const metadata = {
-  title: "Our Services | Frame Toque",
+  title: "Services",
   description: "Browse and discover all available services. Find what you need, compare options, and request with one click.",
   openGraph: {
-    title: "Our Services | Frame Toque",
+    title: "Services | Frame Toque",
     description: "Browse and discover all available services. Find what you need, compare options, and request with one click.",
     url: "https://frametoque.online/dashboard/services", 
     siteName: "Frame Toque",

@@ -6,21 +6,21 @@ const features = [
   {
     title: "Web Development",
     description:
-      "We build fast, modern, and responsive websites that work perfectly on all devices. Your brand will look professional online, and visitors will enjoy a smooth experience.",
+      "Your website is more than pages, it’s how people feel about your brand. We create spaces that inspire trust and leave a lasting impression.",
     icon: Laptop,
     imagePosition: "left",
   },
   {
     title: "Graphics Designing",
     description:
-      "From logos to social media visuals, we create eye-catching designs that tell your brand’s story instantly. Stand out and make a lasting impression.",
+      "Design isn’t just visuals, it’s memory you leave behind. Every piece we craft tells your story and makes your brand unforgettable.",
     icon: PenTool,
     imagePosition: "left",
   },
   {
     title: "Video Editing",
     description:
-      "We turn your ideas into professional videos that engage, entertain, and convert. Smooth editing, creative storytelling, and high-quality output every time.",
+      "Stories don’t just play, they connect. We turn ideas into videos that spark emotion and stay in people’s minds.",
     icon: Video,
     imagePosition: "left",
   },

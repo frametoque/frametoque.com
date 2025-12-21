@@ -1,9 +1,9 @@
 export const metadata = {
-  title: "Our Services | Frame Toque",
+  title: "What We Do",
   description:
     "Explore our range of services including web development, graphic designing, and video editing tailored to make your brand shine.",
     openGraph: {
-    title: "Our Services | Frame Toque",
+    title: "What We Do | Frame Toque",
     description: "Explore our range of services including web development, graphic designing, and video editing tailored to make your brand shine.",
     url: "https://frametoque.online/services", 
     siteName: "Frame Toque",
@@ -39,10 +39,10 @@ export default function Home() {
             <div className="max-w-7xl mx-auto text-center mb-16">
               <h2 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">
                 <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
-                  Our&nbsp;
+                  What We&nbsp;
                 </span>
                 <span className="bg-gradient-to-b from-green-400 to-green-500 bg-clip-text text-transparent">
-                  Services
+                  Do
                 </span>
               </h2>
               <p className="text-gray-400 text-lg max-w-3xl mx-auto">

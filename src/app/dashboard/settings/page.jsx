@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Settings | Frame Toque",
+  title: "Settings",
   description: "Manage your account settings, profile details, and payment methods all in one place.",
   openGraph: {
     title: "Settings | Frame Toque",
