@@ -2,7 +2,7 @@ export const metadata = {
   title: "Frame Toque",
   description: "We craft fast websites, bold graphics, and pro videos that make your brand shine.",
   openGraph: {
-    title: "Frame Toque | Innovative Web Dev, Graphic Design & Video Solutions",
+    title: "Frame Toque Digital | Web Developing, Graphic Designing & Video Solutions",
     description: "We craft fast websites, bold graphics, and pro videos that make your brand shine.",
     url: "https://frametoque.online/", 
     siteName: "Frame Toque",

@@ -3,7 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import Script from "next/script";
 import "./globals.css";
 
-import SnowfallWrapper from '@/components/SnowfallWrapper';
+import SnowfallWrapper from "@/components/SnowfallWrapper";
 import AIChatbot from "@/components/AIChatbot";
 
 const geistSans = Geist({
@@ -15,6 +15,44 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+export const metadata = {
+  metadataBase: new URL("https://frametoque.online"),
+
+  title: {
+    default: "Frame Toque Digital",
+    template: "%s | Frame Toque",
+  },
+
+  description:
+    "Frame Toque Digital is a creative studio focused on web development, video production, and digital storytelling.",
+
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+
+  openGraph: {
+    title: "Frame Toque Digital",
+    description:
+      "Turning ideas into powerful digital visuals through web, video, and creative media.",
+    url: "https://frametoque.online",
+    siteName: "Frame Toque",
+    images: [
+      {
+        url: "/images/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Frame Toque Digital",
+      },
+    ],
+    type: "website",
+  },
+};
 
 export default function RootLayout({ children }) {
   return (
@@ -34,6 +72,24 @@ export default function RootLayout({ children }) {
             gtag('config', 'G-J0RPQGRTEK');
           `}
         </Script>
+
+        {/* Structured Data */}
+        <Script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Frame Toque Digital",
+              url: "https://frametoque.online",
+              logo: "https://frametoque.online/logos/ft/logo-main.png",
+              sameAs: [
+                "https://instagram.com/frame.toque",
+                "https://linkedin.com/company/frametoque",
+              ],
+            }),
+          }}
+        />
       </head>
 
       <body
