@@ -86,7 +86,7 @@ export default function Footer() {
         <div className="pt-6 sm:pt-8 border-t border-slate-800">
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
             <p className="text-gray-400 text-xs sm:text-sm">
-              © {new Date().getFullYear()} Frame Toque. All rights reserved.
+              © {new Date().getFullYear()} Frame Toque Digital. All rights reserved.
             </p>
             <div className="flex items-center space-x-4 sm:space-x-6 text-xs sm:text-sm">
               <Link
