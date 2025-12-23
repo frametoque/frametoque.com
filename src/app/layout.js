@@ -20,8 +20,7 @@ export const metadata = {
   metadataBase: new URL("https://frametoque.online"),
 
   title: {
-    default: "Frame Toque Digital",
-    template: "%s | Frame Toque",
+    default: "Frame Toque Digital"
   },
 
   description:
@@ -29,7 +28,7 @@ export const metadata = {
 
   icons: {
     icon: [
-      { url: "/favicon.ico" },
+      { url: "/favicon.png" },
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
     ],
@@ -73,7 +72,6 @@ export default function RootLayout({ children }) {
           `}
         </Script>
 
-        {/* Structured Data */}
         <Script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -92,7 +90,7 @@ export default function RootLayout({ children }) {
         />
       </head>
 
-      <body
+      <body suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ClerkProvider>
