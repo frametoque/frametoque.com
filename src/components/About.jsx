@@ -76,8 +76,8 @@ export default function AboutUs() {
     },
     {
       name: "Brian",
-      role: "..",
-      expertise: "..",
+      role: "Video Editor",
+      expertise: "Creative storytelling",
       social: {
         instagram: "https://instagram.com/",
         facebook: "https://facebook.com/",
