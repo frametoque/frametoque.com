@@ -75,7 +75,7 @@ export default function AboutUs() {
       }
     },
     {
-      name: "Brian",
+      name: "Senuja Brian",
       role: "Video Editor",
       expertise: "Creative storytelling",
       social: {
@@ -94,7 +94,6 @@ export default function AboutUs() {
       <section className="min-h-screen bg-slate-950 text-white py-16 px-6 sm:px-10 lg:px-16 relative overflow-hidden">
         {/* Pulse */}
         <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-green-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-[#44ed15]/10 rounded-full blur-3xl animate-pulse delay-1000" />
         
         <div className="max-w-7xl mx-auto text-center mb-16 relative z-10">
           <h2 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">
