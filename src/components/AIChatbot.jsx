@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import { Send, X, Maximize2, Minimize2, Bot, User, MessageSquare } from "lucide-react";
 import ReactMarkdown from 'react-markdown';  
 import Link from 'next/link';
-import styles from './AIChatbot.module.css';
 
 export default function AIChatbot() {
   const [open, setOpen] = useState(false);
@@ -211,78 +210,28 @@ export default function AIChatbot() {
 
   return (
     <>
-      {/* Floating Button - Icon Only */}
-      <div className="relative">
-  <button
-    onClick={() => setOpen(!open)}
-    className="fixed bottom-6 right-6 z-50 rounded-2xl backdrop-blur-xl transition-all duration-300 px-5 py-5 hover:scale-105 active:scale-95 group shadow-2xl focus:outline-none focus:ring-2 focus:ring-[#05df72]/50 focus:ring-offset-2 focus:ring-offset-transparent overflow-hidden"
-    style={{
-      background: 'linear-gradient(135deg, rgba(12, 25, 55, 0.9) 0%, rgba(5, 15, 35, 0.95) 100%)',
-      border: '1px solid rgba(5, 223, 114, 0.3)',
-      boxShadow: `
-        0 0 40px rgba(5, 223, 114, 0.25),
-        0 8px 32px rgba(2, 12, 45, 0.6),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1)
-      `,
-      minWidth: '70px',
-      minHeight: '70px'
-    }}
-    aria-label="Open Toque AI Chatbot"
-    title="Open Toque AI (Ctrl+K)"
-  >
-    {/* Main Message Icon with Robot Fusion */}
-    <div className="relative w-8 h-8">
-      <MessageSquare className="w-7 h-7 text-[#05df72] relative z-10" />
-    </div>
-    
-   
-    {/* Data Stream from Message Icon */}
-    <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
-      <div className="w-0.5 h-2 bg-gradient-to-b from-[#05df72] to-transparent animate-data-stream"></div>
-    </div>
-    
-    {/* Neural Network Grid Background */}
-    <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(5, 223, 114, 0.2)" strokeWidth="0.5"/>
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#grid)" className="animate-grid-move" />
-    </svg>
-    
-    {/* Circuit Board Animation */}
-    <div className="absolute inset-0">
-      <div className="absolute top-0 left-1/4 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-[#05df72] to-transparent animate-circuit-pulse"></div>
-      <div className="absolute bottom-0 right-1/4 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-[#05df72] to-transparent animate-circuit-pulse-2"></div>
-    </div>
-    
-    {/* AI Particle Effects */}
-    <div className="absolute inset-0">
-      <div className="absolute top-3 left-3 w-1 h-1 bg-[#05df72] rounded-full animate-particle-1"></div>
-      <div className="absolute bottom-4 right-3 w-1 h-1 bg-white rounded-full animate-particle-2"></div>
-      <div className="absolute top-1/2 left-2 w-0.5 h-0.5 bg-[#05df72]/60 rounded-full animate-particle-3"></div>
-    </div>
-    
-    {/* Binary Code Rain */}
-    <div className="absolute inset-0 overflow-hidden rounded-2xl">
-      <div className="absolute top-0 left-2 text-[6px] text-[#05df72]/40 animate-binary-rain-1">1010</div>
-      <div className="absolute top-4 right-3 text-[6px] text-white/30 animate-binary-rain-2">0110</div>
-      <div className="absolute bottom-2 left-4 text-[6px] text-[#05df72]/30 animate-binary-rain-3">1101</div>
-    </div>
-    
-    {/* Hover Glow Enhancement */}
-    <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-[#05df72]/0 via-[#05df72]/10 to-[#05df72]/0 opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105" />
-    
-    
-    {/* AI Thinking Dots (Appear on hover) */}
-    <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex space-x-1">
-      <div className="w-1 h-1 bg-[#05df72] rounded-full animate-thinking-dot"></div>
-      <div className="w-1 h-1 bg-[#05df72] rounded-full animate-thinking-dot" style={{animationDelay: '0.2s'}}></div>
-      <div className="w-1 h-1 bg-[#05df72] rounded-full animate-thinking-dot" style={{animationDelay: '0.4s'}}></div>
-    </div>
-  </button>
-</div>
+     <div className="relative">
+        <button
+          onClick={() => setOpen(!open)}
+          className="fixed bottom-6 right-6 z-50 rounded-lg backdrop-blur-xl transition-all duration-300 px-5 py-5 hover:scale-105 active:scale-95 group shadow-2xl focus:outline-none focus:ring-2 focus:ring-[#05df72]/50 focus:ring-offset-2 focus:ring-offset-transparent"
+          style={{
+            background: 'rgba(12, 25, 55, 0.8)',
+            border: '1px solid rgba(5, 223, 114, 0.2)',
+            boxShadow: `
+              0 8px 32px rgba(2, 12, 45, 0.4),
+              0 0 0 1px rgba(255, 255, 255, 0.08),
+              0 0 25px rgba(5, 223, 114, 0.15)
+            `,
+            minWidth: '64px', 
+            minHeight: '64px'
+          }}
+          aria-label="Open Toque AI Chatbot"
+          title="Open Toque AI (Ctrl+K)"
+        >
+          <MessageSquare className="w-6 h-6 text-[#05df72]" />
+          <div className="absolute -inset-1 rounded-lg bg-gradient-to-r from-transparent via-[#05df72]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        </button>
+      </div>
 
       {/* Chat Box */}
       {open && (
