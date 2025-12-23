@@ -23,7 +23,7 @@ export default function ContactPage() {
     <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
       <Navbar scrolled={scrolled} />
       <div className="h-20" />
-
+      <br /> <br />
       <section className="relative bg-slate-950/30 backdrop-blur-md py-5 px-4 sm:px-6 lg:px-8 text-center">
 
        {/* Pulse */}

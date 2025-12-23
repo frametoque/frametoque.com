@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 const footerLinks = {
-  Company: ["About", "Works", "Contact"],
+  Company: ["About", "Work", "Contact"],
   Legal: ["Privacy", "Terms", "Cookies"],
 };
 const urls = [

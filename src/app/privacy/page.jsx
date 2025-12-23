@@ -28,7 +28,7 @@ export default function Privacy() {
     <>
       <main  className="min-h-screen bg-slate-950 text-white overflow-hidden">
         <Navbar />
-        <br></br>
+        <div className="h-20" />
         <div className="min-h-screen bg-slate-950 text-white px-6 sm:px-10 lg:px-16 py-16">
           <h1 className="text-4xl sm:text-5xl font-bold mb-8 text-center">Privacy Policy</h1>
 
