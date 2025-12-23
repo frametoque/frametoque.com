@@ -19,7 +19,9 @@ export const metadata = {
   },
 };
 
-import Services from "@/components/services/Services.jsx";
+//import Services from "@/components/services/Services.jsx";
+import Alert from '@/components/Alert.jsx'
+
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -52,7 +54,8 @@ export default function Home() {
               </p>
             </div>
 
-      <Services />
+      {/* <Services /> */}
+      <Alert />
       <Footer/>
     </main >
     </>

@@ -63,11 +63,11 @@ export default function ContactPage() {
             <div className="flex items-center space-x-4">
               <MessageCircle className="text-green-400 w-6 h-6" />
               <a
-                href="https://wa.me/94701234567"
+                href="https://wa.me/94701901461"
                 target="_blank"
                 className="hover:text-green-400 transition"
               >
-                WhatsApp: +94 70 123 4567
+                WhatsApp: +94 70 190 1461
               </a>
             </div>
           </div>

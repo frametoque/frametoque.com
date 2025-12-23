@@ -19,12 +19,13 @@ export const metadata = {
 };
 
 import React from 'react'
-import Services from "@/components/services/Services.jsx"
+// import Services from "@/components/services/Services.jsx"
+import Alert from '@/components/Alert.jsx'
 
 function page() {
   return (
     <>
-    <div>
+        {/* <div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">
             <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
               Our
@@ -37,7 +38,9 @@ function page() {
             From websites to videos, we make your brand look amazing everywhere.
           </p>
         </div>
-         <Services/>
+         <Services/> */}
+
+         <Alert />
         
         </>
    
