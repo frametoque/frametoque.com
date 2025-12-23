@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, X, Maximize2, Minimize2, Bot, User, MessageSquare, Sparkle } from "lucide-react";
+import { Send, X, Maximize2, Minimize2, Bot, User, MessageSquare } from "lucide-react";
 import ReactMarkdown from 'react-markdown';  
 import Link from 'next/link';
 import styles from './AIChatbot.module.css';
@@ -235,10 +235,7 @@ export default function AIChatbot() {
       <MessageSquare className="w-7 h-7 text-[#05df72] relative z-10" />
     </div>
     
-    {/* AI Sparkles around Message Icon */}
-    <Sparkle className="absolute top-2 left-2 w-2.5 h-2.5 text-[#05df72] animate-sparkle-orbital" />
-    <Sparkle className="absolute bottom-2 right-2 w-2 h-2 text-white/60 animate-sparkle-orbital-2" />
-    
+   
     {/* Data Stream from Message Icon */}
     <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
       <div className="w-0.5 h-2 bg-gradient-to-b from-[#05df72] to-transparent animate-data-stream"></div>
@@ -277,11 +274,6 @@ export default function AIChatbot() {
     {/* Hover Glow Enhancement */}
     <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-[#05df72]/0 via-[#05df72]/10 to-[#05df72]/0 opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105" />
     
-    {/* Orbital Rings */}
-    <div className="absolute -inset-3 opacity-30">
-      <div className="absolute inset-0 border border-[#05df72]/20 rounded-full animate-orbit-slow"></div>
-      <div className="absolute inset-2 border border-[#05df72]/10 rounded-full animate-orbit-slow-reverse"></div>
-    </div>
     
     {/* AI Thinking Dots (Appear on hover) */}
     <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex space-x-1">
