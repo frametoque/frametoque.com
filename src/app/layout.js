@@ -43,7 +43,7 @@ export const metadata = {
     siteName: "Frame Toque",
     images: [
       {
-        url: "/images/og-image.jpg",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Frame Toque Digital",

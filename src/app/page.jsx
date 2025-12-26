@@ -8,7 +8,7 @@ export const metadata = {
     siteName: "Frame Toque",
     images: [
       {
-        url: "https://frametoque.online/images/og-image.png",
+        url: "https://frametoque.online/og-image.png",
         width: 1200,
         height: 630,
         alt: "Frame Toque",
