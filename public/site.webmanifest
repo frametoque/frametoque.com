@@ -76,8 +76,9 @@
   "launch_handler": { "client_mode": "focus-existing" },
 
   "protocol_handlers": [
-    { "protocol": "mailto", "url": "mailto:contact@frametoque.online" }
+    { "protocol": "mailto", "url": "mailto:contact@frametoque.online?body=%s" }
   ],
+
 
   "related_applications": [
     { "platform": "play", "url": "https://play.google.com/store/apps/details?id=com.frametoque", "id": "com.frametoque" }
@@ -99,17 +100,20 @@
 
   "widgets": [
     {
-      "src": "/requests",
-      "name": "FrameToque Requests",
-      "description": "Quick access to your Requests",
+      "src": "/dashboard",
+      "name": "FrameToque Dashboard",
+      "description": "Quick access to your dashboard",
       "sizes": ["120x120", "240x240"],
-      "tag": "requests"
+      "tag": "dashboard"
     }
   ],
 
   "edge_side_panel": { "src": "/dashboard", "enabled": true },
 
-  "scope_extensions": ["/dashboard", "/dashboard/settings"],
+  "scope_extensions": {
+  "/dashboard": {},
+  "/dashboard/settings": {}
+},
 
   "note_taking": {
     "new_note_url": "/dashboard/settings",
