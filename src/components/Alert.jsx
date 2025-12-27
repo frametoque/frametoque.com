@@ -1,4 +1,5 @@
 import { AlertCircle } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Alert() {
   const phoneNumber = "+94701901461";
@@ -30,7 +31,7 @@ export default function Alert() {
                 </div>
                 
                 <div>
-                  <a
+                  <Link
                     href={whatsappLink}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -54,7 +55,7 @@ export default function Alert() {
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
-                  </a>
+                  </Link>
                 </div>
                 
                 <div className="pt-4 border-t border-green-700/40">

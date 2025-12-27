@@ -5,6 +5,7 @@ import Clients from "@/components/Clients.jsx";
 import Navbar from "@/components/Navbar.jsx";
 import Footer from "@/components/Footer.jsx";
 import { Linkedin, Facebook, Github, Mail, Instagram, Youtube, Music2 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AboutUs() {
   const [scrolled, setScrolled] = useState(false);
@@ -147,7 +148,7 @@ export default function AboutUs() {
 
                 <div className="flex justify-center space-x-3 mb-4 flex-wrap">
                   {member.social?.linkedin && (
-                    <a
+                    <Link
                       href={member.social.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -155,11 +156,11 @@ export default function AboutUs() {
                       aria-label={`${member.name}'s LinkedIn`}
                     >
                       <Linkedin className="w-5 h-5" />
-                    </a>
+                    </Link>
                   )}
                   
                   {member.social?.facebook && (
-                    <a
+                    <Link
                       href={member.social.facebook}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -167,11 +168,11 @@ export default function AboutUs() {
                       aria-label={`${member.name}'s Facebook`}
                     >
                       <Facebook className="w-5 h-5" />
-                    </a>
+                    </Link>
                   )}
                   
                   {member.social?.github && (
-                    <a
+                    <Link
                       href={member.social.github}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -179,11 +180,11 @@ export default function AboutUs() {
                       aria-label={`${member.name}'s GitHub`}
                     >
                       <Github className="w-5 h-5" />
-                    </a>
+                    </Link>
                   )}
                   
                   {member.social?.instagram && (
-                    <a
+                    <Link
                       href={member.social.instagram}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -191,11 +192,11 @@ export default function AboutUs() {
                       aria-label={`${member.name}'s Instagram`}
                     >
                       <Instagram className="w-5 h-5" />
-                    </a>
+                    </Link>
                   )}
                   
                   {member.social?.youtube && (
-                    <a
+                    <Link
                       href={member.social.youtube}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -203,11 +204,11 @@ export default function AboutUs() {
                       aria-label={`${member.name}'s YouTube`}
                     >
                       <Youtube className="w-5 h-5" />
-                    </a>
+                    </Link>
                   )}
                   
                   {member.social?.tiktok && (
-                    <a
+                    <Link
                       href={member.social.tiktok}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -215,17 +216,17 @@ export default function AboutUs() {
                       aria-label={`${member.name}'s TikTok`}
                     >
                       <Music2 className="w-5 h-5" />
-                    </a>
+                    </Link>
                   )}
                   
                   {member.social?.email && (
-                    <a
+                    <Link
                       href={`mailto:${member.social.email}`}
                       className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center hover:bg-green-600 hover:text-white transition-all hover:scale-110"
                       aria-label={`Email ${member.name}`}
                     >
                       <Mail className="w-5 h-5" />
-                    </a>
+                    </Link>
                   )}
                 </div>
               </div>

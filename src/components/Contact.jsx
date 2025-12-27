@@ -55,20 +55,20 @@ export default function ContactPage() {
           <div className="space-y-4">
             <div className="flex items-center space-x-4">
               <Mail className="text-green-400 w-6 h-6" />
-              <a href="mailto:contact@frametoque.online" className="hover:text-green-400 transition">
+              <Link href="mailto:contact@frametoque.online" className="hover:text-green-400 transition">
                 contact@frametoque.online
-              </a>
+              </Link>
             </div>
 
             <div className="flex items-center space-x-4">
               <MessageCircle className="text-green-400 w-6 h-6" />
-              <a
+              <Link
                 href="https://wa.me/94701901461"
                 target="_blank"
                 className="hover:text-green-400 transition"
               >
                 WhatsApp: +94 70 190 1461
-              </a>
+              </Link>
             </div>
           </div>
 

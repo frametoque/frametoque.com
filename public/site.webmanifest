@@ -5,60 +5,61 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "fullscreen", "minimal-ui"],
+  "display_override": ["standalone", "fullscreen", "minimal-ui", "window-controls-overlay", "tabbed"],
   "orientation": "portrait",
   "background_color": "#000000",
   "theme_color": "#000000",
   "lang": "en",
   "dir": "ltr",
-  
+
+  "categories": ["photography", "social", "productivity"], 
+  "prefer_related_applications": true,
+
   "icons": [
     { "src": "/favicon-16x16.png", "sizes": "16x16", "type": "image/png" },
     { "src": "/favicon-32x32.png", "sizes": "32x32", "type": "image/png" },
     { "src": "/favicon-96x96.png", "sizes": "96x96", "type": "image/png" },
     { "src": "/favicon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/favicon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/favicon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ],
 
   "screenshots": [
     {
-      "src": "/screenshots/shot1.png",
-      "sizes": "1442x3202",
-      "type": "image/png"
+      "src": "/screenshots/wide1.png",
+      "sizes": "3099x1869",
+      "type": "image/png",
+      "label": "FrameToque on desktop",
+      "form_factor": "wide"
     },
     {
-      "src": "/screenshots/shot2.png",
-      "sizes": "1442x3202",
-      "type": "image/png"
+      "src": "/screenshots/handheld1.png",
+      "sizes": "1290x2796",
+      "type": "image/png",
+      "label": "FrameToque on mobile",
+      "form_factor": "narrow"
     }
   ],
 
   "id": "/?source=pwa",
-  
+
   "shortcuts": [
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "url": "/dashboard",
-      "icons": [
-        { "src": "/icons/layout-dashboard.png", "sizes": "24x24", "type": "image/png" }
-      ]
+      "icons": [{ "src": "/icons/layout-dashboard.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "My Requests",
       "short_name": "Requests",
       "url": "/dashboard/requests",
-      "icons": [
-        { "src": "/icons/clipboard-list.png", "sizes": "24x24", "type": "image/png" }
-      ]
+      "icons": [{ "src": "/icons/clipboard-list.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Settings",
       "short_name": "Settings",
       "url": "/dashboard/settings",
-      "icons": [
-        { "src": "/icons/settings.png", "sizes": "24x24", "type": "image/png" }
-      ]
+      "icons": [{ "src": "/icons/settings.png", "sizes": "96x96", "type": "image/png" }]
     }
   ],
 
@@ -72,23 +73,14 @@
     }
   ],
 
-  "launch_handler": {
-    "client_mode": "focus-existing"
-  },
+  "launch_handler": { "client_mode": "focus-existing" },
 
   "protocol_handlers": [
-    {
-      "protocol": "mailto",
-      "url": "mailto:contact@frametoque.online"
-    }
+    { "protocol": "mailto", "url": "mailto:contact@frametoque.online" }
   ],
 
   "related_applications": [
-    {
-      "platform": "play",
-      "url": "https://play.google.com/store/apps/details?id=com.frametoque",
-      "id": "com.frametoque"
-    }
+    { "platform": "play", "url": "https://play.google.com/store/apps/details?id=com.frametoque", "id": "com.frametoque" }
   ],
 
   "share_target": {
@@ -99,27 +91,29 @@
       "title": "title",
       "text": "text",
       "url": "url",
-      "files": [
-        { "name": "media", "accept": ["image/*", "video/*"] }
-      ]
+      "files": [{ "name": "media", "accept": ["image/*", "video/*"] }]
     }
   },
 
-  "iarc_rating_id": "L-FrameToque-01", 
+  "iarc_rating_id": "L-FrameToque-01",
 
   "widgets": [
     {
-      "src": "/dashboard",
-      "name": "FrameToque Dashboard",
-      "description": "Quick access to your dashboard and posts",
-      "sizes": ["120x120", "240x240"]
+      "src": "/requests",
+      "name": "FrameToque Requests",
+      "description": "Quick access to your Requests",
+      "sizes": ["120x120", "240x240"],
+      "tag": "requests"
     }
   ],
 
-  "edge_side_panel": {
-    "src": "/dashboard",
-    "enabled": true
-  },
+  "edge_side_panel": { "src": "/dashboard", "enabled": true },
 
-  "scope_extensions": ["/dashboard", "/dashboard/settings"]
+  "scope_extensions": ["/dashboard", "/dashboard/settings"],
+
+  "note_taking": {
+    "new_note_url": "/dashboard/settings",
+    "name": "FrameToque Notes",
+    "description": "Create a new note quickly from anywhere"
+  }
 }
