@@ -93,8 +93,11 @@
     </main>
 
     <footer>
-        &copy; 2025 Frame Toque
+        &copy; <span id="year"></span> Frame Toque
     </footer>
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
 </body>
 
 </html>
