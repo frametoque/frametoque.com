@@ -63,21 +63,8 @@
     }
   ],
 
-  "file_handlers": [
-    {
-      "action": "/upload",
-      "accept": {
-        "image/*": [".png", ".jpg", ".jpeg"],
-        "video/*": [".mp4", ".mov"]
-      }
-    }
-  ],
 
   "launch_handler": { "client_mode": "focus-existing" },
-
-  "protocol_handlers": [
-    { "protocol": "mailto", "url": "mailto:contact@frametoque.online?body=%s" }
-  ],
 
 
   "related_applications": [
