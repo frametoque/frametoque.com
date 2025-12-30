@@ -53,7 +53,7 @@ export default function Testimonials() {
                     <div className="flex-shrink-0">
                       <div
                         className="text-2xl sm:text-3xl lg:text-4xl font-bold 
-                      bg-gradient-to-r from-green-400 to-green-400 bg-clip-text 
+                      bg-gradient-to-r from-blue-400 to-blue-400 bg-clip-text 
                       text-transparent"
                       >
                         "

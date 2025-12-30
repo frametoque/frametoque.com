@@ -3,7 +3,7 @@ import { Calendar, Eye, MoreVertical } from "lucide-react";
 
 export default function ProjectCard({ project }) {
   const statusColors = {
-    completed: "bg-green-500/20 text-green-400 border-green-500/30",
+    completed: "bg-blue-500/20 text-blue-400 border-blue-500/30",
     "in-progress": "bg-blue-500/20 text-blue-400 border-blue-500/30",
     pending: "bg-orange-500/20 text-orange-400 border-orange-500/30",
     review: "bg-purple-500/20 text-purple-400 border-purple-500/30",
@@ -16,7 +16,7 @@ export default function ProjectCard({ project }) {
   };
 
   return (
-    <div className="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden hover:border-green-500/30 transition-all duration-300 hover:shadow-lg hover:shadow-green-500/10 flex flex-col h-full">
+    <div className="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden hover:border-blue-500/30 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 flex flex-col h-full">
       {/* Project Image */}
       <div className="relative h-48 bg-slate-800 overflow-hidden">
         <Image
@@ -63,7 +63,7 @@ export default function ProjectCard({ project }) {
             <span>{project.date}</span>
           </div>
           
-          <button className="flex items-center gap-2 text-green-400 hover:text-green-300 transition-colors">
+          <button className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors">
             <Eye className="w-4 h-4" />
             <span>View</span>
           </button>

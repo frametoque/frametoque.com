@@ -15,7 +15,7 @@ export default function Forbidden() {
 
       <main className="flex flex-col items-center justify-center flex-1">
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-12 text-center shadow-lg w-11/12 sm:w-96 mt-12">
-          <h1 className="text-6xl font-bold mb-4 bg-gradient-to-b from-green-400 to-green-500 bg-clip-text text-transparent">403</h1>
+          <h1 className="text-6xl font-bold mb-4 bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">403</h1>
           <p className="text-lg mb-6">Oops! You don’t have permission to access this page.</p>
           <Link
             href="/"

@@ -64,15 +64,15 @@ export default function ProjectsMain() {
       <div className="h-20" />
     <section className="min-h-screen bg-slate-950 text-white py-20 px-6 sm:px-10 lg:px-16">
              {/* Pulse */}
-      <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-green-500/10 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-[#44ed15]-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-[#3B82F6]-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
     
       <div className="max-w-7xl mx-auto text-center mb-16">
         <h2 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">
           <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
             What We&nbsp;
           </span>
-          <span className="bg-gradient-to-b from-green-400 to-green-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">
             Did
           </span>
         </h2>
@@ -91,15 +91,15 @@ export default function ProjectsMain() {
               bg-slate-800/40 backdrop-blur-md 
               border border-white/10 
               shadow-lg shadow-black/30 
-              hover:shadow-green-500/20 
-              hover:border-green-400/40 
+              hover:shadow-blue-500/20 
+              hover:border-blue-400/40 
               transition-all duration-300 flex flex-col
             "
           >
             <span className="
               absolute top-3 right-3 text-xs 
               px-3 py-1 rounded-md z-20 
-              bg-green-400 uppercase text-black backdrop-blur-md 
+              bg-blue-400 uppercase text-black backdrop-blur-md 
               shadow-md shadow-black/30
             ">
               {project.category}
@@ -148,10 +148,10 @@ export default function ProjectsMain() {
                         href={project.live}
                         target="_blank"
                         className="
-                          bg-green-500/20 hover:bg-green-500/30 
+                          bg-blue-500/20 hover:bg-blue-500/30 
                           px-3 py-2 rounded-lg transition 
                           flex items-center justify-center
-                          border border-green-400/20 hover:border-green-400/40
+                          border border-blue-400/20 hover:border-blue-400/40
                         "
                       >
                         <Globe className="w-5 h-5" />

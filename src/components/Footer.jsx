@@ -76,7 +76,7 @@ export default function Footer() {
                   Reg No:
                 </h3>
                 <p className="text-gray-300 text-xs sm:text-sm max-w-xs">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 via-[#44ed15] to-green-400 font-semibold">Your brand deserves better visuals.</span> We make brands look serious. 
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-[#3B82F6] to-blue-400 font-semibold">Your brand deserves better visuals.</span> We make brands look serious. 
                 </p>
               </div>
             </div>

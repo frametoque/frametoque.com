@@ -213,14 +213,14 @@ export default function AIChatbot() {
      <div className="relative">
         <button
           onClick={() => setOpen(!open)}
-          className="fixed bottom-6 right-6 z-50 rounded-lg backdrop-blur-xl transition-all duration-300 px-5 py-5 hover:scale-105 active:scale-95 group shadow-2xl focus:outline-none focus:ring-2 focus:ring-[#05df72]/50 focus:ring-offset-2 focus:ring-offset-transparent"
+          className="fixed bottom-6 right-6 z-50 rounded-lg backdrop-blur-xl transition-all duration-300 px-5 py-5 hover:scale-105 active:scale-95 group shadow-2xl focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/50 focus:ring-offset-2 focus:ring-offset-transparent"
           style={{
             background: 'rgba(12, 25, 55, 0.8)',
-            border: '1px solid rgba(5, 223, 114, 0.2)',
+            border: '1px solid rgba(59, 130, 246, 0.2)',
             boxShadow: `
               0 8px 32px rgba(2, 12, 45, 0.4),
               0 0 0 1px rgba(255, 255, 255, 0.08),
-              0 0 25px rgba(5, 223, 114, 0.15)
+              0 0 25px rgba(59, 130, 246, 0.15)
             `,
             minWidth: '64px', 
             minHeight: '64px'
@@ -228,8 +228,8 @@ export default function AIChatbot() {
           aria-label="Open Toque AI Chatbot"
           title="Open Toque AI (Ctrl+K)"
         >
-          <MessageSquare className="w-6 h-6 text-[#05df72]" />
-          <div className="absolute -inset-1 rounded-lg bg-gradient-to-r from-transparent via-[#05df72]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <MessageSquare className="w-6 h-6 text-[#3B82F6]" />
+          <div className="absolute -inset-1 rounded-lg bg-gradient-to-r from-transparent via-[#3B82F6]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         </button>
       </div>
 
@@ -250,27 +250,27 @@ export default function AIChatbot() {
               border: '1px solid rgba(5, 223, 114, 0.15)',
               boxShadow: `
                 0 25px 50px -12px rgba(2, 12, 45, 0.5),
-                0 0 0 1px rgba(5, 223, 114, 0.1),
-                0 0 50px rgba(5, 223, 114, 0.1),
+                0 0 0 1px rgba(59, 130, 246, 0.1),
+                0 0 50px rgba(59, 130, 246, 0.1),
                 inset 0 1px 0 rgba(255, 255, 255, 0.05)
               `,
             }}
           >
             {/* Glass textures */}
             <div className="absolute inset-0 opacity-10" style={{
-              backgroundImage: `radial-gradient(circle at 20% 30%, rgba(5, 223, 114, 0.1) 0%, transparent 50%),
+              backgroundImage: `radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
                                 radial-gradient(circle at 80% 70%, rgba(30, 100, 200, 0.1) 0%, transparent 50%)`
             }} />
             
             <div className="absolute inset-0 opacity-3" style={{
-              backgroundImage: `linear-gradient(rgba(5, 223, 114, 0.1) 1px, transparent 1px),
-                                linear-gradient(90deg, rgba(5, 223, 114, 0.1) 1px, transparent 1px)`,
+              backgroundImage: `linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+                                linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)`,
               backgroundSize: '30px 30px'
             }} />
             
             {/* Clean Header */}
             <div className="relative p-4 border-b" style={{ 
-              borderColor: 'rgba(5, 223, 114, 0.1)',
+              borderColor: 'rgba(59, 130, 246, 0.1)',
               background: 'linear-gradient(to right, rgba(8, 18, 40, 0.7), transparent)'
             }}>
               <div className="flex items-center justify-between">
@@ -278,11 +278,11 @@ export default function AIChatbot() {
                   <div className="p-2 rounded-xl backdrop-blur-sm group relative overflow-hidden"
                     style={{
                       background: 'rgba(12, 25, 55, 0.5)',
-                      border: '1px solid rgba(5, 223, 114, 0.2)'
+                      border: '1px solid rgba(59, 130, 246, 0.2)'
                     }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#05df72]/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                    <Bot className="w-5 h-5 text-[#05df72] relative" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#3B82F6]/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                    <Bot className="w-5 h-5 text-[#3B82F6] relative" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Toque AI</h3>
@@ -294,7 +294,7 @@ export default function AIChatbot() {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={clearChat}
-                    className="p-2 rounded-lg transition-colors hover:text-[#05df72] text-xs"
+                    className="p-2 rounded-lg transition-colors hover:text-[#3B82F6] text-xs"
                     style={{ 
                       color: 'rgba(255, 255, 255, 0.5)',
                       background: 'rgba(12, 25, 55, 0.3)',
@@ -306,7 +306,7 @@ export default function AIChatbot() {
                   </button>
                   <button
                     onClick={() => setIsMaximized(!isMaximized)}
-                    className="p-2 rounded-lg transition-colors hover:text-[#05df72]"
+                    className="p-2 rounded-lg transition-colors hover:text-[#3B82F6]"
                     style={{ 
                       color: 'rgba(255, 255, 255, 0.5)',
                       background: 'rgba(12, 25, 55, 0.3)',
@@ -317,7 +317,7 @@ export default function AIChatbot() {
                   </button>
                   <button
                     onClick={() => setOpen(false)}
-                    className="p-2 rounded-lg transition-colors hover:text-[#05df72]"
+                    className="p-2 rounded-lg transition-colors hover:text-[#3B82F6]"
                     style={{ 
                       color: 'rgba(255, 255, 255, 0.5)',
                       background: 'rgba(12, 25, 55, 0.3)',
@@ -349,24 +349,24 @@ export default function AIChatbot() {
                 >
                   <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border backdrop-blur-sm ${
                     m.role === "user" 
-                      ? "border-[#05df72]/30"
+                      ? "border-[#3B82F6]/30"
                       : "border-white/10"
                   }`}
                     style={{
                       background: m.role === "user" 
-                        ? 'rgba(5, 223, 114, 0.1)'
+                        ? 'rgba(59, 130, 246, 0.1)'
                         : 'rgba(12, 25, 55, 0.5)'
                     }}
                   >
                     {m.role === "user" ? (
-                      <User className="w-4 h-4 text-[#05df72]" />
+                      <User className="w-4 h-4 text-[#3B82F6]" />
                     ) : (
-                      <Bot className="w-4 h-4 text-[#05df72]" />
+                      <Bot className="w-4 h-4 text-[#3B82F6]" />
                     )}
                   </div>
                   <div className={`max-w-[70%] rounded-xl p-3 backdrop-blur-sm border ${
                     m.role === "user"
-                      ? "border-[#05df72]/20 text-white"
+                      ? "border-[#3B82F6]/20 text-white"
                       : "border-white/10 text-gray-200"
                   }`}
                     style={{
@@ -376,13 +376,13 @@ export default function AIChatbot() {
                     }}
                   >
                     <div className="prose prose-invert max-w-none text-sm leading-relaxed">
-                      {/* Customize ReactMarkdown to style links as green */}
+                      {/* Customize ReactMarkdown to style links as blue */}
                       <ReactMarkdown
                         components={{
                           a: ({ children, href }) => (
                             <Link 
                               href={href} 
-                              className="text-[#05df72] hover:text-[#05df72]/80 underline transition-colors" 
+                              className="text-[#3B82F6] hover:text-[#3B82F6]/80 underline transition-colors" 
                               rel="noopener noreferrer"
                             >
                               {children}
@@ -396,7 +396,7 @@ export default function AIChatbot() {
                     <div className="mt-2">
                       <p className={`text-xs ${
                         m.role === "user" 
-                          ? "text-[#05df72]/60" 
+                          ? "text-[#3B82F6]/60" 
                           : "text-white/40"
                       }`}>
                         {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -415,9 +415,9 @@ export default function AIChatbot() {
                     }}
                   >
                     <div className="flex gap-0.5">
-                      <div className="w-1.5 h-1.5 bg-[#05df72] rounded-full animate-bounce" />
-                      <div className="w-1.5 h-1.5 bg-[#05df72] rounded-full animate-bounce delay-150" />
-                      <div className="w-1.5 h-1.5 bg-[#05df72] rounded-full animate-bounce delay-300" />
+                      <div className="w-1.5 h-1.5 bg-[#3B82F6] rounded-full animate-bounce" />
+                      <div className="w-1.5 h-1.5 bg-[#3B82F6] rounded-full animate-bounce delay-150" />
+                      <div className="w-1.5 h-1.5 bg-[#3B82F6] rounded-full animate-bounce delay-300" />
                     </div>
                   </div>
                   <div className="rounded-xl p-3 backdrop-blur-sm"
@@ -440,7 +440,7 @@ export default function AIChatbot() {
             {/* Input Area with Model Info at Bottom */}
             <div className="absolute bottom-0 left-0 right-0 p-4 border-t"
               style={{
-                borderColor: 'rgba(5, 223, 114, 0.1)',
+                borderColor: 'rgba(59, 130, 246, 0.1)',
                 background: 'linear-gradient(to top, rgba(8, 18, 40, 0.8) 0%, transparent 100%)'
               }}
             >
@@ -464,7 +464,7 @@ export default function AIChatbot() {
                     disabled={loading}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2"
-                    style={{ color: 'rgba(5, 223, 114, 0.3)' }}
+                    style={{ color: 'rgba(59, 130, 246, 0.3)' }}
                   >
                     ↵
                   </div>
@@ -472,13 +472,13 @@ export default function AIChatbot() {
                 <button
                   onClick={sendMessage}
                   disabled={!input.trim() || loading}
-                  className="px-4 rounded-lg text-white disabled:opacity-30 disabled:cursor-not-allowed hover:text-[#05df72] transition-all duration-200 flex items-center justify-center backdrop-blur-sm group relative overflow-hidden"
+                  className="px-4 rounded-lg text-white disabled:opacity-30 disabled:cursor-not-allowed hover:text-[#3B82F6] transition-all duration-200 flex items-center justify-center backdrop-blur-sm group relative overflow-hidden"
                   style={{
                     background: 'rgba(12, 25, 55, 0.5)',
-                    border: '1px solid rgba(5, 223, 114, 0.2)'
+                    border: '1px solid rgba(59, 130, 246, 0.2)'
                   }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#05df72]/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#3B82F6]/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                   <Send className="w-4 h-4 relative" />
                 </button>
               </div>

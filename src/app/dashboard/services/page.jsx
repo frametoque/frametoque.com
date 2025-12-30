@@ -27,7 +27,7 @@ function page() {
     <>
          <div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">
               New
             </span>
             <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">

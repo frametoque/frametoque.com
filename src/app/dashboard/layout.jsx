@@ -103,7 +103,7 @@ export default function DashboardLayout({ children }) {
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all
                       ${
                         active
-                          ? "bg-gradient-to-r from-green-600 to-green-700 text-white"
+                          ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
                           : "text-gray-300 hover:bg-white/5"
                       }
                       `}
@@ -133,7 +133,7 @@ export default function DashboardLayout({ children }) {
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-600 to-green-700 flex items-center justify-center text-white font-semibold">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center text-white font-semibold">
                       {user?.firstName?.charAt(0) || "U"}
                     </div>
                   )}
@@ -200,7 +200,7 @@ export default function DashboardLayout({ children }) {
 
             <button className="relative p-2 hover:bg-white/10 rounded-lg">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full"></span>
+              <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></span>
             </button>
 
             {/* Mobile Avatar */}

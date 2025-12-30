@@ -95,8 +95,8 @@ export default function SignupPage() {
 
       <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 pb-16">
         {/* Pulse Effects */}
-        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-green-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-green-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
 
         <div className="max-w-md w-full relative z-10">
           {/* Header */}
@@ -111,7 +111,7 @@ export default function SignupPage() {
               />
             </Link>
             <h1 className="text-4xl sm:text-5xl font-bold mb-3">
-              <span className="bg-gradient-to-b from-green-400 to-green-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">
                 Join
               </span>
               <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
@@ -163,7 +163,7 @@ export default function SignupPage() {
                         value={field.value}
                         onChange={field.onChange}
                         required={field.required}
-                        className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder={field.placeholder}
                       />
                     </div>
@@ -179,15 +179,15 @@ export default function SignupPage() {
                 <input
                   type="checkbox"
                   required
-                  className="w-4 h-4 mt-1 rounded border-white/10 bg-white/5 text-green-500"
+                  className="w-4 h-4 mt-1 rounded border-white/10 bg-white/5 text-blue-500"
                 />
                 <label className="ml-2 text-sm text-gray-400">
                   I agree to the&nbsp;
-                  <Link href="/terms" className="text-green-400 hover:text-green-300">
+                  <Link href="/terms" className="text-blue-400 hover:text-blue-300">
                     Terms
                   </Link>
                   &nbsp;and&nbsp;
-                  <Link href="/privacy" className="text-green-400 hover:text-green-300">
+                  <Link href="/privacy" className="text-blue-400 hover:text-blue-300">
                     Privacy Policy
                   </Link>
                 </label>
@@ -197,7 +197,7 @@ export default function SignupPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full px-6 py-4 bg-gradient-to-b from-green-600 to-green-700 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                className="w-full px-6 py-4 bg-gradient-to-b from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
               >
                 {loading ? "Creating account..." : "Create Account"}
               </button>
@@ -206,7 +206,7 @@ export default function SignupPage() {
             {/* Login Link */}
             <div className="mt-6 text-center text-sm text-gray-400">
               Already have an account?&nbsp;
-              <Link href="/login" className="text-green-400 hover:text-green-300 font-semibold">
+              <Link href="/login" className="text-blue-400 hover:text-blue-300 font-semibold">
                 Sign in
               </Link>
             </div>

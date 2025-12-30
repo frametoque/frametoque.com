@@ -200,7 +200,7 @@ export default function SettingsPage() {
   if (!isLoaded || loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -211,7 +211,7 @@ export default function SettingsPage() {
         <p className="text-gray-400">You must be signed in to access settings.</p>
         <Link 
           href="/sign-in" 
-          className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
+          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
         >
           Sign In
         </Link>
@@ -227,7 +227,7 @@ export default function SettingsPage() {
           <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
             Account{" "}
           </span>
-          <span className="bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">
             Settings
           </span>
         </h1>
@@ -246,7 +246,7 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     activeTab === tab.id
-                      ? "bg-gradient-to-r from-green-600 to-green-700 text-white"
+                      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
                       : "text-gray-400 hover:bg-white/5 hover:text-white"
                   }`}
                 >
@@ -334,8 +334,8 @@ export default function SettingsPage() {
                       >
                         {copied ? (
                           <>
-                            <Check className="w-3.5 h-3.5 text-green-400" />
-                            <span className="text-green-400">Copied!</span>
+                            <Check className="w-3.5 h-3.5 text-blue-400" />
+                            <span className="text-blue-400">Copied!</span>
                           </>
                         ) : (
                           <>
@@ -354,7 +354,7 @@ export default function SettingsPage() {
 
                   {/* Personal Information Section */}
                   <div className="space-y-5">
-                    <div className="border-l-4 border-green-500 pl-4">
+                    <div className="border-l-4 border-blue-500 pl-4">
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -369,7 +369,7 @@ export default function SettingsPage() {
                           name="name"
                           value={formData.name}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/30 transition-all duration-200"
+                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/30 transition-all duration-200"
                           placeholder="Enter your full name"
                           required
                         />
@@ -410,7 +410,7 @@ export default function SettingsPage() {
                           required
                           value={formData.phone}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/30 transition-all duration-200"
+                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/30 transition-all duration-200"
                         />
                         <p className="text-xs text-gray-500 mt-2">Include country code</p>
                       </div>
@@ -427,7 +427,7 @@ export default function SettingsPage() {
                           name="company"
                           value={formData.company}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/30 transition-all duration-200"
+                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/30 transition-all duration-200"
                           placeholder="Your company name"
                         />
                       </div>
@@ -454,7 +454,7 @@ export default function SettingsPage() {
                           const value = e.target.value;
                           setFormData(prev => ({ ...prev, website: value.startsWith('http') ? value : `https://${value}` }));
                         }}
-                        className="w-full pl-20 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/30 transition-all duration-200"
+                        className="w-full pl-20 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/30 transition-all duration-200"
                         placeholder="yourwebsite.com"
                       />
                     </div>
@@ -488,14 +488,14 @@ export default function SettingsPage() {
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div className="text-sm text-gray-400">
                         <p className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                          <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                           Updates are reflected immediately across all systems
                         </p>
                       </div>
                       <button
                         type="submit"
                         disabled={saving}
-                        className={`flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-green-500/25 transition-all duration-300 min-w-[140px] justify-center ${
+                        className={`flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-blue-500/25 transition-all duration-300 min-w-[140px] justify-center ${
                           saving ? "opacity-70 cursor-not-allowed" : "hover:scale-[1.02] hover:shadow-xl"
                         }`}
                       >
@@ -650,7 +650,7 @@ export default function SettingsPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-1">
                             <p className="text-white font-medium">{invoice.service}</p>
-                            <span className="px-2 py-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded-full text-xs font-medium">
+                            <span className="px-2 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full text-xs font-medium">
                               {invoice.status}
                             </span>
                           </div>
@@ -660,7 +660,7 @@ export default function SettingsPage() {
                         </div>
                         <div className="flex items-center gap-4">
                           <p className="text-white font-semibold">{invoice.amount}</p>
-                          <button className="flex items-center gap-2 text-green-400 hover:text-green-300 transition-colors text-sm font-medium">
+                          <button className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium">
                             <Download className="w-4 h-4" />
                             Invoice
                           </button>
@@ -672,7 +672,7 @@ export default function SettingsPage() {
 
                 {/* Total Spent */}
                 <div className="pt-6 border-t border-white/10">
-                  <div className="bg-gradient-to-r from-green-600/20 to-green-700/20 border border-green-500/30 rounded-xl p-6">
+                  <div className="bg-gradient-to-r from-blue-600/20 to-blue-700/20 border border-blue-500/30 rounded-xl p-6">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-400 text-sm mb-1">Total Spent</p>
@@ -680,7 +680,7 @@ export default function SettingsPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-gray-400 text-sm mb-1">Projects Completed</p>
-                        <p className="text-2xl font-bold text-green-400">4</p>
+                        <p className="text-2xl font-bold text-blue-400">4</p>
                       </div>
                     </div>
                   </div>

@@ -39,7 +39,7 @@ export default function ServicesMain() {
           Need something custom?{" "}
           <Link
             href="/contact"
-            className="text-green-500 font-semibold hover:text-green-400"
+            className="text-blue-500 font-semibold hover:text-blue-400"
           >
             Contact us
           </Link>

@@ -27,12 +27,12 @@ export default function ContactPage() {
       <section className="relative bg-slate-950/30 backdrop-blur-md py-5 px-4 sm:px-6 lg:px-8 text-center">
 
        {/* Pulse */}
-      <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-green-500/10 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-[#44ed15]-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-[#3B82F6]-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
 
         <div className="max-w-7xl mx-auto text-center mb-8">
           <h2 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">
-            <span className="bg-gradient-to-b from-green-400 to-green-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">
               Contact&nbsp;
             </span>
             <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
@@ -50,29 +50,29 @@ export default function ContactPage() {
 
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/10 space-y-6">
 
-          <h3 className="text-3xl font-semibold text-green-400">Reach Us Directly</h3>
+          <h3 className="text-3xl font-semibold text-blue-400">Reach Us Directly</h3>
 
           <div className="space-y-4">
             <div className="flex items-center space-x-4">
-              <Mail className="text-green-400 w-6 h-6" />
-              <Link href="mailto:contact@frametoque.online" className="hover:text-green-400 transition">
+              <Mail className="text-blue-400 w-6 h-6" />
+              <Link href="mailto:contact@frametoque.online" className="hover:text-blue-400 transition">
                 contact@frametoque.online
               </Link>
             </div>
 
             <div className="flex items-center space-x-4">
-              <MessageCircle className="text-green-400 w-6 h-6" />
+              <MessageCircle className="text-blue-400 w-6 h-6" />
               <Link
                 href="https://wa.me/94701901461"
                 target="_blank"
-                className="hover:text-green-400 transition"
+                className="hover:text-blue-400 transition"
               >
                 WhatsApp: +94 70 190 1461
               </Link>
             </div>
           </div>
 
-          <h3 className="text-3xl font-semibold text-green-400 mt-10">Social Media</h3>
+          <h3 className="text-3xl font-semibold text-blue-400 mt-10">Social Media</h3>
 
           <div className="flex justify-start sm:justify-between flex-wrap gap-4 pt-2">
             {[
@@ -95,7 +95,7 @@ export default function ContactPage() {
         </div>
 
         <div className="bg-white/5 rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/10">
-          <h3 className="text-3xl font-semibold text-green-400 mb-6">FAQ</h3>
+          <h3 className="text-3xl font-semibold text-blue-400 mb-6">FAQ</h3>
 
           <div className="space-y-6">
 

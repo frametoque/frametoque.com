@@ -33,7 +33,7 @@ export default function DashboardHome() {
       icon: ShoppingCart,
       label: "Browse Services",
       className:
-        "flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity",
+        "flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity",
     },
     {
       href: "/contact",
@@ -53,17 +53,17 @@ export default function DashboardHome() {
       {/* Welcome Section */}
       <div className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
         {/* Pulse Effect */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
 
        <div className="flex items-center gap-2 mb-2">
-  <Sparkles className="w-6 h-6 text-green-400" />
-  <span className="text-green-400 font-semibold">{getGreeting()}</span>
+  <Sparkles className="w-6 h-6 text-blue-400" />
+  <span className="text-blue-400 font-semibold">{getGreeting()}</span>
 </div>
 <h1 className="text-3xl sm:text-4xl font-bold mb-3">
   <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
     Welcome back,&nbsp;
   </span>
-  <span className="bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent">
+  <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">
     {user?.firstName || user?.fullName || "there"}!
   </span>
 </h1>

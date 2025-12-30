@@ -1,13 +1,13 @@
-export default function StatsCard({ title, value, icon: Icon, trend, trendValue, color = "green" }) {
+export default function StatsCard({ title, value, icon: Icon, trend, trendValue, color = "blue" }) {
   const colorClasses = {
-    green: "from-green-500/20 to-green-600/20 border-green-500/30",
+    blue: "from-blue-500/20 to-blue-600/20 border-blue-500/30",
     blue: "from-blue-500/20 to-blue-600/20 border-blue-500/30",
     purple: "from-purple-500/20 to-purple-600/20 border-purple-500/30",
     orange: "from-orange-500/20 to-orange-600/20 border-orange-500/30",
   };
 
   const iconColorClasses = {
-    green: "text-green-400",
+    blue: "text-blue-400",
     blue: "text-blue-400",
     purple: "text-purple-400",
     orange: "text-orange-400",
@@ -31,7 +31,7 @@ export default function StatsCard({ title, value, icon: Icon, trend, trendValue,
         <div className="flex items-center gap-2 text-sm">
           <span
             className={`font-semibold ${
-              trend === "up" ? "text-green-400" : "text-red-400"
+              trend === "up" ? "text-blue-400" : "text-red-400"
             }`}
           >
             {trend === "up" ? "↑" : "↓"} {trendValue}

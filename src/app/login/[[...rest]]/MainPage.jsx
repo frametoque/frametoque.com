@@ -61,7 +61,7 @@ export default function CustomLogin({ scrolled }) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-white text-lg">Redirecting...</p>
         </div>
       </div>
@@ -74,8 +74,8 @@ export default function CustomLogin({ scrolled }) {
       <div className="h-20" />
 
       <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-green-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-green-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
 
         <div className="max-w-md w-full relative z-10">
           <div className="text-center mb-10">
@@ -93,7 +93,7 @@ export default function CustomLogin({ scrolled }) {
               <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
                 Welcome
               </span>
-              <span className="bg-gradient-to-b from-green-400 to-green-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">
                 &nbsp;Back
               </span>
             </h1>
@@ -144,11 +144,11 @@ export default function CustomLogin({ scrolled }) {
 
             <p className="text-center text-xs text-gray-500">
               By continuing, you agree to our{" "}
-              <Link href="/terms" className="text-green-400 hover:text-green-300">
+              <Link href="/terms" className="text-blue-400 hover:text-blue-300">
                 Terms
               </Link>{" "}
               and{" "}
-              <Link href="/privacy" className="text-green-400 hover:text-green-300">
+              <Link href="/privacy" className="text-blue-400 hover:text-blue-300">
                 Privacy Policy
               </Link>
             </p>

@@ -77,18 +77,19 @@ html {
 }
 
 .scrollbar-custom::-webkit-scrollbar-thumb {
-  background: rgba(5, 223, 114, 0.3);
+  background: rgba(59, 130, 246, 0.3);
   border-radius: 4px;
 }
 
 .scrollbar-custom::-webkit-scrollbar-thumb:hover {
-  background: rgba(5, 223, 114, 0.5);
+  background: rgba(59, 130, 246, 0.5);
 }
 
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -103,13 +104,13 @@ html {
 }
 
 .prose strong {
-  color: #05df72;
+  color: #2563EB;
   font-weight: 600;
 }
 
 .prose code {
-  background: rgba(5, 223, 114, 0.1);
-  color: #05df72;
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563EB;
   padding: 0.2em 0.4em;
   border-radius: 0.25rem;
   font-size: 0.875em;
