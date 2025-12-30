@@ -32,8 +32,7 @@ export default function DashboardLayout({ children }) {
     const links = [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { name: "My Projects", href: "/dashboard/requests", icon: ClipboardList },
-      { name: (
-          <span className="flex items-center gap-1"> New Project <ExternalLink className="w-4 h-4" /> </span>), href: "/services", icon: Briefcase, newtab: true },
+      { name: ("New Project"), href: "/dashboard/services", icon: Briefcase, newtab: false },
       { name: "Settings", href: "/dashboard/settings", icon: Settings },
     ];
 

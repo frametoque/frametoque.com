@@ -157,8 +157,7 @@ export default function DashboardProjectsPage() {
 
         <div className="flex flex-wrap gap-3">
           <Link
-            href="/services"
-            target="_blank"
+            href="/dashboard/services"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold hover:opacity-90 transition-opacity"
           >
             <Plus className="w-5 h-5" />
@@ -240,8 +239,7 @@ export default function DashboardProjectsPage() {
             Submit your first service request to get started with Frame Toque.
           </p>
           <Link
-            href="/services"
-            target="_blank"
+            href="/dashboard/services"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold hover:opacity-90 transition-opacity"
           >
             <Plus className="w-5 h-5" />

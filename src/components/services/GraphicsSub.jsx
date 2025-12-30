@@ -412,7 +412,7 @@ export default function WebPackages() {
   return (
     <>
       <section className="py-2 px-6 relative max-w-7xl mx-auto text-white">
-        <h2 className="text-4xl sm:text-5xl font-bold mb-12">Graphics Designing</h2>
+        <h2 className="text-4xl sm:text-4xl font-bold mb-12">Graphics Designing</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {graphicscatprices.map((cat, i) => (
@@ -437,7 +437,7 @@ export default function WebPackages() {
                 }}
                 className="mt-auto py-3 px-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
               >
-                Get Started
+                View Packages
               </button>
             </div>
           ))}
