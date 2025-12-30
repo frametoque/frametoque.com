@@ -19,8 +19,8 @@ export const metadata = {
   },
 };
 
-//import Services from "@/components/services/Services.jsx";
-import Alert from '@/components/Alert.jsx'
+import Services from "@/components/services/Services.jsx";
+//import Alert from '@/components/Alert.jsx'
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -49,13 +49,13 @@ export default function Home() {
                   Do
                 </span>
               </h2>
-              <p className="text-gray-400 text-lg max-w-3xl mx-auto">
+              <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
                 From websites to videos, we make your brand look amazing everywhere.
               </p>
             </div>
 
-      {/* <Services /> */}
-      <Alert />
+      <Services /> 
+      {/* <Alert /> */}
       <Footer/>
     </main >
     </>

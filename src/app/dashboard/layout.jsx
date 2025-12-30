@@ -17,6 +17,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ExternalLink
 } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
@@ -30,8 +31,9 @@ export default function DashboardLayout({ children }) {
 
     const links = [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { name: "My Requests", href: "/dashboard/requests", icon: ClipboardList },
-      { name: "Our Services", href: "/dashboard/services", icon: Briefcase },
+      { name: "My Projects", href: "/dashboard/requests", icon: ClipboardList },
+      { name: (
+          <span className="flex items-center gap-1"> New Project <ExternalLink className="w-4 h-4" /> </span>), href: "/services", icon: Briefcase, newtab: true },
       { name: "Settings", href: "/dashboard/settings", icon: Settings },
     ];
 
@@ -94,12 +96,18 @@ export default function DashboardLayout({ children }) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
+                    target={
+                        item.newtab
+                          ? "_blank"
+                          : "_self"
+                      }
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all
                       ${
                         active
                           ? "bg-gradient-to-r from-green-600 to-green-700 text-white"
                           : "text-gray-300 hover:bg-white/5"
-                      }`}
+                      }
+                      `}
                   >
                     <Icon className="w-5 h-5" />
                     {!collapsed && <span>{item.name}</span>}

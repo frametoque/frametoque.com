@@ -50,8 +50,8 @@
       "icons": [{ "src": "/icons/layout-dashboard.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
-      "name": "My Requests",
-      "short_name": "Requests",
+      "name": "My Projects",
+      "short_name": "Projects",
       "url": "/dashboard/requests",
       "icons": [{ "src": "/icons/clipboard-list.png", "sizes": "96x96", "type": "image/png" }]
     },

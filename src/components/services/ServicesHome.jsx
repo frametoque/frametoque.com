@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Laptop, PenTool, Video } from "lucide-react";
 
 const features = [
@@ -9,6 +10,7 @@ const features = [
       "Your website is more than pages, it’s how people feel about your brand. We create spaces that inspire trust and leave a lasting impression.",
     icon: Laptop,
     imagePosition: "left",
+    link: "/services#web",
   },
   {
     title: "Graphics Designing",
@@ -16,6 +18,8 @@ const features = [
       "Design isn’t just visuals, it’s memory you leave behind. Every piece we craft tells your story and makes your brand unforgettable.",
     icon: PenTool,
     imagePosition: "left",
+    link: "/services#graphics",
+
   },
   {
     title: "Video Editing",
@@ -23,6 +27,8 @@ const features = [
       "Stories don’t just play, they connect. We turn ideas into videos that spark emotion and stay in people’s minds.",
     icon: Video,
     imagePosition: "left",
+    link: "/services#video",
+
   },
 ];
 
@@ -51,32 +57,54 @@ export default function Features() {
             const Icon = feature.icon;
             return (
 
-              <div
-                key={key}
-                className={`flex flex-col lg:flex-row items-center gap-6 sm:gap-8 ${
-                  feature.imagePosition === "right" ? "lg:flex-row-reverse" : ""
-                }`}
-              >
-                <div className="flex-1 w-full flex justify-center lg:order-0 mb-6 lg:mb-0">
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-purple-500/20 rounded-xl sm:rounded-2xl transition-all duration-500" />
-                    <div className="relative bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl sm:rounded-2xl p-10 flex items-center justify-center group-hover:border-green-600/50 transition-all duration-300">
-                      <Icon className="w-16 h-16 sm:w-20 sm:h-20 text-green-400" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex-1 w-full">
-                  <div className="max-w-lg mx-auto lg:mx-0 text-center lg:text-left">
-                    <h3 className="text-4xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6 text-white">
-                      {feature.title}
-                    </h3>
-                    <p className="text-gray-300 text-xl sm:text-lg leading-relaxed">
-                      {feature.description}
-                    </p>
+             <div
+              key={key}
+              className={`flex flex-col lg:flex-row items-center gap-6 sm:gap-8 ${
+                feature.imagePosition === "right" ? "lg:flex-row-reverse" : ""
+              }`}
+            >
+              <div className="flex-1 w-full flex justify-center lg:order-0 mb-6 lg:mb-0">
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-purple-500/20 rounded-xl sm:rounded-2xl transition-all duration-500" />
+                  <div className="relative bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl sm:rounded-2xl p-10 flex items-center justify-center group-hover:border-green-600/50 transition-all duration-300">
+                    <Icon className="w-16 h-16 sm:w-20 sm:h-20 text-green-400" />
                   </div>
                 </div>
               </div>
+
+              <div className="flex-1 w-full">
+                <div className="max-w-lg mx-auto lg:mx-0 text-center lg:text-left">
+                  <h3 className="text-4xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6 text-white">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-300 text-xl sm:text-lg leading-relaxed mb-6 sm:mb-8">
+                    {feature.description}
+                  </p>
+                  
+                  {feature.link && (
+                    <Link
+                      href={feature.link}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 hover:shadow-lg hover:shadow-green-600/20 hover:-translate-y-0.5"
+                    >
+                      <span>View Packages</span>
+                      <svg 
+                        className="w-4 h-4" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M14 5l7 7m0 0l-7 7m7-7H3" 
+                        />
+                      </svg>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
 
 
             );

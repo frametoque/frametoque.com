@@ -9,13 +9,13 @@ const webcatprices = [
   {
     key: "personal",
     title: "Personal Portfolio Website",
-    desc: "Perfect for creators, freelancers, and professionals who want a clean digital identity.",
-    price: "249",
+    desc: "Clean digital identity for creators and professionals.",
+    price: "20,000",
     plans: [
       {
         name: "Standard",
         description: "Beginner-friendly clean portfolio",
-        price: "99",
+        price: "20,000",
         mostPopular: false,
         features: [
           "Up to 5 Pages",
@@ -30,12 +30,12 @@ const webcatprices = [
       {
         name: "Modern UI",
         description: "Smooth, aesthetic, upgraded UI",
-        price: "149",
+        price: "50,000",
         mostPopular: true,
         features: [
           "Everything in Standard",
           "Modern Animations",
-          "Micro Interactions",
+          "Admin Dashboard",
           "Light/Dark Mode",
           "Enhanced Portfolio Grid",
           "SEO Meta Structure",
@@ -45,7 +45,7 @@ const webcatprices = [
       {
         name: "Fully Custom",
         description: "Custom UI/UX built from scratch",
-        price: "249",
+        price: "99,000",
         mostPopular: false,
         features: [
           "Fully Original Layout",
@@ -63,13 +63,13 @@ const webcatprices = [
   {
     key: "business",
     title: "Startup / Company Website",
-    desc: "Perfect for small businesses and startups needing a clean online presence.",
-    price: "299",
+    desc: "Sleek online presence for businesses.",
+    price: "40,000",
     plans: [
       {
         name: "Standard Corporate",
         description: "Professional business layout",
-        price: "149",
+        price: "40,000",
         mostPopular: false,
         features: [
           "Up to 8 Pages",
@@ -85,7 +85,7 @@ const webcatprices = [
       {
         name: "Modern Business UI",
         description: "High-end UI with motion + structure",
-        price: "249",
+        price: "125,000",
         mostPopular: true,
         features: [
           "Everything in Standard Corporate",
@@ -102,7 +102,7 @@ const webcatprices = [
       {
         name: "Fully Custom Enterprise",
         description: "Premium brand-level design",
-        price: "399",
+        price: "320,000",
         mostPopular: false,
         features: [
           "Full Brand-Based Custom Design",
@@ -120,54 +120,55 @@ const webcatprices = [
   {
     key: "ecommerce",
     title: "E-Commerce Online Store",
-    desc: "Sell products online with a smooth, modern shopping experience and showcase your products with style.",
-    price: "399",
+    desc: "Stylish platform to sell your products.",
+    price: "75,000",
     plans: [
       {
         name: "Catalogue Only",
         description: "Show products without checkout",
-        price: "199",
+        price: "75,000",
         mostPopular: false,
         features: [
-          "Product Gallery",
-          "Categories",
+          "Product Gallery & Grid",
+          "Advanced Categories",
           "Product Detail Pages",
-          "Inquiry Button",
+          "WhatsApp Inquiry Button",
           "Up to 50 Products",
+          "Basic SEO",
           "2 Revisions",
         ],
       },
       {
         name: "WooCommerce Store",
-        description: "WooCommerce powered shop",
-        price: "299",
+        description: "Full checkout-ready shop",
+        price: "150,000",
         mostPopular: true,
         features: [
-          "WooCommerce Setup",
-          "Add to Cart + Checkout",
-          "Payment Gateways",
-          "Coupons",
-          "Shipping Zones",
-          "Theme Customization",
+          "Everything in Catalogue",
+          "Cart & Checkout System",
+          "Payment Gateway",
+          "Coupon & Discount System",
+          "Shipping & Tax Rules",
+          "Inventory Management",
           "100+ Products",
           "3 Revisions",
         ],
       },
       {
         name: "Custom-Coded Store",
-        description: "Premium handmade e-commerce",
-        price: "499",
+        description: "High-performance bespoke store",
+        price: "450,000",
         mostPopular: false,
         features: [
-          "Full Custom Frontend",
-          "Custom Backend",
-          "Admin Dashboard",
-          "Unlimited Products",
-          "Search + Filters",
-          "Order Tracking",
-          "Email Notifications",
-          "Full SEO Setup",
+          "Next.js / Headless Frontend",
+          "Custom Admin Dashboard",
+          "Advanced Search & Filters",
+          "Order Tracking System",
+          "Email & SMS Notifications",
+          "Multi-Currency Support",
+          "Full SEO Domination",
           "Priority Support",
+          "Unlimited Revisions",
         ],
       },
     ],
@@ -175,58 +176,222 @@ const webcatprices = [
 
   {
     key: "lms",
-    title: "Learning Management System",
-    desc: "Modern LMS platforms for schools, tutors, and academies.",
-    price: "399",
+    title: "E-Learning Platform",
+    desc: "Modern LMS for academics and tutors.",
+    price: "95,000",
     plans: [
       {
         name: "Basic LMS",
-        description: "For small institutes",
-        price: "249",
+        description: "Perfect for individual tutors",
+        price: "95,000",
         mostPopular: false,
         features: [
-          "Course Listing",
-          "Student Login",
-          "Trainer Profiles",
-          "Video Upload/Embed",
-          "Assignments",
-          "Basic Reports",
-          "Payments (Optional)",
+          "Course Listing & Detail",
+          "Student Registration",
+          "Video Embedding (YouTube/Vimeo)",
+          "Simple Assignment Uploads",
+          "WhatsApp Support Button",
+          "Basic Student Profile",
           "2 Revisions",
         ],
       },
       {
         name: "Advanced LMS",
         description: "For professional academies",
-        price: "349",
+        price: "220,000",
         mostPopular: true,
         features: [
           "Everything in Basic LMS",
-          "Multi-Teacher System",
-          "Live Classes (Zoom/Meet)",
-          "Progress Tracking",
-          "Quizzes + Exams",
-          "Certificates",
-          "Student Dashboard",
-          "Parent Dashboard",
-          "Admin Analytics",
+          "Secure Video Hosting (HLS)",
+          "Live Zoom/Meet Integration",
+          "Online MCQ Exams",
+          "Automated PDF Certificates",
+          "Payment Gateway (PayHere)",
+          "Instructor Dashboard",
           "4 Revisions",
         ],
       },
       {
         name: "Custom LMS",
-        description: "Full-scale institutional LMS",
-        price: "599",
+        description: "Full-scale institutional platform",
+        price: "550,000",
         mostPopular: false,
         features: [
-          "Fully Custom UI/UX",
-          "Institution Roles",
-          "Attendance Tracking",
-          "Advanced Exam Module",
-          "Automated Certificates",
-          "AI Recommendations (Optional)",
-          "Multi-Campus Support",
-          "Deep Analytics Dashboard",
+          "Bespoke UI/UX Design",
+          "Mobile App (Optional / PWA)",
+          "Advanced Analytics & ROI",
+          "Interactive H5P Content",
+          "Anti-Cheat Exam System",
+          "Multi-Campus Management",
+          "Priority Technical Support",
+          "Unlimited Revisions",
+        ],
+      },
+    ],
+  },
+
+  {
+    key: "news",
+    title: "Blog / News & Media Website",
+    desc: "Ideal for journalists, bloggers, and local news.",
+    price: "60,000",
+    plans: [
+      {
+        name: "Standard Blog",
+        description: "Clean layout for personal storytelling",
+        price: "60,000",
+        mostPopular: false,
+        features: [
+          "WordPress/Ghost Setup",
+          "Up to 5 Categories",
+          "AdSense Ready",
+          "Newsletter Signup",
+          "Mobile Optimized",
+          "Basic SEO",
+          "2 Revisions",
+        ],
+      },
+
+      {
+        name: "Pro News Portal",
+        description: "High-traffic ready news engine",
+        price: "135,000",
+        mostPopular: true,
+        features: [
+          "Everything in Standard",
+          "Custom News Layouts",
+          "Breaking News Ticker",
+          "Multi-Author Dashboard",
+          "Speed Optimization",
+          "RSS Feeds",
+          "3 Revisions",
+        ],
+      },
+
+      {
+        name: "Media Enterprise",
+        description: "Full-scale digital media house",
+        price: "350,000",
+        mostPopular: false,
+        features: [
+          "Custom Headless CMS",
+          "Next.js / High-Speed UI",
+          "Video/Podcast Integration",
+          "RSS Feeds",
+          "CDN Setup for Traffic Spikes",
+          "Priority Support",
+          "Unlimited Revisions",
+        ],
+      },
+    ],
+  },
+
+  {
+    key: "booking",
+    title: "Booking / Ticketing System",
+    desc: "Reservation systems for salons, events, and rentals.",
+    price: "60,000",
+    plans: [
+      {
+        name: "Standard Booking",
+        description: "Simple appointment scheduling",
+        price: "60,000",
+        mostPopular: false,
+        features: [
+          "Appointment Calendar",
+          "Service Categories",
+          "Email Confirmations",
+          "Business Hours Setup",
+          "WhatsApp Integration",
+          "Mobile Responsive UI",
+          "2 Revisions",
+        ],
+      },
+      {
+        name: "Pro Ticketing Hub",
+        description: "Advanced event & payment system",
+        price: "135,000",
+        mostPopular: true,
+        features: [
+          "Everything in Standard",
+          "Payment Gateway (PayHere)",
+          "QR Code Ticket Generation",
+          "SMS Reminders",
+          "User Booking History",
+          "Cancellation/Refund Logic",
+          "Admin Booking Dashboard",
+          "3 Revisions",
+        ],
+      },
+      {
+        name: "Enterprise Engine",
+        description: "Full-scale custom reservation platform",
+        price: "380,000",
+        mostPopular: false,
+        features: [
+          "Custom Multi-Vendor System",
+          "Real-time Seat Mapping",
+          "Dynamic Pricing Logic",
+          "Staff/Resource Management",
+          "Mobile Check-in App (Scan QR)",
+          "Deep Analytics & Reporting",
+          "Priority Support",
+          "Unlimited Revisions",
+        ],
+      },
+    ],
+  },
+
+  {
+    key: "institute",
+    title: "School / Institute Website",
+    desc: "Digital presence for schools, and tuition centers.",
+    price: "50,000",
+    plans: [
+      {
+        name: "Academic Basic",
+        description: "Informational site for schools",
+        price: "50,000",
+        mostPopular: false,
+        features: [
+          "About & Gallery Pages",
+          "Notice Board System",
+          "Staff Directory",
+          "Downloadable Forms (PDF)",
+          "Google Maps Integration",
+          "Basic SEO",
+          "2 Revisions",
+        ],
+      },
+
+      {
+        name: "Interactive Campus",
+        description: "Dynamic portal for student engagement",
+        price: "120,000",
+        mostPopular: true,
+        features: [
+          "Everything in Academic Basic",
+          "Online Admission Forms",
+          "Student/Result Portal",
+          "Events Calendar",
+          "Blog & News Section",
+          "Social Media Feed",
+          "3 Revisions",
+        ],
+      },
+
+      {
+        name: "Full LMS Enterprise",
+        description: "Complete e-learning & management system",
+        price: "450,000",
+        mostPopular: false,
+        features: [
+          "Course Management (LMS)",
+          "Online Fee Payments",
+          "Live Class Integration",
+          "Attendance/Grade Tracking",
+          "Mobile App (Web-view)",
+          "Advanced Security",
           "Unlimited Revisions",
         ],
       },
@@ -290,7 +455,7 @@ export default function WebPackages() {
 
               <div className="text-center mb-6">
                 <span className="text-4xl font-bold text-green-400">
-                  ${cat.price}
+                  {cat.price} LKR
                 </span>
                 <div className="text-gray-400 text-sm">onwards</div>
               </div>
@@ -372,7 +537,7 @@ export default function WebPackages() {
                     </p>
                     <div className="flex items-baseline justify-center">
                       <span className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-green-400 to-green-400 bg-clip-text text-transparent">
-                        ${plan.price}
+                        {plan.price} LKR
                       </span>
                     </div>
                   </div>

@@ -14,7 +14,7 @@ export default function Navbar({ scrolled }) {
     { href: "/projects", label: "Work" },
     { href: "/services", label: "Services" },
     { href: "/contact", label: "Contact" },
-    { href: "/dashboard", label: "Start a Project", special: true },
+    { href: "/dashboard", label: "Dashboard", special: true },
   ];
 
   return (

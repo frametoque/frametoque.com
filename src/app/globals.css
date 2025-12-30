@@ -115,3 +115,11 @@ html {
   font-size: 0.875em;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
+
+html {
+  scroll-padding-top: 25rem; 
+}
+
+[id] {
+  scroll-margin-top: 5rem;
+}

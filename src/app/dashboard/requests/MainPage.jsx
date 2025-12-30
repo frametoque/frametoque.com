@@ -72,7 +72,7 @@ export default function DashboardProjectsPage() {
                 My
               </span>
               <span className="bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent">
-                &nbsp;Requests
+                &nbsp;Projects
               </span>
             </h1>
             <p className="text-gray-400 text-lg max-w-2xl">
@@ -157,11 +157,12 @@ export default function DashboardProjectsPage() {
 
         <div className="flex flex-wrap gap-3">
           <Link
-            href="/dashboard/services"
+            href="/services"
+            target="_blank"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold hover:opacity-90 transition-opacity"
           >
             <Plus className="w-5 h-5" />
-            New Request
+            New Project
           </Link>
           <Link
             href="/contact"
@@ -234,12 +235,13 @@ export default function DashboardProjectsPage() {
       ) : (
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-12 text-center">
           <Package className="w-16 h-16 text-gray-600 mx-auto mb-6" />
-          <h3 className="text-2xl font-semibold text-white mb-2">No Requests Yet</h3>
+          <h3 className="text-2xl font-semibold text-white mb-2">No Projects Yet</h3>
           <p className="text-gray-400 mb-6">
             Submit your first service request to get started with Frame Toque.
           </p>
           <Link
-            href="/dashboard/services"
+            href="/services"
+            target="_blank"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold hover:opacity-90 transition-opacity"
           >
             <Plus className="w-5 h-5" />
