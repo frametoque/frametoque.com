@@ -8,7 +8,7 @@ const vidcatprices = [
   {
     key: "short-form",
     title: "Short-Form Video Editing",
-    desc: "High-impact vertical videos made to grab attention on Reels, Shorts, and TikTok.",
+    desc: "Attention-grabbing vertical videos for Reels, Shorts & TikTok.",
     price: "2,500",
     plans: [
       {
@@ -56,7 +56,7 @@ const vidcatprices = [
   {
     key: "long-form",
     title: "Long-Form Video Editing",
-    desc: "Clean and professional edits for YouTube videos, podcasts, and long content.",
+    desc: "Polished edits for YouTube, podcasts & long-form content.",
     price: "4,500",
     plans: [
       {
@@ -104,7 +104,7 @@ const vidcatprices = [
   {
     key: "social-media",
     title: "Social Media Video Editing",
-    desc: "Scroll-stopping promo and ad videos optimized for every platform.",
+    desc: "Eye-catching promo & ad videos for all platforms.",
     price: "3,500",
     plans: [
       {
@@ -138,7 +138,7 @@ const vidcatprices = [
 
   {
     key: "motion-graphics",
-    title: "Motion Graphics (Basic)",
+    title: "Motion Graphics & Animation",
     desc: "Simple yet powerful motion graphics to boost brand presence.",
     price: "6,500",
     plans: [
@@ -174,14 +174,14 @@ const vidcatprices = [
   {
     key: "corporate",
     title: "Corporate & Business Videos",
-    desc: "Professional video edits for businesses, brands, and companies.",
+    desc: "Expert video edits for brands & businesses.",
     price: "10,000",
     plans: [
       {
         name: "Corporate Edit",
         description: "Clean and professional edits for corporate use.",
         price: "10,000",
-        mostPopular: true,
+        mostPopular: false,
         features: [
           "Professional pacing",
           "Logo & brand elements",
@@ -203,7 +203,7 @@ const vidcatprices = [
         name: "Creator Highlight Video",
         description: "Highlight-style edits that keep viewers hooked.",
         price: "4,500",
-        mostPopular: true,
+        mostPopular: false,
         features: [
           "Engaging cuts & zooms",
           "Sound effects & music",
