@@ -363,7 +363,7 @@ const webcatprices = [
           "2 Revisions",
         ],
       },
-
+      
       {
         name: "Interactive Campus",
         description: "Dynamic portal for student engagement",
@@ -399,6 +399,43 @@ const webcatprices = [
   },
 ];
 
+const parsePrice = (price) => {
+  if (typeof price === 'number') return price;
+  return Number(String(price).replace(/,/g, ''));
+};
+
+const convertPricesToUSD = async (services) => {
+  try {
+    const res = await fetch("https://open.er-api.com/v6/latest/LKR");
+    const rateData = await res.json();
+    const rate = rateData.rates.USD;
+
+    console.log("Exchange rate used:", rate);
+
+    return services.map((cat) => {
+      const catPrice = parsePrice(cat.price);
+      const usdCatPrice = catPrice * rate;
+
+      return {
+        ...cat,
+        price: usdCatPrice.toFixed(2),
+        plans: cat.plans.map((plan) => {
+          const planPrice = parsePrice(plan.price);
+          const usdPlanPrice = planPrice * rate;
+
+          return {
+            ...plan,
+            price: usdPlanPrice.toFixed(2),
+          };
+        }),
+      };
+    });
+  } catch (error) {
+    console.error("Error converting to USD:", error);
+    return services;
+  }
+};
+
 
 export default function WebPackages() {
   const [scrolled, setScrolled] = useState(false);
@@ -406,8 +443,10 @@ export default function WebPackages() {
   const [activeCategory, setActiveCategory] = useState(null);
   const popupRef = useRef(null);
 
-  const selectedCategory =
-    webcatprices.find((c) => c.key === activeCategory) || null;
+  const [currency, setCurrency] = useState("LKR");
+  const [prices, setPrices] = useState(webcatprices);
+
+ const selectedCategory = prices.find((c) => c.key === activeCategory) || null;
 
   useEffect(() => {
     function handleScroll() {
@@ -439,13 +478,37 @@ export default function WebPackages() {
     };
   }, []);
 
+  useEffect(() => {
+    async function detectCurrency() {
+      try {
+        const res = await fetch("/api/getCurrency");
+        const data = await res.json();
+
+        if (data.showUSD) {
+          const converted = await convertPricesToUSD(webcatprices);
+          setPrices(converted);
+          setCurrency("USD");
+        } else {
+          setPrices(webcatprices);
+          setCurrency("LKR");
+        }
+      } catch (error) {
+        console.error("Error detecting currency:", error);
+        setPrices(webcatprices);
+        setCurrency("LKR");
+      }
+    }
+
+    detectCurrency();
+  }, []);
+
   return (
     <>
       <section className="py-2 px-6 relative max-w-7xl mx-auto text-white">
         <h2 className="text-4xl sm:text-4xl font-bold mb-12">Web Developing</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-          {webcatprices.map((cat, i) => (
+          {prices.map((cat, i) => (
             <div
               key={i}
               className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 hover:border-blue-500 transition-all duration-300 flex flex-col"
@@ -455,7 +518,7 @@ export default function WebPackages() {
 
               <div className="text-center mb-6">
                 <span className="text-4xl font-bold text-blue-400">
-                  {cat.price} LKR
+                  {cat.price} {currency}
                 </span>
                 <div className="text-gray-400 text-sm">onwards</div>
               </div>
@@ -475,7 +538,7 @@ export default function WebPackages() {
           <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 hover:border-blue-500 transition-all duration-300 flex flex-col">
             <h3 className="text-2xl font-bold">Is Your Category Not Listed?</h3>
             <p className="text-gray-400 text-sm mt-2 mb-6">
-              Don’t worry. connect with us for a custom quote.
+              Don't worry. connect with us for a custom quote.
             </p>
 
             <Link
@@ -537,7 +600,7 @@ export default function WebPackages() {
                     </p>
                     <div className="flex items-baseline justify-center">
                       <span className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-400 to-blue-400 bg-clip-text text-transparent">
-                        {plan.price} LKR
+                        {plan.price} {currency}
                       </span>
                     </div>
                   </div>
@@ -560,7 +623,7 @@ export default function WebPackages() {
 
                   <Link
                     href="/dashboard"
-                    className={`text-center w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold transition-all duration-300 mt-auto hover:scale-102 cursor-pointer text-sm sm:text-base ${
+                    className={`text-center w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold transition-all duration-300 mt-auto hover:scale-[1.02] cursor-pointer text-sm sm:text-base ${
                       plan.mostPopular
                         ? "bg-gradient-to-b from-blue-500 to-blue-500"
                         : "bg-white/5 border border-white/10 hover:bg-white/10"

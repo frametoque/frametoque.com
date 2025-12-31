@@ -31,7 +31,7 @@ export default function Footer() {
               />
             </div>
             <p className="text-gray-400 mb-4 sm:mb-6 max-w-xs mx-auto sm:mx-0 text-sm sm:text-base">
-              Simple.Unique.
+              35, Kopiwaththa Rd, Piliyandala, Sri Lanka
             </p>
             <div className="flex justify-center sm:justify-start space-x-3 sm:space-x-4">
               {[Send, Music2, Linkedin, Instagram, Mail].map((Icon, idx) => (

@@ -104,7 +104,7 @@ export default function SoftwareWeUse() {
             We Use
           </span>
         </h2>
-        <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+        <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
           Tools that power our workflow.
         </p>
       </div>

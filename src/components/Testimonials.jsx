@@ -38,7 +38,7 @@ export default function Testimonials() {
               What Clients are saying about us
             </h2>
           <p className="text-gray-400 text-base text-xl sm:text-lg max-w-2xl mx-auto">
-           Our clients love what we do! See how we’ve helped businesses and creators grow with stunning designs, smooth websites, and eye-catching videos. Real feedback from real people - because your success is our goal.
+           Our clients love what we do! See how we’ve helped businesses and creators grow with stunning designs, smooth websites, and eye-catching videos.
           </p>
           </div>
           

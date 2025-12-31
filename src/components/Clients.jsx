@@ -101,7 +101,7 @@ export default function Clients() {
             Clients
           </span>
         </h2>
-        <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+        <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
           Trusted by global clients - your digital success starts with us.
         </p>
       </div>

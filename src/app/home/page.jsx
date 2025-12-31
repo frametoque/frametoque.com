@@ -6,6 +6,7 @@ import Hero from "@/components/Hero.jsx";
 import ServicesHome from "@/components/services/ServicesHome.jsx";
 import SoftwareWeUse from "@/components/SoftwareWeUse.jsx";
 import ProjectsHome from "@/components/ProjectsHome.jsx";
+import Collab from "@/components/Collab";
 import Testimonials from "@/components/Testimonials.jsx";
 import WhyChooseUs from "@/components/WhyChooseUs.jsx";
 import Clients from "@/components/Clients.jsx";
@@ -29,6 +30,7 @@ export default function HomeClient() {
       <ServicesHome />
       <SoftwareWeUse />
       <ProjectsHome />
+      <Collab />
       <Testimonials />
       <Clients />
       <WhyChooseUs />

@@ -77,7 +77,7 @@ export default function ProjectsMain() {
           </span>
         </h2>
 
-        <p className="text-gray-400 text-lg max-w-3xl mx-auto">
+        <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
           A quick glimpse into some of our highlighted work.
         </p>
       </div>

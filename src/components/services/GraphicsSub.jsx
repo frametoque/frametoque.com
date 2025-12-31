@@ -18,8 +18,11 @@ const graphicscatprices = [
         price: "7,500",
         mostPopular: false,
         features: [
-          "1 Concept Design",
-          "2 Revisions",
+          "1 logo concept",
+          "Brand-focused design",
+          "High-resolution files",
+          "JPG / PNG formats",
+          "2 revisions",
         ],
       },
       {
@@ -28,8 +31,11 @@ const graphicscatprices = [
         price: "12,000",
         mostPopular: true,
         features: [
-          "2 Concept Design",
-          "3 Revisions",
+          "2 logo concepts",
+          "Refined brand direction",
+          "Scalable vector files",
+          "Source file included",
+          "4 revisions",
         ],
       },
       {
@@ -38,13 +44,11 @@ const graphicscatprices = [
         price: "14,000",
         mostPopular: false,
         features: [
-          "Fully Original Layout",
-          "Unlimited Pages",
-          "Custom Components",
-          "Optional Backend",
-          "Blog/Gallery Integration",
-          "Priority Support",
-          "Unlimited Revisions",
+          "Logo design",
+          "Color palette",
+          "Typography selection",
+          "Brand consistency setup",
+          "Revision support",
         ],
       },
       {
@@ -53,13 +57,11 @@ const graphicscatprices = [
         price: "28,000",
         mostPopular: false,
         features: [
-          "Fully Original Layout",
-          "Unlimited Pages",
-          "Custom Components",
-          "Optional Backend",
-          "Blog/Gallery Integration",
-          "Priority Support",
-          "Unlimited Revisions",
+          "Complete visual identity",
+          "Logo, colors & typography",
+          "Brand usage guidelines",
+          "Scalable & editable files",
+          "Unlimited revisions",
         ],
       },
     ],
@@ -77,13 +79,11 @@ const graphicscatprices = [
         price: "1,500",
         mostPopular: false,
         features: [
-          "Up to 8 Pages",
-          "Responsive UI",
-          "Team & Services Pages",
-          "Contact + Inquiry Forms",
-          "Google Maps",
-          "Basic SEO",
-          "2 Revisions",
+  "1 custom post design",
+  "Platform-optimized size",
+  "Brand-aligned layout",
+  "High-resolution export",
+  "2 revisions",
         ],
       },
 
@@ -93,14 +93,11 @@ const graphicscatprices = [
         price: "8,000",
         mostPopular: true,
         features: [
-          "Everything in Standard Corporate",
-          "Custom Hero Sections",
-          "Card Layouts",
-          "Smooth Animations",
-          "Integrated Blog",
-          "Analytics Setup",
-          "SEO Structured Data",
-          "3 Revisions",
+  "8 branded designs",
+  "Consistent visual style",
+  "Platform-ready formats",
+  "High-resolution delivery",
+  "Revision support",
         ],
       },
 
@@ -110,13 +107,11 @@ const graphicscatprices = [
         price: "14,500",
         mostPopular: false,
         features: [
-          "Full Brand-Based Custom Design",
-          "CRM / Backend Integration",
-          "Employee Dashboard (Optional)",
-          "Blog + News System",
-          "Complete SEO Optimization",
-          "Advanced Motion Effects",
-          "Unlimited Revisions",
+  "15 cohesive designs",
+  "Strong brand consistency",
+  "Engagement-focused layouts",
+  "Optimized sizing",
+  "Revision support",
         ],
       },
 
@@ -126,13 +121,11 @@ const graphicscatprices = [
         price: "26,000",
         mostPopular: false,
         features: [
-          "Up to 8 Pages",
-          "Responsive UI",
-          "Team & Services Pages",
-          "Contact + Inquiry Forms",
-          "Google Maps",
-          "Basic SEO",
-          "2 Revisions",
+  "30 professional designs",
+  "Full content consistency",
+  "Multiple layout variations",
+  "Social-ready exports",
+  "Priority revision support",
         ],
       },
     ],
@@ -150,14 +143,11 @@ const graphicscatprices = [
         price: "2,500",
         mostPopular: true,
         features: [
-          "WooCommerce Setup",
-          "Add to Cart + Checkout",
-          "Payment Gateways",
-          "Coupons",
-          "Shipping Zones",
-          "Theme Customization",
-          "100+ Products",
-          "3 Revisions",
+  "Conversion-focused design",
+  "Platform-specific sizing",
+  "Clean CTA placement",
+  "Optimized formats",
+  "Revision support",
         ],
       },
       {
@@ -166,12 +156,11 @@ const graphicscatprices = [
         price: "3,000",
         mostPopular: false,
         features: [
-          "Product Gallery",
-          "Categories",
-          "Product Detail Pages",
-          "Inquiry Button",
-          "Up to 50 Products",
-          "2 Revisions",
+  "Single promotional design",
+  "Print & digital ready",
+  "Strong visual hierarchy",
+  "High-resolution files",
+  "2 revisions",
         ],
       },
       {
@@ -180,15 +169,11 @@ const graphicscatprices = [
         price: "7,500",
         mostPopular: false,
         features: [
-          "Full Custom Frontend",
-          "Custom Backend",
-          "Admin Dashboard",
-          "Unlimited Products",
-          "Search + Filters",
-          "Order Tracking",
-          "Email Notifications",
-          "Full SEO Setup",
-          "Priority Support",
+  "3 event creatives",
+  "Consistent campaign look",
+  "Print & digital versions",
+  "High-quality outputs",
+  "Revision support",
         ],
       },
        {
@@ -197,15 +182,11 @@ const graphicscatprices = [
         price: "14,000",
         mostPopular: false,
         features: [
-          "Full Custom Frontend",
-          "Custom Backend",
-          "Admin Dashboard",
-          "Unlimited Products",
-          "Search + Filters",
-          "Order Tracking",
-          "Email Notifications",
-          "Full SEO Setup",
-          "Priority Support",
+  "6 campaign visuals",
+  "Unified design language",
+  "Multi-platform use",
+  "Premium-quality files",
+  "Priority revisions",
         ],
       },
     ],
@@ -220,35 +201,27 @@ const graphicscatprices = [
       {
         name: "Letterhead",
         description: "For professional academies",
-        price: "349",
-        mostPopular: true,
+        price: "2,000",
+        mostPopular: false,
         features: [
-          "Everything in Basic LMS",
-          "Multi-Teacher System",
-          "Live Classes (Zoom/Meet)",
-          "Progress Tracking",
-          "Quizzes + Exams",
-          "Certificates",
-          "Student Dashboard",
-          "Parent Dashboard",
-          "Admin Analytics",
-          "4 Revisions",
+  "Professional layout",
+  "Brand-aligned styling",
+  "Print-ready format",
+  "High-quality output",
+  "Revision support",
         ],
       },
       {
         name: "Business Card",
         description: "For small institutes",
         price: "2,500",
-        mostPopular: false,
+        mostPopular: true,
         features: [
-          "Course Listing",
-          "Student Login",
-          "Trainer Profiles",
-          "Video Upload/Embed",
-          "Assignments",
-          "Basic Reports",
-          "Payments (Optional)",
-          "2 Revisions",
+  "Front & back design",
+  "Print-ready layout",
+  "CMYK & bleed setup",
+  "High-resolution files",
+  "2 revisions",
         ],
       },
       {
@@ -257,15 +230,11 @@ const graphicscatprices = [
         price: "6,500",
         mostPopular: false,
         features: [
-          "Fully Custom UI/UX",
-          "Institution Roles",
-          "Attendance Tracking",
-          "Advanced Exam Module",
-          "Automated Certificates",
-          "AI Recommendations (Optional)",
-          "Multi-Campus Support",
-          "Deep Analytics Dashboard",
-          "Unlimited Revisions",
+  "Structured page layout",
+  "Visual consistency",
+  "Print-ready PDF",
+  "High-resolution images",
+  "Revision support",
         ],
       },
       {
@@ -274,15 +243,11 @@ const graphicscatprices = [
         price: "10,000",
         mostPopular: false,
         features: [
-          "Fully Custom UI/UX",
-          "Institution Roles",
-          "Attendance Tracking",
-          "Advanced Exam Module",
-          "Automated Certificates",
-          "AI Recommendations (Optional)",
-          "Multi-Campus Support",
-          "Deep Analytics Dashboard",
-          "Unlimited Revisions",
+  "Custom package layout",
+  "Product-focused visuals",
+  "Print-ready files",
+  "Accurate dimensions",
+  "Revision support",
         ],
       },
     ],
@@ -300,15 +265,11 @@ const graphicscatprices = [
         price: "2,500",
         mostPopular: false,
         features: [
-          "Fully Custom UI/UX",
-          "Institution Roles",
-          "Attendance Tracking",
-          "Advanced Exam Module",
-          "Automated Certificates",
-          "AI Recommendations (Optional)",
-          "Multi-Campus Support",
-          "Deep Analytics Dashboard",
-          "Unlimited Revisions",
+  "Branded email design",
+  "Readable layout",
+  "Optimized file size",
+  "JPG / PNG delivery",
+  "Revision support",
         ],
       },
       {
@@ -317,16 +278,11 @@ const graphicscatprices = [
         price: "3,500",
         mostPopular: true,
         features: [
-          "Everything in Basic LMS",
-          "Multi-Teacher System",
-          "Live Classes (Zoom/Meet)",
-          "Progress Tracking",
-          "Quizzes + Exams",
-          "Certificates",
-          "Student Dashboard",
-          "Parent Dashboard",
-          "Admin Analytics",
-          "4 Revisions",
+  "Hero / section design",
+  "Web-optimized visuals",
+  "Responsive sizing",
+  "Fast-loading formats",
+  "Revision support",
         ],
       },
       {
@@ -335,34 +291,50 @@ const graphicscatprices = [
         price: "6,000",
         mostPopular: false,
         features: [
-          "Course Listing",
-          "Student Login",
-          "Trainer Profiles",
-          "Video Upload/Embed",
-          "Assignments",
-          "Basic Reports",
-          "Payments (Optional)",
-          "2 Revisions",
+  "UI-focused visuals",
+  "Section-based graphics",
+  "Clean spacing & hierarchy",
+  "Web-ready formats",
+  "Revision support",
         ],
       },
       
       {
         name: "App UI Assests",
         description: "Full-scale institutional LMS",
-        price: "8,000+",
+        price: "8,000",
         mostPopular: false,
         features: [
-          "Fully Custom UI/UX",
-          "Institution Roles",
-          "Attendance Tracking",
-          "Advanced Exam Module",
-          "Automated Certificates",
-          "AI Recommendations (Optional)",
-          "Multi-Campus Support",
-          "Deep Analytics Dashboard",
-          "Unlimited Revisions",
+  "Custom UI graphics",
+  "Platform-consistent design",
+  "Scalable resolutions",
+  "Organized asset delivery",
+  "Revision support",
         ],
       },
+    ],
+  },
+
+  {
+    key: "customgraphics",
+    title: "Custom Graphic Design",
+    desc: "Unique designs tailored just for you.",
+    price: "4,000",
+    plans: [
+      {
+        name: "Custom Graphic Design",
+        description: "Full-scale institutional LMS",
+        price: "4,000",
+        mostPopular: true,
+        features: [
+  "Unique creative concept",
+  "Tailored visual direction",
+  "Flexible design scope",
+  "High-quality final files",
+  "Revision support",
+        ],
+      },
+     
     ],
   },
 
@@ -370,14 +342,53 @@ const graphicscatprices = [
 ];
 
 
+const parsePrice = (price) => {
+  if (typeof price === 'number') return price;
+  return Number(String(price).replace(/,/g, ''));
+};
+
+const convertPricesToUSD = async (services) => {
+  try {
+    const res = await fetch("https://open.er-api.com/v6/latest/LKR");
+    const rateData = await res.json();
+    const rate = rateData.rates.USD;
+
+    console.log("Exchange rate used:", rate);
+
+    return services.map((cat) => {
+      const catPrice = parsePrice(cat.price);
+      const usdCatPrice = catPrice * rate;
+
+      return {
+        ...cat,
+        price: usdCatPrice.toFixed(2),
+        plans: cat.plans.map((plan) => {
+          const planPrice = parsePrice(plan.price);
+          const usdPlanPrice = planPrice * rate;
+
+          return {
+            ...plan,
+            price: usdPlanPrice.toFixed(2),
+          };
+        }),
+      };
+    });
+  } catch (error) {
+    console.error("Error converting to USD:", error);
+    return services;
+  }
+};
+
 export default function WebPackages() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
   const popupRef = useRef(null);
 
-  const selectedCategory =
-    graphicscatprices.find((c) => c.key === activeCategory) || null;
+  const [currency, setCurrency] = useState("LKR");
+  const [prices, setPrices] = useState(graphicscatprices);
+
+ const selectedCategory = prices.find((c) => c.key === activeCategory) || null;
 
   useEffect(() => {
     function handleScroll() {
@@ -409,13 +420,37 @@ export default function WebPackages() {
     };
   }, []);
 
+  useEffect(() => {
+    async function detectCurrency() {
+      try {
+        const res = await fetch("/api/getCurrency");
+        const data = await res.json();
+
+        if (data.showUSD) {
+          const converted = await convertPricesToUSD(graphicscatprices);
+          setPrices(converted);
+          setCurrency("USD");
+        } else {
+          setPrices(graphicscatprices);
+          setCurrency("LKR");
+        }
+      } catch (error) {
+        console.error("Error detecting currency:", error);
+        setPrices(graphicscatprices);
+        setCurrency("LKR");
+      }
+    }
+
+    detectCurrency();
+  }, []);
+
   return (
     <>
       <section className="py-2 px-6 relative max-w-7xl mx-auto text-white">
         <h2 className="text-4xl sm:text-4xl font-bold mb-12">Graphics Designing</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-          {graphicscatprices.map((cat, i) => (
+          {prices.map((cat, i) => (
             <div
               key={i}
               className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 hover:border-blue-500 transition-all duration-300 flex flex-col"
@@ -425,7 +460,7 @@ export default function WebPackages() {
 
               <div className="text-center mb-6">
                 <span className="text-4xl font-bold text-blue-400">
-                  {cat.price} LKR
+                  {cat.price} {currency}
                 </span>
                 <div className="text-gray-400 text-sm">onwards</div>
               </div>
@@ -443,51 +478,9 @@ export default function WebPackages() {
           ))}
 
           <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 hover:border-blue-500 transition-all duration-300 flex flex-col">
-            <h3 className="text-2xl font-bold">Motion Graphic (Basic)</h3>
-            <p className="text-gray-400 text-sm mt-2 mb-6">
-              Simple animations that bring your ideas to life.
-            </p>
-
-            <div className="text-center mb-6">
-                <span className="text-4xl font-bold text-blue-400">
-                  7,500 LKR
-                </span>
-                <div className="text-gray-400 text-sm">onwards</div>
-              </div>
-
-            <Link
-              href="/contact"
-              className="mt-auto py-3 px-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-center"
-            >
-              Get Started
-            </Link>
-          </div>
-          
-          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 hover:border-blue-500 transition-all duration-300 flex flex-col">
-            <h3 className="text-2xl font-bold">Custom Graphic Design</h3>
-            <p className="text-gray-400 text-sm mt-2 mb-6">
-              Unique designs tailored just for you.
-            </p>
-
-            <div className="text-center mb-6">
-                <span className="text-4xl font-bold text-blue-400">
-                  4,000 LKR
-                </span>
-                <div className="text-gray-400 text-sm">onwards</div>
-              </div>
-
-            <Link
-              href="/contact"
-              className="mt-auto py-3 px-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-center"
-            >
-              Get Started
-            </Link>
-          </div>
-
-          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 hover:border-blue-500 transition-all duration-300 flex flex-col">
             <h3 className="text-2xl font-bold">Is Your Category Not Listed?</h3>
             <p className="text-gray-400 text-sm mt-2 mb-6">
-              Don’t worry. connect with us for a custom quote.
+              Don't worry. connect with us for a custom quote.
             </p>
 
             <Link
@@ -549,7 +542,7 @@ export default function WebPackages() {
                     </p>
                     <div className="flex items-baseline justify-center">
                       <span className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-400 to-blue-400 bg-clip-text text-transparent">
-                        {plan.price} LKR
+                        {plan.price} {currency}
                       </span>
                     </div>
                   </div>
@@ -572,7 +565,7 @@ export default function WebPackages() {
 
                   <Link
                     href="/dashboard"
-                    className={`text-center w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold transition-all duration-300 mt-auto hover:scale-102 cursor-pointer text-sm sm:text-base ${
+                    className={`text-center w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold transition-all duration-300 mt-auto hover:scale-[1.02] cursor-pointer text-sm sm:text-base ${
                       plan.mostPopular
                         ? "bg-gradient-to-b from-blue-500 to-blue-500"
                         : "bg-white/5 border border-white/10 hover:bg-white/10"

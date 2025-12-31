@@ -5,405 +5,233 @@ import { Check, Star } from "lucide-react";
 import Link from "next/link";
 
 const vidcatprices = [
-
   {
-    key: "reels",
-    title: "Vertical Videos (Reels/TikToks)",
-    desc: "Perfect for creators, freelancers, and professionals who want a clean digital identity.",
-    price: "3,000",
+    key: "short-form",
+    title: "Short-Form Video Editing",
+    desc: "High-impact vertical videos made to grab attention on Reels, Shorts, and TikTok.",
+    price: "2,500",
     plans: [
       {
-        name: "Basic",
-        description: "For personal videos",
-        price: "3,000",
+        name: "Single Short Video",
+        description: "Best for quick social posts and one-off content.",
+        price: "2,500",
         mostPopular: false,
         features: [
-          "Simple Caption Style",
-          "Correct Alignment",
-          "Background Music",
-          "Basic Color Correction",
-          <>2 Revisions <i>(Each Extra Revision: $0.65)</i></>
+          "Clean cuts & smooth pacing",
+          "Text & basic captions",
+          "Music sync",
+          "Color correction",
+          "Platform-ready export",
         ],
       },
       {
-        name: "Standard",
-        description: "For content creators",
+        name: "5-Video Pack",
+        description: "Ideal for consistent posting and content batches.",
+        price: "11,500",
+        mostPopular: true,
+        features: [
+          "5 short-form videos",
+          "Consistent editing style",
+          "Caption & text overlays",
+          "Optimized aspect ratios",
+          "Revision support",
+        ],
+      },
+      {
+        name: "10-Video Pack",
+        description: "Perfect for creators building serious momentum.",
+        price: "22,000",
+        mostPopular: false,
+        features: [
+          "10 engaging short videos",
+          "Strong hooks & pacing",
+          "Brand-aligned editing style",
+          "Social-ready exports",
+          "Priority revisions",
+        ],
+      },
+    ],
+  },
+
+  {
+    key: "long-form",
+    title: "Long-Form Video Editing",
+    desc: "Clean and professional edits for YouTube videos, podcasts, and long content.",
+    price: "4,500",
+    plans: [
+      {
+        name: "Basic Edit",
+        description: "Simple and clean edits for videos up to 10 minutes.",
+        price: "4,500",
+        mostPopular: false,
+        features: [
+          "Clean cuts",
+          "Audio balancing",
+          "Color correction",
+          "Intro & outro placement",
+          "HD export",
+        ],
+      },
+      {
+        name: "Standard Edit",
+        description: "Structured edits with smooth flow for mid-length videos.",
+        price: "7,500",
+        mostPopular: true,
+        features: [
+          "Structured timeline",
+          "Smooth transitions",
+          "Audio cleanup",
+          "Basic graphics & text",
+          "Full-HD export",
+        ],
+      },
+      {
+        name: "Premium Edit",
+        description: "Advanced editing for high-quality long-form content.",
+        price: "15,000",
+        mostPopular: false,
+        features: [
+          "Advanced pacing",
+          "Effects & transitions",
+          "Branded graphics",
+          "Sound design",
+          "Priority revisions",
+        ],
+      },
+    ],
+  },
+
+  {
+    key: "social-media",
+    title: "Social Media Video Editing",
+    desc: "Scroll-stopping promo and ad videos optimized for every platform.",
+    price: "3,500",
+    plans: [
+      {
+        name: "Single Promo Video",
+        description: "Perfect for ads, announcements, and promotions.",
+        price: "3,500",
+        mostPopular: false,
+        features: [
+          "High-impact editing",
+          "Text & CTA overlays",
+          "Music & sound effects",
+          "Platform-specific sizing",
+          "Optimized export",
+        ],
+      },
+      {
+        name: "5-Video Promo Pack",
+        description: "Best for campaigns and consistent promotions.",
+        price: "16,000",
+        mostPopular: true,
+        features: [
+          "5 campaign-style videos",
+          "Consistent visual style",
+          "Multi-platform formats",
+          "High-quality output",
+          "Revision support",
+        ],
+      },
+    ],
+  },
+
+  {
+    key: "motion-graphics",
+    title: "Motion Graphics (Basic)",
+    desc: "Simple yet powerful motion graphics to boost brand presence.",
+    price: "6,500",
+    plans: [
+      {
+        name: "Basic Motion Video",
+        description: "Short motion graphics for logos, text, or intros.",
+        price: "6,500",
+        mostPopular: false,
+        features: [
+          "Text or logo animation",
+          "Smooth transitions",
+          "Brand-aligned motion",
+          "Full-HD export",
+          "2 revisions",
+        ],
+      },
+      {
+        name: "Motion Pack (3 Videos)",
+        description: "Consistent motion graphics for brand use.",
+        price: "17,500",
+        mostPopular: true,
+        features: [
+          "3 motion graphic videos",
+          "Consistent animation style",
+          "HD delivery",
+          "Optimized formats",
+          "Revision support",
+        ],
+      },
+    ],
+  },
+
+  {
+    key: "corporate",
+    title: "Corporate & Business Videos",
+    desc: "Professional video edits for businesses, brands, and companies.",
+    price: "10,000",
+    plans: [
+      {
+        name: "Corporate Edit",
+        description: "Clean and professional edits for corporate use.",
+        price: "10,000",
+        mostPopular: true,
+        features: [
+          "Professional pacing",
+          "Logo & brand elements",
+          "Clean transitions",
+          "Audio balancing",
+          "High-quality export",
+        ],
+      },
+    ],
+  },
+
+  {
+    key: "creator",
+    title: "Content Creator Editing",
+    desc: "Energetic edits made for streamers, YouTubers, and online creators.",
+    price: "4,500",
+    plans: [
+      {
+        name: "Creator Highlight Video",
+        description: "Highlight-style edits that keep viewers hooked.",
         price: "4,500",
         mostPopular: true,
         features: [
-          "Advanced Annimations",
-          "Trendy Viral Caption Style",
-          "Sound Effects",
-          "Background Music",
-          "Cinematic Color Grading", 
-          <>3 Revisions <i>(Each Extra Revision: $0.65)</i></>
-        ],
-      },
-      {
-        name: "Premium",
-        description: "For production studios",
-        price: "9,000",
-        mostPopular: false,
-        features: [
-          "Advanced VFX Annimations",
-          "Masking",
-          "Separate Annimated B-Roll", 
-          "Cinematic Color Grading",
-          "Trendy Animated Caption Style",
-          <>5 Revisions <i>(Each Extra Revision: $0.65)</i></>
+          "Engaging cuts & zooms",
+          "Sound effects & music",
+          "Basic subtitle styling",
+          "Platform-ready format",
+          "Revision support",
         ],
       },
     ],
   },
 
   {
-    key: "business",
-    title: "Startup / Company Website",
-    desc: "Perfect for small businesses and startups needing a clean online presence.",
-    price: "40,000",
+    key: "custom",
+    title: "Custom Video Editing",
+    desc: "Tailored video editing solutions based on your idea and vision.",
+    price: "5,000",
     plans: [
       {
-        name: "Standard Corporate",
-        description: "Professional business layout",
-        price: "149",
+        name: "Custom Project",
+        description: "Flexible editing built exactly for your needs.",
+        price: "5,000",
         mostPopular: false,
         features: [
-          "Up to 8 Pages",
-          "Responsive UI",
-          "Team & Services Pages",
-          "Contact + Inquiry Forms",
-          "Google Maps",
-          "Basic SEO",
-          "2 Revisions",
-        ],
-      },
-
-      {
-        name: "Modern Business UI",
-        description: "High-end UI with motion + structure",
-        price: "249",
-        mostPopular: true,
-        features: [
-          "Everything in Standard Corporate",
-          "Custom Hero Sections",
-          "Card Layouts",
-          "Smooth Animations",
-          "Integrated Blog",
-          "Analytics Setup",
-          "SEO Structured Data",
-          "3 Revisions",
-        ],
-      },
-
-      {
-        name: "Fully Custom Enterprise",
-        description: "Premium brand-level design",
-        price: "399",
-        mostPopular: false,
-        features: [
-          "Full Brand-Based Custom Design",
-          "CRM / Backend Integration",
-          "Employee Dashboard (Optional)",
-          "Blog + News System",
-          "Complete SEO Optimization",
-          "Advanced Motion Effects",
-          "Unlimited Revisions",
-        ],
-      },
-    ],
-  },
-
-  {
-    key: "ecommerce",
-    title: "E-Commerce Online Store",
-    desc: "Sell products online with a smooth, modern shopping experience and showcase your products with style.",
-    price: "75,000",
-    plans: [
-      {
-        name: "Catalogue Only",
-        description: "Show products without checkout",
-        price: "199",
-        mostPopular: false,
-        features: [
-          "Product Gallery",
-          "Categories",
-          "Product Detail Pages",
-          "Inquiry Button",
-          "Up to 50 Products",
-          "2 Revisions",
-        ],
-      },
-      {
-        name: "WooCommerce Store",
-        description: "WooCommerce powered shop",
-        price: "299",
-        mostPopular: true,
-        features: [
-          "WooCommerce Setup",
-          "Add to Cart + Checkout",
-          "Payment Gateways",
-          "Coupons",
-          "Shipping Zones",
-          "Theme Customization",
-          "100+ Products",
-          "3 Revisions",
-        ],
-      },
-      {
-        name: "Custom-Coded Store",
-        description: "Premium handmade e-commerce",
-        price: "499",
-        mostPopular: false,
-        features: [
-          "Full Custom Frontend",
-          "Custom Backend",
-          "Admin Dashboard",
-          "Unlimited Products",
-          "Search + Filters",
-          "Order Tracking",
-          "Email Notifications",
-          "Full SEO Setup",
-          "Priority Support",
-        ],
-      },
-    ],
-  },
-
-  {
-    key: "lms",
-    title: "E-Learning Platform",
-    desc: "Modern LMS platforms for schools, tutors, and academies.",
-    price: "80,000",
-    plans: [
-      {
-        name: "Basic LMS",
-        description: "For small institutes",
-        price: "249",
-        mostPopular: false,
-        features: [
-          "Course Listing",
-          "Student Login",
-          "Trainer Profiles",
-          "Video Upload/Embed",
-          "Assignments",
-          "Basic Reports",
-          "Payments (Optional)",
-          "2 Revisions",
-        ],
-      },
-      {
-        name: "Advanced LMS",
-        description: "For professional academies",
-        price: "349",
-        mostPopular: true,
-        features: [
-          "Everything in Basic LMS",
-          "Multi-Teacher System",
-          "Live Classes (Zoom/Meet)",
-          "Progress Tracking",
-          "Quizzes + Exams",
-          "Certificates",
-          "Student Dashboard",
-          "Parent Dashboard",
-          "Admin Analytics",
-          "4 Revisions",
-        ],
-      },
-      {
-        name: "Custom LMS",
-        description: "Full-scale institutional LMS",
-        price: "599",
-        mostPopular: false,
-        features: [
-          "Fully Custom UI/UX",
-          "Institution Roles",
-          "Attendance Tracking",
-          "Advanced Exam Module",
-          "Automated Certificates",
-          "AI Recommendations (Optional)",
-          "Multi-Campus Support",
-          "Deep Analytics Dashboard",
-          "Unlimited Revisions",
-        ],
-      },
-    ],
-  },
-
-  {
-    key: "blog",
-    title: "Blog / News & Media Website",
-    desc: "Modern LMS platforms for schools, tutors, and academies.",
-    price: "45,000",
-    plans: [
-      {
-        name: "Basic LMS",
-        description: "For small institutes",
-        price: "249",
-        mostPopular: false,
-        features: [
-          "Course Listing",
-          "Student Login",
-          "Trainer Profiles",
-          "Video Upload/Embed",
-          "Assignments",
-          "Basic Reports",
-          "Payments (Optional)",
-          "2 Revisions",
-        ],
-      },
-      {
-        name: "Advanced LMS",
-        description: "For professional academies",
-        price: "349",
-        mostPopular: true,
-        features: [
-          "Everything in Basic LMS",
-          "Multi-Teacher System",
-          "Live Classes (Zoom/Meet)",
-          "Progress Tracking",
-          "Quizzes + Exams",
-          "Certificates",
-          "Student Dashboard",
-          "Parent Dashboard",
-          "Admin Analytics",
-          "4 Revisions",
-        ],
-      },
-      {
-        name: "Custom LMS",
-        description: "Full-scale institutional LMS",
-        price: "599",
-        mostPopular: false,
-        features: [
-          "Fully Custom UI/UX",
-          "Institution Roles",
-          "Attendance Tracking",
-          "Advanced Exam Module",
-          "Automated Certificates",
-          "AI Recommendations (Optional)",
-          "Multi-Campus Support",
-          "Deep Analytics Dashboard",
-          "Unlimited Revisions",
-        ],
-      },
-    ],
-  },
-
-  {
-    key: "booking",
-    title: "Booking / Ticketing System",
-    desc: "Modern LMS platforms for schools, tutors, and academies.",
-    price: "60,000",
-    plans: [
-      {
-        name: "Basic LMS",
-        description: "For small institutes",
-        price: "249",
-        mostPopular: false,
-        features: [
-          "Course Listing",
-          "Student Login",
-          "Trainer Profiles",
-          "Video Upload/Embed",
-          "Assignments",
-          "Basic Reports",
-          "Payments (Optional)",
-          "2 Revisions",
-        ],
-      },
-      {
-        name: "Advanced LMS",
-        description: "For professional academies",
-        price: "349",
-        mostPopular: true,
-        features: [
-          "Everything in Basic LMS",
-          "Multi-Teacher System",
-          "Live Classes (Zoom/Meet)",
-          "Progress Tracking",
-          "Quizzes + Exams",
-          "Certificates",
-          "Student Dashboard",
-          "Parent Dashboard",
-          "Admin Analytics",
-          "4 Revisions",
-        ],
-      },
-      {
-        name: "Custom LMS",
-        description: "Full-scale institutional LMS",
-        price: "599",
-        mostPopular: false,
-        features: [
-          "Fully Custom UI/UX",
-          "Institution Roles",
-          "Attendance Tracking",
-          "Advanced Exam Module",
-          "Automated Certificates",
-          "AI Recommendations (Optional)",
-          "Multi-Campus Support",
-          "Deep Analytics Dashboard",
-          "Unlimited Revisions",
-        ],
-      },
-    ],
-  },
-
-  {
-    key: "school",
-    title: "School / Institute Website",
-    desc: "Modern LMS platforms for schools, tutors, and academies.",
-    price: "65,000",
-    plans: [
-      {
-        name: "Basic LMS",
-        description: "For small institutes",
-        price: "249",
-        mostPopular: false,
-        features: [
-          "Course Listing",
-          "Student Login",
-          "Trainer Profiles",
-          "Video Upload/Embed",
-          "Assignments",
-          "Basic Reports",
-          "Payments (Optional)",
-          "2 Revisions",
-        ],
-      },
-      {
-        name: "Advanced LMS",
-        description: "For professional academies",
-        price: "349",
-        mostPopular: true,
-        features: [
-          "Everything in Basic LMS",
-          "Multi-Teacher System",
-          "Live Classes (Zoom/Meet)",
-          "Progress Tracking",
-          "Quizzes + Exams",
-          "Certificates",
-          "Student Dashboard",
-          "Parent Dashboard",
-          "Admin Analytics",
-          "4 Revisions",
-        ],
-      },
-      {
-        name: "Custom LMS",
-        description: "Full-scale institutional LMS",
-        price: "599",
-        mostPopular: false,
-        features: [
-          "Fully Custom UI/UX",
-          "Institution Roles",
-          "Attendance Tracking",
-          "Advanced Exam Module",
-          "Automated Certificates",
-          "AI Recommendations (Optional)",
-          "Multi-Campus Support",
-          "Deep Analytics Dashboard",
-          "Unlimited Revisions",
+          "Concept-based editing",
+          "Flexible scope",
+          "Custom visual style",
+          "High-quality output",
+          "Custom revisions",
         ],
       },
     ],
@@ -411,14 +239,53 @@ const vidcatprices = [
 ];
 
 
+const parsePrice = (price) => {
+  if (typeof price === 'number') return price;
+  return Number(String(price).replace(/,/g, ''));
+};
+
+const convertPricesToUSD = async (services) => {
+  try {
+    const res = await fetch("https://open.er-api.com/v6/latest/LKR");
+    const rateData = await res.json();
+    const rate = rateData.rates.USD;
+
+    console.log("Exchange rate used:", rate);
+
+    return services.map((cat) => {
+      const catPrice = parsePrice(cat.price);
+      const usdCatPrice = catPrice * rate;
+
+      return {
+        ...cat,
+        price: usdCatPrice.toFixed(2),
+        plans: cat.plans.map((plan) => {
+          const planPrice = parsePrice(plan.price);
+          const usdPlanPrice = planPrice * rate;
+
+          return {
+            ...plan,
+            price: usdPlanPrice.toFixed(2),
+          };
+        }),
+      };
+    });
+  } catch (error) {
+    console.error("Error converting to USD:", error);
+    return services;
+  }
+};
+
 export default function WebPackages() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
   const popupRef = useRef(null);
 
-  const selectedCategory =
-    vidcatprices.find((c) => c.key === activeCategory) || null;
+  const [currency, setCurrency] = useState("LKR");
+  const [prices, setPrices] = useState(vidcatprices);
+
+ const selectedCategory = prices.find((c) => c.key === activeCategory) || null;
 
   useEffect(() => {
     function handleScroll() {
@@ -450,13 +317,37 @@ export default function WebPackages() {
     };
   }, []);
 
+  useEffect(() => {
+    async function detectCurrency() {
+      try {
+        const res = await fetch("/api/getCurrency");
+        const data = await res.json();
+
+        if (data.showUSD) {
+          const converted = await convertPricesToUSD(vidcatprices);
+          setPrices(converted);
+          setCurrency("USD");
+        } else {
+          setPrices(vidcatprices);
+          setCurrency("LKR");
+        }
+      } catch (error) {
+        console.error("Error detecting currency:", error);
+        setPrices(vidcatprices);
+        setCurrency("LKR");
+      }
+    }
+
+    detectCurrency();
+  }, []);
+
   return (
     <>
       <section className="py-2 px-6 relative max-w-7xl mx-auto text-white">
         <h2 className="text-4xl sm:text-4xl font-bold mb-12">Video Editing</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-          {vidcatprices.map((cat, i) => (
+          {prices.map((cat, i) => (
             <div
               key={i}
               className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 hover:border-blue-500 transition-all duration-300 flex flex-col"
@@ -466,7 +357,7 @@ export default function WebPackages() {
 
               <div className="text-center mb-6">
                 <span className="text-4xl font-bold text-blue-400">
-                  {cat.price} LKR
+                  {cat.price} {currency}
                 </span>
                 <div className="text-gray-400 text-sm">onwards</div>
               </div>
@@ -486,7 +377,7 @@ export default function WebPackages() {
           <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 hover:border-blue-500 transition-all duration-300 flex flex-col">
             <h3 className="text-2xl font-bold">Is Your Category Not Listed?</h3>
             <p className="text-gray-400 text-sm mt-2 mb-6">
-              Don’t worry. connect with us for a custom quote.
+              Don't worry. connect with us for a custom quote.
             </p>
 
             <Link
@@ -548,7 +439,7 @@ export default function WebPackages() {
                     </p>
                     <div className="flex items-baseline justify-center">
                       <span className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-400 to-blue-400 bg-clip-text text-transparent">
-                        {plan.price} LKR
+                        {plan.price} {currency}
                       </span>
                     </div>
                   </div>
@@ -571,7 +462,7 @@ export default function WebPackages() {
 
                   <Link
                     href="/dashboard"
-                    className={`text-center w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold transition-all duration-300 mt-auto hover:scale-102 cursor-pointer text-sm sm:text-base ${
+                    className={`text-center w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold transition-all duration-300 mt-auto hover:scale-[1.02] cursor-pointer text-sm sm:text-base ${
                       plan.mostPopular
                         ? "bg-gradient-to-b from-blue-500 to-blue-500"
                         : "bg-white/5 border border-white/10 hover:bg-white/10"

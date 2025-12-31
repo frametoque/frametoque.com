@@ -19,8 +19,12 @@ export const metadata = {
   },
 };
 
+import Link from "next/link";
+
+
 import Services from "@/components/services/Services.jsx";
 //import Alert from '@/components/Alert.jsx'
+import Collab from "@/components/Collab.jsx";
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -56,6 +60,8 @@ export default function Home() {
 
       <Services /> 
       {/* <Alert /> */}
+      <Collab />
+      <br /><br />
       <Footer/>
     </main >
     </>

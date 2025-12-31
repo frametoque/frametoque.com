@@ -40,7 +40,7 @@ export default function ContactPage() {
             </span>
           </h2>
 
-          <p className="text-gray-400 text-lg max-w-3xl mx-auto">
+          <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
             Hit us up anytime - we are always down to build something iconic with you.
           </p>
         </div>

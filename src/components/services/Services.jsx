@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 
-import { Check, Star } from "lucide-react";
-import Link from "next/link";
 
 import WebSub from "@/components/services/WebSub";
 import GraphicsSub from "@/components/services/GraphicsSub";
@@ -39,14 +37,7 @@ export default function ServicesMain() {
       </section>
       
 
-        <div className="mt-8 sm:mt-12 text-center">
-          <p className="text-gray-400 text-base text-xl">
-            Need a custom plan? &nbsp;
-            <Link href="/contact" className="text-blue-600 hover:text-blue-500 font-semibold">
-              Contact Us
-            </Link>
-          </p>
-        </div>
+        
      
     </section>
 
