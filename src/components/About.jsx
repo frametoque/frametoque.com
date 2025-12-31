@@ -125,9 +125,9 @@ export default function AboutUs() {
             {teamMembers.map((member, index) => (
                 <div
                   key={index}
-                  className="group relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-700 w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] max-w-xs"
+                  className="group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-700/50 w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] max-w-xs"
                 >
-                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mt-4">
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-slate-700/50 to-slate-800/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mt-4">
                   <span className="text-3xl font-bold text-white">
                     {member.name.split(' ').map(n => n[0]).join('')}
                   </span>
