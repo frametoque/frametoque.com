@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import Navbar from "@/components/Navbar.jsx";
-import Footer from "@/components/Footer.jsx";
+
 import { Github, Globe, Youtube, Eye, Play, ExternalLink, X } from "lucide-react";
 
 const projects = [
@@ -13,7 +12,7 @@ const projects = [
     id: 1,
     title: "Event Pulse - Booking Platform",
     description: "A sleek event booking platform with easy reservations, event listings, and real-time notifications for a seamless experience.",
-    category: "Web Development",
+    category: "Web Developing",
     image: "/projects/web/eventpulse.png",
     type: "web",
     aspectRatio: "16:9",
@@ -25,7 +24,7 @@ const projects = [
       title: "E Commerce Website - FPV Drone Store",
       description: "A modern online store for FPV drones, featuring smooth navigation, product showcases, and secure checkout for a seamless shopping experience.",
       type: "web",
-      category: "Web Development",
+      category: "Web Developing",
       image: "/projects/web/techrolk-store.png",
       aspectRatio: "16:9",
       live: "https://techrolk.com/shop",
@@ -35,7 +34,7 @@ const projects = [
       title: "TechRoLK Company Landing Page",
       description: "A sleek, modern company website featuring smooth animations, and CMS integration for easy content management and updates.",
       type: "web",
-      category: "Web Development",
+      category: "Web Developing",
       image: "/projects/web/techrolk.png",
       aspectRatio: "16:9",
       live: "https://techrolk.com",
@@ -45,7 +44,7 @@ const projects = [
       title: "Personal Portfolio",
       description: "A sleek, modern portfolio showcasing skills, projects, and achievements, designed to highlight your personal brand and online presence.",
       type: "web",
-      category: "Web Development",
+      category: "Web Developing",
       image: "/projects/web/itsnelitha.png",
       aspectRatio: "16:9",
       live: "https://itsnelitha.github.io/",
@@ -180,29 +179,9 @@ export default function ProjectsComponent() {
 
   return (
     <>
-      <Navbar scrolled={scrolled} />
-      <div className="h-20" />
       
-      <section className="min-h-screen bg-slate-950 text-white py-20 px-6 sm:px-10 lg:px-16 relative overflow-hidden">
-        {/* Pulse Effects */}
-        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-        
-        <div className="max-w-7xl mx-auto text-center mb-16 relative z-10">
-          <h2 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">
-            <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
-              What We&nbsp;
-            </span>
-            <span className="bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">
-              Did
-            </span>
-          </h2>
-
-          <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
-            A quick glimpse into some of our highlighted work.
-          </p>
-        </div>
-
+      <section className="py-16 sm:py-20 px-6 lg:px-8">
+       
         <div className="max-w-7xl mx-auto relative z-10">
 
           {Object.entries(groupedProjects).map(([category, categoryProjects]) => (
@@ -426,7 +405,6 @@ export default function ProjectsComponent() {
         </div>
       )}
       
-      <Footer />
     </>
   );
 }

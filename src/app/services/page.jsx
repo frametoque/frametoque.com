@@ -19,7 +19,6 @@ export const metadata = {
   },
 };
 
-import Link from "next/link";
 
 
 import Services from "@/components/services/Services.jsx";
