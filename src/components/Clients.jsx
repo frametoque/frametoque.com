@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 
 const clients = [
   { name: "TechRoLK", logo: "/images/clients/logo/techrolk.png" },
-  { name: "Client", logo: "/logos/ft/logo.png" },
+  { name: "NextVibe", logo: "/images/clients/logo/nextvibe.png" },
   { name: "Client", logo: "/logos/ft/logo.png" },
   { name: "Client", logo: "/logos/ft/logo.png" },
   { name: "Client", logo: "/logos/ft/logo.png" },

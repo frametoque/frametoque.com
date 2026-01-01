@@ -1,11 +1,11 @@
 const testimonials = [
   {
-    name: "ABCD",
-    role: "ABC at ABC",
+    name: "NextVibe",
+    role: "Solution for a Digital World",
     image:
-      "/images/testimonials/user.png",
+      "/images/clients/logo/nextvibe.png",
     content:
-      "Frame Toque transformed our website! It’s fast, sleek, and exactly what our brand needed..",
+      "It was a great experience working with this video editing team. Very professional, creative, and responsive throughout the project. They clearly understood the vision and delivered high-quality results on time. Highly recommended for anyone looking for reliable video editing services.",
   },
   {
     name: "ABCD",
