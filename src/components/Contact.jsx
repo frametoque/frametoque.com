@@ -106,7 +106,7 @@ export default function ContactPage() {
 
             <div>
               <h4 className="font-semibold text-lg">What services do you offer?</h4>
-              <p className="text-gray-400">Web dev, graphics, branding, short-form content, and more.</p>
+              <p className="text-gray-400">Web dev, graphic, branding, short-form content, and more.</p>
             </div>
 
             <div>

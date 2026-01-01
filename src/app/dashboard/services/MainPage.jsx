@@ -23,7 +23,7 @@ export default function ServicesMain() {
             <WebSub />
           </section>
     
-          <section id="graphics" className="mb-12 sm:mb-16">
+          <section id="graphic" className="mb-12 sm:mb-16">
             <GraphicsSub />
           </section>
     

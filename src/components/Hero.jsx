@@ -114,7 +114,7 @@ export default function Hero() {
                 <div className="p-3 sm:p-4 relative h-full">
               
                   <div className="flex space-x-1 sm:space-x-2 mb-3 sm:mb-4 overflow-x-auto">
-                    {["Web Development", "Graphics Designing", "Video Editing"].map((tab) => (
+                    {["Web Development", "Graphic Design", "Video Editing"].map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -148,7 +148,7 @@ export default function Hero() {
                     >
                       {codeExamples[activeTab]}
                     </SyntaxHighlighter>
-                  ) : activeTab === "Graphics Designing" ? (
+                  ) : activeTab === "Graphic Design" ? (
                     <GraphicsDesignUI />
                   ) : activeTab === "Video Editing" ? (
                     <VideoEditorUI />

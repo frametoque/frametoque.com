@@ -81,7 +81,7 @@ const vidcatprices = [
           "Structured timeline",
           "Smooth transitions",
           "Audio cleanup",
-          "Basic graphics & text",
+          "Basic graphic & text",
           "Full-HD export",
         ],
       },
@@ -93,7 +93,7 @@ const vidcatprices = [
         features: [
           "Advanced pacing",
           "Effects & transitions",
-          "Branded graphics",
+          "Branded graphic",
           "Sound design",
           "Priority revisions",
         ],
@@ -137,14 +137,14 @@ const vidcatprices = [
   },
 
   {
-    key: "motion-graphics",
+    key: "motion-graphic",
     title: "Motion Graphics & Animation",
-    desc: "Simple yet powerful motion graphics to boost brand presence.",
+    desc: "Simple yet powerful motion graphic to boost brand presence.",
     price: "6,500",
     plans: [
       {
         name: "Basic Motion Video",
-        description: "Short motion graphics for logos, text, or intros.",
+        description: "Short motion graphic for logos, text, or intros.",
         price: "6,500",
         mostPopular: false,
         features: [
@@ -157,7 +157,7 @@ const vidcatprices = [
       },
       {
         name: "Motion Pack (3 Videos)",
-        description: "Consistent motion graphics for brand use.",
+        description: "Consistent motion graphic for brand use.",
         price: "17,500",
         mostPopular: true,
         features: [

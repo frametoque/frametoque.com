@@ -13,7 +13,7 @@ const testimonials = [
     image:
       "/images/testimonials/user.png",
     content:
-      "Their video editing and graphics made our campaign pop. Highly recommend!",
+      "Their video editing and graphic made our campaign pop. Highly recommend!",
   },
   {
     name: "ABCD",

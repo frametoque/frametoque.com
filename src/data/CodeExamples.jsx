@@ -68,7 +68,7 @@ export function GraphicsDesignUI() {
 
     <div className="flex-1 bg-gray-800 border border-[#001E36]/50 rounded flex items-center justify-center overflow-hidden relative">
       <Image
-        src="/projects/graphics/sample.webp"
+        src="/projects/graphic/sample.webp"
         alt="Canvas Preview"
         width={1000} height={1000}
         className="object-contain h-full w-full"
@@ -145,7 +145,7 @@ export function VideoEditorUI() {
               <div className="aspect-[9/16]">
                 <video
                   ref={videoRef}
-                  src="/projects/videos/sample.mp4"
+                  src="/projects/video/sample.mp4"
                   autoPlay
                   muted
                   loop
@@ -225,7 +225,7 @@ export const floatingCards = {
     title: "Digital Experience",
     content: "Your website is your first impression. Make it count.",
   },
-  "Graphics Designing": {
+  "Graphic Design": {
     bgColor: "bg-[#3c327b]/20",
     iconColor: "text-[#3c327b]",
     textColor: "text-white",

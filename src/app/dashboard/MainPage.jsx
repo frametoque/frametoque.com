@@ -68,7 +68,7 @@ export default function DashboardHome() {
   </span>
 </h1>
 <p className="text-gray-300 text-lg mb-6 max-w-2xl">
-  Your one-stop solution for stunning websites, graphics, and videos.&nbsp;
+  Your one-stop solution for stunning websites, graphic, and videos.&nbsp;
   Explore our services and let's bring your vision to life!
 </p>
 

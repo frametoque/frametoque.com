@@ -11,7 +11,7 @@ export default function ProjectCard({ project }) {
 
   const typeColors = {
     web: "bg-blue-500",
-    graphics: "bg-purple-500",
+    graphic: "bg-purple-500",
     video: "bg-red-500",
   };
 

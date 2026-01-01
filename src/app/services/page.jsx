@@ -1,10 +1,10 @@
 export const metadata = {
   title: "What We Do",
   description:
-    "Explore our range of services including web development, graphic designing, and video editing tailored to make your brand shine.",
+    "Explore our range of services including web development, graphic design, and video editing tailored to make your brand shine.",
     openGraph: {
     title: "What We Do | Frame Toque",
-    description: "Explore our range of services including web development, graphic designing, and video editing tailored to make your brand shine.",
+    description: "Explore our range of services including web development, graphic design, and video editing tailored to make your brand shine.",
     url: "https://frametoque.online/services", 
     siteName: "Frame Toque",
     images: [

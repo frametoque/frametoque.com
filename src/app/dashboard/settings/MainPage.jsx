@@ -639,7 +639,7 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     {[
                       { date: "Jan 15, 2025", service: "Web Development - Standard", amount: "$999.00", status: "Paid", invoice: "INV-001" },
-                      { date: "Jan 10, 2025", service: "Graphics Design - Basic", amount: "$99.00", status: "Paid", invoice: "INV-002" },
+                      { date: "Jan 10, 2025", service: "Graphic Design - Basic", amount: "$99.00", status: "Paid", invoice: "INV-002" },
                       { date: "Dec 28, 2024", service: "Video Editing - Premium", amount: "$999.00", status: "Paid", invoice: "INV-003" },
                       { date: "Dec 15, 2024", service: "Web Development - Basic", amount: "$499.00", status: "Paid", invoice: "INV-004" },
                     ].map((invoice, index) => (

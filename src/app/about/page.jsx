@@ -1,10 +1,10 @@
 export const metadata = {
   title: "About",
   description:
-    "Learn more about Frame Toque, our mission to empower brands with stunning web development, graphic designing, and video editing services.",
+    "Learn more about Frame Toque, our mission to empower brands with stunning web development, graphic design, and video editing services.",
     openGraph: {
     title: "About | Frame Toque",
-    description: "Learn more about Frame Toque, our mission to empower brands with stunning web development, graphic designing, and video editing services.",
+    description: "Learn more about Frame Toque, our mission to empower brands with stunning web development, graphic design, and video editing services.",
     url: "https://frametoque.online/about", 
     siteName: "Frame Toque",
     images: [

@@ -1,10 +1,10 @@
 export const metadata = {
   title: "Terms & Conditions",
   description:
-    "Read the terms and conditions for using Frame Toque's web development, graphic designing, and video editing services.",
+    "Read the terms and conditions for using Frame Toque's web development, graphic design, and video editing services.",
     openGraph: {
     title: "Terms & Conditions | Frame Toque",
-    description: "Read the terms and conditions for using Frame Toque's web development, graphic designing, and video editing services.",
+    description: "Read the terms and conditions for using Frame Toque's web development, graphic design, and video editing services.",
     url: "https://frametoque.online/terms", 
     siteName: "Frame Toque",
     images: [

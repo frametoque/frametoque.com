@@ -14,7 +14,7 @@ export default function ProjectsHome() {
       title: "Company Website - TechRoLK",
       description: "A sleek, modern company website featuring smooth animations, and CMS integration for easy content management and updates.",
       type: "web",
-      category: "Web Developing",
+      category: "Web Development",
       image: "/projects/web/techrolk.png",
       aspectRatio: "16:9",
       live: "https://techrolk.com",
@@ -23,9 +23,9 @@ export default function ProjectsHome() {
       id: 2,
       title: "Brand Poster Design",
       description: "Minimalist poster series for tech conference with bold typography and gradient effects.",
-      type: "graphics",
-      category: "Graphics Designing",
-      image: "/projects/graphics/sample.webp",
+      type: "graphic",
+      category: "Graphic Design",
+      image: "/projects/graphic/sample.webp",
       aspectRatio: "1:1",
     },
   {
@@ -42,7 +42,7 @@ export default function ProjectsHome() {
     id: 4,
     title: "Event Pulse - Booking Platform",
     description: "A sleek event booking platform with easy reservations, event listings, and real-time notifications for a seamless experience.",
-    category: "Web Developing",
+    category: "Web Development",
     image: "/projects/web/eventpulse.png",
     type: "web",
     aspectRatio: "16:9",
@@ -197,7 +197,7 @@ export default function ProjectsHome() {
                     </button>
                   )}
 
-                  {project.type === "graphics" && (
+                  {project.type === "graphic" && (
                     <button
                       onClick={() => setPopupImage(project.image)}
                       className="

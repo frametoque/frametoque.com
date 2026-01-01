@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Star } from "lucide-react";
 import Link from "next/link";
 
-const graphicscatprices = [
+const graphiccatprices = [
 
   {
     key: "logo",
@@ -251,7 +251,7 @@ const graphicscatprices = [
   },
 
   {
-    key: "webgraphics",
+    key: "webgraphic",
     title: "Digital & Web Graphics",
     desc: "Graphics that make your website and apps pop.",
     price: "2,500",
@@ -284,12 +284,12 @@ const graphicscatprices = [
       },
       {
         name: "Landing Page Graphics",
-        description: "Clean, section-based web graphics",
+        description: "Clean, section-based web graphic",
         price: "6,000",
         mostPopular: false,
         features: [
           "UI-focused visuals",
-          "Section-based graphics",
+          "Section-based graphic",
           "Clean spacing & hierarchy",
           "Web-ready formats",
           "Revision support",
@@ -297,11 +297,11 @@ const graphicscatprices = [
       },
       {
         name: "App UI Assets",
-        description: "Custom, scalable UI graphics for apps",
+        description: "Custom, scalable UI graphic for apps",
         price: "8,000",
         mostPopular: false,
         features: [
-          "Custom UI graphics",
+          "Custom UI graphic",
           "Platform-consistent design",
           "Scalable resolutions",
           "Organized asset delivery",
@@ -312,7 +312,7 @@ const graphicscatprices = [
   },
 
   {
-    key: "customgraphics",
+    key: "customgraphic",
     title: "Custom Graphic Design",
     desc: "Unique designs tailored just for you.",
     price: "4,000",
@@ -381,7 +381,7 @@ export default function WebPackages() {
   const popupRef = useRef(null);
 
   const [currency, setCurrency] = useState("LKR");
-  const [prices, setPrices] = useState(graphicscatprices);
+  const [prices, setPrices] = useState(graphiccatprices);
 
  const selectedCategory = prices.find((c) => c.key === activeCategory) || null;
 
@@ -422,16 +422,16 @@ export default function WebPackages() {
         const data = await res.json();
 
         if (data.showUSD) {
-          const converted = await convertPricesToUSD(graphicscatprices);
+          const converted = await convertPricesToUSD(graphiccatprices);
           setPrices(converted);
           setCurrency("USD");
         } else {
-          setPrices(graphicscatprices);
+          setPrices(graphiccatprices);
           setCurrency("LKR");
         }
       } catch (error) {
         console.error("Error detecting currency:", error);
-        setPrices(graphicscatprices);
+        setPrices(graphiccatprices);
         setCurrency("LKR");
       }
     }
@@ -444,7 +444,7 @@ export default function WebPackages() {
       <section className="py-2 px-6 relative max-w-7xl mx-auto text-white">
         <h2 className="text-3xl font-bold mb-8 pb-4 border-b border-white/10 flex items-center gap-3">
             <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">
-                Graphics Designing
+                Graphic Design
             </span>
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">

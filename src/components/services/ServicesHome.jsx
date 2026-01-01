@@ -13,12 +13,12 @@ const features = [
     link: "/services#web",
   },
   {
-    title: "Graphics Designing",
+    title: "Graphic Design",
     description:
       "Design isn’t just visuals, it’s memory you leave behind. Every piece we craft tells your story and makes your brand unforgettable.",
     icon: PenTool,
     imagePosition: "left",
-    link: "/services#graphics",
+    link: "/services#graphic",
 
   },
   {

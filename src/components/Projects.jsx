@@ -12,7 +12,7 @@ const projects = [
     id: 1,
     title: "Event Pulse - Booking Platform",
     description: "A sleek event booking platform with easy reservations, event listings, and real-time notifications for a seamless experience.",
-    category: "Web Developing",
+    category: "Web Development",
     image: "/projects/web/eventpulse.png",
     type: "web",
     aspectRatio: "16:9",
@@ -24,7 +24,7 @@ const projects = [
       title: "E Commerce Website - FPV Drone Store",
       description: "A modern online store for FPV drones, featuring smooth navigation, product showcases, and secure checkout for a seamless shopping experience.",
       type: "web",
-      category: "Web Developing",
+      category: "Web Development",
       image: "/projects/web/techrolk-store.png",
       aspectRatio: "16:9",
       live: "https://techrolk.com/shop",
@@ -34,7 +34,7 @@ const projects = [
       title: "TechRoLK Company Landing Page",
       description: "A sleek, modern company website featuring smooth animations, and CMS integration for easy content management and updates.",
       type: "web",
-      category: "Web Developing",
+      category: "Web Development",
       image: "/projects/web/techrolk.png",
       aspectRatio: "16:9",
       live: "https://techrolk.com",
@@ -44,7 +44,7 @@ const projects = [
       title: "Personal Portfolio",
       description: "A sleek, modern portfolio showcasing skills, projects, and achievements, designed to highlight your personal brand and online presence.",
       type: "web",
-      category: "Web Developing",
+      category: "Web Development",
       image: "/projects/web/itsnelitha.png",
       aspectRatio: "16:9",
       live: "https://itsnelitha.github.io/",
@@ -55,9 +55,9 @@ const projects = [
       id: 5,
       title: "Brand Poster Design",
       description: "Minimalist poster series for tech conference with bold typography and gradient effects.",
-      type: "graphics",
-      category: "Graphics Designing",
-      image: "/projects/graphics/sample.webp",
+      type: "graphic",
+      category: "Graphic Design",
+      image: "/projects/graphic/sample.webp",
       aspectRatio: "1:1",
     },
 
@@ -65,9 +65,9 @@ const projects = [
       id: 6,
       title: "Brand Poster Design",
       description: "Minimalist poster series for tech conference with bold typography and gradient effects.",
-      type: "graphics",
-      category: "Graphics Designing",
-      image: "/projects/graphics/sample.webp",
+      type: "graphic",
+      category: "Graphic Design",
+      image: "/projects/graphic/sample.webp",
       aspectRatio: "1:1",
     },
 
@@ -75,9 +75,9 @@ const projects = [
       id: 7,
       title: "Brand Poster Design",
       description: "Minimalist poster series for tech conference with bold typography and gradient effects.",
-      type: "graphics",
-      category: "Graphics Designing",
-      image: "/projects/graphics/sample.webp",
+      type: "graphic",
+      category: "Graphic Design",
+      image: "/projects/graphic/sample.webp",
       aspectRatio: "1:1",
     },
 
@@ -85,9 +85,9 @@ const projects = [
       id: 8,
       title: "Brand Poster Design",
       description: "Minimalist poster series for tech conference with bold typography and gradient effects.",
-      type: "graphics",
-      category: "Graphics Designing",
-      image: "/projects/graphics/sample.webp",
+      type: "graphic",
+      category: "Graphic Design",
+      image: "/projects/graphic/sample.webp",
       aspectRatio: "1:1",
     },
 
@@ -170,7 +170,7 @@ export default function ProjectsComponent() {
 
   const getAspectClass = (project) => {
     if (project.type === "web") return "aspect-[4/3]"; 
-    if (project.type === "graphics") return "aspect-square"; 
+    if (project.type === "graphic") return "aspect-square"; 
     if (project.type === "video") {
       return project.aspectRatio === "9:16" ? "aspect-[4/5]" : "aspect-video";
     }
@@ -214,7 +214,7 @@ export default function ProjectsComponent() {
                       backdrop-blur-sm
                       shadow-lg shadow-black/30
                     ${project.type === "web" ? "bg-gradient-to-r from-blue-800 to-blue-700" : 
-                      project.type === "graphics" ? "bg-gradient-to-r from-indigo-500 to-indigo-400" : 
+                      project.type === "graphic" ? "bg-gradient-to-r from-indigo-500 to-indigo-400" : 
                       "bg-gradient-to-r from-sky-600 to-sky-500"}
                     `}>
                       {project.type.toUpperCase()}
@@ -222,8 +222,8 @@ export default function ProjectsComponent() {
 
                     <div className={`relative w-full ${getAspectClass(project)} overflow-hidden`}>
                       <Image
-                        width={project.type === "graphics" ? 800 : project.aspectRatio === "9:16" ? 600 : 1200}
-                        height={project.type === "graphics" ? 800 : project.aspectRatio === "9:16" ? 1067 : 675}
+                        width={project.type === "graphic" ? 800 : project.aspectRatio === "9:16" ? 600 : 1200}
+                        height={project.type === "graphic" ? 800 : project.aspectRatio === "9:16" ? 1067 : 675}
                         src={project.image}
                         alt={project.title}
                         className="
@@ -297,7 +297,7 @@ export default function ProjectsComponent() {
                           </button>
                         )}
 
-                        {project.type === "graphics" && (
+                        {project.type === "graphic" && (
                           <button
                             onClick={() => setPopupImage(project.image)}
                             className="
