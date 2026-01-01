@@ -97,11 +97,6 @@
 
   "edge_side_panel": { "src": "/dashboard", "enabled": true },
 
-  "scope_extensions": {
-  "/dashboard": {},
-  "/dashboard/settings": {}
-},
-
   "note_taking": {
     "new_note_url": "/dashboard/settings",
     "name": "FrameToque Notes",
