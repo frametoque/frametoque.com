@@ -7,6 +7,7 @@ import Link from 'next/link';
 
 export default function AIChatbot() {
   const [open, setOpen] = useState(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [messages, setMessages] = useState([
     { role: "ai", text: "Hello! I'm your Frame Toque AI assistant. How can I help with your project?", timestamp: new Date() },
   ]);
@@ -41,7 +42,41 @@ export default function AIChatbot() {
     };
   }, [open]);
 
-  
+  const whatsappConfig = {
+    phoneNumber: "+94701901461", 
+    defaultMessage: "Hello! I'd like to speak with a human agent about: ",
+    businessHours: "8 AM - 10 PM",
+    responseTime: "Typically within 15 minutes"
+  };
+
+  const handleWhatsAppClick = () => {
+    const conversationSummary = messages
+      .slice(-3)
+      .map(m => `${m.role === 'user' ? 'User' : 'AI'}: ${m.text}`)
+      .join('\n');
+    
+    const fullMessage = `${whatsappConfig.defaultMessage}\n\nRecent conversation:\n${conversationSummary}`;
+    const encodedMessage = encodeURIComponent(fullMessage);
+    const whatsappUrl = `https://wa.me/${whatsappConfig.phoneNumber}?text=${encodedMessage}`;
+    
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    
+    setMessages(prev => [
+      ...prev,
+      { 
+        role: "ai", 
+        text: `I've connected you with a human agent via WhatsApp! A representative should respond within ${whatsappConfig.responseTime}. Business hours: ${whatsappConfig.businessHours}.`,
+        timestamp: new Date()
+      },
+    ]);
+    
+    setShowWhatsAppModal(false);
+  };
+
+  const suggestWhatsApp = () => {
+    setShowWhatsAppModal(true);
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
 
@@ -49,7 +84,6 @@ export default function AIChatbot() {
     setInput("");
     setLoading(true);
 
-    // Add user message
     setMessages(prev => [
       ...prev,
       { 
@@ -59,8 +93,22 @@ export default function AIChatbot() {
       },
     ]);
 
+    const wantsHuman = /(human|agent|representative|person|talk to someone|speak with|real person)/i.test(userText);
+    
+    if (wantsHuman) {
+      setLoading(false);
+      setMessages(prev => [
+        ...prev,
+        { 
+          role: "ai", 
+          text: `I understand you'd like to speak with a human agent! Click the green WhatsApp button to connect with our team. Our business hours are ${whatsappConfig.businessHours} and we typically respond within ${whatsappConfig.responseTime}.`,
+          timestamp: new Date()
+        },
+      ]);
+      return;
+    }
+
     try {
-      // Add artificial delay for better UX
       await new Promise(resolve => setTimeout(resolve, 300));
       const res = await fetch("/api/ai", {
         method: "POST",
@@ -71,7 +119,7 @@ export default function AIChatbot() {
         }),
       });
       const data = await res.json();
-      // Update AI status based on response
+      
       if (data.mode === 'openrouter') {
         const modelName = data.model ? data.model.split('/').pop().split(':')[0] : 'OpenRouter';
         setAiStatus({
@@ -89,17 +137,12 @@ export default function AIChatbot() {
           model: 'Frame Toque AI'
         });
       }
-      // Remove or adjust the transformation if switching to Markdown
-      // const transformed = data.reply.replace(
-      //   /<Link\s+href=["']([^"']+)["']>([^<]+)<\/Link>/gi,
-      //   '<a href="$1" class="text-blue-600 hover:text-blue-800 underline transition-colors" target="_blank" rel="noopener noreferrer">$2</a>'
-      // );
-      // Instead, assume data.reply is in Markdown format (e.g., "[text](url)")
+      
       setMessages(prev => [
         ...prev,
         { 
           role: "ai", 
-          text: data.reply,  // Use raw reply if it's Markdown
+          text: data.reply,
           timestamp: new Date()
         },
       ]);
@@ -108,7 +151,6 @@ export default function AIChatbot() {
     } catch (err) {
       console.error("Chat error:", err);
       
-      // Enhanced error handling with fallback responses
       const fallbackResponses = [
         "I'm optimizing my responses. Let me provide some guidance based on your query...",
         "While I connect to enhanced services, here's my take on that...",
@@ -134,7 +176,6 @@ export default function AIChatbot() {
     }
   };
 
-  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -150,7 +191,6 @@ export default function AIChatbot() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open]);
 
-  // Handle wheel event on messages container
   const handleWheel = (e) => {
     const container = messagesContainerRef.current;
     if (!container) return;
@@ -165,7 +205,6 @@ export default function AIChatbot() {
     e.stopPropagation();
   };
 
-  // Handle touch events for mobile
   const handleTouchStart = (e) => {
     const touch = e.touches[0];
     const startY = touch.clientY;
@@ -201,16 +240,22 @@ export default function AIChatbot() {
     e.stopPropagation();
   };
 
-  // Clear chat history
   const clearChat = () => {
     setMessages([
       { role: "ai", text: "Chat cleared! I'm ready to help with your next question.", timestamp: new Date() },
     ]);
   };
 
+
+  const WhatsAppIcon = ({ className = "w-6 h-6" }) => (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.76.982.998-3.675-.236-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.9 6.994c-.004 5.45-4.438 9.88-9.885 9.88m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.333.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.333 11.893-11.893 0-3.18-1.24-6.162-3.495-8.411"/>
+    </svg>
+  );
+
   return (
     <>
-     <div className="relative">
+      <div className="relative">
         <button
           onClick={() => setOpen(!open)}
           className="fixed bottom-6 right-6 z-50 rounded-lg backdrop-blur-xl transition-all duration-300 px-5 py-5 hover:scale-105 active:scale-95 group shadow-2xl focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/50 focus:ring-offset-2 focus:ring-offset-transparent"
@@ -222,7 +267,7 @@ export default function AIChatbot() {
               0 0 0 1px rgba(255, 255, 255, 0.08),
               0 0 25px rgba(59, 130, 246, 0.15)
             `,
-            minWidth: '64px', 
+            minWidth: '64px',
             minHeight: '64px'
           }}
           aria-label="Open Toque AI Chatbot"
@@ -376,7 +421,6 @@ export default function AIChatbot() {
                     }}
                   >
                     <div className="prose prose-invert max-w-none text-sm leading-relaxed">
-                      {/* Customize ReactMarkdown to style links as blue */}
                       <ReactMarkdown
                         components={{
                           a: ({ children, href }) => (
@@ -437,7 +481,7 @@ export default function AIChatbot() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area with Model Info at Bottom */}
+            {/* Input Area with WhatsApp Button */}
             <div className="absolute bottom-0 left-0 right-0 p-4 border-t"
               style={{
                 borderColor: 'rgba(59, 130, 246, 0.1)',
@@ -445,6 +489,21 @@ export default function AIChatbot() {
               }}
             >
               <div className="flex gap-2">
+                {/* WhatsApp Agent Button */}
+                <button
+                  onClick={suggestWhatsApp}
+                  className="p-3 rounded-lg transition-all duration-200 flex items-center justify-center backdrop-blur-sm group relative overflow-hidden hover:scale-105"
+                  style={{
+                    background: 'rgba(37, 211, 102, 0.1)',
+                    border: '1px solid rgba(37, 211, 102, 0.2)',
+                    color: '#25D366'
+                  }}
+                  title="Chat with human agent via WhatsApp"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#25D366]/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  <WhatsAppIcon />
+                </button>
+                
                 <div className="flex-1 relative">
                   <input
                     value={input}
@@ -460,7 +519,7 @@ export default function AIChatbot() {
                       background: 'rgba(12, 25, 55, 0.5)',
                       border: '1px solid rgba(5, 223, 114, 0.15)'
                     }}
-                    placeholder={`Let's talk about your next project`}
+                    placeholder="Let's talk about your next project"
                     disabled={loading}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2"
@@ -483,15 +542,17 @@ export default function AIChatbot() {
                 </button>
               </div>
               
-              {/* Model Information ONLY here at the bottom */}
+              {/* Model Information */}
               <div className="flex items-center justify-between mt-2">
                 <div className="flex items-center gap-1.5">
-                  
-                      <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                        Powered by Toque AI. Responses may vary.
-                        {/* {aiStatus.model} */}
-                      </p>
-                   
+                  <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                    Powered by Toque AI • <button 
+                      onClick={suggestWhatsApp}
+                      className="hover:text-[#25D366] transition-colors underline"
+                    >
+                      Need human help?
+                    </button>
+                  </p>
                 </div>
                 <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>
                   {messages.length} messages • Ctrl+K
@@ -499,7 +560,93 @@ export default function AIChatbot() {
               </div>
             </div>
           </div>
-          
+        </div>
+      )}
+
+      {/* WhatsApp Modal */}
+      {showWhatsAppModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="relative rounded-2xl overflow-hidden max-w-md w-full"
+            style={{
+              background: 'linear-gradient(135deg, rgba(12, 25, 55, 0.95) 0%, rgba(8, 18, 40, 0.98) 100%)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(37, 211, 102, 0.2)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 rounded-xl"
+                  style={{
+                    background: 'rgba(37, 211, 102, 0.1)',
+                    border: '1px solid rgba(37, 211, 102, 0.2)'
+                  }}
+                >
+                  <WhatsAppIcon className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white text-lg">Connect with Human Agent</h3>
+                  <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                    Get personalized assistance on WhatsApp
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4 mb-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Response Time</span>
+                    <span className="text-sm font-medium text-white">{whatsappConfig.responseTime}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Business Hours</span>
+                    <span className="text-sm font-medium text-white">{whatsappConfig.businessHours}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Contact</span>
+                    <span className="text-sm font-medium text-white">{whatsappConfig.phoneNumber}</span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl"
+                  style={{
+                    background: 'rgba(37, 211, 102, 0.05)',
+                    border: '1px solid rgba(37, 211, 102, 0.1)'
+                  }}
+                >
+                  <p className="text-sm text-center" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                    Your recent conversation will be shared with the agent for context
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowWhatsAppModal(false)}
+                  className="flex-1 py-3 rounded-lg transition-colors text-white hover:text-[#3B82F6]"
+                  style={{
+                    background: 'rgba(12, 25, 55, 0.5)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleWhatsAppClick}
+                  className="flex-1 py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-medium group relative overflow-hidden"
+                  style={{
+                    background: 'rgba(37, 211, 102, 0.1)',
+                    border: '1px solid rgba(37, 211, 102, 0.2)',
+                    color: '#25D366'
+                  }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#25D366]/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  <WhatsAppIcon className="w-5 h-5" />
+                  <span>Open WhatsApp</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </>
