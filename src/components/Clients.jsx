@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef } from "react";
 
 const clients = [
-  { name: "Client", logo: "/logos/ft/logo.png" },
+  { name: "TechRoLK", logo: "/images/clients/logo/techrolk.png" },
   { name: "Client", logo: "/logos/ft/logo.png" },
   { name: "Client", logo: "/logos/ft/logo.png" },
   { name: "Client", logo: "/logos/ft/logo.png" },

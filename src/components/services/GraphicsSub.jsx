@@ -442,8 +442,11 @@ export default function WebPackages() {
   return (
     <>
       <section className="py-2 px-6 relative max-w-7xl mx-auto text-white">
-        <h2 className="text-4xl sm:text-4xl font-bold mb-12">Graphics Designing</h2>
-
+        <h2 className="text-3xl font-bold mb-8 pb-4 border-b border-white/10 flex items-center gap-3">
+            <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">
+                Graphics Designing
+            </span>
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {prices.map((cat, i) => (
             <div
