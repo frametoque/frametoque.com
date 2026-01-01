@@ -1,10 +1,9 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/react";
 import Script from "next/script";
 import "./globals.css";
-
 import SWRegister from "./sw-register";
-
 import SnowfallWrapper from "@/components/SnowfallWrapper";
 import AIChatbot from "@/components/AIChatbot";
 
@@ -69,21 +68,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        {/* Google Analytics */}
-        <Script
-          strategy="afterInteractive"
-          src="https://www.googletagmanager.com/gtag/js?id=G-J0RPQGRTEK"
-        />
-
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-J0RPQGRTEK');
-          `}
-        </Script>
-
         <Script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -108,6 +92,7 @@ export default function RootLayout({ children }) {
         <ClerkProvider>
           <SWRegister />
           {children}
+          <Analytics />
           <AIChatbot />
           <SnowfallWrapper />
         </ClerkProvider>

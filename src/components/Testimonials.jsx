@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 const testimonials = [
   {
     name: "NextVibe",
@@ -65,10 +67,12 @@ export default function Testimonials() {
                         {testimonial.content}
                       </p>
                       <div className="flex items-center space-x-2 sm:space-x-3">
-                        <img
+                        <Image
                           src={testimonial.image}
                           alt={testimonial.name}
                           className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
+                          width={48}
+                          height={48}
                         />
                         <div>
                           <h3 className="font-semibold text-white text-sm sm:text-base">
