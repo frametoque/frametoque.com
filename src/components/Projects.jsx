@@ -6,11 +6,13 @@ import Link from "next/link";
 
 import { Github, Globe, Youtube, Eye, Play, ExternalLink, X } from "lucide-react";
 
+const protectImage = (e) => e.preventDefault();
+
 const projects = [
 
     {
     id: 1,
-    title: "Event Pulse - Booking Platform",
+    title: "Booking Platform",
     description: "A sleek event booking platform with easy reservations, event listings, and real-time notifications for a seamless experience.",
     category: "Web Development",
     image: "/projects/web/eventpulse.png",
@@ -21,7 +23,7 @@ const projects = [
 
      {
       id: 2,
-      title: "E Commerce Website - FPV Drone Store",
+      title: "E Commerce Website",
       description: "A modern online store for FPV drones, featuring smooth navigation, product showcases, and secure checkout for a seamless shopping experience.",
       type: "web",
       category: "Web Development",
@@ -31,7 +33,7 @@ const projects = [
     },
  {
       id: 3,
-      title: "TechRoLK Company Landing Page",
+      title: "Company Landing Page",
       description: "A sleek, modern company website featuring smooth animations, and CMS integration for easy content management and updates.",
       type: "web",
       category: "Web Development",
@@ -53,48 +55,48 @@ const projects = [
 
       {
       id: 5,
-      title: "Brand Poster Design",
-      description: "Minimalist poster series for tech conference with bold typography and gradient effects.",
+      title: "Product Poster Design",
+      description: "A warm, premium-style product poster designed to highlight Inginee Energy Cup. Focused on rich lighting, smooth textures, and a strong center composition to create a cozy yet energetic feel that instantly grabs attention.",
       type: "graphic",
       category: "Graphic Design",
-      image: "/projects/graphic/sample.webp",
+      image: "/projects/graphic/energycup.png",
       aspectRatio: "1:1",
     },
 
         {
       id: 6,
-      title: "Brand Poster Design",
-      description: "Minimalist poster series for tech conference with bold typography and gradient effects.",
+      title: "Class Schedule Poster",
+      description: "A bold and structured poster designed for an A/L Grade 13 monthly class plan. Uses strong typography, clear hierarchy, and modern color contrast to make schedules easy to read while keeping a clean, professional look for educational branding.",
       type: "graphic",
       category: "Graphic Design",
-      image: "/projects/graphic/sample.webp",
+      image: "/projects/graphic/class.png",
       aspectRatio: "1:1",
     },
 
         {
       id: 7,
-      title: "Brand Poster Design",
-      description: "Minimalist poster series for tech conference with bold typography and gradient effects.",
+      title: "Magazine Launch Poster",
+      description: "A bold promotional poster designed for a science society magazine launch. Strong typography and dramatic lighting give it a serious and professional look.",
       type: "graphic",
       category: "Graphic Design",
-      image: "/projects/graphic/sample.webp",
+      image: "/projects/graphic/ncss.png",
       aspectRatio: "1:1",
     },
 
         {
       id: 8,
-      title: "Brand Poster Design",
-      description: "Minimalist poster series for tech conference with bold typography and gradient effects.",
+      title: "Product Poster Design",
+      description: "A fun and colorful product poster created to show freshness and flavor. Bright lighting, playful visuals, and bold text help make the snack feel exciting and eye-catching.",
       type: "graphic",
       category: "Graphic Design",
-      image: "/projects/graphic/sample.webp",
+      image: "/projects/graphic/smurfs.png",
       aspectRatio: "1:1",
     },
 
   {
     id: 9,
-    title: "1 of 2 Lamborghini Urus Performante",
-    description: "1 of 2 Lamborghini Urus Performante - ©️ 2025 Frame Toque. All Rights Reserved.",
+    title: "Lamborghini Urus Performante – Short Visual",
+    description: "A short cinematic video showcasing the Lamborghini Urus Performante, focused on power, design, and premium detail.",
     category: "Video Editing",
     image: "https://img.youtube.com/vi/DSjDmrtzAFE/maxresdefault.jpg",
     type: "video",
@@ -133,7 +135,18 @@ const projects = [
     type: "video",
     aspectRatio: "9:16",
     youtube: "https://www.youtube.com/watch?v=DSjDmrtzAFE"
-  }
+  },
+
+   {
+    id: 13,
+    title: "School Website",
+    description: "A modern, responsive school website built to showcase Prince of Wales College’s academics, events, and student life.",
+    category: "Web Development",
+    image: "/projects/web/pwc.png",
+    type: "web",
+    aspectRatio: "16:9",
+    live: "https://princeofwales.edu.lk/"
+  },
 ];
 
 export default function ProjectsComponent() {
@@ -231,6 +244,8 @@ export default function ProjectsComponent() {
                           transition-transform duration-700 
                           group-hover:scale-110
                         "
+                        onContextMenu={protectImage}
+                        onDragStart={protectImage}
                       />
                             
                     </div>

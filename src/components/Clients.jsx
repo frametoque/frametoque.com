@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 
+const protectImage = (e) => e.preventDefault();
+
 const clients = [
   { name: "TechRoLK", logo: "/images/clients/logo/techrolk.png" },
   { name: "NextVibe", logo: "/images/clients/logo/nextvibe.png" },
@@ -138,6 +140,8 @@ export default function Clients() {
                 width={70}
                 height={70}
                 alt={client.name}
+                onContextMenu={protectImage}
+                onDragStart={protectImage}
                 className="object-contain"
               />
               <p className="mt-3 text-lg font-medium text-white">

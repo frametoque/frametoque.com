@@ -4,6 +4,8 @@ import { Github, Globe, Youtube, Eye, Play, ExternalLink, X } from "lucide-react
 import Link from "next/link";
 import Image from "next/image";
 
+const protectImage = (e) => e.preventDefault();
+
 export default function ProjectsHome() {
   const [popupImage, setPopupImage] = useState(null);
   const [popupVideo, setPopupVideo] = useState(null);
@@ -11,7 +13,7 @@ export default function ProjectsHome() {
   const projects = [
     {
       id: 1,
-      title: "Company Website - TechRoLK",
+      title: "Company Website",
       description: "A sleek, modern company website featuring smooth animations, and CMS integration for easy content management and updates.",
       type: "web",
       category: "Web Development",
@@ -21,17 +23,17 @@ export default function ProjectsHome() {
     },
     {
       id: 2,
-      title: "Brand Poster Design",
-      description: "Minimalist poster series for tech conference with bold typography and gradient effects.",
+      title: "Product Poster Design",
+      description: "A fun and colorful product poster created to show freshness and flavor. Bright lighting, playful visuals, and bold text help make the snack feel exciting and eye-catching.",
       type: "graphic",
       category: "Graphic Design",
-      image: "/projects/graphic/sample.webp",
+      image: "/projects/graphic/smurfs.png",
       aspectRatio: "1:1",
     },
   {
     id: 3,
-    title: "1 of 2 Lamborghini Urus Performante",
-    description: "1 of 2 Lamborghini Urus Performante - ©️ 2025 Frame Toque. All Rights Reserved.",
+    title: "Short Visual - Lamborghini Urus Performante",
+    description: "A short cinematic video showcasing the Lamborghini Urus Performante, focused on power, design, and premium detail.",
     category: "Video Editing",
     image: "https://img.youtube.com/vi/DSjDmrtzAFE/maxresdefault.jpg",
     type: "video",
@@ -40,7 +42,7 @@ export default function ProjectsHome() {
   },
   {
     id: 4,
-    title: "Event Pulse - Booking Platform",
+    title: "Booking Platform",
     description: "A sleek event booking platform with easy reservations, event listings, and real-time notifications for a seamless experience.",
     category: "Web Development",
     image: "/projects/web/eventpulse.png",
@@ -125,6 +127,8 @@ export default function ProjectsHome() {
                   height={400}
                   src={project.image}
                   alt={project.title}
+                  onContextMenu={protectImage}
+                  onDragStart={protectImage}
                   className={`
                     w-full h-full object-cover 
                     transition-transform duration-700 

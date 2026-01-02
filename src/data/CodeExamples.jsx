@@ -3,6 +3,8 @@ import { useRef, useState } from "react";
 import { Brush, Pen, Square, Play, Pause, Gauge, Sliders, Film, Filter, Layers, Music, Text, Crop, Undo } from "lucide-react";
 import Image from "next/image";
 
+const protectImage = (e) => e.preventDefault();
+
 export const codeExamples = {
   "Web Development": `// Frame Toque | Creative Web Development
 import React from "react";
@@ -68,10 +70,12 @@ export function GraphicsDesignUI() {
 
     <div className="flex-1 bg-gray-800 border border-[#001E36]/50 rounded flex items-center justify-center overflow-hidden relative">
       <Image
-        src="/projects/graphic/sample.webp"
+        src="/projects/graphic/smurfs.png"
         alt="Canvas Preview"
         width={1000} height={1000}
         className="object-contain h-full w-full"
+        onContextMenu={protectImage}
+        onDragStart={protectImage}
       />
       <div className="absolute bottom-2 right-2 bg-[#001E36]/50 text-xs text-white px-1 py-0.5 rounded">Image</div>
     </div>
@@ -151,6 +155,8 @@ export function VideoEditorUI() {
                   loop
                   className="w-full h-full object-cover rounded"
                   onTimeUpdate={handleTimeUpdate}
+                  onContextMenu={protectImage}
+                  onDragStart={protectImage}
                 />
               </div>
             </div>
