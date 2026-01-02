@@ -43,7 +43,7 @@ export default function Hero() {
           <div>
             <div className="inline-flex items-center space-x-2 px-3 sm:px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full mb-4 sm:mb-6 animate-in slide-in-from-bottom duration-700">
               <Zap className="w-4 h-4 text-blue-400" />
-              <span className="text-xs sm:text-sm text-blue-300">Simple. Unique.</span>
+              <span className="text-xs sm:text-sm text-blue-300">Simple.Better.Fast.</span>
             </div>
 
             <h1 className="text-5xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold mb-4 sm:mb-6 animate-in slide-in-from-bottom duration-700 delay-100 leading-tight">

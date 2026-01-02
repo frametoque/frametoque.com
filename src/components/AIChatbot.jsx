@@ -332,7 +332,7 @@ export default function AIChatbot() {
                   <div>
                     <h3 className="font-semibold text-white">Toque AI</h3>
                     <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                      Simple.Unique.
+                      Simple.Better.Fast.
                     </p>
                   </div>
                 </div>
