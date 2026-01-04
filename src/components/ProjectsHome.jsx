@@ -35,7 +35,7 @@ export default function ProjectsHome() {
       title: "Short Visual | Lamborghini Urus Performante",
       description: "A short cinematic video showcasing the Lamborghini Urus Performante, focused on power, design, and premium detail.",
       category: "Video Editing",
-      image: "https://img.youtube.com/vi/DSjDmrtzAFE/maxresdefault.jpg",
+      image: "https://img.youtube.com/vi/DSjDmrtzAFE/hqdefault.jpg",
       type: "video",
       aspectRatio: "9:16",
       youtube: "https://www.youtube.com/watch?v=DSjDmrtzAFE"
