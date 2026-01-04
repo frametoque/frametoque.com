@@ -28,20 +28,7 @@ const getIconComponent = (iconName) => {
     }
 };
 
-const parsePrice = (priceString) => {
-    if (!priceString) return 0;
-    return parseFloat(priceString.replace(/,/g, ''));
-};
 
-const formatPrice = (price, currency) => {
-    const priceNumber = parseFloat(price);
-
-    if (currency === "USD") {
-        return priceNumber.toFixed(2);
-    } else {
-        return priceNumber.toFixed(0);
-    }
-};
 
 export default function ServiceDataPage({ serviceType = "portfolio-websites" }) {
     const [scrolled, setScrolled] = useState(false);
@@ -73,6 +60,31 @@ export default function ServiceDataPage({ serviceType = "portfolio-websites" }) 
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+
+    const parsePrice = (priceString) => {
+        if (!priceString) return 0;
+        const numericString = priceString.toString().replace(/[^0-9.-]/g, '');
+        return parseFloat(numericString) || 0;
+    };
+
+    const formatPrice = (price, currency) => {
+        const priceNumber = typeof price === 'number' ? price : parseFloat(price);
+
+        if (isNaN(priceNumber)) return '0';
+
+        if (currency === "USD") {
+            return priceNumber.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        } else {
+            return priceNumber.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        }
+    };
+
     useEffect(() => {
         async function detectAndConvertCurrency() {
             try {
@@ -88,27 +100,80 @@ export default function ServiceDataPage({ serviceType = "portfolio-websites" }) 
 
                     if (rate) {
                         const converted = originalPackages.map(pkg => {
-                            const priceInLKR = parsePrice(pkg.price);
+                            // Ensure we have a valid number
+                            const priceInLKR = parseFloat(pkg.numericPrice) || parsePrice(pkg.price) || 0;
                             const priceInUSD = priceInLKR * rate;
+
+                            const formattedUSD = formatPrice(priceInUSD, "USD");
+                            const formattedLKR = formatPrice(priceInLKR, "LKR");
+
                             return {
                                 ...pkg,
-                                convertedPrice: priceInUSD.toFixed(2)
+                                price: formattedUSD,
+                                convertedPrice: formattedUSD,
+                                originalPriceFormatted: formattedLKR,
+                                originalPrice: priceInLKR,
+                                convertedPriceRaw: priceInUSD,
+                                isUSD: true
                             };
                         });
 
                         setConvertedPackages(converted);
                         setCurrency("USD");
                     } else {
-                        setConvertedPackages(originalPackages);
+                        const formatted = originalPackages.map(pkg => {
+                            const priceInLKR = parseFloat(pkg.numericPrice) || parsePrice(pkg.price) || 0;
+                            const formattedLKR = formatPrice(priceInLKR, "LKR");
+
+                            return {
+                                ...pkg,
+                                price: formattedLKR,
+                                convertedPrice: formattedLKR,
+                                originalPriceFormatted: formattedLKR,
+                                originalPrice: priceInLKR,
+                                isUSD: false
+                            };
+                        });
+
+                        setConvertedPackages(formatted);
                         setCurrency("LKR");
                     }
                 } else {
-                    setConvertedPackages(originalPackages);
+                    const formatted = originalPackages.map(pkg => {
+                        const priceInLKR = parseFloat(pkg.numericPrice) || parsePrice(pkg.price) || 0;
+                        const formattedLKR = formatPrice(priceInLKR, "LKR");
+
+                        return {
+                            ...pkg,
+                            price: formattedLKR,
+                            convertedPrice: formattedLKR,
+                            originalPriceFormatted: formattedLKR,
+                            originalPrice: priceInLKR,
+                            isUSD: false
+                        };
+                    });
+
+                    setConvertedPackages(formatted);
                     setCurrency("LKR");
                 }
             } catch (error) {
                 console.error("Error converting currency:", error);
-                setConvertedPackages(originalPackages);
+
+                const formatted = originalPackages.map(pkg => {
+                    const priceInLKR = parseFloat(pkg.numericPrice) || parsePrice(pkg.price) || 0;
+                    const formattedLKR = formatPrice(priceInLKR, "LKR");
+
+                    return {
+                        ...pkg,
+                        price: formattedLKR,
+                        convertedPrice: formattedLKR,
+                        originalPriceFormatted: formattedLKR,
+                        originalPrice: priceInLKR,
+                        isUSD: false
+                    };
+                });
+
+                setConvertedPackages(formatted);
                 setCurrency("LKR");
             } finally {
                 setIsLoading(false);
@@ -120,14 +185,18 @@ export default function ServiceDataPage({ serviceType = "portfolio-websites" }) 
         }
     }, [originalPackages]);
 
-    const displayPackages = currency === "USD" ? convertedPackages : originalPackages;
-
-    // Debug: log what we're getting
-    console.log("Debug Info:");
-    console.log("serviceType received:", serviceType);
-    console.log("data found:", data);
-    console.log("Is servicesData array?", Array.isArray(servicesData));
-    console.log("servicesData first item:", servicesData?.[0]);
+    const displayPackages = convertedPackages.length > 0 ? convertedPackages : originalPackages.map(pkg => {
+        const priceInLKR = parseFloat(pkg.numericPrice) || parsePrice(pkg.price) || 0;
+        const formattedLKR = formatPrice(priceInLKR, "LKR");
+        return {
+            ...pkg,
+            price: formattedLKR,
+            convertedPrice: formattedLKR,
+            originalPriceFormatted: formattedLKR,
+            originalPrice: priceInLKR,
+            isUSD: false
+        };
+    });
 
     if (!data) {
         return (
