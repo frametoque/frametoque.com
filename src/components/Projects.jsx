@@ -98,7 +98,7 @@ const projects = [
     title: "Short Visual | Lamborghini Urus Performante",
     description: "A short cinematic video showcasing the Lamborghini Urus Performante, focused on power, design, and premium detail.",
     category: "Video Editing",
-    image: "https://img.youtube.com/vi/DSjDmrtzAFE/maxresdefault.jpg",
+    image: "https://img.youtube.com/vi/DSjDmrtzAFE/hqdefault.jpg",
     type: "video",
     aspectRatio: "9:16",
     youtube: "https://www.youtube.com/watch?v=DSjDmrtzAFE"
@@ -109,7 +109,7 @@ const projects = [
     title: "Promotional Trailer | DocuMind '26",
     description: "A high-energy promo produced for the Nalanda College Science Society (NCSS) to launch the 'DocuMind' Report Contest. This project focuses on seamless transitions, crisp typography, and a narrative flow that connects Sri Lanka’s current challenges with innovative student solutions.",
     category: "Video Editing",
-    image: "https://img.youtube.com/vi/fcm_iurb5dE/maxresdefault.jpg",
+    image: "https://img.youtube.com/vi/fcm_iurb5dE/hqdefault.jpg",
     type: "video",
     aspectRatio: "9:16",
     youtube: "https://www.youtube.com/watch?v=fcm_iurb5dE"
