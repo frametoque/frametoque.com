@@ -30,30 +30,30 @@ export default function ProjectsHome() {
       image: "/projects/graphic/smurfs.png",
       aspectRatio: "1:1",
     },
-  {
-    id: 3,
-    title: "Short Visual - Lamborghini Urus Performante",
-    description: "A short cinematic video showcasing the Lamborghini Urus Performante, focused on power, design, and premium detail.",
-    category: "Video Editing",
-    image: "https://img.youtube.com/vi/DSjDmrtzAFE/maxresdefault.jpg",
-    type: "video",
-    aspectRatio: "9:16",
-    youtube: "https://www.youtube.com/watch?v=DSjDmrtzAFE"
-  },
-  {
-    id: 4,
-    title: "Booking Platform",
-    description: "A sleek event booking platform with easy reservations, event listings, and real-time notifications for a seamless experience.",
-    category: "Web Development",
-    image: "/projects/web/eventpulse.png",
-    type: "web",
-    aspectRatio: "16:9",
-    live: "https://eventpulse.duckdns.org/"
-  },
+    {
+      id: 3,
+      title: "Short Visual | Lamborghini Urus Performante",
+      description: "A short cinematic video showcasing the Lamborghini Urus Performante, focused on power, design, and premium detail.",
+      category: "Video Editing",
+      image: "https://img.youtube.com/vi/DSjDmrtzAFE/maxresdefault.jpg",
+      type: "video",
+      aspectRatio: "9:16",
+      youtube: "https://www.youtube.com/watch?v=DSjDmrtzAFE"
+    },
+    {
+      id: 4,
+      title: "Booking Platform",
+      description: "A sleek event booking platform with easy reservations, event listings, and real-time notifications for a seamless experience.",
+      category: "Web Development",
+      image: "/projects/web/eventpulse.png",
+      type: "web",
+      aspectRatio: "16:9",
+      live: "https://eventpulse.duckdns.org/"
+    },
   ];
 
   const getAspectClass = () => {
-    return "aspect-[3/2]"; 
+    return "aspect-[3/2]";
   };
 
   const getImagePosition = (project) => {
@@ -79,7 +79,7 @@ export default function ProjectsHome() {
       {/* Pulse Effects */}
       <div className="absolute top-10 left-4 sm:left-10 w-32 sm:w-48 h-32 sm:h-48 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-10 right-4 sm:right-10 w-40 sm:w-64 h-40 sm:h-64 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-      
+
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-12">
           <h2 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
@@ -111,15 +111,6 @@ export default function ProjectsHome() {
                 h-full
               "
             >
-              <span className={`
-                absolute top-3 left-3 text-xs font-medium
-                px-3 py-1.5 rounded-full z-20 
-                backdrop-blur-sm
-                shadow-lg shadow-black/30
-                bg-gradient-to-r from-blue-800 to-blue-700
-              `}>
-                {project.category}
-              </span>
 
               <div className={`relative w-full ${getAspectClass()} overflow-hidden`}>
                 <Image
@@ -136,11 +127,16 @@ export default function ProjectsHome() {
                     ${getImagePosition(project)}
                   `}
                 />
-                
-              
+
+
               </div>
 
               <div className="p-5 flex flex-col gap-3 flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-medium">
+                    {project.category}
+                  </span>
+                </div>
                 <h3 className="text-lg font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                   {project.title}
                 </h3>
@@ -148,11 +144,11 @@ export default function ProjectsHome() {
                 <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
                   {project.description}
                 </p>
-                
+
                 <div className="flex gap-2 mt-auto pt-3">
                   {project.type === "web" && (
                     <>
-                     
+
 
                       {project.live && (
                         <Link
@@ -180,9 +176,9 @@ export default function ProjectsHome() {
 
                   {project.type === "video" && project.youtube && (
                     <button
-                      onClick={() => setPopupVideo({ 
-                        url: project.youtube, 
-                        title: project.title 
+                      onClick={() => setPopupVideo({
+                        url: project.youtube,
+                        title: project.title
                       })}
                       className="
                         flex-1 px-3 py-2 rounded-lg
@@ -244,7 +240,7 @@ export default function ProjectsHome() {
 
       {popupImage && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div 
+          <div
             className="absolute inset-0"
             onClick={() => setPopupImage(null)}
           />
@@ -280,7 +276,7 @@ export default function ProjectsHome() {
 
       {popupVideo && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div 
+          <div
             className="absolute inset-0"
             onClick={() => setPopupVideo(null)}
           />
@@ -300,7 +296,7 @@ export default function ProjectsHome() {
                 Close (ESC)
               </span>
             </button>
-            
+
             <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-black">
               <div className="aspect-video">
                 <iframe
@@ -313,7 +309,7 @@ export default function ProjectsHome() {
                 />
               </div>
             </div>
-            
+
             <h3 className="text-white text-xl font-semibold mt-4 text-center bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
               {popupVideo.title}
             </h3>

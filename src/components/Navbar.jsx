@@ -1,4 +1,4 @@
-"use client"; 
+"use client";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -9,7 +9,7 @@ export default function Navbar({ scrolled }) {
   const [mobileMenuIsOpen, setMobileMenuIsOpen] = useState(false);
   const pathname = usePathname();
 
-   const links = [
+  const links = [
     { href: "/about", label: "About" },
     { href: "/projects", label: "Work" },
     { href: "/services", label: "Services" },
@@ -19,54 +19,55 @@ export default function Navbar({ scrolled }) {
 
   return (
     <nav
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-slate-950/80 backdrop-blur-lg border-b border-slate-800"
-          : "bg-slate-950/20 backdrop-blur-sm"
-      }`}
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled
+        ? "bg-slate-950/80 backdrop-blur-lg border-b border-slate-800"
+        : "bg-slate-950/20 backdrop-blur-sm"
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14 sm:h-16 md:h-20">
           <Link href="/">
-          <div className="flex items-center space-x-1 group cursor-pointer">
-            <div>
-             <Image
-                src="/logos/ft/name-logo.png"
-                alt="Frame Toque"
-                width={200}     
-                height={40}
-                className="w-32 h-auto sm:w-48"
-              />
+            <div className="flex items-center space-x-1 group cursor-pointer">
+              <div>
+                <Image
+                  src="/logos/ft/name-logo.png"
+                  alt="Frame Toque"
+                  width={200}
+                  height={40}
+                  className="w-32 h-auto sm:w-48"
+                />
+              </div>
             </div>
-          </div>
           </Link>
           <div className="hidden md:flex items-center space-x-6 lg:space-x-8 active">
             {links.map((link) => {
-        const isActive = pathname === link.href;
 
-        const baseClasses = link.special
-          ? "px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-b from-blue-600 to-blue-700 transition-transform duration-300"
-          : "text-sm lg:text-base transition-colors duration-300";
+              const isActive = link.href === "/services"
+                ? pathname === "/services" || pathname.startsWith("/services/")
+                : pathname === link.href || pathname.startsWith(`${link.href}/`);
 
-        return (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`${baseClasses} ${
-              !link.special && isActive
-              ? "text-white font-bold" 
-              : "text-gray-300 hover:text-white"
-            } ${link.special ? "hover:scale-102" : ""}`}
-          >
-            {link.label}
-          </Link>
-        );
-      })}
+              const baseClasses = link.special
+                ? "px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-b from-blue-600 to-blue-700 transition-transform duration-300"
+                : "text-sm lg:text-base transition-colors duration-300";
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`${baseClasses} ${!link.special && isActive
+                    ? "text-white font-bold"
+                    : "text-gray-300 hover:text-white"
+                    } ${link.special ? "hover:scale-102" : ""}`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Mobile menu button */}
           <button
-          aria-label="Toggle Menu"
+            aria-label="Toggle Menu"
             className="md:hidden p-2 text-gray-300 hover:text-white"
             onClick={() => setMobileMenuIsOpen((prev) => !prev)}
           >

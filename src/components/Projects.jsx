@@ -10,7 +10,7 @@ const protectImage = (e) => e.preventDefault();
 
 const projects = [
 
-    {
+  {
     id: 1,
     title: "Booking Platform",
     description: "A sleek event booking platform with easy reservations, event listings, and real-time notifications for a seamless experience.",
@@ -21,81 +21,81 @@ const projects = [
     live: "https://eventpulse.duckdns.org/"
   },
 
-     {
-      id: 2,
-      title: "E Commerce Website",
-      description: "A modern online store for FPV drones, featuring smooth navigation, product showcases, and secure checkout for a seamless shopping experience.",
-      type: "web",
-      category: "Web Development",
-      image: "/projects/web/techrolk-store.png",
-      aspectRatio: "16:9",
-      live: "https://techrolk.com/shop",
-    },
- {
-      id: 3,
-      title: "Company Landing Page",
-      description: "A sleek, modern company website featuring smooth animations, and CMS integration for easy content management and updates.",
-      type: "web",
-      category: "Web Development",
-      image: "/projects/web/techrolk.png",
-      aspectRatio: "16:9",
-      live: "https://techrolk.com",
-    },
- {
-      id: 4,
-      title: "Personal Portfolio",
-      description: "A sleek, modern portfolio showcasing skills, projects, and achievements, designed to highlight your personal brand and online presence.",
-      type: "web",
-      category: "Web Development",
-      image: "/projects/web/itsnelitha.png",
-      aspectRatio: "16:9",
-      live: "https://itsnelitha.github.io/",
-    },  
+  {
+    id: 2,
+    title: "E Commerce Website",
+    description: "A modern online store for FPV drones, featuring smooth navigation, product showcases, and secure checkout for a seamless shopping experience.",
+    type: "web",
+    category: "Web Development",
+    image: "/projects/web/techrolk-store.png",
+    aspectRatio: "16:9",
+    live: "https://techrolk.com/shop",
+  },
+  {
+    id: 3,
+    title: "Company Landing Page",
+    description: "A sleek, modern company website featuring smooth animations, and CMS integration for easy content management and updates.",
+    type: "web",
+    category: "Web Development",
+    image: "/projects/web/techrolk.png",
+    aspectRatio: "16:9",
+    live: "https://techrolk.com",
+  },
+  {
+    id: 4,
+    title: "Personal Portfolio",
+    description: "A sleek, modern portfolio showcasing skills, projects, and achievements, designed to highlight your personal brand and online presence.",
+    type: "web",
+    category: "Web Development",
+    image: "/projects/web/itsnelitha.png",
+    aspectRatio: "16:9",
+    live: "https://itsnelitha.github.io/",
+  },
 
 
-      {
-      id: 5,
-      title: "Product Poster Design",
-      description: "A warm, premium-style product poster designed to highlight Inginee Energy Cup. Focused on rich lighting, smooth textures, and a strong center composition to create a cozy yet energetic feel that instantly grabs attention.",
-      type: "graphic",
-      category: "Graphic Design",
-      image: "/projects/graphic/energycup.png",
-      aspectRatio: "1:1",
-    },
+  {
+    id: 5,
+    title: "Product Poster Design",
+    description: "A warm, premium-style product poster designed to highlight Inginee Energy Cup. Focused on rich lighting, smooth textures, and a strong center composition to create a cozy yet energetic feel that instantly grabs attention.",
+    type: "graphic",
+    category: "Graphic Design",
+    image: "/projects/graphic/energycup.png",
+    aspectRatio: "1:1",
+  },
 
-        {
-      id: 6,
-      title: "Class Schedule Poster",
-      description: "A bold and structured poster designed for an A/L Grade 13 monthly class plan. Uses strong typography, clear hierarchy, and modern color contrast to make schedules easy to read while keeping a clean, professional look for educational branding.",
-      type: "graphic",
-      category: "Graphic Design",
-      image: "/projects/graphic/class.png",
-      aspectRatio: "1:1",
-    },
+  {
+    id: 6,
+    title: "Class Schedule Poster",
+    description: "A bold and structured poster designed for an A/L Grade 13 monthly class plan. Uses strong typography, clear hierarchy, and modern color contrast to make schedules easy to read while keeping a clean, professional look for educational branding.",
+    type: "graphic",
+    category: "Graphic Design",
+    image: "/projects/graphic/class.png",
+    aspectRatio: "1:1",
+  },
 
-        {
-      id: 7,
-      title: "Magazine Launch Poster",
-      description: "A bold promotional poster designed for a science society magazine launch. Strong typography and dramatic lighting give it a serious and professional look.",
-      type: "graphic",
-      category: "Graphic Design",
-      image: "/projects/graphic/ncss.png",
-      aspectRatio: "1:1",
-    },
+  {
+    id: 7,
+    title: "Magazine Launch Poster",
+    description: "A bold promotional poster designed for a science society magazine launch. Strong typography and dramatic lighting give it a serious and professional look.",
+    type: "graphic",
+    category: "Graphic Design",
+    image: "/projects/graphic/ncss.png",
+    aspectRatio: "1:1",
+  },
 
-        {
-      id: 8,
-      title: "Product Poster Design",
-      description: "A fun and colorful product poster created to show freshness and flavor. Bright lighting, playful visuals, and bold text help make the snack feel exciting and eye-catching.",
-      type: "graphic",
-      category: "Graphic Design",
-      image: "/projects/graphic/smurfs.png",
-      aspectRatio: "1:1",
-    },
+  {
+    id: 8,
+    title: "Product Poster Design",
+    description: "A fun and colorful product poster created to show freshness and flavor. Bright lighting, playful visuals, and bold text help make the snack feel exciting and eye-catching.",
+    type: "graphic",
+    category: "Graphic Design",
+    image: "/projects/graphic/smurfs.png",
+    aspectRatio: "1:1",
+  },
 
   {
     id: 9,
-    title: "Lamborghini Urus Performante – Short Visual",
+    title: "Short Visual | Lamborghini Urus Performante",
     description: "A short cinematic video showcasing the Lamborghini Urus Performante, focused on power, design, and premium detail.",
     category: "Video Editing",
     image: "https://img.youtube.com/vi/DSjDmrtzAFE/maxresdefault.jpg",
@@ -106,39 +106,19 @@ const projects = [
 
   {
     id: 10,
-    title: "1 of 2 Lamborghini Urus Performante",
-    description: "1 of 2 Lamborghini Urus Performante - ©️ 2025 Frame Toque. All Rights Reserved.",
+    title: "Promotional Trailer | DocuMind '26",
+    description: "A high-energy promo produced for the Nalanda College Science Society (NCSS) to launch the 'DocuMind' Report Contest. This project focuses on seamless transitions, crisp typography, and a narrative flow that connects Sri Lanka’s current challenges with innovative student solutions.",
     category: "Video Editing",
-    image: "https://img.youtube.com/vi/DSjDmrtzAFE/maxresdefault.jpg",
+    image: "https://img.youtube.com/vi/fcm_iurb5dE/maxresdefault.jpg",
     type: "video",
     aspectRatio: "9:16",
-    youtube: "https://www.youtube.com/watch?v=DSjDmrtzAFE"
+    youtube: "https://www.youtube.com/watch?v=fcm_iurb5dE"
   },
+
+
 
   {
     id: 11,
-    title: "1 of 2 Lamborghini Urus Performante",
-    description: "1 of 2 Lamborghini Urus Performante - ©️ 2025 Frame Toque. All Rights Reserved.",
-    category: "Video Editing",
-    image: "https://img.youtube.com/vi/DSjDmrtzAFE/maxresdefault.jpg",
-    type: "video",
-    aspectRatio: "9:16",
-    youtube: "https://www.youtube.com/watch?v=DSjDmrtzAFE"
-  },
-
-  {
-    id: 12,
-    title: "1 of 2 Lamborghini Urus Performante",
-    description: "1 of 2 Lamborghini Urus Performante - ©️ 2025 Frame Toque. All Rights Reserved.",
-    category: "Video Editing",
-    image: "https://img.youtube.com/vi/DSjDmrtzAFE/maxresdefault.jpg",
-    type: "video",
-    aspectRatio: "9:16",
-    youtube: "https://www.youtube.com/watch?v=DSjDmrtzAFE"
-  },
-
-   {
-    id: 13,
     title: "School Website",
     description: "A modern, responsive school website built to showcase Prince of Wales College’s academics, events, and student life.",
     category: "Web Development",
@@ -182,8 +162,8 @@ export default function ProjectsComponent() {
   }, {});
 
   const getAspectClass = (project) => {
-    if (project.type === "web") return "aspect-[4/3]"; 
-    if (project.type === "graphic") return "aspect-square"; 
+    if (project.type === "web") return "aspect-[4/3]";
+    if (project.type === "graphic") return "aspect-square";
     if (project.type === "video") {
       return project.aspectRatio === "9:16" ? "aspect-[4/5]" : "aspect-video";
     }
@@ -192,19 +172,22 @@ export default function ProjectsComponent() {
 
   return (
     <>
-      
+
       <section className="py-16 sm:py-20 px-6 lg:px-8">
-       
+
         <div className="max-w-7xl mx-auto relative z-10">
 
           {Object.entries(groupedProjects).map(([category, categoryProjects]) => (
             <div key={category} className="mb-16 last:mb-0">
-              <h2 className="text-3xl font-bold mb-8 pb-4 border-b border-white/10 flex items-center gap-3">
-                <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">
-                  {category}
-                </span>
-              </h2>
-              
+              <div className="text-center mb-12">
+                <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+                  <span className="text-blue-400">{category.split(' ')[0]}</span> {category.split(' ')[1]}
+                </h2>
+                <p className="text-gray-400 max-w-2xl mx-auto">
+                  Explore our innovative solutions in {category}.
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {categoryProjects.map((project) => (
                   <div
@@ -220,7 +203,7 @@ export default function ProjectsComponent() {
                       hover:-translate-y-1
                     "
                   >
-                
+
                     {/* <span className={`
                       absolute top-3 left-3 text-xs font-medium
                       px-3 py-1.5 rounded-full z-20 
@@ -247,10 +230,10 @@ export default function ProjectsComponent() {
                         onContextMenu={protectImage}
                         onDragStart={protectImage}
                       />
-                            
+
                     </div>
 
-             
+
                     <div className="p-5 flex flex-col gap-3 flex-1">
                       <h3 className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                         {project.title}
@@ -259,9 +242,9 @@ export default function ProjectsComponent() {
                       <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
                         {project.description}
                       </p>
-                 
+
                       <div className="flex gap-2 mt-auto pt-4">
-              
+
                         {project.type === "web" && (
                           <>
                             {project.live && (
@@ -288,12 +271,12 @@ export default function ProjectsComponent() {
                           </>
                         )}
 
-             
+
                         {project.type === "video" && project.youtube && (
                           <button
-                            onClick={() => setPopupVideo({ 
-                              url: project.youtube, 
-                              title: project.title 
+                            onClick={() => setPopupVideo({
+                              url: project.youtube,
+                              title: project.title
                             })}
                             className="
                               flex-1 px-3 py-2 rounded-lg
@@ -343,7 +326,7 @@ export default function ProjectsComponent() {
 
       {popupImage && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div 
+          <div
             className="absolute inset-0"
             onClick={() => setPopupImage(null)}
           />
@@ -379,7 +362,7 @@ export default function ProjectsComponent() {
 
       {popupVideo && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div 
+          <div
             className="absolute inset-0"
             onClick={() => setPopupVideo(null)}
           />
@@ -399,7 +382,7 @@ export default function ProjectsComponent() {
                 Close (ESC)
               </span>
             </button>
-            
+
             <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-black">
               <div className="aspect-video">
                 <iframe
@@ -412,14 +395,14 @@ export default function ProjectsComponent() {
                 />
               </div>
             </div>
-            
+
             <h3 className="text-white text-xl font-semibold mt-4 text-center bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
               {popupVideo.title}
             </h3>
           </div>
         </div>
       )}
-      
+
     </>
   );
 }

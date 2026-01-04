@@ -2,10 +2,10 @@ export const metadata = {
   title: "What We Do",
   description:
     "Explore our range of services including web development, graphic design, and video editing tailored to make your brand shine.",
-    openGraph: {
+  openGraph: {
     title: "What We Do | Frame Toque",
     description: "Explore our range of services including web development, graphic design, and video editing tailored to make your brand shine.",
-    url: "https://frametoque.online/services", 
+    url: "https://frametoque.online/services",
     siteName: "Frame Toque",
     images: [
       {
@@ -33,36 +33,35 @@ export default function Home() {
 
   return (
     <>
-    <main  className="min-h-screen bg-slate-950 text-white overflow-hidden">
-          <Navbar />
-          
-     <div className="h-20" />
-     <div className="h-20" />
+      <main className="min-h-screen bg-slate-950 text-white overflow-hidden">
+        <Navbar />
 
-                   {/* Pulse */}
-            <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-[#3B82F6]-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-            
-            <div className="max-w-7xl mx-auto text-center mb-8">
-              <h2 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">
-                <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
-                  What We&nbsp;
-                </span>
-                <span className="bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">
-                  Do
-                </span>
-              </h2>
-              <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
-                From websites to videos, we make your brand look amazing everywhere.
-              </p>
-            </div>
+        <div className="h-20" />
+        <div className="h-20" />
 
-      <Services /> 
-      {/* <Alert /> */}
-      <Collab />
-      <br /><br />
-      <Footer/>
-    </main >
+        {/* Pulse */}
+        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-[#3B82F6]-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+
+        <div className="max-w-7xl mx-auto text-center mb-8">
+          <h2 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">
+            <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">What We
+            </span>
+            <span className="bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">
+              &nbsp;Do
+            </span>
+          </h2>
+          <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
+            From websites to videos, we make your brand look amazing everywhere.
+          </p>
+        </div>
+
+        <Services />
+        {/* <Alert /> */}
+        <Collab />
+        <br /><br /><br /><br /><br />
+        <Footer />
+      </main >
     </>
   );
 }
