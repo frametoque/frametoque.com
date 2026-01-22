@@ -112,14 +112,12 @@ export default function AboutUs() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <h3 className="text-3xl sm:text-4xl font-semibold mb-12 text-center leading-tight">
-            <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
-              Meet Our&nbsp;
-            </span>
-            <span className="bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">
-              Team
-            </span>
-          </h3>
+          
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+              <span className="text-blue-400">Meet Our</span> Team
+            </h2>
+          </div>
           
           <div className="flex flex-wrap justify-center gap-6">
             {teamMembers.map((member, index) => (
