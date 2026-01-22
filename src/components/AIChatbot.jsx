@@ -19,6 +19,7 @@ export default function AIChatbot() {
     model: 'Toque AI'
   });
   
+  
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
