@@ -333,7 +333,7 @@ const servicesData = [
     {
         id: "booking-systems",
         category: WEB_CATEGORY,
-        title: "E-Learning Platform",
+        title: "Booking / Ticketing System",
         description: "Smart booking systems designed to handle appointments, reservations, and schedules with real-time availability, smooth user flow, and automated management.",
         overview: "Easy and reliable online booking solutions.",
         heroImage: "/services/eventpulse.png",
@@ -399,7 +399,7 @@ const servicesData = [
     {
         id: "education-websites",
         category: WEB_CATEGORY,
-        title: "E-Learning Platform",
+        title: "School / Institute Website",
         description: "Modern education websites built for schools, institutes, and educators to share knowledge, manage content, and engage students with a smooth digital experience.",
         overview: "Smart digital platforms for education.",
         heroImage: "/services/eventpulse.png",
