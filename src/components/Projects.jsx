@@ -127,6 +127,36 @@ const projects = [
     aspectRatio: "16:9",
     live: "https://princeofwales.edu.lk/"
   },
+
+  {
+    id: 12,
+    title: "Wedding Invitation",
+    description: "An elegant and sophisticated wedding invitation design featuring delicate typography, ornamental details, and a timeless color palette. Combines classical elegance with modern design to create a memorable first impression for special occasions.",
+    type: "graphic",
+    category: "Graphic Design",
+    image: "/projects/graphic/invitation.png",
+    aspectRatio: "4:5",
+  },
+
+  {
+    id: 13,
+    title: "Charity Campaign Poster",
+    description: "A compelling visual campaign created to raise awareness about important social causes. Bold messaging and emotional design work together to inspire action and community involvement.",
+    type: "graphic",
+    category: "Graphic Design",
+    image: "/projects/graphic/soyuru-sathkara.png",
+    aspectRatio: "4:5",
+  },
+
+   {
+    id: 14,
+    title: "Photography Services Poster",
+    description: "A vibrant and eye-catching poster designed to promote professional photography services. Features dynamic imagery, modern typography, and a clean layout to attract potential clients and showcase photography skills.",
+    type: "graphic",
+    category: "Graphic Design",
+    image: "/projects/graphic/photography-services.png",
+    aspectRatio: "4:5",
+  },
 ];
 
 export default function ProjectsComponent() {
@@ -163,7 +193,9 @@ export default function ProjectsComponent() {
 
   const getAspectClass = (project) => {
     if (project.type === "web") return "aspect-[4/3]";
-    if (project.type === "graphic") return "aspect-square";
+    if (project.type === "graphic") {
+      return project.aspectRatio === "4:5" ? "aspect-[4/5]" : "aspect-square";
+    }
     if (project.type === "video") {
       return project.aspectRatio === "9:16" ? "aspect-[4/5]" : "aspect-video";
     }
