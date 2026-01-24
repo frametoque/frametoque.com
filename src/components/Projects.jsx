@@ -157,6 +157,17 @@ const projects = [
     image: "/projects/graphic/photography-services.png",
     aspectRatio: "4:5",
   },
+
+  {
+    id: 15,
+    title: "TATA Company Short Visual",
+    description: "A dynamic short visual created for TATA Company, highlighting their innovative products and services through engaging cinematography and sleek editing techniques.",
+    category: "Video Editing",
+    image: "https://img.youtube.com/vi/bhcXWM37P-8/hqdefault.jpg",
+    type: "video",
+    aspectRatio: "9:16",
+    youtube: "https://www.youtube.com/watch?v=bhcXWM37P-8"
+  },
 ];
 
 export default function ProjectsComponent() {
