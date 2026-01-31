@@ -168,6 +168,28 @@ const projects = [
     aspectRatio: "9:16",
     youtube: "https://www.youtube.com/watch?v=bhcXWM37P-8"
   },
+
+  {
+    id: 16,
+    title: "TATA Company Short Visual",
+    description: "A dynamic short visual created for TATA Company, highlighting their innovative products and services through engaging cinematography and sleek editing techniques.",
+    category: "Video Editing",
+    image: "https://img.youtube.com/vi/bhcXWM37P-8/hqdefault.jpg",
+    type: "video",
+    aspectRatio: "9:16",
+    youtube: "https://www.youtube.com/watch?v=bhcXWM37P-8"
+  },
+
+    {
+    id: 17,
+    title: "Wedding After Movie",
+    description: "Memories, Elevated. Modern wedding cinematography focused on the rhythm, the vibe, and the fine details.",
+    category: "Video Editing",
+    image: "https://img.youtube.com/vi/X75cDve1Fc8/hqdefault.jpg",
+    type: "video",
+    aspectRatio: "16:9",
+    youtube: "https://www.youtube.com/watch?v=X75cDve1Fc8"
+  },
 ];
 
 export default function ProjectsComponent() {
