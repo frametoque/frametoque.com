@@ -134,7 +134,7 @@ const projects = [
     description: "An elegant and sophisticated wedding invitation design featuring delicate typography, ornamental details, and a timeless color palette. Combines classical elegance with modern design to create a memorable first impression for special occasions.",
     type: "graphic",
     category: "Graphic Design",
-    image: "/projects/graphic/invitation.png",
+    image: "/projects/graphic/weddng-inv.png",
     aspectRatio: "4:5",
   },
 
