@@ -194,7 +194,7 @@ const projects = [
   {
     id: 18,
     title: "SaaS Subscription Marketplace",
-    description: "A full-featured marketplace for global SaaS products like Netflix, Canva, and ChatGPT Plus. Engineered for speed and reliability, this platform features a streamlined user journey, localized payment integration cues, and an instant delivery architecture.",
+    description: "A full featured marketplace for global SaaS products like Netflix, Canva, and ChatGPT Plus. Engineered for speed and reliability, this platform features a streamlined user journey, localized payment integration cues, and an instant delivery architecture.",
     type: "web",
     category: "Web Development",
     image: "/projects/web/itech.png",
