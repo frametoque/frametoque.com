@@ -190,6 +190,17 @@ const projects = [
     aspectRatio: "16:9",
     youtube: "https://www.youtube.com/watch?v=X75cDve1Fc8"
   },
+
+  {
+    id: 18,
+    title: "iTech.LK | SaaS Subscription Marketplace",
+    description: "A full-featured marketplace for global SaaS products like Netflix, Canva, and ChatGPT Plus. Engineered for speed and reliability, this platform features a streamlined user journey, localized payment integration cues, and an instant delivery architecture.",
+    type: "web",
+    category: "Web Development",
+    image: "/projects/web/itech.png",
+    aspectRatio: "16:9",
+    live: "https://www.itechlk.store",
+  },
 ];
 
 export default function ProjectsComponent() {
