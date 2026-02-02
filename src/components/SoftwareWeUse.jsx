@@ -83,7 +83,7 @@ export default function SoftwareWeUse() {
 
   const tools = [
     { name: "Adobe Photoshop", img: "/logos/ps-logo.png" },
-    { name: "Adobe Premier Pro", img: "/logos/pr-logo.png" },
+    { name: "Adobe Premier", img: "/logos/pr-logo.png" },
     { name: "Final Cut Pro", img: "/logos/finalcut-logo.png" },
     { name: "Davinci Resolve", img: "/logos/davinci-logo.png" },
     { name: "Adobe After Effects", img: "/logos/aftereffects-logo.png" },

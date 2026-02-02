@@ -126,7 +126,7 @@ export function VideoEditorUI() {
             width={20} height={20} 
             className="w-5 h-5"
           />
-          <span className="font-semibold text-white text-sm">Premier Pro</span>
+          <span className="font-semibold text-white text-sm">Premier</span>
         </div>
         <button className="px-2 py-1 bg-[#00005b] text-white rounded hover:bg-[#00003a] transition-colors text-sm">
           Export
