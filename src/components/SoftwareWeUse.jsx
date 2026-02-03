@@ -84,6 +84,7 @@ export default function SoftwareWeUse() {
   const tools = [
     { name: "Adobe Photoshop", img: "/logos/ps-logo.png" },
     { name: "Adobe Premier", img: "/logos/pr-logo.png" },
+    { name: "Pixelmator Pro", img: "/logos/pixelmator-logo.png" },
     { name: "Final Cut Pro", img: "/logos/finalcut-logo.png" },
     { name: "Davinci Resolve", img: "/logos/davinci-logo.png" },
     { name: "Adobe After Effects", img: "/logos/aftereffects-logo.png" },
@@ -91,6 +92,7 @@ export default function SoftwareWeUse() {
     { name: "Visual Studio Code", img: "/logos/vscode-logo.png" },
     { name: "Figma", img: "/logos/figma-logo.png" },
     { name: "GitHub", img: "/logos/github-logo.png" },
+    { name: "Docker", img: "/logos/docker-logo.png" },
   ];
 
   return (
