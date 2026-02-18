@@ -171,13 +171,13 @@ const projects = [
 
   {
     id: 16,
-    title: "TATA Company Short Visual",
-    description: "A dynamic short visual created for TATA Company, highlighting their innovative products and services through engaging cinematography and sleek editing techniques.",
+    title: "Poster Design | Layer Breakdown",
+    description: "A detailed layer breakdown of a complex poster design, showcasing the creative process and techniques used to achieve the final result. This visual guide provides insight into the design workflow, from concept to completion, highlighting key elements and design decisions along the way.",
     category: "Video Editing",
-    image: "https://img.youtube.com/vi/bhcXWM37P-8/hqdefault.jpg",
+    image: "https://img.youtube.com/vi/ztSOTGvMqXM/maxresdefault.jpg",
     type: "video",
     aspectRatio: "9:16",
-    youtube: "https://www.youtube.com/watch?v=bhcXWM37P-8"
+    youtube: "https://www.youtube.com/watch?v=ztSOTGvMqXM"
   },
 
     {
