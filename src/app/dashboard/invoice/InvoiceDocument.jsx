@@ -136,7 +136,7 @@ export default function InvoiceDocument({ invoice }) {
             <div style={{
               ...pos(rowTops[i], 875, 37, { color: "#222" }),
               width: px(702, 2480),
-              overflow: "hidden",
+              overflow: "visible",
               whiteSpace: "nowrap",
               textOverflow: "ellipsis",
             }}>
