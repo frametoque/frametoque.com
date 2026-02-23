@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Laptop, PenTool, Video } from "lucide-react";
+import { Laptop, PenTool, Video, Camera } from "lucide-react";
 
 const features = [
   {
@@ -28,6 +28,15 @@ const features = [
     icon: Video,
     imagePosition: "left",
     link: "/services#video",
+
+  },
+  {
+    title: "Photography & Videography",
+    description:
+      "A picture is worth a thousand words, but a video captures a thousand moments. We create visual stories that resonate and leave a lasting impression.",
+    icon: Camera,
+    imagePosition: "left",
+    link: "/services#photo",
 
   },
 ];

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import WebSub from "@/components/services/WebSub";
 import GraphicsSub from "@/components/services/GraphicsSub";
 import VidSub from "@/components/services/VidSub";
+import PhotoSub from "@/components/services/PhotoSub";
 
 
 export default function ServicesMain() {
@@ -34,6 +35,10 @@ export default function ServicesMain() {
 
       <section id="video">
         <VidSub />
+      </section>
+
+      <section id="photo">
+        <PhotoSub />
       </section>
       
 

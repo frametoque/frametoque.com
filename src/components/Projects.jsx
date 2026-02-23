@@ -163,7 +163,7 @@ const projects = [
     title: "TATA Company Short Visual",
     description: "A dynamic short visual created for TATA Company, highlighting their innovative products and services through engaging cinematography and sleek editing techniques.",
     category: "Video Editing",
-    image: "https://img.youtube.com/vi/bhcXWM37P-8/hqdefault.jpg",
+    image: "https://img.youtube.com/vi/bhcXWM37P-8/maxresdefault.jpg",
     type: "video",
     aspectRatio: "9:16",
     youtube: "https://www.youtube.com/watch?v=bhcXWM37P-8"
@@ -201,6 +201,29 @@ const projects = [
     aspectRatio: "16:9",
     live: "https://www.itechlk.store",
   },
+
+  {
+    id: 19,
+    title: "Evendor '25 | Album",
+    description: "A vibrant and dynamic album created for the Prince of Wales' Collge Prefects' Day, capturing the energy and excitement of the occasion through a collection of visually stunning photographs.",
+    type: "photography",
+    category: "Photography & Videography",
+    image: "/projects/graphic/soyuru-sathkara.png",
+    aspectRatio: "4:5",
+    link: "https://www.facebook.com/media/set/?set=a.122097815595271134&type=3",
+  },  
+
+  {
+    id: 20,
+    title: "Evendor '25 | Aftermovie",
+    description: "A dynamic and engaging aftermovie created for the Prince of Wales' Collge Prefects' Day, showcasing the highlights and memorable moments of the event through captivating cinematography and editing.",
+    type: "videography",
+    category: "Photography & Videography",
+    image: "https://img.youtube.com/vi/X75cDve1Fc8/hqdefault.jpg",
+    aspectRatio: "16:9",
+    youtube: "https://www.youtube.com/watch?v=X75cDve1Fc8"
+  },
+  
 ];
 
 export default function ProjectsComponent() {
@@ -241,7 +264,13 @@ export default function ProjectsComponent() {
       return project.aspectRatio === "4:5" ? "aspect-[4/5]" : "aspect-square";
     }
     if (project.type === "video") {
-      return project.aspectRatio === "9:16" ? "aspect-[4/5]" : "aspect-video";
+      return project.aspectRatio === "9:16" ? "aspect-[9/16]" : "aspect-video";
+    }
+    if (project.type === "photography") {
+      return project.aspectRatio === "4:5" ? "aspect-[4/5]" : "aspect-square";
+    }
+    if (project.type === "videography") {
+      return project.aspectRatio === "9:16" ? "aspect-[9/16]" : "aspect-video";
     }
     return "aspect-square";
   };
@@ -257,7 +286,7 @@ export default function ProjectsComponent() {
             <div key={category} className="mb-16 last:mb-0">
               <div className="text-center mb-12">
                 <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                  <span className="text-blue-400">{category.split(' ')[0]}</span> {category.split(' ')[1]}
+                  <span className="text-blue-400">{category.split(' ')[0]}</span> {category.split(' ').slice(1).join(' ')}
                 </h2>
                 <p className="text-gray-400 max-w-2xl mx-auto">
                   Explore our innovative solutions in {category}.
@@ -347,6 +376,54 @@ export default function ProjectsComponent() {
                           </>
                         )}
 
+                        {project.type === "photography" && (
+                          <>
+                            {project.link && (
+                              <Link
+                                href={project.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="
+                                  flex-1 px-3 py-2 rounded-lg
+                                  bg-gradient-to-r from-blue-600/20 to-cyan-600/20 
+                                  hover:from-blue-600/30 hover:to-cyan-600/30
+                                  transition-all duration-300
+                                  flex items-center justify-center gap-2
+                                  border border-blue-400/20 hover:border-blue-400/40
+                                  hover:shadow-lg hover:shadow-blue-500/20
+                                  group/btn
+                                "
+                                aria-label="View Album"
+                              >
+                                <Globe className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
+                                <span className="text-xs font-medium">View</span>
+                              </Link>
+                            )}
+                          </>
+                        )}
+
+                        {project.type === "videography" && project.youtube && (
+                          <button
+                            onClick={() => setPopupVideo({
+                              url: project.youtube,
+                              title: project.title
+                            })}
+                            className="
+                              flex-1 px-3 py-2 rounded-lg
+                              bg-gradient-to-r from-blue-600/15 to-cyan-500/15
+                              hover:from-blue-600/25 hover:to-cyan-500/25
+                              transition-all duration-300
+                              flex items-center justify-center gap-2
+                              border border-blue-500/25 hover:border-blue-500/40
+                              hover:shadow-lg hover:shadow-cyan-500/20
+                              group/btn
+                            "
+                            aria-label="Watch on YouTube"
+                          >
+                            <Youtube className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
+                            <span className="text-xs font-medium">Watch</span>
+                          </button>
+                        )}
 
                         {project.type === "video" && project.youtube && (
                           <button
