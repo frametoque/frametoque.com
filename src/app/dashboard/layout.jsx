@@ -38,6 +38,11 @@ export default function DashboardLayout({ children }) {
 
     const isActive = (href) => {
       if (href === "/dashboard") return pathname === href;
+      
+      if (href === "/dashboard/projects" && pathname.startsWith("/dashboard/invoice")) {
+        return true;
+      }
+
       return pathname.startsWith(href);
     };
 
