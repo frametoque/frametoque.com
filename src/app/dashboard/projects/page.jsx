@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "Requests",
-  description: "View, track, and manage all your requests in one place & Get real-time updates.",
+  title: "Projects",
+  description: "View, track, and manage all your projects in one place & Get real-time updates.",
   openGraph: {
     title: "Projects | Frame Toque",
     description: "View, track, and manage all your projects in one place & Get real-time updates.",
