@@ -1,0 +1,179 @@
+"use client";
+
+import Link from "next/link";
+import { Package, MessageCircle, Plus, Download } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
+
+const statusStyles = {
+  "in-progress": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  completed: "bg-green-500/20 text-green-400 border-green-500/30",
+  pending: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+};
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+export default function DashboardProjectsPage() {
+  const [myRequests, setMyRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  const { user, isLoaded: isUserLoaded } = useUser();
+
+  useEffect(() => {
+    if (isUserLoaded && user?.primaryEmailAddress?.emailAddress) {
+      const fetchRequests = async () => {
+        try {
+          setLoading(true);
+          const userEmail = user.primaryEmailAddress.emailAddress;
+          const response = await fetch(`/api/requests?user_email=${encodeURIComponent(userEmail)}`);
+          if (!response.ok) throw new Error('Failed to fetch requests');
+          const data = await response.json();
+          setMyRequests(data);
+        } catch (err) {
+          setError(err.message);
+          console.error('Error fetching requests:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchRequests();
+    } else if (isUserLoaded && !user) {
+      setLoading(false);
+      setError("Please sign in to view your requests");
+    }
+  }, [isUserLoaded, user]);
+
+  const PageShell = ({ children }) => (
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2">
+            <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">My</span>
+            <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">&nbsp;Requests</span>
+          </h1>
+          <p className="text-gray-400 text-lg max-w-2xl">
+            Track the status of every service request you have made with Frame Toque.
+          </p>
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+
+  if (!isUserLoaded || loading) {
+    return (
+      <PageShell>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-gray-400">{!isUserLoaded ? "Loading..." : "Loading your requests..."}</div>
+        </div>
+      </PageShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageShell>
+        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 text-center">
+          <p className="text-red-400">{error}</p>
+        </div>
+      </PageShell>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col gap-4">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2">
+            <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">My</span>
+            <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">&nbsp;Projects</span>
+          </h1>
+          <p className="text-gray-400 text-lg max-w-2xl">
+            Track the status of every service request you have made with Frame Toque.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/services"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:opacity-90 transition-opacity"
+          >
+            <Plus className="w-5 h-5" />
+            New Project
+          </Link>
+          <Link
+            href="/contact"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-white/5 border border-white/10 text-white font-semibold hover:bg-white/10 transition-colors"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Talk to Support
+          </Link>
+        </div>
+      </div>
+
+      {/* Requests List */}
+      {myRequests.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6">
+          {myRequests.map((request) => (
+            <div
+              key={request.id}
+              className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-blue-500/30 transition-colors"
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                {/* Left - Info */}
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-3 mb-2">
+                    <h3 className="text-xl font-semibold text-white">{request.title}</h3>
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${statusStyles[request.status] || statusStyles.pending}`}>
+                      {request.status?.replace("-", " ") || "pending"}
+                    </span>
+                  </div>
+                  <p className="text-gray-400 text-sm mb-2">
+                    Request ID: {request.request_id} • Submitted: {request.submitted_at ? formatDate(request.submitted_at) : "N/A"}
+                  </p>
+                  <span className="text-gray-400 text-sm">Price: </span>
+                  <span className="text-lg font-semibold text-white">
+                    ${!isNaN(parseFloat(request.price)) ? parseFloat(request.price).toFixed(2) : "N/A"}
+                  </span>
+                </div>
+
+                {/* Right - Invoice button */}
+                <div className="shrink-0">
+                  <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 border border-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors">
+                    <Download className="w-4 h-4" />
+                    Invoice
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-12 text-center">
+          <Package className="w-16 h-16 text-gray-600 mx-auto mb-6" />
+          <h3 className="text-2xl font-semibold text-white mb-2">No Projects Yet</h3>
+          <p className="text-gray-400 mb-6">
+            Submit your first service request to get started with Frame Toque.
+          </p>
+          <Link
+            href="/dashboard/services"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:opacity-90 transition-opacity"
+          >
+            <Plus className="w-5 h-5" />
+            Browse Services
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}

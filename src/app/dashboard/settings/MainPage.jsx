@@ -634,7 +634,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Billing History */}
-                <div className="pt-6 border-t border-white/10">
+                {/* <div className="pt-6 border-t border-white/10">
                   <h3 className="text-lg font-semibold text-white mb-4">Billing History</h3>
                   <div className="space-y-2">
                     {[
@@ -668,10 +668,10 @@ export default function SettingsPage() {
                       </div>
                     ))}
                   </div>
-                </div>
+                </div> */}
 
                 {/* Total Spent */}
-                <div className="pt-6 border-t border-white/10">
+                {/* <div className="pt-6 border-t border-white/10">
                   <div className="bg-gradient-to-r from-blue-600/20 to-blue-700/20 border border-blue-500/30 rounded-xl p-6">
                     <div className="flex items-center justify-between">
                       <div>
@@ -684,7 +684,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
             )}
           </div>

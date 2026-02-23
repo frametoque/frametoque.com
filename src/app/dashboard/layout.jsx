@@ -31,8 +31,8 @@ export default function DashboardLayout({ children }) {
 
     const links = [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { name: "My Projects", href: "/dashboard/requests", icon: ClipboardList },
-      { name: ("New Project"), href: "/dashboard/services", icon: Briefcase, newtab: false },
+      { name: ("My Projects"), href: "/dashboard/projects", icon: ClipboardList },
+      // { name: ("New Project"), href: "/dashboard/services", icon: Briefcase, newtab: false },
       { name: "Settings", href: "/dashboard/settings", icon: Settings },
     ];
 

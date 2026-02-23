@@ -15,21 +15,19 @@ export async function GET(request) {
   
   try {
     const { searchParams } = new URL(request.url);
-    const clerk_id = searchParams.get('clerk_id');
+    const user_email = searchParams.get('user_email');
     
-    console.log('Query param clerk_id:', clerk_id);
+    console.log('Query param user_email:', user_email);
     
-    if (!clerk_id) {
+    if (!user_email) {
       return NextResponse.json(
-        { error: 'clerk_id is required' },
+        { error: 'user_email is required' },
         { status: 400 }
       );
     }
 
-    // Get a client from the pool
     client = await pool.connect();
     
-    // Modified query structure - handle potential database schema differences
     const result = await client.query(`
       SELECT 
         id,
@@ -40,15 +38,14 @@ export async function GET(request) {
         progress,
         type,
         price,
-        clerk_id
+        user_email
       FROM projects 
-      WHERE clerk_id = $1 
+      WHERE user_email = $1 
       ORDER BY submitted_at DESC
-    `, [clerk_id]);
+    `, [user_email]);
     
-    console.log(`Found ${result.rows.length} requests for clerk_id: ${clerk_id}`);
+    console.log(`Found ${result.rows.length} requests for user_email: ${user_email}`);
     
-    // Format the response data
     const formattedRequests = result.rows.map(row => ({
       id: row.id,
       title: row.title || 'Untitled Request',
@@ -58,7 +55,7 @@ export async function GET(request) {
       progress: row.progress || 0,
       type: row.type || 'General',
       price: row.price,
-      clerk_id: row.clerk_id
+      user_email: row.user_email
     }));
     
     return NextResponse.json(formattedRequests);
@@ -66,53 +63,21 @@ export async function GET(request) {
   } catch (error) {
     console.error('Database error:', error);
     
-    // Check for specific errors
     if (error.message.includes('relation "projects" does not exist')) {
       console.log('Projects table does not exist, returning empty array');
       return NextResponse.json([]);
     }
     
-    if (error.message.includes('column "clerk_id" does not exist')) {
-      console.log('clerk_id column does not exist, trying alternative query');
-      try {
-        if (client) {
-          // Try to query all projects if clerk_id column doesn't exist
-          const result = await client.query(`
-            SELECT 
-              id,
-              title,
-              request_id,
-              submitted_at,
-              status,
-              progress,
-              type,
-              price
-            FROM projects 
-            ORDER BY submitted_at DESC 
-          `);
-          
-          // Filter or map based on your application logic
-          // For now, return limited data
-          const limitedData = result.rows.slice(0, 5).map(row => ({
-            id: row.id,
-            title: row.title || 'Untitled Request',
-            request_id: row.request_id || `REQ-${row.id.toString().padStart(3, '0')}`,
-            submitted_at: row.submitted_at ? new Date(row.submitted_at).toISOString() : new Date().toISOString(),
-            status: row.status || 'pending',
-            progress: row.progress || 0,
-            type: row.type || 'General',
-            price: row.price
-          }));
-          
-          return NextResponse.json(limitedData);
-        }
-      } catch (secondError) {
-        console.error('Second query error:', secondError);
-      }
+    if (error.message.includes('column "user_email" does not exist')) {
+      console.log('user_email column does not exist in projects table');
+      // Unlike clerk_id fallback, we should NOT return all projects here
+      // since email is the security boundary for manually pre-added projects
+      return NextResponse.json(
+        { error: 'Database schema missing user_email column. Please run migrations.' },
+        { status: 500 }
+      );
     }
     
-    
-    // In production, return proper error
     return NextResponse.json(
       { 
         error: 'Failed to fetch requests',
@@ -122,7 +87,6 @@ export async function GET(request) {
     );
     
   } finally {
-    // Always release the client back to the pool
     if (client) {
       client.release();
     }

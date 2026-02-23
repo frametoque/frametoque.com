@@ -8,6 +8,7 @@ import { useUser } from "@clerk/nextjs";
 
 
 import ProfileProgress from "./ProfileProgress";
+import RecentProjectsWidget from "./projects/RecentProjectsWidget";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -29,7 +30,7 @@ export default function DashboardHome() {
 
   const quickActions = [
     {
-      href: "/dashboard/services",
+      href: "/services",
       icon: ShoppingCart,
       label: "Browse Services",
       className:
@@ -87,6 +88,7 @@ export default function DashboardHome() {
       </div>
 
 <ProfileProgress />
+<RecentProjectsWidget/>
 
 
     </div>

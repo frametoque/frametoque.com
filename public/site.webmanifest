@@ -52,7 +52,7 @@
     {
       "name": "My Projects",
       "short_name": "Projects",
-      "url": "/dashboard/requests",
+      "url": "/dashboard/projects",
       "icons": [{ "src": "/icons/clipboard-list.png", "sizes": "96x96", "type": "image/png" }]
     },
     {

@@ -7,6 +7,7 @@ import { Check, Star } from "lucide-react";
 import WebSub from "@/components/services/WebSub";
 import GraphicsSub from "@/components/services/GraphicsSub";
 import VidSub from "@/components/services/VidSub";
+import PhotoSub from "@/components/services/PhotoSub";
 
 export default function ServicesMain() {
   const [scrolled, setScrolled] = useState(false);
@@ -29,6 +30,10 @@ export default function ServicesMain() {
     
           <section id="video">
             <VidSub />
+          </section>
+
+          <section id="photo">
+            <PhotoSub />
           </section>
 
       <div className="max-w-7xl mx-auto space-y-20 mt-16">
