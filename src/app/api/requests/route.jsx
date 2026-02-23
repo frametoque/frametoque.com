@@ -38,7 +38,7 @@ export async function GET(request) {
         currency
       FROM invoices 
       WHERE user_email = $1 
-      ORDER BY date DESC
+      ORDER BY invoice_id DESC
     `, [user_email]);
     
     console.log(`Found ${result.rows.length} requests for user_email: ${user_email}`);

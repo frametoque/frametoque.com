@@ -212,7 +212,7 @@ export default function InvoicePage() {
         <Briefcase className="w-5 h-5 text-blue-400" />
       </div>
       <div>
-        <p className="text-gray-400 text-xs mb-2">Work Status</p>
+        <p className="text-gray-400 text-xs mb-2">Project Status</p>
         <span className={`px-3 py-1 text-xs font-medium rounded-full border ${workStatusStyles[invoice.work_status] || workStatusStyles.pending}`}>
           {invoice.work_status || "pending"}
         </span>
