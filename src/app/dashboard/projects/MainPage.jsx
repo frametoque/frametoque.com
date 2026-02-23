@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Package, MessageCircle, Plus, Download } from "lucide-react";
+import { Package, MessageCircle, Plus, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 
@@ -159,10 +159,12 @@ export default function DashboardProjectsPage() {
 
                 {/* Right - Invoice button */}
                 <div className="shrink-0">
+                  <Link href={`/dashboard/invoice/${request.request_id}`}>
                   <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 border border-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors">
-                    <Download className="w-4 h-4" />
-                    Invoice
+                    <Eye className="w-4 h-4" />
+                    View Invoice
                   </button>
+                  </Link>
                 </div>
               </div>
             </div>

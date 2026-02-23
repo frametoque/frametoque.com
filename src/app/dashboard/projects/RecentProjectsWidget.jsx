@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Package, ArrowRight, Download } from "lucide-react";
+import { Package, ArrowRight, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 
@@ -135,10 +135,12 @@ export default function RecentProjectsWidget() {
                   {request.payment_status || "unpaid"}
                 </span>
 
+                <Link href={`/dashboard/invoice/${request.request_id}`}>
                 <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 border border-white/10 text-xs font-medium text-white hover:bg-white/20 transition-colors">
-                  <Download className="w-3.5 h-3.5" />
-                  Invoice
+                  <Eye className="w-3.5 h-3.5" />
+                  View Invoice
                 </button>
+                </Link>
               </div>
             </div>
           ))}
