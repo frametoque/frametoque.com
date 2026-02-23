@@ -54,7 +54,7 @@ export default function AboutUs() {
       }
     },
     {
-      name: "Sadaka",
+      name: "Sadaka Wijerathna",
       role: "Developer",
       expertise: "Frontend development",
       social: {

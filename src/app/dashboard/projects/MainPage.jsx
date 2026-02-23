@@ -5,10 +5,15 @@ import { Package, MessageCircle, Plus, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 
-const statusStyles = {
-  "in-progress": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+const workStatusStyles = {
+  "in progress": "bg-blue-500/20 text-blue-400 border-blue-500/30",
   completed: "bg-green-500/20 text-green-400 border-green-500/30",
   pending: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+};
+
+const paymentStatusStyles = {
+  paid: "bg-green-500/20 text-green-400 border-green-500/30",
+  unpaid: "bg-red-500/20 text-red-400 border-red-500/30",
 };
 
 const formatDate = (dateString) => {
@@ -58,7 +63,7 @@ export default function DashboardProjectsPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">
             <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">My</span>
-            <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">&nbsp;Requests</span>
+            <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">&nbsp;Projects</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl">
             Track the status of every service request you have made with Frame Toque.
@@ -73,7 +78,7 @@ export default function DashboardProjectsPage() {
     return (
       <PageShell>
         <div className="flex justify-center items-center h-64">
-          <div className="text-gray-400">{!isUserLoaded ? "Loading..." : "Loading your requests..."}</div>
+          <div className="text-gray-400">{!isUserLoaded ? "Loading..." : "Loading your projects..."}</div>
         </div>
       </PageShell>
     );
@@ -134,16 +139,21 @@ export default function DashboardProjectsPage() {
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-3 mb-2">
                     <h3 className="text-xl font-semibold text-white">{request.title}</h3>
-                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${statusStyles[request.status] || statusStyles.pending}`}>
-                      {request.status?.replace("-", " ") || "pending"}
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${workStatusStyles[request.status] || workStatusStyles.pending}`}>
+                      {request.status || "pending"}
+                    </span>
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${paymentStatusStyles[request.payment_status] || paymentStatusStyles.unpaid}`}>
+                      {request.payment_status || "unpaid"}
                     </span>
                   </div>
                   <p className="text-gray-400 text-sm mb-2">
-                    Request ID: {request.request_id} • Submitted: {request.submitted_at ? formatDate(request.submitted_at) : "N/A"}
+                    Invoice ID: {request.request_id} • Date: {request.submitted_at ? formatDate(request.submitted_at) : "N/A"}
                   </p>
-                  <span className="text-gray-400 text-sm">Price: </span>
+                  <span className="text-gray-400 text-sm">Total: </span>
                   <span className="text-lg font-semibold text-white">
-                    ${!isNaN(parseFloat(request.price)) ? parseFloat(request.price).toFixed(2) : "N/A"}
+                    {!isNaN(parseFloat(request.total))
+                    ? `${request.currency || ""} ${parseFloat(request.total).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : "N/A"}
                   </span>
                 </div>
 

@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
 
-// Initialize database connection
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
@@ -30,32 +29,29 @@ export async function GET(request) {
     
     const result = await client.query(`
       SELECT 
-        id,
-        title,
-        request_id,
-        submitted_at,
-        status,
-        progress,
-        type,
-        price,
-        user_email
-      FROM projects 
+        invoice_id,
+        project_name,
+        date,
+        work_status,
+        total,
+        user_email,
+        currency
+      FROM invoices 
       WHERE user_email = $1 
-      ORDER BY submitted_at DESC
+      ORDER BY date DESC
     `, [user_email]);
     
     console.log(`Found ${result.rows.length} requests for user_email: ${user_email}`);
     
     const formattedRequests = result.rows.map(row => ({
-      id: row.id,
-      title: row.title || 'Untitled Request',
-      request_id: row.request_id || `REQ-${row.id.toString().padStart(3, '0')}`,
-      submitted_at: row.submitted_at ? new Date(row.submitted_at).toISOString() : new Date().toISOString(),
-      status: row.status || 'pending',
-      progress: row.progress || 0,
-      type: row.type || 'General',
-      price: row.price,
-      user_email: row.user_email
+      id: row.invoice_id,
+      title: row.project_name || 'Untitled Request',
+      request_id: row.invoice_id,
+      submitted_at: row.date ? new Date(row.date).toISOString() : new Date().toISOString(),
+      status: row.work_status || 'pending',
+      total: row.total,
+      user_email: row.user_email,
+      currency: row.currency,
     }));
     
     return NextResponse.json(formattedRequests);
@@ -63,15 +59,13 @@ export async function GET(request) {
   } catch (error) {
     console.error('Database error:', error);
     
-    if (error.message.includes('relation "projects" does not exist')) {
-      console.log('Projects table does not exist, returning empty array');
+    if (error.message.includes('relation "invoices" does not exist')) {
+      console.log('Invoices table does not exist, returning empty array');
       return NextResponse.json([]);
     }
     
     if (error.message.includes('column "user_email" does not exist')) {
-      console.log('user_email column does not exist in projects table');
-      // Unlike clerk_id fallback, we should NOT return all projects here
-      // since email is the security boundary for manually pre-added projects
+      console.log('user_email column does not exist in invoices table');
       return NextResponse.json(
         { error: 'Database schema missing user_email column. Please run migrations.' },
         { status: 500 }

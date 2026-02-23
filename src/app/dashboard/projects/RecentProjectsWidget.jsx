@@ -5,10 +5,15 @@ import { Package, ArrowRight, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 
-const statusStyles = {
-  "in-progress": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+const workStatusStyles = {
+  "in progress": "bg-blue-500/20 text-blue-400 border-blue-500/30",
   completed: "bg-green-500/20 text-green-400 border-green-500/30",
   pending: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+};
+
+const paymentStatusStyles = {
+  paid: "bg-green-500/20 text-green-400 border-green-500/30",
+  unpaid: "bg-red-500/20 text-red-400 border-red-500/30",
 };
 
 const formatDate = (dateString) => {
@@ -56,7 +61,6 @@ export default function RecentProjectsWidget() {
 
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-white">Recent Projects</h2>
         <Link
@@ -77,18 +81,16 @@ export default function RecentProjectsWidget() {
         </div>
       )}
 
-      {/* Error */}
       {!loading && error && (
         <div className="text-center py-6">
           <p className="text-red-400 text-sm">{error}</p>
         </div>
       )}
 
-      {/* Empty */}
       {!loading && !error && requests.length === 0 && (
         <div className="text-center py-8">
           <Package className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-400 text-sm">No requests yet.</p>
+          <p className="text-gray-400 text-sm">No projects yet.</p>
           <Link
             href="/dashboard/services"
             className="inline-block mt-3 text-sm text-blue-400 hover:text-blue-300 transition-colors"
@@ -106,7 +108,6 @@ export default function RecentProjectsWidget() {
               key={request.id}
               className="flex items-center justify-between gap-4 p-4 rounded-xl bg-white/5 border border-white/5 hover:border-blue-500/20 transition-colors"
             >
-              {/* Left - Title & Meta */}
               <div className="flex-1 min-w-0">
                 <p className="text-white text-sm font-medium truncate">
                   {request.title}
@@ -117,19 +118,24 @@ export default function RecentProjectsWidget() {
                 </p>
               </div>
 
-              {/* Right - Status + Invoice */}
               <div className="flex items-center gap-2 shrink-0">
                 <span
                   className={`px-2.5 py-1 text-xs font-medium rounded-full border ${
-                    statusStyles[request.status] || statusStyles.pending
+                    workStatusStyles[request.status] || workStatusStyles.pending
                   }`}
                 >
-                  {request.status?.replace("-", " ") || "pending"}
+                  {request.status || "pending"}
                 </span>
 
-                <button
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 border border-white/10 text-xs font-medium text-white hover:bg-white/20 transition-colors"
+                <span
+                  className={`px-2.5 py-1 text-xs font-medium rounded-full border ${
+                    paymentStatusStyles[request.payment_status] || paymentStatusStyles.unpaid
+                  }`}
                 >
+                  {request.payment_status || "unpaid"}
+                </span>
+
+                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 border border-white/10 text-xs font-medium text-white hover:bg-white/20 transition-colors">
                   <Download className="w-3.5 h-3.5" />
                   Invoice
                 </button>
