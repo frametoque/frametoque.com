@@ -101,7 +101,7 @@ const projects = [
     image: "https://img.youtube.com/vi/DSjDmrtzAFE/hqdefault.jpg",
     type: "video",
     aspectRatio: "9:16",
-    youtube: "https://www.youtube.com/watch?v=DSjDmrtzAFE"
+    youtube: "DSjDmrtzAFE"
   },
 
   {
@@ -112,7 +112,7 @@ const projects = [
     image: "https://img.youtube.com/vi/fcm_iurb5dE/hqdefault.jpg",
     type: "video",
     aspectRatio: "9:16",
-    youtube: "https://www.youtube.com/watch?v=fcm_iurb5dE"
+    youtube: "fcm_iurb5dE"
   },
 
 
@@ -166,7 +166,7 @@ const projects = [
     image: "https://img.youtube.com/vi/bhcXWM37P-8/maxresdefault.jpg",
     type: "video",
     aspectRatio: "9:16",
-    youtube: "https://www.youtube.com/watch?v=bhcXWM37P-8"
+    youtube: "bhcXWM37P-8"
   },
 
   {
@@ -177,7 +177,7 @@ const projects = [
     image: "https://img.youtube.com/vi/ztSOTGvMqXM/maxresdefault.jpg",
     type: "video",
     aspectRatio: "9:16",
-    youtube: "https://www.youtube.com/watch?v=ztSOTGvMqXM"
+    youtube: "ztSOTGvMqXM"
   },
 
     {
@@ -188,7 +188,7 @@ const projects = [
     image: "https://img.youtube.com/vi/X75cDve1Fc8/hqdefault.jpg",
     type: "video",
     aspectRatio: "16:9",
-    youtube: "https://www.youtube.com/watch?v=X75cDve1Fc8"
+    youtube: "X75cDve1Fc8"
   },
 
   {
@@ -208,9 +208,9 @@ const projects = [
     description: "A vibrant and dynamic album created for the Prince of Wales' Collge Prefects' Day, capturing the energy and excitement of the occasion through a collection of visually stunning photographs.",
     type: "photography",
     category: "Photography & Videography",
-    image: "/projects/graphic/soyuru-sathkara.png",
+    image: "/projects/graphic/photography-services.png",
     aspectRatio: "4:5",
-    link: "https://www.facebook.com/media/set/?set=a.122097815595271134&type=3",
+    live: "https://www.facebook.com/media/set/?set=a.122097815595271134&type=3",
   },  
 
   {
@@ -219,9 +219,9 @@ const projects = [
     description: "A dynamic and engaging aftermovie created for the Prince of Wales' Collge Prefects' Day, showcasing the highlights and memorable moments of the event through captivating cinematography and editing.",
     type: "videography",
     category: "Photography & Videography",
-    image: "https://img.youtube.com/vi/X75cDve1Fc8/hqdefault.jpg",
+    image: "https://img.youtube.com/vi/Ugd-Q4K-ob0/hqdefault.jpg",
     aspectRatio: "16:9",
-    youtube: "https://www.youtube.com/watch?v=X75cDve1Fc8"
+    youtube: "Ugd-Q4K-ob0"
   },
   
 ];
@@ -322,20 +322,29 @@ export default function ProjectsComponent() {
                     </span> */}
 
                     <div className={`relative w-full ${getAspectClass(project)} overflow-hidden`}>
-                      <Image
-                        width={project.type === "graphic" ? 800 : project.aspectRatio === "9:16" ? 600 : 1200}
-                        height={project.type === "graphic" ? 800 : project.aspectRatio === "9:16" ? 1067 : 675}
-                        src={project.image}
-                        alt={project.title}
-                        className="
-                          w-full h-full object-cover 
-                          transition-transform duration-700 
-                          group-hover:scale-110
-                        "
-                        onContextMenu={protectImage}
-                        onDragStart={protectImage}
-                      />
-
+                      {project.type === "video" || project.type === "videography" ? (
+                        <iframe
+                          src={`https://www.youtube.com/embed/${project.youtube}?autoplay=1&mute=1&loop=1&playlist=${project.youtube}&controls=0&modestbranding=1&playsinline=1`}
+                          className="w-full h-full absolute inset-0"
+                          allow="autoplay; encrypted-media"
+                          allowFullScreen
+                          frameBorder="0"
+                        />
+                      ) : (
+                        <Image
+                          width={project.type === "graphic" ? 800 : project.aspectRatio === "9:16" ? 600 : 1200}
+                          height={project.type === "graphic" ? 800 : project.aspectRatio === "9:16" ? 1067 : 675}
+                          src={project.image}
+                          alt={project.title}
+                          className="
+                            w-full h-full object-cover 
+                            transition-transform duration-700 
+                            group-hover:scale-110
+                          "
+                          onContextMenu={protectImage}
+                          onDragStart={protectImage}
+                        />
+                      )}
                     </div>
 
 
@@ -378,9 +387,9 @@ export default function ProjectsComponent() {
 
                         {project.type === "photography" && (
                           <>
-                            {project.link && (
+                            {project.live && (
                               <Link
-                                href={project.link}
+                                href={project.live}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="
@@ -428,7 +437,7 @@ export default function ProjectsComponent() {
                         {project.type === "video" && project.youtube && (
                           <button
                             onClick={() => setPopupVideo({
-                              url: project.youtube,
+                              url: `https://www.youtube.com/watch?v=${project.youtube}`,
                               title: project.title
                             })}
                             className="
@@ -507,6 +516,8 @@ export default function ProjectsComponent() {
                 height={1200}
                 className="max-h-[85vh] w-auto rounded-xl"
                 style={{ objectFit: 'contain' }}
+                onContextMenu={protectImage}
+                onDragStart={protectImage}
               />
             </div>
           </div>

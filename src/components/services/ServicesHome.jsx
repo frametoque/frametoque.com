@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Laptop, PenTool, Video, Camera } from "lucide-react";
+import { Laptop, PenTool, Video, Camera, Film, Megaphone } from "lucide-react";
 
 const features = [
   {
@@ -25,16 +25,36 @@ const features = [
     title: "Video Editing",
     description:
       "Stories don’t just play, they connect. We turn ideas into videos that spark emotion and stay in people’s minds.",
-    icon: Video,
+    icon: Film,
     imagePosition: "left",
     link: "/services#video",
 
   },
   {
-    title: "Photography & Videography",
+    title: "Photography",
     description:
-      "A picture is worth a thousand words, but a video captures a thousand moments. We create visual stories that resonate and leave a lasting impression.",
+      "A photo isn’t just a moment, it’s a feeling. We capture the essence of your brand in images that resonate and leave a lasting impression.",
     icon: Camera,
+    imagePosition: "left",
+    link: "/services#photo",
+
+  },
+
+  {
+    title: "Videography",
+    description:
+      "Videos aren’t just watched, they’re experienced. We create cinematic stories that captivate your audience and make your brand unforgettable.",
+    icon: Video,
+    imagePosition: "left",
+    link: "/services#photo",
+
+  },
+
+  {
+    title: "Digital Marketing",
+    description:
+      "Marketing isn’t just promotion, it’s connection. We craft strategies that resonate with your audience and make your brand unforgettable.",
+    icon: Megaphone,
     imagePosition: "left",
     link: "/services#photo",
 
@@ -61,64 +81,63 @@ export default function Features() {
           </h2>
         </div>
 
-        <div className="space-y-16 sm:space-y-20 lg:space-y-32">
+        <div className="grid gap-4 sm:gap-4 lg:gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, key) => {
             const Icon = feature.icon;
-            return (
 
-             <div
-              key={key}
-              className={`flex flex-col lg:flex-row items-center gap-6 sm:gap-8 ${
-                feature.imagePosition === "right" ? "lg:flex-row-reverse" : ""
-              }`}
-            >
-              <div className="flex-1 w-full flex justify-center lg:order-0 mb-6 lg:mb-0">
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl sm:rounded-2xl transition-all duration-500" />
-                  <div className="relative bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl sm:rounded-2xl p-10 flex items-center justify-center group-hover:border-blue-600/50 transition-all duration-300">
-                    <Icon className="w-16 h-16 sm:w-20 sm:h-20 text-blue-400" />
+            return (
+              <div
+                key={key}
+                className="group relative bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 transition-all duration-300 hover:border-blue-600/50 hover:-translate-y-2 hover:shadow-xl hover:shadow-blue-600/10"
+              >
+                {/* Icon */}
+                <div className="mb-6 flex justify-center">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl blur-xl opacity-70 group-hover:opacity-100 transition duration-500" />
+                    <div className="relative bg-gray-800/70 border border-gray-700 rounded-xl p-6">
+                      <Icon className="w-12 h-12 text-blue-400" />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex-1 w-full">
-                <div className="max-w-lg mx-auto lg:mx-0 text-center lg:text-left">
-                  <h3 className="text-4xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6 text-white">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-300 text-xl sm:text-lg leading-relaxed mb-6 sm:mb-8">
-                    {feature.description}
-                  </p>
-                  
-                  {feature.link && (
+                {/* Content */}
+                <h3 className="text-2xl font-bold text-white mb-4 text-center">
+                  {feature.title}
+                </h3>
+
+                <p className="text-gray-300 text-base leading-relaxed mb-6 text-center">
+                  {feature.description}
+                </p>
+
+                {/* Button */}
+                {feature.link && (
+                  <div className="flex justify-center">
                     <Link
                       href={feature.link}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:shadow-lg hover:shadow-blue-600/20 hover:-translate-y-0.5"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:shadow-lg hover:shadow-blue-600/20"
                     >
                       <span>View Packages</span>
-                      <svg 
-                        className="w-4 h-4" 
-                        fill="none" 
-                        stroke="currentColor" 
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M14 5l7 7m0 0l-7 7m7-7H3" 
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M14 5l7 7m0 0l-7 7m7-7H3"
                         />
                       </svg>
                     </Link>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            </div>
-
-
             );
           })}
         </div>
+
       </div>
     </section>
   );

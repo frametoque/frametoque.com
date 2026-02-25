@@ -1,4 +1,3 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/react";
 import Script from "next/script";
@@ -7,14 +6,18 @@ import SWRegister from "./sw-register";
 import SnowfallWrapper from "@/components/SnowfallWrapper";
 import AIChatbot from "@/components/AIChatbot";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+import { Bricolage_Grotesque, DM_Mono } from "next/font/google";
+
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-geist-sans", // keeps your existing CSS vars working
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const dmMono = DM_Mono({
+  variable: "--font-geist-mono", // keeps your existing CSS vars working
   subsets: ["latin"],
+  weight: ["300", "400", "500"],
 });
 
 
@@ -88,7 +91,7 @@ export default function RootLayout({ children }) {
       </head>
 
       <body suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${bricolage.variable} ${dmMono.variable} antialiased`}
       >
         <ClerkProvider>
           <SWRegister />

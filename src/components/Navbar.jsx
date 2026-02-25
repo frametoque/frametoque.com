@@ -19,11 +19,21 @@ export default function Navbar({ scrolled }) {
 
   return (
     <nav
+      className={`fixed top-0 w-full z-50 transition-all duration-500 ${
+        scrolled
+          ? "bg-white/[0.07] backdrop-blur-2xl border-b border-white/[0.08] shadow-[0_1px_0_rgba(255,255,255,0.06),0_4px_24px_rgba(0,0,0,0.3)] after:content-[''] after:absolute after:left-0 after:right-0 after:top-full after:h-12 after:pointer-events-none after:bg-gradient-to-b after:from-black/5 after:to-transparent"
+          : "bg-slate-950/20 backdrop-blur-sm"
+      }`}
+      style={scrolled ? { WebkitBackdropFilter: "saturate(180%) blur(20px)", backdropFilter: "saturate(180%) blur(20px)" } : {}}
+    >
+
+    {/* <nav
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled
         ? "bg-slate-950/80 backdrop-blur-lg border-b border-slate-800"
         : "bg-slate-950/20 backdrop-blur-sm"
         }`}
-    >
+    > */}
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14 sm:h-16 md:h-20">
           <Link href="/">

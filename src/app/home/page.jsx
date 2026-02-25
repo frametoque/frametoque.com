@@ -28,9 +28,9 @@ export default function HomeClient() {
       <Navbar scrolled={scrolled} />
       <Hero />
       <ServicesHome />
-      <SoftwareWeUse />
       <ProjectsHome />
       <Collab />
+      <SoftwareWeUse />
       <Testimonials />
       <Clients />
       <WhyChooseUs />

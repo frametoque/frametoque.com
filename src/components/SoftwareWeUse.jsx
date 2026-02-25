@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 
+const protectImage = (e) => e.preventDefault();
+
 export default function SoftwareWeUse() {
   const sliderRef = useRef(null);
 
@@ -145,6 +147,8 @@ export default function SoftwareWeUse() {
                 height={70}
                 alt={tool.name}
                 className="object-contain"
+                onContextMenu={protectImage}
+                onDragStart={protectImage}
               />
               <p className="mt-3 text-lg font-medium text-white">
                 {tool.name}
