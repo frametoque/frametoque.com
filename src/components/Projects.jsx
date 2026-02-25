@@ -325,7 +325,7 @@ export default function ProjectsComponent() {
                       {project.type === "video" || project.type === "videography" ? (
                         <iframe
                           src={`https://www.youtube.com/embed/${project.youtube}?autoplay=1&mute=1&loop=1&playlist=${project.youtube}&controls=0&modestbranding=1&playsinline=1`}
-                          className="w-full h-full absolute inset-0"
+                          className="w-full h-full absolute inset-0 pointer-events-none"
                           allow="autoplay; encrypted-media"
                           allowFullScreen
                           frameBorder="0"
