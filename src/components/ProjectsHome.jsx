@@ -28,7 +28,7 @@ export default function ProjectsHome() {
       category: "Web Development",
       image: "/projects/web/techrolk-store.png",
       type: "web",
-      live: "https://eventpulse.duckdns.org/",
+      live: "https://techrolk.com/shop",
       area: "b", // 4:5 top-mid-left
     },
     {
@@ -37,7 +37,7 @@ export default function ProjectsHome() {
       category: "Web Development",
       image: "/projects/web/pwc.png",
       type: "web",
-      live: "https://eventpulse.duckdns.org/",
+      live: "https://princeofwales.edu.lk/",
       area: "c", // 4:5 top-mid-right
     },
     {
@@ -136,6 +136,7 @@ export default function ProjectsHome() {
       {project.video ? (
         <video
           src={`/projects/video/${project.video}`}
+          poster={project.image}
           className="absolute inset-0 w-full h-full pointer-events-none object-cover group-hover:scale-110 transition-transform duration-700"
           autoPlay
           muted
