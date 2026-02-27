@@ -105,7 +105,7 @@ export default function RootLayout({ children }) {
           {children}
           <Analytics />
 
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3" style={{ visibility: mounted ? 'visible' : 'hidden' }} >
             <CurrencyToggle />
             <AIChatbot />
           </div>

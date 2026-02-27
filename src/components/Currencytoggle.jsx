@@ -22,7 +22,11 @@ export default function CurrencyToggle() {
     window.dispatchEvent(new CustomEvent('currencyChange', { detail: { currency: selected } }));
   };
 
-  if (!mounted) return null;
+if (!mounted) {
+    return (
+      <div className="w-[65px] h-[65px] rounded-lg" style={{ visibility: 'hidden' }} />
+    );
+  }
 
   return (
     <div className="relative">
