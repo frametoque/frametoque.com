@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
+
 const protectImage = (e) => e.preventDefault();
 
 const webcatprices = [
@@ -108,29 +109,45 @@ export default function WebPackages() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    async function detectCurrency() {
-      try {
-        const res = await fetch("/api/getCurrency");
-        const data = await res.json();
 
-        if (data.showUSD) {
-          const converted = await convertPricesToUSD(webcatprices);
-          setPrices(converted);
-          setCurrency("USD");
-        } else {
-          setPrices(webcatprices);
-          setCurrency("LKR");
-        }
-      } catch (error) {
-        console.error("Error detecting currency:", error);
-        setPrices(webcatprices);
-        setCurrency("LKR");
+  //currency detection
+    function detectCurrency() {
+          const saved = localStorage.getItem('preferred_currency') || 'LKR';
+  
+          if (saved === 'USD') {
+            convertPricesToUSD(webcatprices).then((converted) => {
+              setPrices(converted);
+              setCurrency('USD');
+            });
+          } else {
+            setPrices(webcatprices);
+            setCurrency('LKR');
+          }
       }
-    }
 
-    detectCurrency();
-  }, []);
+    useEffect(() => {
+    
+      detectCurrency();
+  
+      const handler = (e) => {
+      const { currency } = e.detail;
+      if (currency === 'USD') {
+        convertPricesToUSD(webcatprices).then((converted) => {
+          setPrices(converted);
+          setCurrency('USD');
+        });
+      } else {
+        setPrices(webcatprices);
+        setCurrency('LKR');
+      }
+    };
+  
+      window.addEventListener('currencyChange', handler);
+      return () => window.removeEventListener('currencyChange', handler);
+  
+    }, []);
+  //currency detection end
+
 
   return (
     <section className="py-12 px-4 sm:px-6 lg:px-8 relative max-w-7xl mx-auto text-white">
@@ -142,6 +159,7 @@ export default function WebPackages() {
           Choose from our specialized web development services
         </p>
       </div>
+
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-3">
         {prices.map((cat, i) => (

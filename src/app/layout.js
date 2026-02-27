@@ -5,21 +5,28 @@ import "./globals.css";
 import SWRegister from "./sw-register";
 import SnowfallWrapper from "@/components/SnowfallWrapper";
 import AIChatbot from "@/components/AIChatbot";
+import CurrencyToggle from '@/components/Currencytoggle';
+
 
 import { Bricolage_Grotesque, DM_Mono } from "next/font/google";
+//import localFont from "next/font/local";
 
 const bricolage = Bricolage_Grotesque({
-  variable: "--font-geist-sans", // keeps your existing CSS vars working
+  variable: "--font-geist-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
 });
 
 const dmMono = DM_Mono({
-  variable: "--font-geist-mono", // keeps your existing CSS vars working
+  variable: "--font-geist-mono",
   subsets: ["latin"],
   weight: ["300", "400", "500"],
 });
 
+// const aestera = localFont({
+//   src: "./fonts/aestera.ttf",
+//   variable: "--font-geist-sans",
+// });
 
 export const metadata = {
   metadataBase: new URL("https://frametoque.online"),
@@ -82,7 +89,7 @@ export default function RootLayout({ children }) {
               url: "https://frametoque.online",
               logo: "https://frametoque.online/logos/ft/logo-main.png",
               sameAs: [
-                "https://instagram.com/frame.toque",
+                "https://instagram.com/frametoque",
                 "https://linkedin.com/company/frametoque",
               ],
             }),
@@ -97,7 +104,12 @@ export default function RootLayout({ children }) {
           <SWRegister />
           {children}
           <Analytics />
-          <AIChatbot />
+
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+            <CurrencyToggle />
+            <AIChatbot />
+          </div>
+
           <SnowfallWrapper />
         </ClerkProvider>
       </body>

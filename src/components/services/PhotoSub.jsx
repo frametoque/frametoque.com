@@ -7,7 +7,7 @@ import Image from "next/image";
 
 const protectImage = (e) => e.preventDefault();
 
-const vidcatprices = [
+const photocatprices = [
   {
     key: "basic-photography",
     title: "Basic Photography Package",
@@ -95,7 +95,7 @@ const convertPricesToUSD = async (services) => {
 export default function WebPackages() {
   const [scrolled, setScrolled] = useState(false);
   const [currency, setCurrency] = useState("LKR");
-  const [prices, setPrices] = useState(vidcatprices);
+  const [prices, setPrices] = useState(photocatprices);
 
   useEffect(() => {
     function handleScroll() {
@@ -105,29 +105,43 @@ export default function WebPackages() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    async function detectCurrency() {
-      try {
-        const res = await fetch("/api/getCurrency");
-        const data = await res.json();
-
-        if (data.showUSD) {
-          const converted = await convertPricesToUSD(vidcatprices);
-          setPrices(converted);
-          setCurrency("USD");
-        } else {
-          setPrices(vidcatprices);
-          setCurrency("LKR");
-        }
-      } catch (error) {
-        console.error("Error detecting currency:", error);
-        setPrices(vidcatprices);
-        setCurrency("LKR");
+  //currency detection
+    function detectCurrency() {
+          const saved = localStorage.getItem('preferred_currency') || 'LKR';
+  
+          if (saved === 'USD') {
+            convertPricesToUSD(photocatprices).then((converted) => {
+              setPrices(converted);
+              setCurrency('USD');
+            });
+          } else {
+            setPrices(photocatprices);
+            setCurrency('LKR');
+          }
       }
-    }
 
-    detectCurrency();
-  }, []);
+    useEffect(() => {
+    
+      detectCurrency();
+  
+      const handler = (e) => {
+      const { currency } = e.detail;
+      if (currency === 'USD') {
+        convertPricesToUSD(photocatprices).then((converted) => {
+          setPrices(converted);
+          setCurrency('USD');
+        });
+      } else {
+        setPrices(photocatprices);
+        setCurrency('LKR');
+      }
+    };
+  
+      window.addEventListener('currencyChange', handler);
+      return () => window.removeEventListener('currencyChange', handler);
+  
+    }, []);
+  //currency detection end
 
   return (
     <section className="py-12 px-4 sm:px-6 lg:px-8 relative max-w-7xl mx-auto text-white">

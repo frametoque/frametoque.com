@@ -14,7 +14,7 @@ export default function ProjectsHome() {
   const projects = [
     {
       id: 1,
-       title: "Promotional Trailer",
+       title: "Contest Trailer",
       category: "Video Editing",
       image: "https://img.youtube.com/vi/fcm_iurb5dE/hqdefault.jpg",
       type: "video",

@@ -259,7 +259,7 @@ export default function AIChatbot() {
       <div className="relative">
         <button
           onClick={() => setOpen(!open)}
-          className="fixed bottom-6 right-6 z-50 rounded-lg backdrop-blur-xl transition-all duration-300 px-5 py-5 hover:scale-105 active:scale-95 group shadow-2xl focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/50 focus:ring-offset-2 focus:ring-offset-transparent"
+          className="rounded-lg backdrop-blur-xl transition-all duration-300 px-5 py-5 hover:scale-105 active:scale-95 group shadow-2xl focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/50 focus:ring-offset-2 focus:ring-offset-transparent"
           style={{
             background: 'rgba(12, 25, 55, 0.8)',
             border: '1px solid rgba(59, 130, 246, 0.2)',

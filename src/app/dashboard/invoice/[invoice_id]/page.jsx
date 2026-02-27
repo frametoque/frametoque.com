@@ -182,7 +182,7 @@ export default function InvoicePage() {
   {/* Project Name */}
   <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
     <h1 className="text-2xl font-bold text-white mb-1">{invoice.project_name || "Untitled Project"}</h1>
-    <p className="text-gray-400 text-sm">Invoice for services rendered by Frame Toque Digital</p>
+    <p className="text-gray-400 text-sm">{invoice.billing_address}</p>
   </div>
 
   {/* Details Grid */}
@@ -296,7 +296,10 @@ export default function InvoicePage() {
         <div className="flex justify-between pt-2 border-t border-white/10">
           <span className="text-white font-semibold">Total Due</span>
           <span className="text-white font-bold text-lg">
-            {invoice.currency === "LKR" ? "Rs." : invoice.currency} {parseFloat(invoice.total_due || invoice.total).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            {invoice.currency === "LKR" ? "Rs." : invoice.currency}{" "}
+              {(
+                parseFloat(invoice.subtotal || 0) - parseFloat(invoice.discount || 0) - parseFloat(invoice.advance || 0)
+              ).toLocaleString("en-US", { minimumFractionDigits: 2 })}
           </span>
         </div>
       </div>

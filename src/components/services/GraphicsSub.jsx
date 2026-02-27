@@ -99,29 +99,43 @@ export default function WebPackages() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    async function detectCurrency() {
-      try {
-        const res = await fetch("/api/getCurrency");
-        const data = await res.json();
-
-        if (data.showUSD) {
-          const converted = await convertPricesToUSD(graphiccatprices);
-          setPrices(converted);
-          setCurrency("USD");
-        } else {
-          setPrices(graphiccatprices);
-          setCurrency("LKR");
-        }
-      } catch (error) {
-        console.error("Error detecting currency:", error);
-        setPrices(graphiccatprices);
-        setCurrency("LKR");
+  //currency detection
+    function detectCurrency() {
+          const saved = localStorage.getItem('preferred_currency') || 'LKR';
+  
+          if (saved === 'USD') {
+            convertPricesToUSD(graphiccatprices).then((converted) => {
+              setPrices(converted);
+              setCurrency('USD');
+            });
+          } else {
+            setPrices(graphiccatprices);
+            setCurrency('LKR');
+          }
       }
-    }
 
-    detectCurrency();
-  }, []);
+    useEffect(() => {
+    
+      detectCurrency();
+  
+      const handler = (e) => {
+      const { currency } = e.detail;
+      if (currency === 'USD') {
+        convertPricesToUSD(graphiccatprices).then((converted) => {
+          setPrices(converted);
+          setCurrency('USD');
+        });
+      } else {
+        setPrices(graphiccatprices);
+        setCurrency('LKR');
+      }
+    };
+  
+      window.addEventListener('currencyChange', handler);
+      return () => window.removeEventListener('currencyChange', handler);
+  
+    }, []);
+  //currency detection end
 
   return (
     <section className="py-12 px-4 sm:px-6 lg:px-8 relative max-w-7xl mx-auto text-white">

@@ -34,7 +34,6 @@ export default function ServiceDataPage({ serviceType = "portfolio-websites" }) 
     const [scrolled, setScrolled] = useState(false);
     const [currency, setCurrency] = useState("LKR");
     const [convertedPackages, setConvertedPackages] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
 
     // Find the service by ID from the webData array
     const data = useMemo(() => {
@@ -85,118 +84,73 @@ export default function ServiceDataPage({ serviceType = "portfolio-websites" }) 
         }
     };
 
-    useEffect(() => {
-        async function detectAndConvertCurrency() {
-            try {
-                setIsLoading(true);
 
-                const res = await fetch("/api/getCurrency");
-                const currencyData = await res.json();
+const convertPricesToUSD = async (packages) => {
+    try {
+        const res = await fetch("https://open.er-api.com/v6/latest/LKR");
+        const rateData = await res.json();
+        const rate = rateData.rates.USD;
 
-                if (currencyData.showUSD) {
-                    const exchangeRes = await fetch("https://open.er-api.com/v6/latest/LKR");
-                    const exchangeData = await exchangeRes.json();
-                    const rate = exchangeData.rates?.USD;
+        console.log("Exchange rate used:", rate);
 
-                    if (rate) {
-                        const converted = originalPackages.map(pkg => {
-                            // Ensure we have a valid number
-                            const priceInLKR = parseFloat(pkg.numericPrice) || parsePrice(pkg.price) || 0;
-                            const priceInUSD = priceInLKR * rate;
+        return packages.map(pkg => {
+            const priceInLKR = parseFloat(pkg.numericPrice) || parsePrice(pkg.price) || 0;
+            const priceInUSD = priceInLKR * rate;
 
-                            const formattedUSD = formatPrice(priceInUSD, "USD");
-                            const formattedLKR = formatPrice(priceInLKR, "LKR");
+            return {
+                ...pkg,
+                price: priceInUSD.toFixed(2),
+                convertedPrice: priceInUSD.toFixed(2),
+                originalPrice: priceInLKR,
+                isUSD: true
+            };
+        });
+    } catch (error) {
+        console.error("Error converting to USD:", error);
+        return packages;
+    }
+};
 
-                            return {
-                                ...pkg,
-                                price: formattedUSD,
-                                convertedPrice: formattedUSD,
-                                originalPriceFormatted: formattedLKR,
-                                originalPrice: priceInLKR,
-                                convertedPriceRaw: priceInUSD,
-                                isUSD: true
-                            };
-                        });
+// currency detection
+function detectCurrency() {
+    const saved = localStorage.getItem('preferred_currency') || 'LKR';
 
-                        setConvertedPackages(converted);
-                        setCurrency("USD");
-                    } else {
-                        const formatted = originalPackages.map(pkg => {
-                            const priceInLKR = parseFloat(pkg.numericPrice) || parsePrice(pkg.price) || 0;
-                            const formattedLKR = formatPrice(priceInLKR, "LKR");
+    if (saved === 'USD') {
+        convertPricesToUSD(originalPackages).then((converted) => {
+            setConvertedPackages(converted);
+            setCurrency('USD');
+        });
+    } else {
+        setConvertedPackages(originalPackages);
+        setCurrency('LKR');
+    }
+}
 
-                            return {
-                                ...pkg,
-                                price: formattedLKR,
-                                convertedPrice: formattedLKR,
-                                originalPriceFormatted: formattedLKR,
-                                originalPrice: priceInLKR,
-                                isUSD: false
-                            };
-                        });
+useEffect(() => {
+    if (originalPackages.length === 0) return;
 
-                        setConvertedPackages(formatted);
-                        setCurrency("LKR");
-                    }
-                } else {
-                    const formatted = originalPackages.map(pkg => {
-                        const priceInLKR = parseFloat(pkg.numericPrice) || parsePrice(pkg.price) || 0;
-                        const formattedLKR = formatPrice(priceInLKR, "LKR");
+    detectCurrency();
 
-                        return {
-                            ...pkg,
-                            price: formattedLKR,
-                            convertedPrice: formattedLKR,
-                            originalPriceFormatted: formattedLKR,
-                            originalPrice: priceInLKR,
-                            isUSD: false
-                        };
-                    });
-
-                    setConvertedPackages(formatted);
-                    setCurrency("LKR");
-                }
-            } catch (error) {
-                console.error("Error converting currency:", error);
-
-                const formatted = originalPackages.map(pkg => {
-                    const priceInLKR = parseFloat(pkg.numericPrice) || parsePrice(pkg.price) || 0;
-                    const formattedLKR = formatPrice(priceInLKR, "LKR");
-
-                    return {
-                        ...pkg,
-                        price: formattedLKR,
-                        convertedPrice: formattedLKR,
-                        originalPriceFormatted: formattedLKR,
-                        originalPrice: priceInLKR,
-                        isUSD: false
-                    };
-                });
-
-                setConvertedPackages(formatted);
-                setCurrency("LKR");
-            } finally {
-                setIsLoading(false);
-            }
+    const handler = (e) => {
+        const { currency } = e.detail;
+        if (currency === 'USD') {
+            convertPricesToUSD(originalPackages).then((converted) => {
+                setConvertedPackages(converted);
+                setCurrency('USD');
+            });
+        } else {
+            setConvertedPackages(originalPackages);
+            setCurrency('LKR');
         }
+    };
 
-        if (originalPackages.length > 0) {
-            detectAndConvertCurrency();
-        }
-    }, [originalPackages]);
+    window.addEventListener('currencyChange', handler);
+    return () => window.removeEventListener('currencyChange', handler);
 
-    const displayPackages = convertedPackages.length > 0 ? convertedPackages : originalPackages.map(pkg => {
-        const priceInLKR = parseFloat(pkg.numericPrice) || parsePrice(pkg.price) || 0;
-        const formattedLKR = formatPrice(priceInLKR, "LKR");
-        return {
-            ...pkg,
-            price: formattedLKR,
-            convertedPrice: formattedLKR,
-            originalPriceFormatted: formattedLKR,
-            originalPrice: priceInLKR,
-            isUSD: false
-        };
-    });
+}, [originalPackages]);
+// currency detection end
+
+const displayPackages = convertedPackages.length > 0 ? convertedPackages : originalPackages;
 
     if (!data) {
         return (
@@ -308,12 +262,7 @@ export default function ServiceDataPage({ serviceType = "portfolio-websites" }) 
                             </p>
                         </div>
 
-                        {isLoading ? (
-                            <div className="text-center py-12">
-                                <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                                <p className="mt-4 text-gray-400">Loading prices...</p>
-                            </div>
-                        ) : (
+                       
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {displayPackages.map((pkg, index) => (
                                     <div
@@ -338,7 +287,7 @@ export default function ServiceDataPage({ serviceType = "portfolio-websites" }) 
 
                                             <div className="flex items-baseline justify-center gap-2 mb-2">
                                                 <span className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">
-                                                    {currency === "USD" ? pkg.convertedPrice || formatPrice(parsePrice(pkg.price) / 300) : formatPrice(parsePrice(pkg.price))}
+                                                    {pkg.price}
                                                 </span>
                                                 <span className="text-gray-400">{currency}</span>
                                             </div>
@@ -366,7 +315,7 @@ export default function ServiceDataPage({ serviceType = "portfolio-websites" }) 
                                     </div>
                                 ))}
                             </div>
-                        )}
+                       
                     </div>
                 </section>
 
