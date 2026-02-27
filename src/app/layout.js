@@ -4,8 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import SWRegister from "./sw-register";
 import SnowfallWrapper from "@/components/SnowfallWrapper";
-import AIChatbot from "@/components/AIChatbot";
-import CurrencyToggle from '@/components/Currencytoggle';
+import FloatingButtons from '@/components/FloatingButtons';
 
 
 import { Bricolage_Grotesque, DM_Mono } from "next/font/google";
@@ -75,7 +74,9 @@ export const metadata = {
   },
 };
 
+
 export default function RootLayout({ children }) {
+  
   return (
     <html lang="en">
       <head>
@@ -104,12 +105,7 @@ export default function RootLayout({ children }) {
           <SWRegister />
           {children}
           <Analytics />
-
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3" style={{ visibility: mounted ? 'visible' : 'hidden' }} >
-            <CurrencyToggle />
-            <AIChatbot />
-          </div>
-
+          <FloatingButtons />
           <SnowfallWrapper />
         </ClerkProvider>
       </body>
