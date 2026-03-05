@@ -11,7 +11,7 @@ const urls = [
   "https://facebook.com/frametoque",
   "https://www.linkedin.com/company/frametoque/",
   "https://youtube.com/@FrameToque",
-  "https://tiktok.com/@ft.media0",
+  "https://tiktok.com/@frame.toque",
   "https://t.me/frametoque",
   "mailto:contact@frametoque.online",
 ];

@@ -133,7 +133,7 @@ export default function ContactPage() {
                   label: "YouTube",
                 },
                 {
-                  href: "https://tiktok.com/@ft.media0",
+                  href: "https://tiktok.com/@frame.toque",
                   icon: <TikTok />,
                   label: "TikTok",
                 },

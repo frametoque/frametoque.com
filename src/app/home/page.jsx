@@ -11,6 +11,7 @@ import Testimonials from "@/components/Testimonials.jsx";
 import WhyChooseUs from "@/components/WhyChooseUs.jsx";
 import Clients from "@/components/Clients.jsx";
 import Footer from "@/components/Footer.jsx";
+import StudioPromo from "@/components/FTStudio";
 
 export default function HomeClient() {
   const [scrolled, setScrolled] = useState(false);
@@ -31,6 +32,7 @@ export default function HomeClient() {
       <ProjectsHome />
       <Collab />
       <SoftwareWeUse />
+      <StudioPromo />
       <Testimonials />
       <Clients />
       <WhyChooseUs />
