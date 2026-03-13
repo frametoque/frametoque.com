@@ -44,12 +44,12 @@ const projects = [
   {
     id: 4,
     title: "Personal Portfolio",
-    description: "A sleek, modern portfolio showcasing skills, projects, and achievements, designed to highlight your personal brand and online presence.",
+    description: "A sleek, modern portfolio showcasing skills, projects, and achievements, with AI Chatbot designed to highlight your personal brand and online presence.",
     type: "web",
     category: "Web Development",
     image: "/projects/web/itsnelitha.png",
     aspectRatio: "16:9",
-    live: "https://itsnelitha.github.io/",
+    live: "https://itsnelitha.vercel.app/",
   },
 
 
