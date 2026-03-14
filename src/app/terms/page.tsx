@@ -21,13 +21,13 @@ export const metadata = {
 
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
-import Footer from "@/components/Footer.jsx";
+import Footer from "@/components/Footer";
 
 export default function Terms() {
   return (
     <>
     <main  className="min-h-screen bg-slate-950 text-white overflow-hidden">
-<Navbar />
+<Navbar scrolled={false} />
 <div className="h-20" />
     <div className="min-h-screen bg-slate-950 text-white px-6 sm:px-10 lg:px-16 py-16">
       <h1 className="text-4xl sm:text-5xl font-bold mb-8 text-center">Terms & Conditions</h1>

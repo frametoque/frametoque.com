@@ -19,7 +19,7 @@ export const metadata = {
 };
 
 
-import HomeClient from "./home/page.jsx";
+import HomeClient from "./home/page";
 
 export default function Page() {
   return <HomeClient />;

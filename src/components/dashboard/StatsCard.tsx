@@ -1,13 +1,11 @@
 export default function StatsCard({ title, value, icon: Icon, trend, trendValue, color = "blue" }) {
   const colorClasses = {
     blue: "from-blue-500/20 to-blue-600/20 border-blue-500/30",
-    blue: "from-blue-500/20 to-blue-600/20 border-blue-500/30",
     purple: "from-purple-500/20 to-purple-600/20 border-purple-500/30",
     orange: "from-orange-500/20 to-orange-600/20 border-orange-500/30",
   };
 
   const iconColorClasses = {
-    blue: "text-blue-400",
     blue: "text-blue-400",
     purple: "text-purple-400",
     orange: "text-orange-400",

@@ -5,7 +5,7 @@ import { ArrowRight, ChevronDown, Play, Zap, Layers, FolderKanban } from "lucide
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { nightOwl } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
-import { codeExamples, floatingCards, GraphicsDesignUI, VideoEditorUI } from "../data/CodeExamples.jsx";
+import { codeExamples, floatingCards, GraphicsDesignUI, VideoEditorUI } from "../data/CodeExamples";
 
 import Link from "next/link";
 

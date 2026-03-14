@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import WhyChooseUs from "@/components/WhyChooseUs.jsx";
-import Clients from "@/components/Clients.jsx";
-import Navbar from "@/components/Navbar.jsx";
-import Footer from "@/components/Footer.jsx";
+import WhyChooseUs from "@/components/WhyChooseUs";
+import Clients from "@/components/Clients";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { Linkedin, Facebook, Github, Mail, Instagram, Youtube, Music2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -19,7 +19,14 @@ export default function AboutUs() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const teamMembers = [
+  type TeamMember = {
+  name: string;
+  role: string;
+  expertise: string;
+  social: Record<string, string>;
+};
+
+  const teamMembers : TeamMember[] = [
     {
       name: "Kavinu Pasandul",
       role: "Video Editor",

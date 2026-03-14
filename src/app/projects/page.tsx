@@ -19,15 +19,15 @@ export const metadata = {
   },
 };
 
-import Navbar from "@/components/Navbar.jsx";
-import Footer from "@/components/Footer.jsx";
-import Projects from "@/components/Projects.jsx";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import Projects from "@/components/Projects";
 
 export default function ProjectsOut() {
   return (
     <>
       <main className="min-h-screen bg-slate-950 text-white overflow-hidden">
-        <Navbar />
+        <Navbar scrolled={false} />
         <div className="h-20" />
         <div className="h-20" />
 

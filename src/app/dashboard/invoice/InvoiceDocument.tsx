@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 // A4 display size: 794 x 1123px (96dpi)
 // Original design was: 2480 x 3508px (300dpi)
@@ -68,7 +69,7 @@ export default function InvoiceDocument({ invoice }) {
   // Helper: build absolute position style using % coords
   // fontScale: font size as fraction of container width (original_px / 2480)
   const pos = (topPx, leftPx, fontPx = 37, extra = {}) => ({
-    position: "absolute",
+    position: "absolute" as const,
     top: px(topPx, 3508),
     left: px(leftPx, 2480),
     fontSize: `${((fontPx / 2480) * 100).toFixed(4)}cqw`,
@@ -106,7 +107,7 @@ export default function InvoiceDocument({ invoice }) {
       />
 
       {/* Invoice Number */}
-      <div style={pos(435, 1942, 49, { color: "#1a3a4a", fontWeight: "600" })}>
+      <div style={pos(440, 1942, 49, { color: "#1a3a4a", fontWeight: "600" })}>
         {invoice_id}
       </div>
 

@@ -70,49 +70,18 @@ function SSOCallbackContent() {
         }
 
         await handleRedirectCallback({
-          onSuccess: () => {
-            console.log("SSO authentication successful");
-            setProgress(100);
-            setStatusMessage("Authentication successful!");
-            setIsComplete(true);
-            setShowManualButton(false);
-            
-            // Clear any existing timeout
-            if (redirectTimeout.current) {
-              clearTimeout(redirectTimeout.current);
-            }
-            
-            // Redirect with a short delay for better UX
-            redirectTimeout.current = setTimeout(() => {
-              router.push("/dashboard");
-            }, 600);
-          },
-          onComplete: () => {
-            console.log("SSO authentication complete");
-            setProgress(100);
-            setStatusMessage("Authentication complete!");
-            setIsComplete(true);
-            setShowManualButton(false);
-            
-            if (redirectTimeout.current) {
-              clearTimeout(redirectTimeout.current);
-            }
-            
-            redirectTimeout.current = setTimeout(() => {
-              router.push("/dashboard");
-            }, 600);
-          },
-          onError: (err) => {
-            console.error("SSO callback error:", err);
-            setError(err.message || "Authentication failed");
-            if (redirectTimeout.current) {
-              clearTimeout(redirectTimeout.current);
-            }
-            setTimeout(() => {
-              router.push("/login?error=" + encodeURIComponent(err.message || "Authentication failed"));
-            }, 2000);
-          }
-        });
+  afterSignInUrl: "/dashboard",
+  afterSignUpUrl: "/dashboard",
+});
+
+setProgress(100);
+setStatusMessage("Authentication successful!");
+setIsComplete(true);
+setShowManualButton(false);
+redirectTimeout.current = setTimeout(() => {
+  router.push("/dashboard");
+}, 600);
+
       } catch (err) {
         console.error("Authentication error:", err);
         setError(err.message || "Authentication failed");

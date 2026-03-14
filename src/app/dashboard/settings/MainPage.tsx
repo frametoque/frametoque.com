@@ -53,21 +53,23 @@ export default function SettingsPage() {
           if (!res.ok) {
             console.error("Failed to fetch profile:", res.status);
            
-            setFormData({
+            setFormData(prev => ({
+              ...prev,
               name: user.fullName || "",
               email: user.primaryEmailAddress?.emailAddress || "",
               phone: "",
               company: "",
               website: "",
               address: "",
-            });
+            }));
             return;
           }
           
           const data = await res.json();
           
           if (data.success) {
-            setFormData({
+            setFormData(prev => ({
+              ...prev,
               name: data.profile?.fullName 
                 ? data.profile.fullName 
                 : user.fullName || "",
@@ -78,27 +80,29 @@ export default function SettingsPage() {
               company: data.profile?.company || "",
               website: data.profile?.website || "",
               address: data.profile?.address || "",
-            });
+            }));
           } else {
-            setFormData({
+            setFormData(prev => ({
+              ...prev,
               name: user.fullName || "",
               email: user.primaryEmailAddress?.emailAddress || "",
               phone: "",
               company: "",
               website: "",
               address: "",
-            });
+            }));
           }
         } catch (err) {
           console.error("Error fetching profile:", err);
-          setFormData({
+          setFormData(prev => ({
+            ...prev,
             name: user.fullName || "",
             email: user.primaryEmailAddress?.emailAddress || "",
             phone: "",
             company: "",
             website: "",
             address: "",
-          });
+          }));
         } finally {
           setLoading(false);
         }
@@ -574,16 +578,12 @@ export default function SettingsPage() {
                             </div>
                             <div>
                               <p className="text-white font-medium">{name}</p>
-                              <p className="text-sm text-gray-400">
-                                {account.linked ? "Connected" : "Connected"}
-                              </p>
+                              <div className="text-sm text-gray-400">Connected</div>
                             </div>
                           </div>
-                          {account.linked && (
-                            <button className="text-red-400 hover:text-red-300 transition-colors text-sm">
-                              Disconnect
-                            </button>
-                          )}
+                          <button className="text-red-400 hover:text-red-300 transition-colors text-sm">
+                            Disconnect
+                          </button>
                         </div>
                       );
                     })}

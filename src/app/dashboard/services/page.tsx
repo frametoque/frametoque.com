@@ -19,8 +19,8 @@ export const metadata = {
 };
 
 import React from 'react'
-import ServicesMain from "./MainPage.jsx"
-//import Alert from '@/components/Alert.jsx'
+import ServicesMain from "./MainPage"
+//import Alert from '@/components/Alert"
 
 function page() {
   return (

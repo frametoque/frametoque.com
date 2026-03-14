@@ -32,11 +32,11 @@ export default function CustomLogin({ scrolled }) {
     }
   }, [userLoaded, isSignedIn, router]);
 
-  const socialProviders = [
-    { provider: "oauth_google", label: "Continue with Google", icon: <FcGoogle size={20} /> },
-    { provider: "oauth_apple", label: "Continue with Apple", icon: <FaApple size={20} /> },
-    { provider: "oauth_github", label: "Continue with Github", icon: <FaGithub size={20} /> },
-  ];
+const socialProviders = [
+  { provider: "oauth_google", label: "Continue with Google", icon: <FcGoogle size={20} />, disabled: false },
+  { provider: "oauth_apple", label: "Continue with Apple", icon: <FaApple size={20} />, disabled: false },
+  { provider: "oauth_github", label: "Continue with Github", icon: <FaGithub size={20} />, disabled: false },
+];
 
   async function handleSignIn(provider) {
   if (!isLoaded || loadingProvider) return; // Changed from `loading` to `loadingProvider`

@@ -19,7 +19,7 @@ export const metadata = {
   },
 };
 
-import About from "@/components/About.jsx";
+import About from "@/components/About";
 
 export default function AboutOut() {
 

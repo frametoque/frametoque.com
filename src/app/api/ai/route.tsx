@@ -464,15 +464,6 @@ function enhanceResponseWithLinks(response, userMessage) {
     }
   }
   
-  // Add blog link for content/inspiration
-  if (lowerMsg.includes('blog') || lowerMsg.includes('article') || 
-      lowerMsg.includes('learn') || lowerMsg.includes('inspiration') ||
-      lowerMsg.includes('tips')) {
-    if (!response.includes(FRAME_TOQUE_URLS.blog)) {
-      enhancedResponse += `\n\nCheck out our [Blog](${FRAME_TOQUE_URLS.blog}) for tips and inspiration.`;
-    }
-  }
-  
   // Ensure main website link is mentioned at least once
   if (!response.includes(FRAME_TOQUE_URLS.main) && !enhancedResponse.includes(FRAME_TOQUE_URLS.main)) {
     enhancedResponse += `\n\nVisit our [Website](${FRAME_TOQUE_URLS.main}) for more information.`;
@@ -540,8 +531,12 @@ const defaults = [
 };
 
 export async function POST(req) {
+  let message = '';
+  let format = 'markdown';
   try {
-    const { message, format = 'markdown' } = await req.json(); // Default to 'markdown' instead of 'plain'
+    const body = await req.json();
+    message = body.message ?? '';
+    format = body.format ?? 'markdown';
 
     if (!message || typeof message !== 'string' || message.trim() === '') {
       const welcomeMsg = `Hello! I'm the Frame Toque AI Assistant. We specialize in graphic design, web development, and video editing. How can I help you today?\n\nVisit our website: [Frame Toque](${FRAME_TOQUE_URLS.main}) | View portfolio: [Frame Toque Portfolio](${FRAME_TOQUE_URLS.portfolio})`;
@@ -595,13 +590,13 @@ export async function POST(req) {
         
         // In the generateText prompt, include crawled content for context
         const websiteContext = Object.entries(websiteContent.pages).map(([page, data]) => 
-          `${page.toUpperCase()}: ${data.content.substring(0, 500)}...`  // Limit to 500 chars per page to fit token limits
+          `${page.toUpperCase()}: ${(data as any).content?.substring(0, 500) ?? ''}...`
         ).join('\n');
         
         const { text } = await generateText({
           model: openrouter(modelName),
           prompt: `${AGENCY_TRAINING}\n\nCurrent Date: ${new Date().toISOString()}\nLast Crawled: ${websiteContent.lastCrawled || 'Never'}\n\nWebsite Content:\n${websiteContext}\n\nClient Message: "${message}"\n\nRespond as Frame Toque AI Assistant (follow all rules above, reference website content where relevant, include links only if helpful):`,
-          maxTokens: 300,
+          maxOutputTokens: 300,
           temperature: 0.7,
         });
 

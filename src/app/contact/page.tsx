@@ -19,7 +19,7 @@ export const metadata = {
   },
 };
 
-import Contact from "@/components/Contact.jsx";
+import Contact from "@/components/Contact";
 
 export default function ProjectsOut() {
   return (

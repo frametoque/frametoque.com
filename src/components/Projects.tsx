@@ -250,13 +250,13 @@ export default function ProjectsComponent() {
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
-  const groupedProjects = projects.reduce((acc, project) => {
-    if (!acc[project.category]) {
-      acc[project.category] = [];
-    }
-    acc[project.category].push(project);
-    return acc;
-  }, {});
+const groupedProjects = projects.reduce<Record<string, typeof projects>>((acc, project) => {
+  if (!acc[project.category]) {
+    acc[project.category] = [];
+  }
+  acc[project.category].push(project);
+  return acc;
+}, {});
 
   const getAspectClass = (project) => {
     if (project.type === "web") return "aspect-[4/3]";

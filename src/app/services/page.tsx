@@ -21,9 +21,9 @@ export const metadata = {
 
 
 
-import Services from "@/components/services/Services.jsx";
-//import Alert from '@/components/Alert.jsx'
-import Collab from "@/components/Collab.jsx";
+import Services from "@/components/services/Services";
+//import Alert from '@/components/Alert"
+import Collab from "@/components/Collab";
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -34,7 +34,7 @@ export default function Home() {
   return (
     <>
       <main className="min-h-screen bg-slate-950 text-white overflow-hidden">
-        <Navbar />
+        <Navbar scrolled={false} />
 
         <div className="h-20" />
         <div className="h-20" />

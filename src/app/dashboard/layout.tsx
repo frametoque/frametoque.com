@@ -29,12 +29,11 @@ export default function DashboardLayout({ children }) {
     const pathname = usePathname();
     const { user, isLoaded } = useUser();
 
-    const links = [
-      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { name: ("My Projects"), href: "/dashboard/projects", icon: ClipboardList },
-      // { name: ("New Project"), href: "/dashboard/services", icon: Briefcase, newtab: false },
-      { name: "Settings", href: "/dashboard/settings", icon: Settings },
-    ];
+const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "My Projects", href: "/dashboard/projects", icon: ClipboardList },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
+];
 
     const isActive = (href) => {
       if (href === "/dashboard") return pathname === href;

@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar.jsx";
-import Hero from "@/components/Hero.jsx";
-import ServicesHome from "@/components/services/ServicesHome.jsx";
-import SoftwareWeUse from "@/components/SoftwareWeUse.jsx";
-import ProjectsHome from "@/components/ProjectsHome.jsx";
+import Navbar from "@/components/Navbar";
+import Hero from "@/components/Hero";
+import ServicesHome from "@/components/services/ServicesHome";
+import SoftwareWeUse from "@/components/SoftwareWeUse";
+import ProjectsHome from "@/components/ProjectsHome";
 import Collab from "@/components/Collab";
-import Testimonials from "@/components/Testimonials.jsx";
-import WhyChooseUs from "@/components/WhyChooseUs.jsx";
-import Clients from "@/components/Clients.jsx";
-import Footer from "@/components/Footer.jsx";
+import Testimonials from "@/components/Testimonials";
+import WhyChooseUs from "@/components/WhyChooseUs";
+import Clients from "@/components/Clients";
+import Footer from "@/components/Footer";
 import StudioPromo from "@/components/FTStudio";
 
 export default function HomeClient() {

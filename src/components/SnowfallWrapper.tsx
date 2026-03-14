@@ -36,19 +36,6 @@ const SnowfallWrapper = () => {
         pointerEvents: 'none',
         transition: 'opacity 1s ease-in-out',
       }}
-      snowflakeRenderer={({ radius, color, style }) => (
-        <div
-          style={{
-            ...style,
-            width: radius * 2,
-            height: radius * 2,
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${color} 0%, rgba(255,255,255,0) 70%)`,
-            boxShadow: `0 0 ${radius}px rgba(255,255,255,0.05)`,
-            opacity: Math.random() * 0.5 + 0.1, 
-          }}
-        />
-      )}
     />
   );
 };

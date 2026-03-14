@@ -11,7 +11,7 @@ export const metadata = {
 export default function NotFound() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <Navbar />
+      <Navbar scrolled={false} />
       
       <main className="flex flex-col items-center justify-center flex-1">
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-12 text-center shadow-lg w-11/12 sm:w-96 mt-12">
