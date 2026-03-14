@@ -34,7 +34,7 @@ export const metadata = {
   },
 
   description:
-    "Frame Toque Digital is a creative studio focused on web development, video production, and digital storytelling.",
+    "Frame Toque Digital is a creative media company focused on web development, video production, and digital storytelling.",
 
   icons: {
     icon: [
