@@ -6,7 +6,6 @@ import SWRegister from "./sw-register";
 import SnowfallWrapper from "@/components/SnowfallWrapper";
 import FloatingButtons from '@/components/FloatingButtons';
 
-
 import { Bricolage_Grotesque, DM_Mono } from "next/font/google";
 //import localFont from "next/font/local";
 
