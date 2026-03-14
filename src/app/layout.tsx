@@ -32,7 +32,6 @@ export const metadata = {
   title: {
     default: "Frame Toque Digital"
   },
-
   description:
     "Frame Toque Digital is a creative media company focused on web development, video production, and digital storytelling.",
 
