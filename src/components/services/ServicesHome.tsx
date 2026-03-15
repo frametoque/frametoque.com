@@ -24,7 +24,7 @@ const features = [
   {
     title: "Video Editing",
     description:
-      "Stories don’t just play, they connect. We turn ideas into videos that spark emotion and stay in people’s minds.",
+      "Stories don’t just play, they connect deeply. We turn ideas into videos that spark emotion and stay in people’s minds forever.",
     icon: Film,
     imagePosition: "left",
     link: "/services#video",
@@ -114,7 +114,7 @@ export default function Features() {
                   <div className="flex justify-center">
                     <Link
                       href={feature.link}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold rounded-lg hover:from-brand-700 hover:to-brand-800 transition-all duration-300 hover:shadow-lg hover:shadow-brand-600/20"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-500 to-brand-600 text-white font-semibold rounded-lg hover:from-brand-600 hover:to-brand-700 transition-all duration-300 hover:shadow-lg hover:shadow-brand-600/20"
                     >
                       <span>View Packages</span>
                       <svg
