@@ -2,7 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/react";
 import Script from "next/script";
 import "./globals.css";
-import SWRegister from "./sw-register";
+import SWRegister from "../lib/sw-register";
 import SnowfallWrapper from "@/components/SnowfallWrapper";
 import FloatingButtons from '@/components/FloatingButtons';
 
