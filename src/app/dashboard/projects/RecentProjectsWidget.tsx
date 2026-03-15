@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 
 const workStatusStyles = {
-  "in progress": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  "in progress": "bg-brand-500/20 text-brand-400 border-brand-500/30",
   completed: "bg-green-500/20 text-green-400 border-green-500/30",
   pending: "bg-amber-500/20 text-amber-400 border-amber-500/30",
 };
@@ -65,7 +65,7 @@ export default function RecentProjectsWidget() {
         <h2 className="text-xl font-semibold text-white">Recent Projects</h2>
         <Link
           href="/dashboard/projects"
-          className="inline-flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium"
+          className="inline-flex items-center gap-1.5 text-sm text-brand-400 hover:text-brand-300 transition-colors font-medium"
         >
           View All
           <ArrowRight className="w-4 h-4" />
@@ -93,7 +93,7 @@ export default function RecentProjectsWidget() {
           <p className="text-gray-400 text-sm">No projects yet.</p>
           <Link
             href="/dashboard/services"
-            className="inline-block mt-3 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+            className="inline-block mt-3 text-sm text-brand-400 hover:text-brand-300 transition-colors"
           >
             Browse Services →
           </Link>
@@ -106,7 +106,7 @@ export default function RecentProjectsWidget() {
           {requests.map((request) => (
             <div
               key={request.id}
-              className="flex items-center justify-between gap-4 p-4 rounded-xl bg-white/5 border border-white/5 hover:border-blue-500/20 transition-colors"
+              className="flex items-center justify-between gap-4 p-4 rounded-xl bg-white/5 border border-white/5 hover:border-brand-500/20 transition-colors"
             >
               <div className="flex-1 min-w-0">
                 <p className="text-white text-sm font-medium truncate">

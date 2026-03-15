@@ -101,7 +101,7 @@ export default function SoftwareWeUse() {
     <section className="py-20 bg-slate-950 relative">
       <div className="max-w-6xl mx-auto text-center mb-12">
         <h2 className="text-4xl sm:text-5xl font-bold mb-3">
-          <span className="bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">
             Tools&nbsp;
           </span>
           <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">

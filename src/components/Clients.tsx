@@ -99,7 +99,7 @@ export default function Clients() {
           <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
             Our&nbsp;
           </span>
-          <span className="bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">
             Clients
           </span>
         </h2>

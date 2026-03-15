@@ -57,7 +57,7 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
                 : pathname === link.href || pathname.startsWith(`${link.href}/`);
 
               const baseClasses = link.special
-                ? "px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-b from-blue-600 to-blue-700 transition-transform duration-300"
+                ? "px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-b from-brand-600 to-brand-700 transition-transform duration-300"
                 : "text-sm lg:text-base transition-colors duration-300";
 
               return (

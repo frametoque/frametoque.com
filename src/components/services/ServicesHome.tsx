@@ -66,7 +66,7 @@ export default function Features() {
     <section id="features" className="py-16 sm:py-20 px-6 sm:px-10 lg:px-16 relative">
 
       {/* Pulse */}
-      <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-brand-500/10 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-[#3B82F6]-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
 
       <div className="max-w-6xl mx-auto">
@@ -75,7 +75,7 @@ export default function Features() {
             <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
               What We&nbsp;
             </span>
-            <span className="bg-gradient-to-b from-blue-400 to-blue-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-b from-brand-400 to-brand-400 bg-clip-text text-transparent">
               Do
             </span>
           </h2>
@@ -88,14 +88,14 @@ export default function Features() {
             return (
               <div
                 key={key}
-                className="group relative bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 transition-all duration-300 hover:border-blue-600/50 hover:-translate-y-2 hover:shadow-xl hover:shadow-blue-600/10"
+                className="group relative bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 transition-all duration-300 hover:border-brand-600/50 hover:-translate-y-2 hover:shadow-xl hover:shadow-brand-600/10"
               >
                 {/* Icon */}
                 <div className="mb-6 flex justify-center">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl blur-xl opacity-70 group-hover:opacity-100 transition duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-brand-500/20 to-purple-500/20 rounded-xl blur-xl opacity-70 group-hover:opacity-100 transition duration-500" />
                     <div className="relative bg-gray-800/70 border border-gray-700 rounded-xl p-6">
-                      <Icon className="w-12 h-12 text-blue-400" />
+                      <Icon className="w-12 h-12 text-brand-400" />
                     </div>
                   </div>
                 </div>
@@ -114,7 +114,7 @@ export default function Features() {
                   <div className="flex justify-center">
                     <Link
                       href={feature.link}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:shadow-lg hover:shadow-blue-600/20"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold rounded-lg hover:from-brand-700 hover:to-brand-800 transition-all duration-300 hover:shadow-lg hover:shadow-brand-600/20"
                     >
                       <span>View Packages</span>
                       <svg

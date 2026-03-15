@@ -7,24 +7,24 @@ export default function Alert() {
   
   return (
     <div className="w-full max-w-4xl mx-auto my-10 px-4">
-      <div className="relative bg-gradient-to-br from-slate-900/30 to-slate-800/20 backdrop-blur-lg rounded-2xl border border-blue-700/40 shadow-2xl shadow-slate-900/20 overflow-hidden">
-        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full -translate-x-12 -translate-y-12" />
-        <div className="absolute bottom-0 right-0 w-40 h-40 bg-gradient-to-tl from-blue-500/10 to-transparent rounded-full translate-x-20 translate-y-20" />
+      <div className="relative bg-gradient-to-br from-slate-900/30 to-slate-800/20 backdrop-blur-lg rounded-2xl border border-brand-700/40 shadow-2xl shadow-slate-900/20 overflow-hidden">
+        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -translate-x-12 -translate-y-12" />
+        <div className="absolute bottom-0 right-0 w-40 h-40 bg-gradient-to-tl from-brand-500/10 to-transparent rounded-full translate-x-20 translate-y-20" />
         <div className="relative p-6 md:p-8">
           <div className="flex flex-col md:flex-row items-start gap-6">
             <div className="flex-shrink-0">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-blue-900/50 to-blue-800/40 border border-blue-600/40 shadow-lg">
-                <AlertCircle className="w-10 h-10 text-blue-300" />
+              <div className="p-3 rounded-xl bg-gradient-to-br from-brand-900/50 to-brand-800/40 border border-brand-600/40 shadow-lg">
+                <AlertCircle className="w-10 h-10 text-brand-300" />
               </div>
             </div>
             
             <div className="flex-1">
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-2xl font-bold text-blue-100 mb-2">
+                  <h3 className="text-2xl font-bold text-brand-100 mb-2">
                     Need Help?
                   </h3>
-                  <p className="text-blue-200/90 text-lg leading-relaxed">
+                  <p className="text-brand-200/90 text-lg leading-relaxed">
                     We are still maintaining this section. If you want to know prices or place an order, 
                     contact us via WhatsApp.
                   </p>
@@ -35,7 +35,7 @@ export default function Alert() {
                     href={whatsappLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-500 hover:to-blue-500 text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-blue-900/40 border border-blue-500/40 group transform hover:-translate-y-0.5"
+                    className="inline-flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-brand-600 to-brand-600 hover:from-brand-500 hover:to-brand-500 text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-brand-900/40 border border-brand-500/40 group transform hover:-translate-y-0.5"
                   >
                     <svg 
                       className="w-6 h-6" 
@@ -58,9 +58,9 @@ export default function Alert() {
                   </Link>
                 </div>
                 
-                <div className="pt-4 border-t border-blue-700/40">
-                  <p className="text-blue-300/80 italic">
-                    <span className="text-blue-400 font-medium">Note:</span> Sorry for any inconvenience.
+                <div className="pt-4 border-t border-brand-700/40">
+                  <p className="text-brand-300/80 italic">
+                    <span className="text-brand-400 font-medium">Note:</span> Sorry for any inconvenience.
                   </p>
                 </div>
               </div>

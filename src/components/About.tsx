@@ -101,14 +101,14 @@ export default function AboutUs() {
       <div className="h-20" />
       <section className="min-h-screen bg-slate-950 text-white py-16 px-6 sm:px-10 lg:px-16 relative overflow-hidden">
         {/* Pulse */}
-        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-brand-500/10 rounded-full blur-3xl animate-pulse" />
         
         <div className="max-w-7xl mx-auto text-center mb-16 relative z-10">
           <h2 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">
             <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
               About&nbsp;
             </span>
-            <span className="bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">
               Us
             </span>
           </h2>
@@ -122,7 +122,7 @@ export default function AboutUs() {
           
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              <span className="text-blue-400">Meet Our</span> Team
+              <span className="text-brand-400">Meet Our</span> Team
             </h2>
           </div>
           
@@ -139,10 +139,10 @@ export default function AboutUs() {
                 </div>
 
                 <div className="text-center mb-6">
-                  <h4 className="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
+                  <h4 className="text-xl font-bold text-white mb-2 group-hover:text-brand-400 transition-colors">
                     {member.name}
                   </h4>
-                  <p className="text-blue-300 font-medium mb-1">{member.role}</p>
+                  <p className="text-brand-300 font-medium mb-1">{member.role}</p>
                 </div>
 
                 {member.expertise && (
@@ -227,7 +227,7 @@ export default function AboutUs() {
                   {member.social?.email && (
                     <Link
                       href={`mailto:${member.social.email}`}
-                      className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all hover:scale-110"
+                      className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center hover:bg-brand-600 hover:text-white transition-all hover:scale-110"
                       aria-label={`Email ${member.name}`}
                     >
                       <Mail className="w-5 h-5" />

@@ -46,8 +46,8 @@ export default function Footer() {
               />
             </div>
             <p className="text-gray-400 mb-4 sm:mb-6 max-w-xs mx-auto sm:mx-0 text-sm sm:text-base">
-              <Link href="https://share.google/8O9paXxs7VBKoAZlR" aria-label="Google Maps" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition inline-flex items-center min-h-[48px] min-w-[48px] py-3 px-2" >Piliyandala, Sri Lanka </Link><br />
-              <Link href="tel:+94701901461" aria-label="Telephone" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition inline-flex items-center min-h-[48px] min-w-[48px] py-3 px-2" >+94 70 190 1461</Link>
+              <Link href="https://share.google/8O9paXxs7VBKoAZlR" aria-label="Google Maps" target="_blank" rel="noopener noreferrer" className="hover:text-brand-400 transition inline-flex items-center min-h-[48px] min-w-[48px] py-3 px-2" >Piliyandala, Sri Lanka </Link><br />
+              <Link href="tel:+94701901461" aria-label="Telephone" target="_blank" rel="noopener noreferrer" className="hover:text-brand-400 transition inline-flex items-center min-h-[48px] min-w-[48px] py-3 px-2" >+94 70 190 1461</Link>
             </p>
             <div className="flex justify-center space-x-2">
               {[Instagram, Facebook, Linkedin, Youtube, TikTok, Telegram, Mail].map((Icon, idx) => (
@@ -92,7 +92,7 @@ export default function Footer() {
                   Reg No:
                 </h3>
                 <p className="text-gray-300 text-xs sm:text-sm max-w-xs">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-[#3B82F6] to-blue-400 font-semibold">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-400 via-[#3ec3ec] to-brand-400 font-semibold">
                     Your brand deserves better visuals.
                   </span>{" "}
                   We make brands look serious.

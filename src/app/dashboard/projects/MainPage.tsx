@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 
 const workStatusStyles = {
-  "in progress": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  "in progress": "bg-brand-500/20 text-brand-400 border-brand-500/30",
   completed: "bg-green-500/20 text-green-400 border-green-500/30",
   pending: "bg-amber-500/20 text-amber-400 border-amber-500/30",
 };
@@ -63,7 +63,7 @@ export default function DashboardProjectsPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">
             <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">My</span>
-            <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">&nbsp;Projects</span>
+            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Projects</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl">
             Track the status of every service request you have made with Frame Toque.
@@ -101,7 +101,7 @@ export default function DashboardProjectsPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">
             <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">My</span>
-            <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">&nbsp;Projects</span>
+            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Projects</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl">
             Track the status of every service request you have made with Frame Toque.
@@ -111,7 +111,7 @@ export default function DashboardProjectsPage() {
         <div className="flex flex-wrap gap-3">
           <Link
             href="/services"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity"
           >
             <Plus className="w-5 h-5" />
             New Project
@@ -132,7 +132,7 @@ export default function DashboardProjectsPage() {
           {myRequests.map((request) => (
             <div
               key={request.id}
-              className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-blue-500/30 transition-colors"
+              className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-brand-500/30 transition-colors"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 {/* Left - Info */}
@@ -179,7 +179,7 @@ export default function DashboardProjectsPage() {
           </p>
           <Link
             href="/dashboard/services"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity"
           >
             <Plus className="w-5 h-5" />
             Browse Services

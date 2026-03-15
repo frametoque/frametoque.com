@@ -14,7 +14,7 @@ export default function WhyChooseUs() {
     <section className="py-16 bg-gray-900 text-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-5xl sm:text-6xl font-bold text-center mb-8 leading-tight">
-            <span className="bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">
             Why&nbsp;
           </span>
           <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
@@ -30,7 +30,7 @@ export default function WhyChooseUs() {
               key={idx}
               className="flex items-start space-x-3 bg-white/5 backdrop-blur-md p-4 rounded-lg hover:bg-white/10 transition duration-300"
             >
-              <Check className="w-6 h-6 text-blue-400 flex-shrink-0 mt-1" />
+              <Check className="w-6 h-6 text-brand-400 flex-shrink-0 mt-1" />
               <p className="text-gray-200 font-medium">{item}</p>
             </div>
           ))}

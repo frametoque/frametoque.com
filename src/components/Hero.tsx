@@ -34,26 +34,26 @@ export default function Hero() {
       />
 
       {/* Pulse */}
-      <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-brand-500/10 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-[#3B82F6]-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
 
       <div className="max-w-7xl mx-auto text-center relative w-full">
         <div className="max-w-7xl mx-auto flex flex-col lg:grid lg:grid-cols-2 text-center lg:text-left gap-6 sm:gap-8 lg:gap-12 items-center relative">
          
           <div>
-            <div className="inline-flex items-center space-x-2 px-3 sm:px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full mb-4 sm:mb-6 animate-in slide-in-from-bottom duration-700">
-              <Zap className="w-4 h-4 text-blue-400" />
-              <span className="text-xs sm:text-sm text-blue-300">Simple.Better.Fast.</span>
+            <div className="inline-flex items-center space-x-2 px-3 sm:px-4 py-2 bg-brand-500/10 border border-brand-500/20 rounded-full mb-4 sm:mb-6 animate-in slide-in-from-bottom duration-700">
+              <Zap className="w-4 h-4 text-brand-400" />
+              <span className="text-xs sm:text-sm text-brand-300">Simple.Better.Fast.</span>
             </div>
 
             <h1 className="text-5xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold mb-4 sm:mb-6 animate-in slide-in-from-bottom duration-700 delay-100 leading-tight">
-              <span className="bg-gradient-to-r from-white via-blue-100 to-[#3B82F6]-100 bg-clip-text text-transparent block mb-1 sm:mb-2">
+              <span className="bg-gradient-to-r from-white via-brand-100 to-[#3B82F6]-100 bg-clip-text text-transparent block mb-1 sm:mb-2">
                 Your Brand Deserves
               </span>
-              <span className="bg-gradient-to-b from-blue-400 via-[#3B82F6]-400 to-blue-400 bg-clip-text text-transparent block mb-1 sm:mb-2">
+              <span className="bg-gradient-to-b from-brand-400 via-[#3B82F6]-400 to-brand-400 bg-clip-text text-transparent block mb-1 sm:mb-2">
                 Better
               </span>
-              <span className="bg-gradient-to-r from-white via-blue-100 to-[#3B82F6]-100 bg-clip-text text-transparent block mb-1 sm:mb-2">
+              <span className="bg-gradient-to-r from-white via-brand-100 to-[#3B82F6]-100 bg-clip-text text-transparent block mb-1 sm:mb-2">
                 Visuals.
               </span>
             </h1>
@@ -65,7 +65,7 @@ export default function Hero() {
 
                 <Link
                   href="/dashboard"
-                  className="group w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-b from-blue-600 to-blue-700 text-white rounded-lg font-semibold text-sm sm:text-base hover:scale-102 transition-transform duration-300 flex items-center justify-center"
+                  className="group w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-b from-brand-600 to-brand-700 text-white rounded-lg font-semibold text-sm sm:text-base hover:scale-102 transition-transform duration-300 flex items-center justify-center"
                 >
                  Dashboard
                 </Link>
@@ -120,7 +120,7 @@ export default function Hero() {
                         onClick={() => setActiveTab(tab)}
                         className={`px-3 py-2 backdrop-blur-sm text-xs sm:text-sm rounded-t-lg border ${
                           activeTab === tab
-                            ? "bg-blue-500/30 text-white border-blue-400/20"
+                            ? "bg-brand-500/30 text-white border-brand-400/20"
                             : "bg-white/5 text-gray-300 border-white/10 hover:bg-white/10"
                         } transition-all duration-200 whitespace-nowrap`}
                       >

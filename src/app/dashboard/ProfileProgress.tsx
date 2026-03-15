@@ -74,7 +74,7 @@ export default function ProfileProgress() {
   if (!isLoaded || loading) {
     return (
       <div className="flex justify-center py-10">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-brand-400" />
       </div>
     );
   }
@@ -84,16 +84,16 @@ export default function ProfileProgress() {
   return (
     <div className="p-6 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl relative overflow-hidden">
      
-      <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl" />
 
       <div className="flex items-center gap-2 mb-2">
-        <UserCheck className="w-6 h-6 text-blue-400" />
-        <span className="text-blue-400 font-semibold">Profile Status</span>
+        <UserCheck className="w-6 h-6 text-brand-400" />
+        <span className="text-brand-400 font-semibold">Profile Status</span>
       </div>
 
       <h2 className="text-xl font-bold mb-3">
         Hey{" "}
-        <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">
+        <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">
           {user?.firstName || "there"}
         </span>
         , let’s complete your profile!
@@ -103,12 +103,12 @@ export default function ProfileProgress() {
       <div className="mb-3">
         <div className="flex justify-between mb-1 text-sm text-gray-300">
           <span>Completion</span>
-          <span className="text-blue-400 font-semibold">{progress}%</span>
+          <span className="text-brand-400 font-semibold">{progress}%</span>
         </div>
 
         <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-500"
+            className="h-full bg-gradient-to-r from-brand-400 to-brand-600 transition-all duration-500"
             style={{ width: `${progress}%` }}
           ></div>
         </div>
@@ -123,7 +123,7 @@ export default function ProfileProgress() {
 
       <Link
         href="/dashboard/settings"
-        className="inline-block px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:opacity-90 text-white font-semibold rounded-lg transition-colors"
+        className="inline-block px-5 py-2 bg-gradient-to-r from-brand-600 to-brand-700 hover:opacity-90 text-white font-semibold rounded-lg transition-colors"
       >
         Complete Profile
       </Link>

@@ -286,7 +286,7 @@ const groupedProjects = projects.reduce<Record<string, typeof projects>>((acc, p
             <div key={category} className="mb-16 last:mb-0">
               <div className="text-center mb-12">
                 <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                  <span className="text-blue-400">{category.split(' ')[0]}</span> {category.split(' ').slice(1).join(' ')}
+                  <span className="text-brand-400">{category.split(' ')[0]}</span> {category.split(' ').slice(1).join(' ')}
                 </h2>
                 <p className="text-gray-400 max-w-2xl mx-auto">
                   Explore our innovative solutions in {category}.
@@ -302,8 +302,8 @@ const groupedProjects = projects.reduce<Record<string, typeof projects>>((acc, p
                       bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-md 
                       border border-white/10 
                       shadow-2xl shadow-black/30 
-                      hover:shadow-blue-500/20 
-                      hover:border-blue-400/30 
+                      hover:shadow-brand-500/20 
+                      hover:border-brand-400/30 
                       transition-all duration-500 flex flex-col
                       hover:-translate-y-1
                     "
@@ -314,7 +314,7 @@ const groupedProjects = projects.reduce<Record<string, typeof projects>>((acc, p
                       px-3 py-1.5 rounded-full z-20 
                       backdrop-blur-sm
                       shadow-lg shadow-black/30
-                    ${project.type === "web" ? "bg-gradient-to-r from-blue-800 to-blue-700" : 
+                    ${project.type === "web" ? "bg-gradient-to-r from-brand-800 to-brand-700" : 
                       project.type === "graphic" ? "bg-gradient-to-r from-indigo-500 to-indigo-400" : 
                       "bg-gradient-to-r from-sky-600 to-sky-500"}
                     `}>
@@ -368,12 +368,12 @@ const groupedProjects = projects.reduce<Record<string, typeof projects>>((acc, p
                                 rel="noopener noreferrer"
                                 className="
                                   flex-1 px-3 py-2 rounded-lg
-                                  bg-gradient-to-r from-blue-600/20 to-cyan-600/20 
-                                  hover:from-blue-600/30 hover:to-cyan-600/30
+                                  bg-gradient-to-r from-brand-600/20 to-brand-600/20 
+                                  hover:from-brand-600/30 hover:to-brand-600/30
                                   transition-all duration-300
                                   flex items-center justify-center gap-2
-                                  border border-blue-400/20 hover:border-blue-400/40
-                                  hover:shadow-lg hover:shadow-blue-500/20
+                                  border border-brand-400/20 hover:border-brand-400/40
+                                  hover:shadow-lg hover:shadow-brand-500/20
                                   group/btn
                                 "
                                 aria-label="View Live Site"
@@ -394,12 +394,12 @@ const groupedProjects = projects.reduce<Record<string, typeof projects>>((acc, p
                                 rel="noopener noreferrer"
                                 className="
                                   flex-1 px-3 py-2 rounded-lg
-                                  bg-gradient-to-r from-blue-600/20 to-cyan-600/20 
-                                  hover:from-blue-600/30 hover:to-cyan-600/30
+                                  bg-gradient-to-r from-brand-600/20 to-brand-600/20 
+                                  hover:from-brand-600/30 hover:to-brand-600/30
                                   transition-all duration-300
                                   flex items-center justify-center gap-2
-                                  border border-blue-400/20 hover:border-blue-400/40
-                                  hover:shadow-lg hover:shadow-blue-500/20
+                                  border border-brand-400/20 hover:border-brand-400/40
+                                  hover:shadow-lg hover:shadow-brand-500/20
                                   group/btn
                                 "
                                 aria-label="View Album"
@@ -419,12 +419,12 @@ const groupedProjects = projects.reduce<Record<string, typeof projects>>((acc, p
                             })}
                             className="
                               flex-1 px-3 py-2 rounded-lg
-                              bg-gradient-to-r from-blue-600/15 to-cyan-500/15
-                              hover:from-blue-600/25 hover:to-cyan-500/25
+                              bg-gradient-to-r from-brand-600/15 to-brand-500/15
+                              hover:from-brand-600/25 hover:to-brand-500/25
                               transition-all duration-300
                               flex items-center justify-center gap-2
-                              border border-blue-500/25 hover:border-blue-500/40
-                              hover:shadow-lg hover:shadow-cyan-500/20
+                              border border-brand-500/25 hover:border-brand-500/40
+                              hover:shadow-lg hover:shadow-brand-500/20
                               group/btn
                             "
                             aria-label="Watch on YouTube"
@@ -442,12 +442,12 @@ const groupedProjects = projects.reduce<Record<string, typeof projects>>((acc, p
                             })}
                             className="
                               flex-1 px-3 py-2 rounded-lg
-                              bg-gradient-to-r from-blue-600/15 to-cyan-500/15
-                              hover:from-blue-600/25 hover:to-cyan-500/25
+                              bg-gradient-to-r from-brand-600/15 to-brand-500/15
+                              hover:from-brand-600/25 hover:to-brand-500/25
                               transition-all duration-300
                               flex items-center justify-center gap-2
-                              border border-blue-500/25 hover:border-blue-500/40
-                              hover:shadow-lg hover:shadow-cyan-500/20
+                              border border-brand-500/25 hover:border-brand-500/40
+                              hover:shadow-lg hover:shadow-brand-500/20
                               group/btn
                             "
                             aria-label="Watch on YouTube"
@@ -462,12 +462,12 @@ const groupedProjects = projects.reduce<Record<string, typeof projects>>((acc, p
                             onClick={() => setPopupImage(project.image)}
                             className="
                               flex-1 px-3 py-2 rounded-lg
-                              bg-gradient-to-r from-blue-600/15 to-cyan-500/15
-                              hover:from-blue-600/25 hover:to-cyan-500/25
+                              bg-gradient-to-r from-brand-600/15 to-brand-500/15
+                              hover:from-brand-600/25 hover:to-brand-500/25
                               transition-all duration-300
                               flex items-center justify-center gap-2
-                              border border-blue-500/25 hover:border-blue-500/40
-                              hover:shadow-lg hover:shadow-cyan-500/20
+                              border border-brand-500/25 hover:border-brand-500/40
+                              hover:shadow-lg hover:shadow-brand-500/20
                               group/btn
                             "
                             aria-label="View full size"

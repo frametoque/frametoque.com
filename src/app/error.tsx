@@ -10,7 +10,7 @@ export default function Error({ error, reset }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-12 text-center shadow-lg w-11/12 sm:w-96">
-        <h1 className="text-6xl font-bold mb-4 bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">500</h1>
+        <h1 className="text-6xl font-bold mb-4 bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">500</h1>
         <p className="text-lg mb-6">Something went wrong on our side.</p>
         <button
           onClick={() => reset()}

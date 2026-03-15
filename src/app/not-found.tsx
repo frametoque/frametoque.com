@@ -15,7 +15,7 @@ export default function NotFound() {
       
       <main className="flex flex-col items-center justify-center flex-1">
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-12 text-center shadow-lg w-11/12 sm:w-96 mt-12">
-          <h1 className="text-6xl font-bold mb-4 bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">404</h1>
+          <h1 className="text-6xl font-bold mb-4 bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">404</h1>
           <p className="text-lg mb-6">Oops! Page not found.</p>
           <Link
             href="/"

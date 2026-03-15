@@ -10,13 +10,13 @@ export default function CollabCompact() {
         <div className="bg-gradient-to-br from-slate-950/50 to-slate-800/50 border border-slate-700/50 rounded-2xl p-8 shadow-xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-500 to-brand-500 flex items-center justify-center flex-shrink-0">
                 <Handshake className="h-7 w-7 text-white" />
               </div>
               
               <div>
                 <h3 className="text-2xl font-bold text-white mb-2">
-                  <span className="bg-gradient-to-r from-blue-400 to-blue-400 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-brand-400 to-brand-400 bg-clip-text text-transparent">
                     Collaborate With Us
                   </span>
                 </h3>
@@ -26,11 +26,11 @@ export default function CollabCompact() {
                 
                 <div className="flex flex-wrap gap-4">
                   <div className="flex items-center text-sm">
-                    <Percent className="h-4 w-4 text-blue-400 mr-1" />
+                    <Percent className="h-4 w-4 text-brand-400 mr-1" />
                     <span className="text-gray-300">Special Rates</span>
                   </div>
                   <div className="flex items-center text-sm">
-                    <Calendar className="h-4 w-4 text-blue-400 mr-1" />
+                    <Calendar className="h-4 w-4 text-brand-400 mr-1" />
                     <span className="text-gray-300">Flexible Dates</span>
                   </div>
                 </div>
@@ -39,7 +39,7 @@ export default function CollabCompact() {
             
             <Link 
               href="/contact" 
-              className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-xl whitespace-nowrap"
+              className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-600 text-white font-semibold rounded-lg hover:from-brand-700 hover:to-brand-700 transition-all duration-300 shadow-lg hover:shadow-xl whitespace-nowrap"
             >
               Discuss Your Event
               <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />

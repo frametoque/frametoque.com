@@ -107,7 +107,7 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all
                       ${
                         active
-                          ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+                          ? "bg-gradient-to-r from-brand-600 to-brand-700 text-white"
                           : "text-gray-300 hover:bg-white/5"
                       }
                       `}
@@ -137,7 +137,7 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center text-white font-semibold">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-brand-600 to-brand-700 flex items-center justify-center text-white font-semibold">
                       {user?.firstName?.charAt(0) || "U"}
                     </div>
                   )}
@@ -204,7 +204,7 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
 
             <button className="relative p-2 hover:bg-white/10 rounded-lg">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></span>
+              <span className="absolute top-1 right-1 w-2 h-2 bg-brand-500 rounded-full"></span>
             </button>
 
             {/* Mobile Avatar */}

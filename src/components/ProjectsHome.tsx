@@ -102,7 +102,7 @@ export default function ProjectsHome() {
     if (project.type === "web" && project.live)
       return (
         <Link href={project.live} target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-blue-500/30 border border-white/15 hover:border-blue-400/50 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-300 group/btn">
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-brand-500/30 border border-white/15 hover:border-brand-400/50 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-300 group/btn">
           <Globe className="w-3.5 h-3.5" /> Live Site
           <ExternalLink className="w-3 h-3 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-0.5 transition-all" />
         </Link>
@@ -110,7 +110,7 @@ export default function ProjectsHome() {
     if (project.type === "photography" && project.live)
       return (
         <Link href={project.live} target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-blue-500/30 border border-white/15 hover:border-blue-400/50 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-300 group/btn">
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-brand-500/30 border border-white/15 hover:border-brand-400/50 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-300 group/btn">
           <Camera className="w-3.5 h-3.5" /> View Album
           <ExternalLink className="w-3 h-3 opacity-50 group-hover/btn:opacity-100 transition-all" />
         </Link>
@@ -118,14 +118,14 @@ export default function ProjectsHome() {
     if (project.type === "video" && project.youtube)
       return (
         <button onClick={() => setPopupVideo({ url: project.youtube, title: project.title })}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-blue-500/30 border border-white/15 hover:border-blue-400/50 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-300">
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-brand-500/30 border border-white/15 hover:border-brand-400/50 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-300">
           <Youtube className="w-3.5 h-3.5" /> Watch Full Video
         </button>
       );
     if (project.type === "graphic")
       return (
         <button onClick={() => setPopupImage(project.image)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-blue-500/30 border border-white/15 hover:border-blue-400/50 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-300">
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-brand-500/30 border border-white/15 hover:border-brand-400/50 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-300">
           <Eye className="w-3.5 h-3.5" /> Full View
         </button>
       );
@@ -152,9 +152,9 @@ export default function ProjectsHome() {
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/5 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
-      <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/8 transition-all duration-500" />
+      <div className="absolute inset-0 bg-brand-600/0 group-hover:bg-brand-600/8 transition-all duration-500" />
       <div className="absolute top-4 left-4 z-10">
-        <span className="px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-blue-300 text-[8px] font-bold tracking-widest uppercase">
+        <span className="px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-brand-300 text-[8px] font-bold tracking-widest uppercase">
           {project.category}
         </span>
       </div>
@@ -170,21 +170,21 @@ export default function ProjectsHome() {
     </>
   );
 
-  const card = "group relative rounded-2xl overflow-hidden cursor-pointer border border-white/[0.07] hover:border-blue-500/40 transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/15 hover:-translate-y-1 hover:scale-[1.01]";
+  const card = "group relative rounded-2xl overflow-hidden cursor-pointer border border-white/[0.07] hover:border-brand-500/40 transition-all duration-500 hover:shadow-2xl hover:shadow-brand-500/15 hover:-translate-y-1 hover:scale-[1.01]";
 
   // helper to get project by area letter
   const byArea = (letter) => projects.find((p) => p.area === letter);
 
   return (
     <section className="py-16 px-6 sm:px-10 lg:px-16 bg-slate-950 text-white relative overflow-hidden">
-      <div className="absolute top-10 left-4 sm:left-10 w-32 sm:w-48 h-32 sm:h-48 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-10 right-4 sm:right-10 w-40 sm:w-64 h-40 sm:h-64 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      <div className="absolute top-10 left-4 sm:left-10 w-32 sm:w-48 h-32 sm:h-48 bg-brand-500/10 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-10 right-4 sm:right-10 w-40 sm:w-64 h-40 sm:h-64 bg-brand-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-12">
           <h2 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
             <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">Featured&nbsp;</span>
-            <span className="bg-gradient-to-b from-blue-400 to-blue-500 bg-clip-text text-transparent">Projects</span>
+            <span className="bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">Projects</span>
           </h2>
           <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
             A quick glimpse into some of our highlighted work across different domains.
@@ -293,7 +293,7 @@ export default function ProjectsHome() {
         <div className="text-center">
           <Link
             href="/projects"
-            className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-xl whitespace-nowrap"
+            className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-600 text-white font-semibold rounded-lg hover:from-brand-700 hover:to-brand-700 transition-all duration-300 shadow-lg hover:shadow-xl whitespace-nowrap"
             aria-label="View More Projects"
           >
             View All Projects

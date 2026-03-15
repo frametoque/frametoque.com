@@ -7,7 +7,7 @@ import Link from "next/link";
 import InvoiceDocument from "@/app/dashboard/invoice/InvoiceDocument";
 
 const workStatusStyles = {
-  "in progress": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  "in progress": "bg-brand-500/20 text-brand-400 border-brand-500/30",
   completed: "bg-green-500/20 text-green-400 border-green-500/30",
   pending: "bg-amber-500/20 text-amber-400 border-amber-500/30",
 };
@@ -108,7 +108,7 @@ export default function InvoicePage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
       </div>
     );
   }
@@ -117,7 +117,7 @@ export default function InvoicePage() {
     return (
       <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 text-center">
         <p className="text-red-400">{error}</p>
-        <Link href="/dashboard/projects" className="text-blue-400 text-sm mt-3 inline-block">
+        <Link href="/dashboard/projects" className="text-brand-400 text-sm mt-3 inline-block">
           ← Back to Projects
         </Link>
       </div>
@@ -140,7 +140,7 @@ export default function InvoicePage() {
         <button
           onClick={handleDownload}
           disabled={downloading}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           {downloading ? "Generating PDF..." : "Download PDF"}
@@ -188,8 +188,8 @@ export default function InvoicePage() {
   {/* Details Grid */}
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-start gap-4">
-      <div className="p-2 rounded-lg bg-blue-500/10">
-        <FileText className="w-5 h-5 text-blue-400" />
+      <div className="p-2 rounded-lg bg-brand-500/10">
+        <FileText className="w-5 h-5 text-brand-400" />
       </div>
       <div>
         <p className="text-gray-400 text-xs mb-1">Invoice ID</p>
@@ -198,8 +198,8 @@ export default function InvoicePage() {
     </div>
 
     <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-start gap-4">
-      <div className="p-2 rounded-lg bg-blue-500/10">
-        <Calendar className="w-5 h-5 text-blue-400" />
+      <div className="p-2 rounded-lg bg-brand-500/10">
+        <Calendar className="w-5 h-5 text-brand-400" />
       </div>
       <div>
         <p className="text-gray-400 text-xs mb-1">Date</p>
@@ -208,8 +208,8 @@ export default function InvoicePage() {
     </div>
 
     <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-start gap-4">
-      <div className="p-2 rounded-lg bg-blue-500/10">
-        <Briefcase className="w-5 h-5 text-blue-400" />
+      <div className="p-2 rounded-lg bg-brand-500/10">
+        <Briefcase className="w-5 h-5 text-brand-400" />
       </div>
       <div>
         <p className="text-gray-400 text-xs mb-2">Project Status</p>
@@ -220,8 +220,8 @@ export default function InvoicePage() {
     </div>
 
     <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-start gap-4">
-      <div className="p-2 rounded-lg bg-blue-500/10">
-        <Tag className="w-5 h-5 text-blue-400" />
+      <div className="p-2 rounded-lg bg-brand-500/10">
+        <Tag className="w-5 h-5 text-brand-400" />
       </div>
       <div>
         <p className="text-gray-400 text-xs mb-2">Payment Status</p>
