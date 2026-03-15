@@ -1,9 +1,4 @@
 "use client";
-import React from "react";
-
-// A4 display size: 794 x 1123px (96dpi)
-// Original design was: 2480 x 3508px (300dpi)
-// We use percentage-based positioning so layout scales to any size.
 
 const formatDate = (dateString) => {
   if (!dateString) return "";
