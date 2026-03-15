@@ -46,8 +46,8 @@ export default function Footer() {
               />
             </div>
             <p className="text-gray-400 mb-4 sm:mb-6 max-w-xs mx-auto sm:mx-0 text-sm sm:text-base">
-              <Link href="https://share.google/8O9paXxs7VBKoAZlR" aria-label="Google Maps" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition">Piliyandala, Sri Lanka </Link><br />
-              <Link href="tel:+94701901461" aria-label="Telephone" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition">+94 70 190 1461</Link>
+              <Link href="https://share.google/8O9paXxs7VBKoAZlR" aria-label="Google Maps" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition inline-flex items-center min-h-[48px] min-w-[48px] py-3 px-2" >Piliyandala, Sri Lanka </Link><br />
+              <Link href="tel:+94701901461" aria-label="Telephone" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition inline-flex items-center min-h-[48px] min-w-[48px] py-3 px-2" >+94 70 190 1461</Link>
             </p>
             <div className="flex justify-center space-x-2">
               {[Instagram, Facebook, Linkedin, Youtube, TikTok, Telegram, Mail].map((Icon, idx) => (
