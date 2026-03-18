@@ -325,62 +325,15 @@ async function crawlWebsite() {
 }
 
 function enhanceResponseWithLinks(response: string, userMessage: string): string {
-  const lowerMsg = userMessage.toLowerCase();
-  let enhancedResponse = response;
-
-  if (
-    (lowerMsg.includes('portfolio') || lowerMsg.includes('example') ||
-      lowerMsg.includes('work') || lowerMsg.includes('see') ||
-      lowerMsg.includes('show') || lowerMsg.includes('previous')) &&
-    !response.includes(FRAME_TOQUE_URLS.portfolio)
-  ) {
-    enhancedResponse += `\n\nYou can view our portfolio at [Frame Toque Portfolio](${FRAME_TOQUE_URLS.portfolio}) to see examples of our work.`;
-  }
-
-  if (
-    (lowerMsg.includes('project') || lowerMsg.includes('case study') ||
-      lowerMsg.includes('example') || lowerMsg.includes('website')) &&
-    !response.includes(FRAME_TOQUE_URLS.projects)
-  ) {
-    enhancedResponse += `\n\nCheck out our [Projects page](${FRAME_TOQUE_URLS.projects}) for specific case studies.`;
-  }
-
-  if (
-    (lowerMsg.includes('service') || lowerMsg.includes('what you do') ||
-      lowerMsg.includes('offer') || lowerMsg.includes('provide')) &&
-    !response.includes(FRAME_TOQUE_URLS.services)
-  ) {
-    enhancedResponse += `\n\nLearn more about our [Services](${FRAME_TOQUE_URLS.services}).`;
-  }
-
-  if (
-    (response.includes('consultation') || response.includes('contact') ||
-      response.includes('schedule') || response.includes('book') ||
-      response.includes('discuss')) &&
-    !response.includes(FRAME_TOQUE_URLS.contact)
-  ) {
-    enhancedResponse += `\n\nContact us to get started: [Book Consultation](${FRAME_TOQUE_URLS.contact})`;
-  }
-
-  if (
-    !response.includes(FRAME_TOQUE_URLS.main) &&
-    !enhancedResponse.includes(FRAME_TOQUE_URLS.main)
-  ) {
-    enhancedResponse += `\n\nVisit our [Website](${FRAME_TOQUE_URLS.main}) for more information.`;
-  }
-
-  return enhancedResponse.trim();
+  return response.trim();
 }
 
 const getClientFocusedResponse = (userMessage: string): string => {
   const lowerMsg = userMessage.toLowerCase();
 
-  const technicalTerms = [
-    'react', 'next.js', 'javascript', 'typescript', 'code',
-    'backend', 'api', 'hosting', 'server', 'database',
-    'framework', 'library', 'package', 'npm', 'node',
-    'css', 'html', 'frontend', 'fullstack', 'devops',
-  ];
+  const technicalTerms = ['react', 'next.js', 'javascript', 'typescript', 'code',
+    'backend', 'api', 'hosting', 'server', 'database', 'framework', 'library',
+    'package', 'npm', 'node', 'css', 'html', 'frontend', 'fullstack', 'devops'];
 
   if (technicalTerms.some((term) => lowerMsg.includes(term))) {
     return `That's a good technical question. Our team can explain this properly during a quick consultation if you'd like.`;
@@ -389,10 +342,16 @@ const getClientFocusedResponse = (userMessage: string): string => {
     return `Pricing depends on what you need. We usually share a clear quote after understanding the project.`;
   }
   if (lowerMsg.includes('time') || lowerMsg.includes('how long') || lowerMsg.includes('deadline')) {
-    return `Timelines depend on the project size. Most designs are done faster than full websites, and we confirm timelines before starting.`;
+    return `Timelines depend on the project size. We confirm timelines before starting.`;
   }
-  if (lowerMsg.includes('see work') || lowerMsg.includes('portfolio') || lowerMsg.includes('example')) {
-    return `Sure. You can view some of our recent work here: [Frame Toque Portfolio](${FRAME_TOQUE_URLS.portfolio})`;
+  if (lowerMsg.includes('portfolio') || lowerMsg.includes('see work') || lowerMsg.includes('example')) {
+    return `Sure, you can view our recent work here: [Frame Toque Portfolio](${FRAME_TOQUE_URLS.portfolio})`;
+  }
+  if (lowerMsg.includes('contact') || lowerMsg.includes('email') || lowerMsg.includes('reach')) {
+    return `You can reach us here: [Contact Frame Toque](${FRAME_TOQUE_URLS.contact})`;
+  }
+  if (lowerMsg.includes('service') || lowerMsg.includes('what do you offer')) {
+    return `We offer graphic design, web development, and video editing. Want to know more about any of these?`;
   }
   if (lowerMsg.includes('design') || lowerMsg.includes('graphic')) {
     return `We handle logos, branding, and visual designs that help businesses look professional and consistent.`;
@@ -403,17 +362,14 @@ const getClientFocusedResponse = (userMessage: string): string => {
   if (lowerMsg.includes('video') || lowerMsg.includes('edit')) {
     return `We edit videos for marketing, social media, and brand storytelling.`;
   }
-  if (lowerMsg.includes('about') || lowerMsg.includes('who are you') || lowerMsg.includes('company')) {
+  if (lowerMsg.includes('about') || lowerMsg.includes('who are you')) {
     return `Frame Toque is a creative agency working with brands on design, websites, and video content.`;
-  }
-  if (lowerMsg.includes('contact') || lowerMsg.includes('email') || lowerMsg.includes('phone')) {
-    return `You can reach us through our contact page. We usually reply within a day. [Contact Frame Toque](${FRAME_TOQUE_URLS.contact})`;
   }
 
   const defaults = [
-    `I can help with that. Could you tell me a bit more about what you're planning?`,
+    `Happy to help. Could you tell me a bit more about what you're planning?`,
     `That sounds interesting. What kind of result are you aiming for?`,
-    `Happy to help. Share a little more detail so I can guide you better.`,
+    `Sure. Share a little more detail so I can guide you better.`,
   ];
 
   return defaults[Math.floor(Math.random() * defaults.length)];
@@ -429,7 +385,7 @@ export async function POST(req: Request) {
     format = body.format ?? 'markdown';
 
     if (!message || typeof message !== 'string' || message.trim() === '') {
-      const welcomeMsg = `Hello! I'm the Frame Toque AI Assistant. We specialize in graphic design, web development, and video editing. How can I help you today?\n\nVisit our website: [Frame Toque](${FRAME_TOQUE_URLS.main}) | View portfolio: [Frame Toque Portfolio](${FRAME_TOQUE_URLS.portfolio})`;
+      const welcomeMsg = `Hello! I'm the Frame Toque AI Assistant. We specialize in photography, videography, graphic design, web development, and video editing. How can I help you today?`;
 
       return Response.json({
         reply: format === 'plain' ? stripMarkdown(welcomeMsg) : welcomeMsg,
