@@ -1,4 +1,3 @@
-// app/api/requests/route.js
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
 

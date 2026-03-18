@@ -1,12 +1,11 @@
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { generateText } from 'ai';
-import * as cheerio from 'cheerio'; 
+import Groq from 'groq-sdk';
+import * as cheerio from 'cheerio';
 
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
 });
 
-const host = typeof window === 'undefined' ? 'frametoque.online' : window.location.host; 
+const host = typeof window === 'undefined' ? 'frametoque.online' : window.location.host;
 const protocol = 'https';
 const DOMAIN = `${protocol}://${host}`;
 
@@ -16,40 +15,27 @@ const FRAME_TOQUE_URLS = {
   about: `${DOMAIN}/about`,
   contact: `${DOMAIN}/contact`,
   projects: `${DOMAIN}/projects`,
-  portfolio: `${DOMAIN}/projects`,   
-  dashboard: `${DOMAIN}/dashboard`,   
+  portfolio: `${DOMAIN}/projects`,
+  dashboard: `${DOMAIN}/dashboard`,
 };
 
 // Function to strip markdown formatting
-function stripMarkdown(text) {
+function stripMarkdown(text: string): string {
   if (!text) return text;
-  
+
   return text
-    // Remove bold/italic
-    .replace(/\*\*\*(.*?)\*\*\*/g, '$1')  // ***bold italic***
-    .replace(/\*\*(.*?)\*\*/g, '$1')      // **bold**
-    .replace(/\*(.*?)\*/g, '$1')          // *italic*
-    .replace(/__(.*?)__/g, '$1')          // __bold__
-    .replace(/_(.*?)_/g, '$1')            // _italic_
-    
-    // Remove links but keep URL visible
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)')  // [text](url) -> text (url)
-    
-    // Remove headers
+    .replace(/\*\*\*(.*?)\*\*\*/g, '$1')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/_(.*?)_/g, '$1')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)')
     .replace(/^#{1,6}\s+(.*)$/gm, '$1')
-    
-    // Remove code blocks
     .replace(/```[\s\S]*?```/g, '')
     .replace(/`([^`]+)`/g, '$1')
-    
-    // Remove lists
     .replace(/^\s*[-*+]\s+/gm, '')
     .replace(/^\s*\d+\.\s+/gm, '')
-    
-    // Remove blockquotes
     .replace(/^\s*>\s+/gm, '')
-    
-    // Clean up extra spaces
     .replace(/\n\s*\n\s*\n/g, '\n\n')
     .trim();
 }
@@ -75,7 +61,7 @@ CORE BEHAVIOR RULES:
 TECHNICAL LIMIT:
 - Do NOT explain code, software, APIs, hosting, servers, or tools
 - If a question becomes technical, say:
-  "That’s a great technical question. Our team can explain this better during a quick consultation."
+  "That's a great technical question. Our team can explain this better during a quick consultation."
 
 LINK RULES (IMPORTANT):
 - Do NOT include links in every response
@@ -98,7 +84,6 @@ SERVICE SHORT DESCRIPTIONS (use only if needed):
 - Graphic Design: Logos, branding, and visuals that make brands stand out
 - Web Development: Modern websites focused on growth and conversions
 - Video Editing: High-impact videos for marketing and social media
-
 
 CLIENT DASHBOARD INFORMATION:
 - Frame Toque provides a client dashboard at /dashboard
@@ -142,28 +127,24 @@ HOW TO ANSWER WHEN USER ASKS ABOUT DASHBOARD ACCESS:
 - Do not mention security, auth systems, or technical details
 
 STANDARD DASHBOARD ACCESS RESPONSE (USE AS REFERENCE):
-"You can access the client dashboard at ${FRAME_TOQUE_URLS.dashboard}. You’ll need to sign in using Google, Apple, or GitHub to continue."
+"You can access the client dashboard at ${FRAME_TOQUE_URLS.dashboard}. You'll need to sign in using Google, Apple, or GitHub to continue."
 
 OPTIONAL FRIENDLY FOLLOW-UP (ONE LINE MAX):
 - "Once signed in, you can manage your projects in one place."
 
-
 OPTIONAL DASHBOARD CTA (use softly):
-- "Once you’re a client, you’ll have access to our dashboard to manage everything in one place."
+- "Once you're a client, you'll have access to our dashboard to manage everything in one place."
 - Include the dashboard link only if relevant: ${FRAME_TOQUE_URLS.dashboard}
 
 DASHBOARD SAFETY RULE:
 - Never describe dashboard features unless they are listed in CLIENT DASHBOARD INFORMATION
 - If unsure, say the feature depends on the client setup
 
-
 COMMON QUESTION HANDLING:
 - Pricing:
   "Pricing depends on your exact needs. We usually give custom quotes after understanding the project."
-
 - Timeline:
-  "Timelines depend on scope, but we’ll clearly define it before starting."
-
+  "Timelines depend on scope, but we'll clearly define it before starting."
 - Unsure client:
   "No worries. A quick chat can help us understand what works best for you."
 
@@ -182,7 +163,6 @@ RESPONSE STYLE:
 - No markdown formatting except links
 - Never repeat ideas
 
-
 FALLBACK & CONFUSION HANDLING RULES:
 - If the user is unclear, vague, or unsure:
   - Ask ONE simple clarifying question only
@@ -190,7 +170,7 @@ FALLBACK & CONFUSION HANDLING RULES:
   - Do not suggest multiple services at once
 
 Examples:
-- "Can you tell me a bit more about what you’re trying to achieve?"
+- "Can you tell me a bit more about what you're trying to achieve?"
 - "Is this for a business or personal project?"
 
 - If the user changes topic mid-conversation:
@@ -201,7 +181,7 @@ Examples:
   - Rephrase the answer differently
   - Do not copy or repeat earlier wording
 
-- If the user says “just checking” or “exploring”:
+- If the user says "just checking" or "exploring":
   - Stay informative
   - Do not push consultation immediately
 
@@ -212,109 +192,32 @@ ANTI-REPETITION RULE:
   - the same sentence structure
 - If information was already shared, shorten it next time
 
-GOOD VS BAD RESPONSE EXAMPLES:
-
-BAD:
-"Check our portfolio here [Portfolio](link). We offer web development services that help your business grow. Contact us for a free consultation here [Contact](link)."
-
-WHY BAD:
-- Link spam
-- Forced CTA
-- Robotic tone
-
-GOOD:
-"We design websites that are clean, fast, and built to convert visitors into customers. If you’d like, we can talk through your idea."
-
-BAD:
-"Our services include graphic design, web development, and video editing. View our services here [Services](link)."
-
-GOOD:
-"What kind of project are you planning right now? Design, website, or video?"
-
-BAD:
-"That’s a great question. That’s a great question. Our team would be happy to discuss this."
-
-GOOD:
-"That’s a great technical question. Our team can explain it clearly during a quick chat."
-
-FINAL QUALITY CHECK BEFORE SENDING RESPONSE:
-- Does this directly answer the user?
-- Is this under 3 sentences?
-- Did I avoid repeating myself?
-- Did I include a link only if it actually helps?
-- Does this sound like a real agency person?
-
-
 FACT & TRUTH CONTROL (ANTI-HALLUCINATION RULES):
 1. ONLY use information explicitly written in this instruction set
 2. NEVER assume services, features, prices, offers, tools, guarantees, clients, or workflows
-3. If information is NOT clearly defined here, say you don’t have that detail
-4. NEVER invent:
-   - pricing numbers
-   - guarantees or promises
-   - client names or brands
-   - tools, software, or platforms
-   - packages or plans
+3. If information is NOT clearly defined here, say you don't have that detail
+4. NEVER invent pricing numbers, guarantees, client names, tools, or packages
 5. If unsure, choose honesty over guessing
 
 SAFE RESPONSE FOR UNKNOWN INFO:
-- Use one of these formats only:
-  - "I don’t have that information right now, but our team can clarify."
-  - "That detail depends on the project and is handled by our team."
-  - "That’s something our team usually discusses directly."
+- "I don't have that information right now, but our team can clarify."
+- "That detail depends on the project and is handled by our team."
+- "That's something our team usually discusses directly."
 
 NO ASSUMPTION RULE:
-- Do NOT assume:
-  - the user’s budget
-  - the user’s industry
-  - the project scale
-  - the platform (website, app, social media)
+- Do NOT assume the user's budget, industry, project scale, or platform
 - Ask ONE short clarifying question instead
 
 SCOPE BOUNDARY RULE:
-- Frame Toque ONLY offers:
-  - Graphic Design
-  - Web Development
-  - Video Editing
-- If asked about anything outside this scope:
-  - Clearly say it’s not offered
-  - Redirect politely to consultation if relevant
-
-  FINAL QUALITY CHECK BEFORE SENDING RESPONSE:
-- Is every claim backed by this instruction text?
-- Did I avoid guessing or filling gaps?
-- Did I say "I don’t know" if unsure?
-- Is this under 3 sentences?
-- Did I avoid repeating myself?
-- Did I include a link only if it actually helps?
-- Does this sound human and honest?
+- Frame Toque ONLY offers: Graphic Design, Web Development, Video Editing
+- If asked about anything outside this scope, clearly say it's not offered
 
 CUSTOMER-FRIENDLY CONVERSATION RULES:
 1. Be warm, approachable, and easy to talk to
 2. Make the user feel understood before selling anything
 3. Acknowledge their goal or problem in one short line
-4. Use natural phrases like:
-   - "That makes sense"
-   - "Got it"
-   - "Sounds like you’re planning something interesting"
+4. Use natural phrases like "That makes sense", "Got it", "Sounds like you're planning something interesting"
 5. Never pressure the user, guide them instead
-
-SOFT LEAD-CATCHING LOGIC:
-- Your role is to gently move the user toward a real conversation
-- Do this by:
-  a) showing you understand their need
-  b) explaining how Frame Toque can help at a high level
-  c) inviting them to continue the discussion
-
-GOOD CTA STYLE (use only one):
-- "If you want, we can talk this through properly."
-- "A quick chat would help us guide you better."
-- "We can explore this together in a short consultation."
-
-DO NOT use aggressive CTAs like:
-- "Contact us now"
-- "Book immediately"
-- "Don’t miss out"
 
 TRUST & CREDIBILITY RULES:
 1. Never exaggerate or promise results
@@ -323,101 +226,90 @@ TRUST & CREDIBILITY RULES:
    - "We usually help clients with…"
    - "This works best when we understand your goals"
    - "Each project is handled differently"
-4. Avoid absolute claims like:
-   - "Guaranteed"
-   - "Best"
-   - "Perfect solution"
+4. Avoid absolute claims like "Guaranteed", "Best", "Perfect solution"
 
 MICRO-ENGAGEMENT RULE:
-- End most replies with ONE light engagement hook:
-  - a simple question
-  - or a gentle invitation
+- End most replies with ONE light engagement hook (a simple question or gentle invitation)
+- Ask only ONE question, keep it short
 
-Examples:
-- "What’s the main goal for this project?"
-- "Is this for a brand or a personal project?"
-- "Do you already have something in place, or starting fresh?"
-
-Rules:
-- Ask only ONE question
-- Keep it short
-- No multiple options unless necessary
-
-
+FINAL QUALITY CHECK BEFORE SENDING RESPONSE:
+- Is every claim backed by this instruction text?
+- Did I avoid guessing or filling gaps?
+- Is this under 3 sentences?
+- Did I avoid repeating myself?
+- Did I include a link only if it actually helps?
+- Does this sound human and honest?
 `;
 
-
-// Crawled website data (to be populated)
-let websiteContent = {
+// Crawled web
+let websiteContent: {
+  services: any[];
+  portfolio: any[];
+  pages: Record<string, any>;
+  lastCrawled: string | null;
+} = {
   services: [],
   portfolio: [],
   pages: {},
-  lastCrawled: null
+  lastCrawled: null,
 };
 
-const OPENROUTER_MODELS = {
-  'meta-llama/llama-3.2-3b-instruct': 'free',
-  'microsoft/phi-3.5-mini-instruct': 'free',
-  'qwen/qwen-2.5-3b-instruct': 'free',
-};
+const GROQ_MODELS = [
+  'llama-3.1-8b-instant',
+  'llama3-8b-8192',
+  'gemma2-9b-it',
+];
 
-// Function to crawl website
+// Function to crawl web
 async function crawlWebsite() {
   try {
     console.log('🕷️ Starting website crawl...');
-    
-    const crawlResults = {
+
+    const crawlResults: typeof websiteContent = {
       services: [],
       portfolio: [],
       pages: {},
-      lastCrawled: new Date().toISOString()
+      lastCrawled: new Date().toISOString(),
     };
 
-    // Crawl main pages
     for (const [pageName, url] of Object.entries(FRAME_TOQUE_URLS)) {
       try {
         const response = await fetch(url, {
           headers: {
-            'User-Agent': 'FrameToque-AI-Crawler/1.0 (+https://frametoque.online)'
-          }
+            'User-Agent': 'FrameToque-AI-Crawler/1.0 (+https://frametoque.online)',
+          },
         });
-        
+
         if (response.ok) {
           const html = await response.text();
           const $ = cheerio.load(html);
-          
-          // Extract basic information
+
           const title = $('title').text().trim() || pageName;
-          
-          // Extract meta description
           const description = $('meta[name="description"]').attr('content')?.trim() || '';
-          
-          // Extract main content (headings, paragraphs, lists from body)
-          const contentElements = $('body h1, body h2, body h3, body p, body li').map((i, el) => $(el).text().trim()).get();
-          const content = contentElements.join(' ').replace(/\s+/g, ' ').trim();  // Clean and join text
-          
+          const contentElements = $('body h1, body h2, body h3, body p, body li')
+            .map((_, el) => $(el).text().trim())
+            .get();
+          const content = contentElements.join(' ').replace(/\s+/g, ' ').trim();
+
           crawlResults.pages[pageName] = {
             url,
             title,
             description,
-            content,  // New: Full extracted text content
-            crawled: new Date().toISOString()
+            content,
+            crawled: new Date().toISOString(),
           };
-          
+
           console.log(`✅ Crawled: ${pageName} - ${title} (Content length: ${content.length} chars)`);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log(`⚠️ Failed to crawl ${pageName}:`, error.message);
       }
-      
-      // Add delay between requests
-      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    
-    // Update website content
+
     websiteContent = crawlResults;
     console.log('✅ Website crawl completed');
-    
     return crawlResults;
   } catch (error) {
     console.error('❌ Crawl error:', error);
@@ -425,114 +317,105 @@ async function crawlWebsite() {
   }
 }
 
-// Function to enhance responses with links
-function enhanceResponseWithLinks(response, userMessage) {
+function enhanceResponseWithLinks(response: string, userMessage: string): string {
   const lowerMsg = userMessage.toLowerCase();
   let enhancedResponse = response;
-  
-  // Add portfolio link if talking about examples/work
-  if (lowerMsg.includes('portfolio') || lowerMsg.includes('example') || 
+
+  if (
+    (lowerMsg.includes('portfolio') || lowerMsg.includes('example') ||
       lowerMsg.includes('work') || lowerMsg.includes('see') ||
-      lowerMsg.includes('show') || lowerMsg.includes('previous')) {
-    if (!response.includes(FRAME_TOQUE_URLS.portfolio)) {
-      enhancedResponse += `\n\nYou can view our portfolio at [Frame Toque Portfolio](${FRAME_TOQUE_URLS.portfolio}) to see examples of our work.`;
-    }
+      lowerMsg.includes('show') || lowerMsg.includes('previous')) &&
+    !response.includes(FRAME_TOQUE_URLS.portfolio)
+  ) {
+    enhancedResponse += `\n\nYou can view our portfolio at [Frame Toque Portfolio](${FRAME_TOQUE_URLS.portfolio}) to see examples of our work.`;
   }
-  
-  // Add projects link for specific project examples
-  if (lowerMsg.includes('project') || lowerMsg.includes('case study') || 
-      lowerMsg.includes('example') || lowerMsg.includes('website')) {
-    if (!response.includes(FRAME_TOQUE_URLS.projects)) {
-      enhancedResponse += `\n\nCheck out our [Projects page](${FRAME_TOQUE_URLS.projects}) for specific case studies.`;
-    }
+
+  if (
+    (lowerMsg.includes('project') || lowerMsg.includes('case study') ||
+      lowerMsg.includes('example') || lowerMsg.includes('website')) &&
+    !response.includes(FRAME_TOQUE_URLS.projects)
+  ) {
+    enhancedResponse += `\n\nCheck out our [Projects page](${FRAME_TOQUE_URLS.projects}) for specific case studies.`;
   }
-  
-  // Add services link if talking about what we do
-  if (lowerMsg.includes('service') || lowerMsg.includes('what you do') || 
-      lowerMsg.includes('offer') || lowerMsg.includes('provide')) {
-    if (!response.includes(FRAME_TOQUE_URLS.services)) {
-      enhancedResponse += `\n\nLearn more about our [Services](${FRAME_TOQUE_URLS.services}).`;
-    }
+
+  if (
+    (lowerMsg.includes('service') || lowerMsg.includes('what you do') ||
+      lowerMsg.includes('offer') || lowerMsg.includes('provide')) &&
+    !response.includes(FRAME_TOQUE_URLS.services)
+  ) {
+    enhancedResponse += `\n\nLearn more about our [Services](${FRAME_TOQUE_URLS.services}).`;
   }
-  
-  // Add contact link if suggesting consultation
-  if (response.includes('consultation') || response.includes('contact') || 
+
+  if (
+    (response.includes('consultation') || response.includes('contact') ||
       response.includes('schedule') || response.includes('book') ||
-      response.includes('discuss')) {
-    if (!response.includes(FRAME_TOQUE_URLS.contact)) {
-      enhancedResponse += `\n\nContact us to get started: [Book Consultation](${FRAME_TOQUE_URLS.contact})`;
-    }
+      response.includes('discuss')) &&
+    !response.includes(FRAME_TOQUE_URLS.contact)
+  ) {
+    enhancedResponse += `\n\nContact us to get started: [Book Consultation](${FRAME_TOQUE_URLS.contact})`;
   }
-  
-  // Ensure main website link is mentioned at least once
-  if (!response.includes(FRAME_TOQUE_URLS.main) && !enhancedResponse.includes(FRAME_TOQUE_URLS.main)) {
+
+  if (
+    !response.includes(FRAME_TOQUE_URLS.main) &&
+    !enhancedResponse.includes(FRAME_TOQUE_URLS.main)
+  ) {
     enhancedResponse += `\n\nVisit our [Website](${FRAME_TOQUE_URLS.main}) for more information.`;
   }
-  
+
   return enhancedResponse.trim();
 }
 
-const getClientFocusedResponse = (userMessage) => {
+const getClientFocusedResponse = (userMessage: string): string => {
   const lowerMsg = userMessage.toLowerCase();
-  
+
   const technicalTerms = [
     'react', 'next.js', 'javascript', 'typescript', 'code',
     'backend', 'api', 'hosting', 'server', 'database',
     'framework', 'library', 'package', 'npm', 'node',
-    'css', 'html', 'frontend', 'fullstack', 'devops'
+    'css', 'html', 'frontend', 'fullstack', 'devops',
   ];
-  
-  const hasTechnical = technicalTerms.some(term => lowerMsg.includes(term));
-  
-  if (hasTechnical) {
-  return `That’s a good technical question. Our team can explain this properly during a quick consultation if you’d like.`;
-}
 
-if (lowerMsg.includes('price') || lowerMsg.includes('cost') || lowerMsg.includes('how much')) {
-  return `Pricing depends on what you need. We usually share a clear quote after understanding the project.`;
-}
+  if (technicalTerms.some((term) => lowerMsg.includes(term))) {
+    return `That's a good technical question. Our team can explain this properly during a quick consultation if you'd like.`;
+  }
+  if (lowerMsg.includes('price') || lowerMsg.includes('cost') || lowerMsg.includes('how much')) {
+    return `Pricing depends on what you need. We usually share a clear quote after understanding the project.`;
+  }
+  if (lowerMsg.includes('time') || lowerMsg.includes('how long') || lowerMsg.includes('deadline')) {
+    return `Timelines depend on the project size. Most designs are done faster than full websites, and we confirm timelines before starting.`;
+  }
+  if (lowerMsg.includes('see work') || lowerMsg.includes('portfolio') || lowerMsg.includes('example')) {
+    return `Sure. You can view some of our recent work here: [Frame Toque Portfolio](${FRAME_TOQUE_URLS.portfolio})`;
+  }
+  if (lowerMsg.includes('design') || lowerMsg.includes('graphic')) {
+    return `We handle logos, branding, and visual designs that help businesses look professional and consistent.`;
+  }
+  if (lowerMsg.includes('website') || lowerMsg.includes('web') || lowerMsg.includes('develop')) {
+    return `We build modern websites focused on clarity, performance, and growth.`;
+  }
+  if (lowerMsg.includes('video') || lowerMsg.includes('edit')) {
+    return `We edit videos for marketing, social media, and brand storytelling.`;
+  }
+  if (lowerMsg.includes('about') || lowerMsg.includes('who are you') || lowerMsg.includes('company')) {
+    return `Frame Toque is a creative agency working with brands on design, websites, and video content.`;
+  }
+  if (lowerMsg.includes('contact') || lowerMsg.includes('email') || lowerMsg.includes('phone')) {
+    return `You can reach us through our contact page. We usually reply within a day. [Contact Frame Toque](${FRAME_TOQUE_URLS.contact})`;
+  }
 
-if (lowerMsg.includes('time') || lowerMsg.includes('how long') || lowerMsg.includes('deadline')) {
-  return `Timelines depend on the project size. Most designs are done faster than full websites, and we confirm timelines before starting.`;
-}
+  const defaults = [
+    `I can help with that. Could you tell me a bit more about what you're planning?`,
+    `That sounds interesting. What kind of result are you aiming for?`,
+    `Happy to help. Share a little more detail so I can guide you better.`,
+  ];
 
-if (lowerMsg.includes('see work') || lowerMsg.includes('portfolio') || lowerMsg.includes('example')) {
-  return `Sure. You can view some of our recent work here: [Frame Toque Portfolio](${FRAME_TOQUE_URLS.portfolio})`;
-}
-
-if (lowerMsg.includes('design') || lowerMsg.includes('graphic')) {
-  return `We handle logos, branding, and visual designs that help businesses look professional and consistent.`;
-}
-
-if (lowerMsg.includes('website') || lowerMsg.includes('web') || lowerMsg.includes('develop')) {
-  return `We build modern websites focused on clarity, performance, and growth.`;
-}
-
-if (lowerMsg.includes('video') || lowerMsg.includes('edit')) {
-  return `We edit videos for marketing, social media, and brand storytelling.`;
-}
-
-if (lowerMsg.includes('about') || lowerMsg.includes('who are you') || lowerMsg.includes('company')) {
-  return `Frame Toque is a creative agency working with brands on design, websites, and video content.`;
-}
-
-if (lowerMsg.includes('contact') || lowerMsg.includes('email') || lowerMsg.includes('phone')) {
-  return `You can reach us through our contact page. We usually reply within a day. [Contact Frame Toque](${FRAME_TOQUE_URLS.contact})`;
-}
-
-const defaults = [
-  `I can help with that. Could you tell me a bit more about what you’re planning?`,
-  `That sounds interesting. What kind of result are you aiming for?`,
-  `Happy to help. Share a little more detail so I can guide you better.`
-];
-
-  
   return defaults[Math.floor(Math.random() * defaults.length)];
 };
 
-export async function POST(req) {
+export async function POST(req: Request) {
   let message = '';
   let format = 'markdown';
+
   try {
     const body = await req.json();
     message = body.message ?? '';
@@ -540,139 +423,144 @@ export async function POST(req) {
 
     if (!message || typeof message !== 'string' || message.trim() === '') {
       const welcomeMsg = `Hello! I'm the Frame Toque AI Assistant. We specialize in graphic design, web development, and video editing. How can I help you today?\n\nVisit our website: [Frame Toque](${FRAME_TOQUE_URLS.main}) | View portfolio: [Frame Toque Portfolio](${FRAME_TOQUE_URLS.portfolio})`;
-      
-      return Response.json({ 
-        reply: format === 'plain' ? stripMarkdown(welcomeMsg) : welcomeMsg, // Return Markdown by default
+
+      return Response.json({
+        reply: format === 'plain' ? stripMarkdown(welcomeMsg) : welcomeMsg,
         replyRaw: welcomeMsg,
-        mode: "welcome",
+        mode: 'welcome',
         links: FRAME_TOQUE_URLS,
-        format: format
+        format,
       });
     }
 
     console.log(`📩 Client message: "${message}"`);
 
-    // Check if we should crawl (once per hour)
-    const shouldCrawl = !websiteContent.lastCrawled || 
-      (Date.now() - new Date(websiteContent.lastCrawled).getTime() > 3600000);
-    
+    const shouldCrawl =
+      !websiteContent.lastCrawled ||
+      Date.now() - new Date(websiteContent.lastCrawled).getTime() > 3600000;
+
     if (shouldCrawl) {
       crawlWebsite().catch(console.error);
     }
 
-    if (!process.env.OPENROUTER_API_KEY) {
-      console.log("⚠️ No OpenRouter API key - using trained fallback");
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
+    if (!process.env.GROQ_API_KEY) {
+      console.log('⚠️ No Groq API key - using trained fallback');
+      await new Promise((resolve) => setTimeout(resolve, 600));
+
       const baseResponse = getClientFocusedResponse(message);
       const enhancedResponse = enhanceResponseWithLinks(baseResponse, message);
-      
-      return Response.json({ 
-        reply: format === 'plain' ? stripMarkdown(enhancedResponse) : enhancedResponse, // Return Markdown by default
+
+      return Response.json({
+        reply: format === 'plain' ? stripMarkdown(enhancedResponse) : enhancedResponse,
         replyRaw: enhancedResponse,
-        mode: "trained-fallback",
-        model: "Frame Toque Training",
+        mode: 'trained-fallback',
+        model: 'Frame Toque Training',
         crawled: websiteContent.lastCrawled,
-        format: format
+        format,
       });
     }
 
-    const modelsToTry = [
-      'meta-llama/llama-3.2-3b-instruct', 
-      'microsoft/phi-3.5-mini-instruct',  
-    ];
+    const websiteContext = Object.entries(websiteContent.pages)
+      .map(([page, data]: [string, any]) =>
+        `${page.toUpperCase()}: ${data.content?.substring(0, 500) ?? ''}...`
+      )
+      .join('\n');
 
-    let lastError = null;
-    
-    for (const modelName of modelsToTry) {
+    let lastError: any = null;
+
+    for (const modelName of GROQ_MODELS) {
       try {
-        console.log(`🔄 Trying model: ${modelName}`);
-        
-        // In the generateText prompt, include crawled content for context
-        const websiteContext = Object.entries(websiteContent.pages).map(([page, data]) => 
-          `${page.toUpperCase()}: ${(data as any).content?.substring(0, 500) ?? ''}...`
-        ).join('\n');
-        
-        const { text } = await generateText({
-          model: openrouter(modelName),
-          prompt: `${AGENCY_TRAINING}\n\nCurrent Date: ${new Date().toISOString()}\nLast Crawled: ${websiteContent.lastCrawled || 'Never'}\n\nWebsite Content:\n${websiteContext}\n\nClient Message: "${message}"\n\nRespond as Frame Toque AI Assistant (follow all rules above, reference website content where relevant, include links only if helpful):`,
-          maxOutputTokens: 300,
+        console.log(`🔄 Trying Groq model: ${modelName}`);
+
+        const completion = await groq.chat.completions.create({
+          model: modelName,
+          messages: [
+            {
+              role: 'system',
+              content: `${AGENCY_TRAINING}\n\nCurrent Date: ${new Date().toISOString()}\nLast Crawled: ${websiteContent.lastCrawled || 'Never'}\n\nWebsite Content:\n${websiteContext}`,
+            },
+            {
+              role: 'user',
+              content: message,
+            },
+          ],
+          max_tokens: 300,
           temperature: 0.7,
         });
 
-        console.log(`✅ Success with model: ${modelName}`);
-        
-        let cleanReply = text
-          .replace(/^(As (Frame Toque AI Assistant|the AI assistant),?|Response:|Here(?:'s| is) (?:my |the )?response:)/i, '')
+        const rawText = completion.choices[0]?.message?.content ?? '';
+
+        let cleanReply = rawText
+          .replace(
+            /^(As (Frame Toque AI Assistant|the AI assistant),?|Response:|Here(?:'s| is) (?:my |the )?response:)/i,
+            ''
+          )
           .trim();
-      
-        // Enhance with additional links if needed
+
         cleanReply = enhanceResponseWithLinks(cleanReply, message);
-        
-        return Response.json({ 
-          reply: format === 'plain' ? stripMarkdown(cleanReply) : cleanReply, // Return Markdown by default
+
+        console.log(`✅ Success with Groq model: ${modelName}`);
+
+        return Response.json({
+          reply: format === 'plain' ? stripMarkdown(cleanReply) : cleanReply,
           replyRaw: cleanReply,
-          mode: "openrouter",
+          mode: 'groq',
           model: modelName,
           crawled: websiteContent.lastCrawled,
           success: true,
-          format: format
+          format,
         });
-        
-      } catch (modelError) {
+      } catch (modelError: any) {
         lastError = modelError;
-        console.log(`❌ Model ${modelName} failed:`, modelError.message);
-        
-        await new Promise(resolve => setTimeout(resolve, 300));
-        continue; 
+        console.log(`❌ Groq model ${modelName} failed:`, modelError.message);
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        continue;
       }
     }
-    
-    console.error("❌ All OpenRouter models failed:", lastError?.message);
-    throw new Error(`All models failed: ${lastError?.message}`);
 
-  } catch (error) {
-    console.error("🔥 API Error:", error.message);
-    
+    console.error('❌ All Groq models failed:', lastError?.message);
+    throw new Error(`All Groq models failed: ${lastError?.message}`);
+  } catch (error: any) {
+    console.error('🔥 API Error:', error.message);
+
     const baseResponse = getClientFocusedResponse(message);
     const enhancedResponse = enhanceResponseWithLinks(baseResponse, message);
-    const format = req.body?.format || 'markdown'; // Default to 'markdown'
-    
-    return Response.json({ 
-      reply: format === 'plain' ? stripMarkdown(enhancedResponse) : enhancedResponse, // Return Markdown by default
+
+    return Response.json({
+      reply: format === 'plain' ? stripMarkdown(enhancedResponse) : enhancedResponse,
       replyRaw: enhancedResponse,
-      mode: "emergency-fallback",
+      mode: 'emergency-fallback',
       crawled: websiteContent.lastCrawled,
       error: error.message,
-      format: format
+      format,
     });
   }
 }
 
-export async function GET(req) {
-  // Manual crawl trigger via GET request
+export async function GET(req: Request) {
   const url = new URL(req.url);
+
   if (url.searchParams.get('crawl') === 'true') {
     const crawlResult = await crawlWebsite();
     return Response.json({
-      service: "Frame Toque AI Assistant",
-      status: "Active",
-      provider: "OpenRouter",
+      service: 'Frame Toque AI Assistant',
+      status: 'Active',
+      provider: 'Groq',
       crawled: true,
       content: crawlResult,
-      available_models: Object.keys(OPENROUTER_MODELS).filter(k => OPENROUTER_MODELS[k] === 'free'),
+      available_models: GROQ_MODELS,
       links: FRAME_TOQUE_URLS,
-      note: "Use ?format=html in POST requests for HTML formatted responses"
+      note: "Use ?format=plain in POST requests for plain text responses",
     });
   }
-  
+
   return Response.json({
-    service: "Frame Toque AI Assistant",
-    status: "Active",
-    provider: "OpenRouter",
+    service: 'Frame Toque AI Assistant',
+    status: 'Active',
+    provider: 'Groq',
     last_crawled: websiteContent.lastCrawled,
-    available_models: Object.keys(OPENROUTER_MODELS).filter(k => OPENROUTER_MODELS[k] === 'free'),
+    available_models: GROQ_MODELS,
     links: FRAME_TOQUE_URLS,
-    note: "Add ?crawl=true to manually trigger website crawl. Use format='markdown' in POST for Markdown responses (default), or 'plain' for stripped text."
+    note: "Add ?crawl=true to manually trigger website crawl. Use format='markdown' (default) or 'plain' in POST body.",
   });
 }
