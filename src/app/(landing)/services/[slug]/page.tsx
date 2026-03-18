@@ -1,4 +1,3 @@
-// app/services/[slug]/page.jsx
 import { notFound } from 'next/navigation';
 import ServiceDataPage from "@/components/services/ServiceDetails";
 
@@ -154,6 +153,5 @@ export default async function ServicePage({ params }) {
         notFound();
     }
 
-    // Pass the slug as serviceType so it matches the ID in webdata.js
     return <ServiceDataPage serviceType={slug} />;
 }

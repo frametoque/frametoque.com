@@ -1,5 +1,3 @@
-"use client";
-
 import { Sparkles, ArrowRight, Brain } from 'lucide-react';
 import Link from "next/link";
 

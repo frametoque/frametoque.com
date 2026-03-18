@@ -1,5 +1,3 @@
-"use client";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Laptop, PenTool, Video, Camera, Film, Megaphone } from "lucide-react";
 

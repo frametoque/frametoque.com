@@ -1,5 +1,3 @@
-"use client";
-
 import { Handshake, ArrowRight, Percent, Calendar } from 'lucide-react';
 import Link from "next/link";
 
