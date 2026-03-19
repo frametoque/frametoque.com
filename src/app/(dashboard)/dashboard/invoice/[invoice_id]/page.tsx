@@ -360,7 +360,8 @@ export default function InvoicePage() {
 
             <button
               onClick={handleGoogleWallet}
-              disabled={addingToWallet !== null}
+              // disabled={addingToWallet !== null}
+              disabled
               className="inline-flex items-center justify-center gap-3 w-full px-5 py-4 rounded-2xl border border-white/20 bg-[#1a1a2e] hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {addingToWallet === "google" ? (
