@@ -57,7 +57,7 @@ async function ensureClass(authClient: GoogleAuth) {
         },
         body: JSON.stringify({
           id: CLASS_ID,
-          issuerName: "Frame Toque",
+          issuerName: "Frametoque",
           reviewStatus: "UNDER_REVIEW",
 
           logo: {
@@ -65,7 +65,7 @@ async function ensureClass(authClient: GoogleAuth) {
               uri: `${APP_URL}/logos/ft/logo-main.png`,
             },
             contentDescription: {
-              defaultValue: { language: "en-US", value: "Frame Toque Logo" },
+              defaultValue: { language: "en-US", value: "Frametoque Logo" },
             },
           },
 
@@ -143,7 +143,7 @@ function buildPassObject(invoice: Record<string, any>) {
     state: "ACTIVE",
 
     cardTitle: {
-      defaultValue: { language: "en-US", value: "Frame Toque" },
+      defaultValue: { language: "en-US", value: "Frametoque" },
     },
     subheader: {
       defaultValue: { language: "en-US", value: invoice.project_name ?? "Invoice" },
@@ -160,7 +160,7 @@ function buildPassObject(invoice: Record<string, any>) {
         uri: `${APP_URL}/og-image.png`,
       },
       contentDescription: {
-        defaultValue: { language: "en-US", value: "Frame Toque" },
+        defaultValue: { language: "en-US", value: "Frametoque" },
       },
     },
 

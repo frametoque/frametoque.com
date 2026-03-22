@@ -66,7 +66,7 @@ export default function DashboardProjectsPage() {
             <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Projects</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl">
-            Track the status of every service request you have made with Frame Toque.
+            Track the status of every service request you have made with Frametoque.
           </p>
         </div>
       </div>
@@ -104,7 +104,7 @@ export default function DashboardProjectsPage() {
             <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Projects</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl">
-            Track the status of every service request you have made with Frame Toque.
+            Track the status of every service request you have made with Frametoque.
           </p>
         </div>
 
@@ -175,7 +175,7 @@ export default function DashboardProjectsPage() {
           <Package className="w-16 h-16 text-gray-600 mx-auto mb-6" />
           <h3 className="text-2xl font-semibold text-white mb-2">No Projects Yet</h3>
           <p className="text-gray-400 mb-6">
-            Submit your first service request to get started with Frame Toque.
+            Submit your first service request to get started with Frametoque.
           </p>
           <Link
             href="/dashboard/services"

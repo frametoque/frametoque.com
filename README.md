@@ -1,6 +1,6 @@
 <div align="center">
 
-# Frame Toque
+# Frametoque
 
 **Your Brand Deserves Better Visuals.**  
 We make brands look serious.
@@ -38,7 +38,7 @@ We make brands look serious.
 
 <p align="center">
   <a href="https://frametoque.online"><img src="https://img.shields.io/badge/Web-frametoque.online-000000?style=for-the-badge" /></a>
-  <a href="https://t.me/FrameToque"><img src="https://img.shields.io/badge/Telegram-@FrameToque-2CA5E0?style=for-the-badge&logo=telegram" /></a>
+  <a href="https://t.me/Frametoque"><img src="https://img.shields.io/badge/Telegram-@Frametoque-2CA5E0?style=for-the-badge&logo=telegram" /></a>
 </p>
 
 ---
@@ -46,6 +46,6 @@ We make brands look serious.
 <div align="center">
 
 **Simple. Better. Fast.**  
-_© Frame Toque_
+_© Frametoque_
 
 </div>

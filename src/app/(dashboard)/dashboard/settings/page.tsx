@@ -2,16 +2,16 @@ export const metadata = {
   title: "Settings",
   description: "Manage your account settings, profile details, and payment methods all in one place.",
   openGraph: {
-    title: "Settings | Frame Toque",
+    title: "Settings | Frametoque",
     description: "Manage your account settings, profile details, and payment methods all in one place.",
     url: "https://frametoque.online/dashboard/settings", 
-    siteName: "Frame Toque",
+    siteName: "Frametoque",
     images: [
       {
         url: "https://frametoque.online/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Frame Toque",
+        alt: "Frametoque",
       },
     ],
     type: "website",

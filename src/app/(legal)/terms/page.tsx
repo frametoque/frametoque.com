@@ -1,18 +1,18 @@
 export const metadata = {
   title: "Terms & Conditions",
   description:
-    "Read the terms and conditions for using Frame Toque's web development, graphic design, and video editing services.",
+    "Read the terms and conditions for using Frametoque's web development, graphic design, and video editing services.",
     openGraph: {
-    title: "Terms & Conditions | Frame Toque",
-    description: "Read the terms and conditions for using Frame Toque's web development, graphic design, and video editing services.",
+    title: "Terms & Conditions | Frametoque",
+    description: "Read the terms and conditions for using Frametoque's web development, graphic design, and video editing services.",
     url: "https://frametoque.online/terms", 
-    siteName: "Frame Toque",
+    siteName: "Frametoque",
     images: [
       {
         url: "https://frametoque.online/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Frame Toque",
+        alt: "Frametoque",
       },
     ],
     type: "website",
@@ -36,42 +36,42 @@ export default function Terms() {
         <div>
           <h2 className="text-2xl font-semibold mb-2">1. Acceptance of Terms</h2>
           <p className="text-gray-300 leading-relaxed">
-            By using Frame Toque, you agree to comply with and be bound by these Terms & Conditions. If you do not agree, please do not use our services.
+            By using Frametoque, you agree to comply with and be bound by these Terms & Conditions. If you do not agree, please do not use our services.
           </p>
         </div>
 
         <div>
           <h2 className="text-2xl font-semibold mb-2">2. Use of Services</h2>
           <p className="text-gray-300 leading-relaxed">
-            You agree to use Frame Toque only for lawful purposes and in accordance with all applicable laws. Any unauthorized use may result in termination of access.
+            You agree to use Frametoque only for lawful purposes and in accordance with all applicable laws. Any unauthorized use may result in termination of access.
           </p>
         </div>
 
         <div>
           <h2 className="text-2xl font-semibold mb-2">3. User Content</h2>
           <p className="text-gray-300 leading-relaxed">
-            Users are responsible for all content they upload, post, or share. Frame Toque reserves the right to remove content that violates our guidelines or applicable law.
+            Users are responsible for all content they upload, post, or share. Frametoque reserves the right to remove content that violates our guidelines or applicable law.
           </p>
         </div>
 
         <div>
           <h2 className="text-2xl font-semibold mb-2">4. Intellectual Property</h2>
           <p className="text-gray-300 leading-relaxed">
-            All content on Frame Toque, including images, videos, and text, is protected by copyright. You may not copy or distribute content without proper authorization.
+            All content on Frametoque, including images, videos, and text, is protected by copyright. You may not copy or distribute content without proper authorization.
           </p>
         </div>
 
         <div>
           <h2 className="text-2xl font-semibold mb-2">5. Limitation of Liability</h2>
           <p className="text-gray-300 leading-relaxed">
-            Frame Toque is not liable for any direct, indirect, or consequential damages arising from your use of the service.
+            Frametoque is not liable for any direct, indirect, or consequential damages arising from your use of the service.
           </p>
         </div>
 
         <div>
           <h2 className="text-2xl font-semibold mb-2">6. Changes to Terms</h2>
           <p className="text-gray-300 leading-relaxed">
-            We may update these Terms at any time. Continued use of Frame Toque signifies your acceptance of the new terms.
+            We may update these Terms at any time. Continued use of Frametoque signifies your acceptance of the new terms.
           </p>
         </div>
 

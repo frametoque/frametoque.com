@@ -19,7 +19,7 @@ export default function Error({ error, reset }) {
           Try Again
         </button>
       </div>
-      <p className="mt-8 text-gray-400 text-sm">Frame Toque</p>
+      <p className="mt-8 text-gray-400 text-sm">Frametoque</p>
     </div>
   );
 }

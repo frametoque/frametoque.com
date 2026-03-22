@@ -123,12 +123,12 @@ export default function ContactPage() {
                   label: "LinkedIn",
                 },
                 {
-                  href: "https://www.facebook.com/FrameToque/",
+                  href: "https://www.facebook.com/Frametoque/",
                   icon: <Facebook />,
                   label: "Facebook",
                 },
                 {
-                  href: "https://www.youtube.com/@FrameToque",
+                  href: "https://www.youtube.com/@Frametoque",
                   icon: <Youtube />,
                   label: "YouTube",
                 },
@@ -138,7 +138,7 @@ export default function ContactPage() {
                   label: "TikTok",
                 },
                 {
-                  href: "https://t.me/FrameToque",
+                  href: "https://t.me/Frametoque",
                   icon: <Telegram />,
                   label: "Telegram",
                 },

@@ -30,10 +30,10 @@ export const metadata = {
   metadataBase: new URL("https://frametoque.online"),
 
   title: {
-    default: "Frame Toque Digital"
+    default: "Frametoque Digital"
   },
   description:
-    "Frame Toque Digital is a creative media company focused on web development, video production, and digital storytelling.",
+    "Frametoque Digital is a creative media company focused on web development, video production, and digital storytelling.",
 
   icons: {
     icon: [
@@ -51,21 +51,21 @@ export const metadata = {
   manifest: "/site.webmanifest",
 
   appleWebApp: {
-    title: "FrameToque",
+    title: "Frametoque",
   },
 
   openGraph: {
-    title: "Frame Toque Digital",
+    title: "Frametoque Digital",
     description:
       "Turning ideas into powerful digital visuals through web, video, and creative media.",
     url: "https://frametoque.online",
-    siteName: "Frame Toque",
+    siteName: "Frametoque",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Frame Toque Digital",
+        alt: "Frametoque Digital",
       },
     ],
     type: "website",
@@ -84,7 +84,7 @@ export default function RootLayout({ children }) {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              name: "Frame Toque Digital",
+              name: "Frametoque Digital",
               url: "https://frametoque.online",
               logo: "https://frametoque.online/logos/ft/logo-main.png",
               sameAs: [

@@ -104,7 +104,7 @@ export default function SignupPage() {
             <Link href="/">
               <Image
                 src="/logos/ft/name-logo.png"
-                alt="Frame Toque"
+                alt="Frametoque"
                 width={200}
                 height={40}
                 className="w-48 h-auto mx-auto mb-6"
@@ -115,7 +115,7 @@ export default function SignupPage() {
                 Join
               </span>
               <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
-                &nbsp;Frame Toque
+                &nbsp;Frametoque
               </span>
             </h1>
             <p className="text-gray-400 text-lg">Create your account</p>

@@ -41,7 +41,7 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
               <div>
                 <Image
                   src="/logos/ft/name-logo.png"
-                  alt="Frame Toque"
+                  alt="Frametoque"
                   width={200}
                   height={40}
                   className="w-32 h-auto sm:w-48"

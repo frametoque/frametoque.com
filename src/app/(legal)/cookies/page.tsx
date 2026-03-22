@@ -1,18 +1,18 @@
 export const metadata = {
   title: "Cookie Policy",
   description:
-    "Read the cookie policy for Frame Toque, explaining how we use cookies and similar technologies on our website.",
+    "Read the cookie policy for Frametoque, explaining how we use cookies and similar technologies on our website.",
     openGraph: {
-    title: "Cookie Policy | Frame Toque",
-    description: "Read the cookie policy for Frame Toque, explaining how we use cookies and similar technologies on our website.",
+    title: "Cookie Policy | Frametoque",
+    description: "Read the cookie policy for Frametoque, explaining how we use cookies and similar technologies on our website.",
     url: "https://frametoque.online/cookies", 
-    siteName: "Frame Toque",
+    siteName: "Frametoque",
     images: [
       {
         url: "https://frametoque.online/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Frame Toque",
+        alt: "Frametoque",
       },
     ],
     type: "website",
@@ -43,7 +43,7 @@ export default function Cookies() {
             <div>
               <h2 className="text-2xl font-semibold mb-2">2. How We Use Cookies</h2>
               <p className="text-gray-300 leading-relaxed">
-                Frame Toque uses cookies to:
+                Frametoque uses cookies to:
               </p>
               <ul className="list-disc list-inside text-gray-300 leading-relaxed">
                 <li>Remember your preferences and settings</li>
@@ -70,7 +70,7 @@ export default function Cookies() {
             <div>
               <h2 className="text-2xl font-semibold mb-2">5. Updates to This Policy</h2>
               <p className="text-gray-300 leading-relaxed">
-                We may update this Cookie Policy from time to time. Continued use of Frame Toque indicates your acceptance of any changes.
+                We may update this Cookie Policy from time to time. Continued use of Frametoque indicates your acceptance of any changes.
               </p>
             </div>
 

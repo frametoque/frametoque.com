@@ -2,16 +2,16 @@ export const metadata = {
   title: "Dashboard",
   description: "We craft fast websites, bold graphic, and pro videos that make your brand shine.",
   openGraph: {
-    title: "Dashboard | Frame Toque",
+    title: "Dashboard | Frametoque",
     description: "We craft fast websites, bold graphic, and pro videos that make your brand shine.",
     url: "https://frametoque.online/dashboard", 
-    siteName: "Frame Toque",
+    siteName: "Frametoque",
     images: [
       {
         url: "https://frametoque.online/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Frame Toque",
+        alt: "Frametoque",
       },
     ],
     type: "website",

@@ -9,7 +9,7 @@ export default function AIChatbot() {
   const [open, setOpen] = useState(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [messages, setMessages] = useState([
-    { role: "ai", text: "Hello! I'm your Frame Toque AI assistant. How can I help with your project?", timestamp: new Date() },
+    { role: "ai", text: "Hello! I'm your Frametoque AI assistant. How can I help with your project?", timestamp: new Date() },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -121,7 +121,7 @@ export default function AIChatbot() {
       } else if (data.mode === 'intelligent-fallback') {
         setAiStatus({ mode: 'intelligent', model: 'Enhanced AI' });
       } else {
-        setAiStatus({ mode: 'local', model: 'Frame Toque AI' });
+        setAiStatus({ mode: 'local', model: 'Frametoque AI' });
       }
 
       setMessages(prev => [

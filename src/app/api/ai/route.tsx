@@ -41,10 +41,10 @@ function stripMarkdown(text: string): string {
 }
 
 const AGENCY_TRAINING = `
-You are "Toque AI Assistant", the official AI representative of Frame Toque.
+You are "Toque AI Assistant", the official AI representative of Frametoque.
 
 ABOUT FRAME TOQUE:
-- Frame Toque is a creative agency offering Graphic Design, Web Development, and Video Editing
+- Frametoque is a creative agency offering Graphic Design, Web Development, and Video Editing
 - You talk to business owners, creators, startups, and marketing teams
 - Your main goal is to understand the client need and guide them toward a consultation
 - Website: ${FRAME_TOQUE_URLS.main}
@@ -91,7 +91,7 @@ SERVICE SHORT DESCRIPTIONS (use only if needed):
 - Video Editing: High-impact videos for marketing and social media
 
 CLIENT DASHBOARD INFORMATION:
-- Frame Toque provides a client dashboard at /dashboard
+- Frametoque provides a client dashboard at /dashboard
 - The dashboard is for existing and approved clients
 
 WHAT CLIENTS CAN DO IN THE DASHBOARD:
@@ -215,7 +215,7 @@ NO ASSUMPTION RULE:
 - Ask ONE short clarifying question instead
 
 SCOPE BOUNDARY RULE:
-- Frame Toque ONLY offers: Graphic Design, Web Development, Video Editing
+- Frametoque ONLY offers: Graphic Design, Web Development, Video Editing
 - If asked about anything outside this scope, clearly say it's not offered
 
 CUSTOMER-FRIENDLY CONVERSATION RULES:
@@ -283,7 +283,7 @@ async function crawlWebsite() {
       try {
         const response = await fetch(url, {
           headers: {
-            'User-Agent': 'FrameToque-AI-Crawler/1.0 (+https://frametoque.online)',
+            'User-Agent': 'Frametoque-AI-Crawler/1.0 (+https://frametoque.online)',
           },
         });
 
@@ -345,10 +345,10 @@ const getClientFocusedResponse = (userMessage: string): string => {
     return `Timelines depend on the project size. We confirm timelines before starting.`;
   }
   if (lowerMsg.includes('portfolio') || lowerMsg.includes('see work') || lowerMsg.includes('example')) {
-    return `Sure, you can view our recent work here: [Frame Toque Portfolio](${FRAME_TOQUE_URLS.portfolio})`;
+    return `Sure, you can view our recent work here: [Frametoque Portfolio](${FRAME_TOQUE_URLS.portfolio})`;
   }
   if (lowerMsg.includes('contact') || lowerMsg.includes('email') || lowerMsg.includes('reach')) {
-    return `You can reach us here: [Contact Frame Toque](${FRAME_TOQUE_URLS.contact})`;
+    return `You can reach us here: [Contact Frametoque](${FRAME_TOQUE_URLS.contact})`;
   }
   if (lowerMsg.includes('service') || lowerMsg.includes('what do you offer')) {
     return `We offer graphic design, web development, and video editing. Want to know more about any of these?`;
@@ -363,7 +363,7 @@ const getClientFocusedResponse = (userMessage: string): string => {
     return `We edit videos for marketing, social media, and brand storytelling.`;
   }
   if (lowerMsg.includes('about') || lowerMsg.includes('who are you')) {
-    return `Frame Toque is a creative agency working with brands on design, websites, and video content.`;
+    return `Frametoque is a creative agency working with brands on design, websites, and video content.`;
   }
 
   const defaults = [
@@ -385,7 +385,7 @@ export async function POST(req: Request) {
     format = body.format ?? 'markdown';
 
     if (!message || typeof message !== 'string' || message.trim() === '') {
-      const welcomeMsg = `Hello! I'm the Frame Toque AI Assistant. We specialize in photography, videography, graphic design, web development, and video editing. How can I help you today?`;
+      const welcomeMsg = `Hello! I'm the Frametoque AI Assistant. We specialize in photography, videography, graphic design, web development, and video editing. How can I help you today?`;
 
       return Response.json({
         reply: format === 'plain' ? stripMarkdown(welcomeMsg) : welcomeMsg,
@@ -417,7 +417,7 @@ export async function POST(req: Request) {
         reply: format === 'plain' ? stripMarkdown(enhancedResponse) : enhancedResponse,
         replyRaw: enhancedResponse,
         mode: 'trained-fallback',
-        model: 'Frame Toque Training',
+        model: 'Frametoque Training',
         crawled: websiteContent.lastCrawled,
         format,
       });
@@ -455,7 +455,7 @@ export async function POST(req: Request) {
 
         let cleanReply = rawText
           .replace(
-            /^(As (Frame Toque AI Assistant|the AI assistant),?|Response:|Here(?:'s| is) (?:my |the )?response:)/i,
+            /^(As (Frametoque AI Assistant|the AI assistant),?|Response:|Here(?:'s| is) (?:my |the )?response:)/i,
             ''
           )
           .trim();
@@ -506,7 +506,7 @@ export async function GET(req: Request) {
   if (url.searchParams.get('crawl') === 'true') {
     const crawlResult = await crawlWebsite();
     return Response.json({
-      service: 'Frame Toque AI Assistant',
+      service: 'Frametoque AI Assistant',
       status: 'Active',
       provider: 'Groq',
       crawled: true,
@@ -518,7 +518,7 @@ export async function GET(req: Request) {
   }
 
   return Response.json({
-    service: 'Frame Toque AI Assistant',
+    service: 'Frametoque AI Assistant',
     status: 'Active',
     provider: 'Groq',
     last_crawled: websiteContent.lastCrawled,

@@ -3,16 +3,16 @@ export const metadata = {
   description:
     "Explore our range of services including web development, graphic design, and video editing tailored to make your brand shine.",
   openGraph: {
-    title: "What We Do | Frame Toque",
+    title: "What We Do | Frametoque",
     description: "Explore our range of services including web development, graphic design, and video editing tailored to make your brand shine.",
     url: "https://frametoque.online/services",
-    siteName: "Frame Toque",
+    siteName: "Frametoque",
     images: [
       {
         url: "https://frametoque.online/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Frame Toque",
+        alt: "Frametoque",
       },
     ],
     type: "website",

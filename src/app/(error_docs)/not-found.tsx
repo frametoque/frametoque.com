@@ -3,8 +3,8 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
 export const metadata = {
-  title: "404 Not Found | Frame Toque",
-  description: "Oops! The page you're looking for doesn't exist. Return home to explore Frame Toque.",
+  title: "404 Not Found | Frametoque",
+  description: "Oops! The page you're looking for doesn't exist. Return home to explore Frametoque.",
   robots: "noindex, follow", 
 };
 

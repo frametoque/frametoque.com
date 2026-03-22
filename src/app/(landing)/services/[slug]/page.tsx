@@ -113,19 +113,19 @@ export async function generateMetadata({ params }) {
 
     if (!service) {
         return {
-            title: 'Service Not Found | Frame Toque',
+            title: 'Service Not Found | Frametoque',
             description: 'The requested service page could not be found.'
         };
     }
 
     return {
-        title: `${service.title} | Frame Toque`,
+        title: `${service.title} | Frametoque`,
         description: service.description,
         openGraph: {
-            title: `${service.title} | Frame Toque`,
+            title: `${service.title} | Frametoque`,
             description: service.description,
             url: `https://frametoque.online/services/${slug}`,
-            siteName: 'Frame Toque',
+            siteName: 'Frametoque',
             images: [
                 {
                     url: `https://frametoque.online${service.image}`,
@@ -138,7 +138,7 @@ export async function generateMetadata({ params }) {
         },
         twitter: {
             card: 'summary_large_image',
-            title: `${service.title} | Frame Toque`,
+            title: `${service.title} | Frametoque`,
             description: service.description,
             images: [`https://frametoque.online${service.image}`],
         },

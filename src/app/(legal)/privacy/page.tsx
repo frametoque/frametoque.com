@@ -1,18 +1,18 @@
 export const metadata = {
   title: "Privacy Policy",
   description:
-    "Read the privacy policy for Frame Toque, detailing how we collect and handle user data when submitting projects or using our services.",
+    "Read the privacy policy for Frametoque, detailing how we collect and handle user data when submitting projects or using our services.",
     openGraph: {
-    title: "Privacy Policy | Frame Toque",
-    description: "Read the privacy policy for Frame Toque, detailing how we collect and handle user data when submitting projects or using our services.",
+    title: "Privacy Policy | Frametoque",
+    description: "Read the privacy policy for Frametoque, detailing how we collect and handle user data when submitting projects or using our services.",
     url: "https://frametoque.online/privacy", 
-    siteName: "Frame Toque",
+    siteName: "Frametoque",
     images: [
       {
         url: "https://frametoque.online/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Frame Toque",
+        alt: "Frametoque",
       },
     ],
     type: "website",
@@ -50,7 +50,7 @@ export default function Privacy() {
             <div>
               <h2 className="text-2xl font-semibold mb-2">3. Data Sharing</h2>
               <p className="text-gray-300 leading-relaxed">
-                Frame Toque does not sell or share your personal information with third parties except for trusted partners who assist us in providing our services.
+                Frametoque does not sell or share your personal information with third parties except for trusted partners who assist us in providing our services.
               </p>
             </div>
 
@@ -71,7 +71,7 @@ export default function Privacy() {
             <div>
               <h2 className="text-2xl font-semibold mb-2">6. Changes to Privacy Policy</h2>
               <p className="text-gray-300 leading-relaxed">
-                Frame Toque may update this Privacy Policy occasionally. Continued use of our services indicates your acceptance of any changes.
+                Frametoque may update this Privacy Policy occasionally. Continued use of our services indicates your acceptance of any changes.
               </p>
             </div>
 

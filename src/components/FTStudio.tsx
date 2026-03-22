@@ -1,4 +1,4 @@
-import { Sparkles, ArrowRight, Brain } from 'lucide-react';
+import { Sparkles, ArrowRight, Brain } from "lucide-react";
 import Link from "next/link";
 
 export default function CollabCompact() {
@@ -11,7 +11,7 @@ export default function CollabCompact() {
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-500 to-brand-500 flex items-center justify-center flex-shrink-0">
                 <Sparkles className="h-7 w-7 text-white" />
               </div>
-              
+
               <div>
                 <h3 className="text-2xl font-bold text-white mb-2">
                   <span className="bg-gradient-to-r from-brand-400 to-brand-400 bg-clip-text text-transparent">
@@ -19,9 +19,11 @@ export default function CollabCompact() {
                   </span>
                 </h3>
                 <p className="text-gray-400 mb-4 max-w-md">
-                  FrameToque Studio is our free suite of AI tools built for filmmakers and content creators who take their craft seriously.
+                  Frametoque Studio is our free suite of AI tools built for
+                  filmmakers and content creators who take their craft
+                  seriously.
                 </p>
-                
+
                 <div className="flex flex-wrap gap-4">
                   <div className="flex items-center text-sm">
                     <Brain className="h-4 w-4 text-brand-400 mr-1" />
@@ -34,9 +36,10 @@ export default function CollabCompact() {
                 </div>
               </div>
             </div>
-            
-            <Link 
-              href="https://studio.frametoque.online" target='_blank'
+
+            <Link
+              href="https://aistudio.frametoque.online"
+              target="_blank"
               className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-600 text-white font-semibold rounded-lg hover:from-brand-700 hover:to-brand-700 transition-all duration-300 shadow-lg hover:shadow-xl whitespace-nowrap"
             >
               Visit FT Studio

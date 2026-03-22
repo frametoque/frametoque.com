@@ -66,7 +66,7 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
                 <Link href="/">
                   <Image
                     src="/logos/ft/name-logo.png"
-                    alt="Frame Toque"
+                    alt="Frametoque"
                     width={150}
                     height={30}
                     className="h-8 w-auto"

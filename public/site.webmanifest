@@ -1,6 +1,6 @@
 {
-  "name": "FrameToque",
-  "short_name": "FrameToque",
+  "name": "Frametoque",
+  "short_name": "Frametoque",
   "description": "A modern visual storytelling platform built for the future.",
   "start_url": "/",
   "scope": "/",
@@ -28,14 +28,14 @@
       "src": "/screenshots/wide1.png",
       "sizes": "3099x1869",
       "type": "image/png",
-      "label": "FrameToque on desktop",
+      "label": "Frametoque on desktop",
       "form_factor": "wide"
     },
     {
       "src": "/screenshots/handheld1.png",
       "sizes": "1290x2796",
       "type": "image/png",
-      "label": "FrameToque on mobile",
+      "label": "Frametoque on mobile",
       "form_factor": "narrow"
     }
   ],
@@ -83,12 +83,12 @@
     }
   },
 
-  "iarc_rating_id": "L-FrameToque-01",
+  "iarc_rating_id": "L-Frametoque-01",
 
   "widgets": [
     {
       "src": "/dashboard",
-      "name": "FrameToque Dashboard",
+      "name": "Frametoque Dashboard",
       "description": "Quick access to your dashboard",
       "sizes": ["120x120", "240x240"],
       "tag": "dashboard"
@@ -99,7 +99,7 @@
 
   "note_taking": {
     "new_note_url": "/dashboard/settings",
-    "name": "FrameToque Notes",
+    "name": "Frametoque Notes",
     "description": "Create a new note quickly from anywhere"
   }
 }

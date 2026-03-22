@@ -6,11 +6,11 @@ import Image from "next/image";
 const protectImage = (e) => e.preventDefault();
 
 export const codeExamples = {
-  "Web Development": `// Frame Toque | Creative Web Development
+  "Web Development": `// Frametoque | Creative Web Development
 import React from "react";
 
-function FrameToqueApp() {
-  const companyName = "Frame Toque";
+function FrametoqueApp() {
+  const companyName = "Frametoque";
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center
@@ -26,7 +26,7 @@ function FrameToqueApp() {
     </div>
   );
 }
-export default FrameToqueApp;`,
+export default FrametoqueApp;`,
 };
 
 export function GraphicsDesignUI() {
