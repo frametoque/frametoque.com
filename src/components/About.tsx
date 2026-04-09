@@ -82,17 +82,6 @@ export default function AboutUs() {
         email: "dasindu@frametoque.online"
       }
     },
-    {
-      name: "Senuja Brian",
-      role: "Video Editor",
-      expertise: "Creative storytelling",
-      social: {
-        instagram: "https://instagram.com/",
-        facebook: "https://facebook.com/",
-        tiktok: "https://tiktok.com/",
-        email: "brian@frametoque.online"
-      }
-    }
   ];
 
   return (
