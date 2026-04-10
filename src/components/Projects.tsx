@@ -219,9 +219,20 @@ const projects = [
     description: "A dynamic and engaging aftermovie created for the Prince of Wales' Collge Prefects' Day, showcasing the highlights and memorable moments of the event through captivating cinematography and editing.",
     type: "videography",
     category: "Photography & Videography",
-    image: "https://img.youtube.com/vi/Ugd-Q4K-ob0/hqdefault.jpg",
+    image: "https://img.youtube.com/vi/hMGyOVpEZKA/hqdefault.jpg",
     aspectRatio: "16:9",
-    youtube: "Ugd-Q4K-ob0"
+    youtube: "hMGyOVpEZKA"
+  },
+
+  {
+    id: 21,
+    title: "Tution Class Landing Page",
+    description: "A modern, responsive landing page designed for a tuition class. Features a clean layout, engaging visuals, and clear calls to action to attract potential students and provide essential information about the classes offered.",
+    type: "web",
+    category: "Web Development",
+    image: "/projects/web/cmjr.png",
+    aspectRatio: "16:9",
+    live: "https://mathswithjanidu.lk",
   },
   
 ];
