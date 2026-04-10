@@ -9,22 +9,7 @@ const testimonials = [
     content:
       "It was a great experience working with this video editing team. Very professional, creative, and responsive throughout the project. They clearly understood the vision and delivered high-quality results on time. Highly recommended for anyone looking for reliable video editing services.",
   },
-  {
-    name: "ABCD",
-    role: "ABC at ABC",
-    image:
-      "/images/testimonials/user.png",
-    content:
-      "Their video editing and graphic made our campaign pop. Highly recommend!",
-  },
-  {
-    name: "ABCD",
-    role: "ABC at ABC",
-    image:
-      "/images/testimonials/user.png",
-    content:
-      "From start to finish, the team made everything simple and stress-free. Loved it!",
-  },
+
 ];
 
 export default function Testimonials() {
