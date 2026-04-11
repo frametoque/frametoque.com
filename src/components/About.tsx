@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Linkedin, Facebook, Github, Mail, Instagram, Youtube, Music2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function AboutUs() {
   const [scrolled, setScrolled] = useState(false);
@@ -23,6 +24,7 @@ export default function AboutUs() {
   name: string;
   role: string;
   expertise: string;
+  image?: string;
   social: Record<string, string>;
 };
 
@@ -31,6 +33,7 @@ export default function AboutUs() {
       name: "Kavinu Pasandul",
       role: "Video Editor",
       expertise: "Creative storytelling",
+      image: "/images/team/kavinu.jpg",
       social: {
         linkedin: "https://linkedin.com/in/",
         instagram: "https://instagram.com/", 
@@ -42,6 +45,7 @@ export default function AboutUs() {
       name: "Tharul Bandara",
       role: "Graphic Designer",
       expertise: "Brand identity & UI/UX design",
+      image: "/images/team/tharul.jpg",
       social: {
         linkedin: "https://linkedin.com/in/",
         facebook: "https://facebook.com/",
@@ -53,6 +57,7 @@ export default function AboutUs() {
       name: "Nelitha Priyawansha",
       role: "Developer",
       expertise: "Frontend & Backend development",
+      image: "/images/team/nelitha.jpg",
       social: {
         linkedin: "https://linkedin.com/in/itsnelitha",
         facebook: "https://facebook.com/itsnelitha",
@@ -64,6 +69,7 @@ export default function AboutUs() {
       name: "Sadaka Wijerathna",
       role: "Developer",
       expertise: "Frontend development",
+      image: "/images/team/sadaka.jpg",
       social: {
         linkedin: "https://linkedin.com/in/",
         facebook: "https://facebook.com/",
@@ -75,6 +81,7 @@ export default function AboutUs() {
       name: "Dasindu Nimnal",
       role: "Photographer",
       expertise: "Portrait & Commercial photography",
+      image: "/images/team/dasindu.jpg",
       social: {
         instagram: "https://instagram.com/",
         facebook: "https://facebook.com/",
@@ -82,17 +89,6 @@ export default function AboutUs() {
         email: "dasindu@frametoque.online"
       }
     },
-    {
-      name: "Senuja Brian",
-      role: "Video Editor",
-      expertise: "Creative storytelling",
-      social: {
-        instagram: "https://instagram.com/",
-        facebook: "https://facebook.com/",
-        tiktok: "https://tiktok.com/",
-        email: "brian@frametoque.online"
-      }
-    }
   ];
 
   return (
@@ -132,10 +128,20 @@ export default function AboutUs() {
                   key={index}
                   className="group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-700/50 w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] max-w-xs"
                 >
-                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-slate-700/50 to-slate-800/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mt-4">
-                  <span className="text-3xl font-bold text-white">
-                    {member.name.split(' ').map(n => n[0]).join('')}
-                  </span>
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-slate-700/50 to-slate-800/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mt-4 overflow-hidden">
+                  {member.image ? (
+                    <Image
+                      src={member.image}
+                      alt={member.name}
+                      width={500}
+                      height={500}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-3xl font-bold text-white">
+                      {member.name.split(' ').map(n => n[0]).join('')}
+                    </span>
+                  )}
                 </div>
 
                 <div className="text-center mb-6">

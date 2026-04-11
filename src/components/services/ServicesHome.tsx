@@ -5,7 +5,7 @@ const features = [
   {
     title: "Web Development",
     description:
-      "Your website is more than pages, it’s how people feel about your brand. We create spaces that inspire trust and leave a lasting impression.",
+      "We create spaces that inspire trust and leave a lasting impression.",
     icon: Laptop,
     imagePosition: "left",
     link: "/services#web",
@@ -13,7 +13,7 @@ const features = [
   {
     title: "Graphic Design",
     description:
-      "Design isn’t just visuals, it’s memory you leave behind. Every piece we craft tells your story and makes your brand unforgettable.",
+      "Every piece we craft tells your story and makes your brand unforgettable.",
     icon: PenTool,
     imagePosition: "left",
     link: "/services#graphic",
@@ -22,7 +22,7 @@ const features = [
   {
     title: "Video Editing",
     description:
-      "Stories don’t just play, they connect deeply. We turn ideas into videos that spark emotion and stay in people’s minds forever.",
+      "We turn ideas into videos that spark emotion and stay in people’s minds forever.",
     icon: Film,
     imagePosition: "left",
     link: "/services#video",
@@ -31,7 +31,7 @@ const features = [
   {
     title: "Photography",
     description:
-      "A photo isn’t just a moment, it’s a feeling. We capture the essence of your brand in images that resonate and leave a lasting impression.",
+      "We capture the essence of your brand in images that resonate and leave a lasting impression.",
     icon: Camera,
     imagePosition: "left",
     link: "/services#photo",
@@ -41,7 +41,7 @@ const features = [
   {
     title: "Videography",
     description:
-      "Videos aren’t just watched, they’re experienced. We create cinematic stories that captivate your audience and make your brand unforgettable.",
+      "We create cinematic stories that captivate your audience and make your brand unforgettable.",
     icon: Video,
     imagePosition: "left",
     link: "/services#photo",
@@ -51,7 +51,7 @@ const features = [
   {
     title: "Digital Marketing",
     description:
-      "Marketing isn’t just promotion, it’s connection. We craft strategies that resonate with your audience and make your brand unforgettable.",
+      "We craft strategies that resonate with your audience and make your brand unforgettable.",
     icon: Megaphone,
     imagePosition: "left",
     link: "/services#photo",
