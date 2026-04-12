@@ -57,9 +57,7 @@ export default function ContactPage() {
       <div className="h-20" />
       <br /> <br />
       <section className="relative bg-slate-950/30 backdrop-blur-md py-5 px-4 sm:px-6 lg:px-8 text-center">
-        {/* Pulse */}
-        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-brand-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-[#3B82F6]-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        {/* Pulse removed */}
 
         <div className="max-w-7xl mx-auto text-center mb-8">
           <h2 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">

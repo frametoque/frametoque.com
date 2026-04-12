@@ -96,8 +96,7 @@ export default function AboutUs() {
       <Navbar scrolled={scrolled} />
       <div className="h-20" />
       <section className="min-h-screen bg-slate-950 text-white py-16 px-6 sm:px-10 lg:px-16 relative overflow-hidden">
-        {/* Pulse */}
-        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-brand-500/10 rounded-full blur-3xl animate-pulse" />
+        {/* Pulse removed */}
         
         <div className="max-w-7xl mx-auto text-center mb-16 relative z-10">
           <h2 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">

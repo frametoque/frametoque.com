@@ -1,11 +1,13 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const isProtectedRoute = createRouteMatcher(["/dashboard(.*)"]);
+// DEV: auth disabled for UI editing — re-enable when done
+// const isProtectedRoute = createRouteMatcher(["/dashboard(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) {
-    await auth.protect();
-  }
+  // DEV: commented out so all routes are public
+  // if (isProtectedRoute(req)) {
+  //   await auth.protect();
+  // }
 });
 
 export const config = {

@@ -1,0 +1,199 @@
+﻿
+> frame-toque-next@0.1.0 build D:\Web Projects\ft.online
+> next build --turbopack
+
+node.exe : [baseline-b
+rowser-mapping] The 
+data in this module 
+is over two months 
+old.  To ensure 
+accurate Baseline 
+data, please update: 
+`npm i baseline-browse
+r-mapping@latest -D`
+At C:\Users\Sadaka\App
+Data\Roaming\npm\pnpm.
+ps1:24 char:5
++     & "node$exe"  "$
+basedir/node_modules/p
+npm/bin/pnpm.cjs" 
+$args
++     ~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~
+    + CategoryInfo    
+          : 
+NotSpecified    : 
+([baseline-brows.    
+..ping@latest -D`:S   
+ tring) [], RemoteEx  
+  ception
+    + 
+FullyQualifiedErr    
+orId : NativeComman   
+ dError
+ 
+   Γû▓ Next.js 16.0.10 (Turbopack)
+
+   Creating an optimized production build ...
+[baseline-browser-mapp
+ing] The data in this 
+module is over two 
+months old.  To 
+ensure accurate 
+Baseline data, please 
+update: `npm i baselin
+e-browser-mapping@late
+st -D`
+ Γ£ô Compiled successfully in 31.7s
+   Running TypeScript ...
+   Collecting page data using 3 workers ...
+[baseline-browser-mapp
+ing] The data in this 
+module is over two 
+months old.  To 
+ensure accurate 
+Baseline data, please 
+update: `npm i baselin
+e-browser-mapping@late
+st -D`
+[baseline-browser-mapp
+ing] The data in this 
+module is over two 
+months old.  To 
+ensure accurate 
+Baseline data, please 
+update: `npm i baselin
+e-browser-mapping@late
+st -D`
+[baseline-browser-mapp
+ing] The data in this 
+module is over two 
+months old.  To 
+ensure accurate 
+Baseline data, please 
+update: `npm i baselin
+e-browser-mapping@late
+st -D`
+Error: The 
+GROQ_API_KEY 
+environment variable 
+is missing or empty; 
+either provide it, or 
+instantiate the Groq 
+client with an apiKey 
+option, like new 
+Groq({ apiKey: 'My 
+API Key' }).
+    at new Ao (D:\Web 
+Projects\ft.online\.ne
+xt\server\chunks\[root
+-of-the-server]__c72d8
+91e._.js:123:9019)
+    at module 
+evaluation (D:\Web Pro
+jects\ft.online\.next\
+server\chunks\[root-of
+-the-server]__c72d891e
+._.js:127:178654)
+    at 
+instantiateModule 
+(D:\Web Projects\ft.on
+line\.next\server\chun
+ks\[turbopack]_runtime
+.js:715:9)
+    at instantiateRunt
+imeModule (D:\Web Proj
+ects\ft.online\.next\s
+erver\chunks\[turbopac
+k]_runtime.js:743:12)
+    at getOrInstantiat
+eRuntimeModule 
+(D:\Web Projects\ft.on
+line\.next\server\chun
+ks\[turbopack]_runtime
+.js:756:12)
+    at Object.m 
+(D:\Web Projects\ft.on
+line\.next\server\chun
+ks\[turbopack]_runtime
+.js:765:18)
+    at 
+Object.<anonymous> 
+(D:\Web Projects\ft.on
+line\.next\server\app\
+api\ai\route.js:6:3)
+Error: No database 
+connection string was 
+provided to `neon()`. 
+Perhaps an 
+environment variable 
+has not been set?
+    at neon (D:\Web Pr
+ojects\ft.online\.next
+\server\chunks\src_lib
+_db_tsx_189f667f._.js:
+14:8522)
+    at module 
+evaluation (D:\Web Pro
+jects\ft.online\.next\
+server\chunks\src_lib_
+db_tsx_189f667f._.js:1
+8:350)
+    at 
+instantiateModule 
+(D:\Web Projects\ft.on
+line\.next\server\chun
+ks\[turbopack]_runtime
+.js:715:9)
+    at getOrInstantiat
+eModuleFromParent 
+(D:\Web Projects\ft.on
+line\.next\server\chun
+ks\[turbopack]_runtime
+.js:738:12)
+    at 
+Context.esmImport [as 
+i] (D:\Web Projects\ft
+.online\.next\server\c
+hunks\[turbopack]_runt
+ime.js:228:20)
+    at module 
+evaluation (D:\Web Pro
+jects\ft.online\.next\
+server\chunks\[root-of
+-the-server]__495dbab8
+._.js:1:6229)
+    at 
+instantiateModule 
+(D:\Web Projects\ft.on
+line\.next\server\chun
+ks\[turbopack]_runtime
+.js:715:9)
+    at instantiateRunt
+imeModule (D:\Web Proj
+ects\ft.online\.next\s
+erver\chunks\[turbopac
+k]_runtime.js:743:12)
+    at getOrInstantiat
+eRuntimeModule 
+(D:\Web Projects\ft.on
+line\.next\server\chun
+ks\[turbopack]_runtime
+.js:756:12)
+    at Object.m 
+(D:\Web Projects\ft.on
+line\.next\server\chun
+ks\[turbopack]_runtime
+.js:765:18)
+
+> Build error occurred
+Error: Failed to 
+collect page data for 
+/api/ai
+    at ignore-listed 
+frames {
+  type: 'Error'
+}
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.

@@ -22,11 +22,12 @@ export default function DashboardHome() {
   const router = useRouter();
   const { isSignedIn, isLoaded, user } = useUser();
 
-  useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      router.push("/login"); 
-    }
-  }, [isLoaded, isSignedIn, router]);
+  // DEV: auth guard disabled for UI editing — re-enable when done
+  // useEffect(() => {
+  //   if (isLoaded && !isSignedIn) {
+  //     router.push("/login"); 
+  //   }
+  // }, [isLoaded, isSignedIn, router]);
 
   const quickActions = [
     {
@@ -45,9 +46,10 @@ export default function DashboardHome() {
     },
   ];
 
-  if (!isLoaded || !isSignedIn) {
-    return null;
-  }
+  // DEV: auth guard disabled for UI editing — re-enable when done
+  // if (!isLoaded || !isSignedIn) {
+  //   return null;
+  // }
 
   return (
     <div className="space-y-8">

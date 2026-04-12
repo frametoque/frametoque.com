@@ -98,7 +98,7 @@ export default function SoftwareWeUse() {
   ];
 
   return (
-    <section className="py-20 bg-slate-950 relative">
+    <section className="py-20 bg-black relative">
       <div className="max-w-6xl mx-auto text-center mb-12">
         <h2 className="text-4xl sm:text-5xl font-bold mb-3">
           <span className="bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">
@@ -114,8 +114,8 @@ export default function SoftwareWeUse() {
       </div>
 
       <div className="relative max-w-6xl mx-auto px-6">
-        <div className="pointer-events-none absolute left-0 top-0 h-full w-24 bg-gradient-to-r from-slate-950 to-transparent z-20"></div>
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-slate-950 to-transparent z-20"></div>
+        <div className="pointer-events-none absolute left-0 top-0 h-full w-32 bg-gradient-to-r from-black via-black/80 to-transparent z-20"></div>
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-32 bg-gradient-to-l from-black via-black/80 to-transparent z-20"></div>
 
         <div
           ref={sliderRef}
@@ -130,15 +130,17 @@ export default function SoftwareWeUse() {
             <div
               key={i}
               className="
-                min-w-[200px]
+                min-w-[210px]
                 shrink-0
-                bg-slate-900/70
-                border border-slate-800
+                bg-white/[0.03]
+                backdrop-blur-md
+                border border-white/10
                 rounded-2xl
-                px-8 py-6
-                flex flex-col items-center
-                hover:bg-slate-900
-                transition
+                px-10 py-12
+                flex flex-col items-center justify-center
+                hover:border-brand-500/40
+                transition-all duration-500
+                group
               "
             >
               <Image

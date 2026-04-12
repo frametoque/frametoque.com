@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, X, Maximize2, Minimize2, Bot, User, MessageSquare } from "lucide-react";
+import { Send, X, Maximize2, Minimize2, Bot, User, MessageSquare, Zap, Cpu, Sparkles } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
 
@@ -9,18 +9,13 @@ export default function AIChatbot() {
   const [open, setOpen] = useState(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [messages, setMessages] = useState([
-    { role: "ai", text: "Hello! I'm your Frametoque AI assistant. How can I help with your project?", timestamp: new Date() },
+    { role: "ai", text: "Neural pathways active. I'm Toque AI. How can I facilitate your digital evolution today?", timestamp: new Date() },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isMaximized, setIsMaximized] = useState(false);
-  const [aiStatus, setAiStatus] = useState({
-    mode: 'intelligent',
-    model: 'Toque AI'
-  });
 
-  const messagesEndRef = useRef(null);
-  const messagesContainerRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -30,50 +25,18 @@ export default function AIChatbot() {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [open]);
 
   const whatsappConfig = {
     phoneNumber: "+94701901461",
-    defaultMessage: "Hello! I'd like to speak with a human agent about: ",
-    businessHours: "8 AM - 10 PM",
-    responseTime: "Typically within 15 minutes"
+    defaultMessage: "Hello! I'd like to speak with a human agent regarding my project inquiry.",
+    responseTime: "15 minutes",
+    businessHours: "8 AM - 10 PM"
   };
 
   const handleWhatsAppClick = () => {
-    const conversationSummary = messages
-      .slice(-3)
-      .map(m => `${m.role === 'user' ? 'User' : 'AI'}: ${m.text}`)
-      .join('\n');
-
-    const fullMessage = `${whatsappConfig.defaultMessage}\n\nRecent conversation:\n${conversationSummary}`;
-    const encodedMessage = encodeURIComponent(fullMessage);
-    const whatsappUrl = `https://wa.me/${whatsappConfig.phoneNumber}?text=${encodedMessage}`;
-
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-
-    setMessages(prev => [
-      ...prev,
-      {
-        role: "ai",
-        text: `I've connected you with a human agent via WhatsApp! A representative should respond within ${whatsappConfig.responseTime}. Business hours: ${whatsappConfig.businessHours}.`,
-        timestamp: new Date()
-      },
-    ]);
-
+    const encodedMessage = encodeURIComponent(whatsappConfig.defaultMessage);
+    window.open(`https://wa.me/${whatsappConfig.phoneNumber}?text=${encodedMessage}`, '_blank');
     setShowWhatsAppModal(false);
-  };
-
-  const suggestWhatsApp = () => {
-    setShowWhatsAppModal(true);
   };
 
   const sendMessage = async () => {
@@ -88,41 +51,14 @@ export default function AIChatbot() {
       { role: "user", text: userText, timestamp: new Date() },
     ]);
 
-    const wantsHuman = /(human|agent|representative|person|talk to someone|speak with|real person)/i.test(userText);
-
-    if (wantsHuman) {
-      setLoading(false);
-      setMessages(prev => [
-        ...prev,
-        {
-          role: "ai",
-          text: `I understand you'd like to speak with a human agent! Click the green WhatsApp button to connect with our team. Our business hours are ${whatsappConfig.businessHours} and we typically respond within ${whatsappConfig.responseTime}.`,
-          timestamp: new Date()
-        },
-      ]);
-      return;
-    }
-
     try {
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate thinking
       const res = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: userText,
-          timestamp: new Date().toISOString()
-        }),
+        body: JSON.stringify({ message: userText }),
       });
       const data = await res.json();
-
-      if (data.mode === 'openrouter') {
-        const modelName = data.model ? data.model.split('/').pop().split(':')[0] : 'OpenRouter';
-        setAiStatus({ mode: 'cloud', model: modelName });
-      } else if (data.mode === 'intelligent-fallback') {
-        setAiStatus({ mode: 'intelligent', model: 'Enhanced AI' });
-      } else {
-        setAiStatus({ mode: 'local', model: 'Frametoque AI' });
-      }
 
       setMessages(prev => [
         ...prev,
@@ -130,88 +66,12 @@ export default function AIChatbot() {
       ]);
       setLoading(false);
     } catch (err) {
-      console.error("Chat error:", err);
-
-      const fallbackResponses = [
-        "I'm optimizing my responses. Let me provide some guidance based on your query...",
-        "While I connect to enhanced services, here's my take on that...",
-        "Let me think about this. Based on design principles, I'd suggest...",
-        "I'm processing your request. Here's what I recommend for now..."
-      ];
-
-      const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-
-      setAiStatus({ mode: 'offline', model: 'Local Mode' });
       setMessages(prev => [
         ...prev,
-        { role: "ai", text: randomResponse, timestamp: new Date() },
+        { role: "ai", text: "Connection interrupted. Still here to help!", timestamp: new Date() },
       ]);
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        setOpen(prev => !prev);
-      }
-      if (e.key === 'Escape' && open) {
-        setOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open]);
-
-  const handleWheel = (e) => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    const isAtTop = container.scrollTop === 0;
-    const isAtBottom = container.scrollHeight - container.scrollTop === container.clientHeight;
-
-    if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) return;
-
-    e.stopPropagation();
-  };
-
-  const handleTouchStart = (e) => {
-    const touch = e.touches[0];
-    const startY = touch.clientY;
-    const container = messagesContainerRef.current;
-
-    if (!container) return;
-
-    const isAtTop = container.scrollTop === 0;
-    const isAtBottom = container.scrollHeight - container.scrollTop === container.clientHeight;
-
-    container.dataset.touchStartY = startY;
-    container.dataset.isAtTop = isAtTop;
-    container.dataset.isAtBottom = isAtBottom;
-  };
-
-  const handleTouchMove = (e) => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    const touch = e.touches[0];
-    const startY = parseFloat(container.dataset.touchStartY);
-    const deltaY = startY - touch.clientY;
-    const isAtTop = container.dataset.isAtTop === 'true';
-    const isAtBottom = container.dataset.isAtBottom === 'true';
-
-    if ((isAtTop && deltaY < 0) || (isAtBottom && deltaY > 0)) return;
-
-    if (e.cancelable) e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const clearChat = () => {
-    setMessages([
-      { role: "ai", text: "Chat cleared! I'm ready to help with your next question.", timestamp: new Date() },
-    ]);
   };
 
   const WhatsAppIcon = ({ className = "w-6 h-6" }) => (
@@ -222,309 +82,215 @@ export default function AIChatbot() {
 
   return (
     <>
-      {/* Toggle Button */}
-      <div className="relative">
+      <style jsx global>{`
+        @keyframes orbit {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pulse-ring {
+          0% { transform: scale(0.9); opacity: 0.5; }
+          50% { transform: scale(1.1); opacity: 0.8; }
+          100% { transform: scale(0.9); opacity: 0.5; }
+        }
+        @keyframes float {
+          0% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+          100% { transform: translateY(0); }
+        }
+        .toque-orb-ring {
+          animation: orbit 4s linear infinite;
+        }
+        .toque-orb-pulse {
+          animation: pulse-ring 3s ease-in-out infinite;
+        }
+        .toque-orb-float {
+          animation: float 4s ease-in-out infinite;
+        }
+      `}</style>
+
+      {/* Trigger Button (Orb) */}
+      <div className="z-[100]">
         <button
           onClick={() => setOpen(!open)}
-          className="
-            rounded-lg backdrop-blur-xl transition-all duration-300 px-5 py-5
-            hover:scale-105 active:scale-95 group shadow-2xl
-            focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:ring-offset-2 focus:ring-offset-transparent
-            bg-[rgba(12,25,55,0.8)] border border-brand-500/20
-            [box-shadow:0_8px_32px_rgba(2,12,45,0.4),0_0_0_1px_rgba(255,255,255,0.08),0_0_25px_rgba(59,130,246,0.15)]
-            min-w-16 min-h-16
-          "
-          aria-label="Open Toque AI Chatbot"
-          title="Open Toque AI (Ctrl+K)"
+          className="relative w-12 h-12 group outline-none"
+          title="Toque AI Neural Interface"
         >
-          <MessageSquare className="w-6 h-6 text-brand-500" />
-          <div className="absolute -inset-1 rounded-lg bg-gradient-to-r from-transparent via-brand-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          {/* Pulsing Back Glow removed as requested */}
+
+          {/* Rotating Outer Ring removed as requested */}
+
+          {/* Main Orb */}
+          <div className="relative w-full h-full rounded-full bg-gradient-to-br from-brand-400 to-brand-700 shadow-[0_0_20px_rgba(22,159,228,0.4)] border border-white/20 flex items-center justify-center overflow-hidden transition-transform duration-300 group-hover:scale-110 active:scale-95">
+             <Bot className="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300" />
+             
+             {/* Inner Scanline Effect */}
+             <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.1)_50%)] bg-[length:100%_4px] pointer-events-none opacity-20" />
+          </div>
         </button>
       </div>
 
-      {/* Chat Box */}
+      {/* Neural Interface Chat Box */}
       {open && (
         <div
-          className={`fixed z-50 transition-all duration-300 ${isMaximized ? 'inset-0' : 'bottom-24 right-6'}`}
+          className="fixed z-[90] transition-all duration-500 ease-out bottom-24 right-6"
           style={{
-            width: isMaximized ? '100vw' : '28rem',
-            height: isMaximized ? '100vh' : '36rem',
-            maxWidth: isMaximized ? '100%' : 'calc(100vw - 3rem)',
-            maxHeight: isMaximized ? '100%' : 'calc(100vh - 6rem)',
+            width: "min(22rem, calc(100vw - 4rem))",
+            height: "min(32rem, calc(100vh - 8rem))",
           }}
         >
-          <div
-            className="relative h-full w-full rounded-2xl overflow-hidden"
-            style={{
-              background: 'linear-gradient(135deg, rgba(12,25,55,0.85) 0%, rgba(8,18,40,0.9) 100%)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(5,223,114,0.15)',
-              boxShadow: '0 25px 50px -12px rgba(2,12,45,0.5), 0 0 0 1px rgba(59,130,246,0.1), 0 0 50px rgba(59,130,246,0.1), inset 0 1px 0 rgba(255,255,255,0.05)',
-            }}
-          >
-            {/* Glass textures */}
-            <div
-              className="absolute inset-0 opacity-10"
-              style={{
-                backgroundImage: `radial-gradient(circle at 20% 30%, rgba(59,130,246,0.1) 0%, transparent 50%),
-                                  radial-gradient(circle at 80% 70%, rgba(30,100,200,0.1) 0%, transparent 50%)`,
-              }}
-            />
-            <div
-              className="absolute inset-0 opacity-[0.03]"
-              style={{
-                backgroundImage: `linear-gradient(rgba(59,130,246,0.1) 1px, transparent 1px),
-                                  linear-gradient(90deg, rgba(59,130,246,0.1) 1px, transparent 1px)`,
-                backgroundSize: '30px 30px',
-              }}
-            />
+          <div className="relative h-full w-full overflow-hidden border border-white/10 bg-black/40 backdrop-blur-[60px] shadow-[0_30px_100px_rgba(0,0,0,0.8)] flex flex-col animate-in zoom-in-95 duration-500 rounded-[2.5rem]">
+            
+            {/* Cyber Grid Texture */}
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
+                 style={{ backgroundImage: `radial-gradient(circle, white 1px, transparent 1px)`, backgroundSize: '24px 24px' }} />
 
-            {/* Header */}
-            <div
-              className="relative p-4 border-b border-brand-500/10"
-              style={{ background: 'linear-gradient(to right, rgba(8,18,40,0.7), transparent)' }}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl backdrop-blur-sm group relative overflow-hidden bg-[rgba(12,25,55,0.5)] border border-brand-500/20">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-500/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                    <Bot className="w-5 h-5 text-brand-500 relative" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-white">Toque AI</h3>
-                    <p className="text-xs text-white/50">Simple.Better.Fast.</p>
+            {/* Neural Header */}
+            <div className="relative p-6 px-8 flex items-center justify-between border-b border-white/5 bg-white/[0.02] shrink-0">
+              <div className="flex items-center gap-4">
+                <div className="relative group">
+                   <div className="absolute -inset-1 bg-brand-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
+                   <Cpu className="w-6 h-6 text-brand-400 relative z-10" />
+                   <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-black shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                    Toque AI <Sparkles className="w-3.5 h-3.5 text-brand-400" />
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase tracking-widest text-brand-400 font-bold">Neural Engine v3.0</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={clearChat}
-                    className="p-2 rounded-lg transition-colors hover:text-brand-500 text-xs text-white/50 bg-[rgba(12,25,55,0.3)] border border-white/5"
-                    title="Clear chat"
-                  >
-                    Clear
-                  </button>
-                  <button
-                    onClick={() => setIsMaximized(!isMaximized)}
-                    className="p-2 rounded-lg transition-colors hover:text-brand-500 text-white/50 bg-[rgba(12,25,55,0.3)] border border-white/5"
-                  >
-                    {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                  </button>
-                  <button
-                    onClick={() => setOpen(false)}
-                    className="p-2 rounded-lg transition-colors hover:text-brand-500 text-white/50 bg-[rgba(12,25,55,0.3)] border border-white/5"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setOpen(false)}
+                  className="p-2 text-gray-400 hover:text-red-400 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
             </div>
 
-            {/* Messages */}
+            {/* Neural Streams (Messages) */}
             <div
               ref={messagesContainerRef}
-              onWheel={handleWheel}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              className="h-[calc(100%-8rem)] overflow-y-auto p-4 space-y-4 scrollbar-hide overscroll-contain [-webkit-overflow-scrolling:touch]"
+              className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide overscroll-contain z-10"
             >
               {messages.map((m, i) => (
-                <div key={i} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
-                  <div
-                    className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border backdrop-blur-sm ${
-                      m.role === "user"
-                        ? "border-brand-500/30 bg-brand-500/10"
-                        : "border-white/10 bg-[rgba(12,25,55,0.5)]"
-                    }`}
-                  >
-                    {m.role === "user"
-                      ? <User className="w-4 h-4 text-brand-500" />
-                      : <Bot className="w-4 h-4 text-brand-500" />
-                    }
+                <div key={i} className={`flex gap-4 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
+                  <div className={`shrink-0 transition-transform duration-300 hover:scale-110 flex items-center justify-center`}>
+                    {m.role === "user" ? <User className="w-5 h-5 text-white/70" /> : <Bot className="w-5 h-5 text-brand-400" />}
                   </div>
-                  <div
-                    className={`max-w-[70%] rounded-xl p-3 backdrop-blur-sm border ${
-                      m.role === "user"
-                        ? "border-brand-500/20 text-white"
-                        : "border-white/10 text-gray-200"
-                    }`}
-                    style={{
-                      background: m.role === "user"
-                        ? 'linear-gradient(135deg, rgba(12,25,55,0.6) 0%, rgba(8,18,40,0.7) 100%)'
-                        : 'linear-gradient(135deg, rgba(12,25,55,0.7) 0%, rgba(8,18,40,0.8) 100%)',
-                    }}
-                  >
+                  <div className={`relative max-w-[85%] rounded-2xl p-4 transition-all duration-300 ${
+                    m.role === "user"
+                      ? "bg-white/10 border border-white/20 text-white shadow-inner ml-auto"
+                      : "bg-white/[0.03] border border-white/10 text-gray-200"
+                  }`}>
                     <div className="prose prose-invert max-w-none text-sm leading-relaxed">
-                      <ReactMarkdown
-                        components={{
-                          a: ({ children, href }) => (
-                            <Link
-                              href={href}
-                              className="text-brand-500 hover:text-brand-500/80 underline transition-colors"
-                              rel="noopener noreferrer"
-                            >
-                              {children}
-                            </Link>
-                          )
-                        }}
-                      >
-                        {m.text}
-                      </ReactMarkdown>
+                      <ReactMarkdown>{m.text}</ReactMarkdown>
                     </div>
-                    <div className="mt-2">
-                      <p className={`text-xs ${m.role === "user" ? "text-brand-500/60" : "text-white/40"}`}>
-                        {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
+                    <div className="mt-3 flex items-center justify-between">
+                       <div className="flex gap-1">
+                          {[1,2,3].map(dot => <div key={dot} className="w-1 h-1 bg-white/[0.05] rounded-full" />)}
+                       </div>
+                       <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">
+                         {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                       </span>
                     </div>
                   </div>
                 </div>
               ))}
-
               {loading && (
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center backdrop-blur-sm bg-[rgba(12,25,55,0.5)] border border-white/10">
-                    <div className="flex gap-0.5">
-                      <div className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-bounce" />
-                      <div className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-bounce delay-150" />
-                      <div className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-bounce delay-300" />
-                    </div>
+                <div className="flex gap-4 animate-pulse">
+                  <div className="shrink-0 flex items-center justify-center">
+                    <Bot className="w-5 h-5 text-brand-400/50" />
                   </div>
-                  <div
-                    className="rounded-xl p-3 backdrop-blur-sm border border-white/10"
-                    style={{ background: 'linear-gradient(135deg, rgba(12,25,55,0.7) 0%, rgba(8,18,40,0.8) 100%)' }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-white/50">Thinking...</span>
-                    </div>
+                  <div className="bg-[#0d0d0d]/80 border border-white/5 rounded-2xl p-4 w-32 flex items-center gap-1.5 h-12">
+                     <div className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                     <div className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                     <div className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-bounce" />
                   </div>
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
-            <div
-              className="absolute bottom-0 left-0 right-0 p-4 border-t border-brand-500/10"
-              style={{ background: 'linear-gradient(to top, rgba(8,18,40,0.8) 0%, transparent 100%)' }}
-            >
-              <div className="flex gap-2">
-                {/* WhatsApp Button */}
-                <button
-                  onClick={suggestWhatsApp}
-                  className="p-3 rounded-lg transition-all duration-200 flex items-center justify-center backdrop-blur-sm group relative overflow-hidden hover:scale-105 bg-[rgba(37,211,102,0.1)] border border-[rgba(37,211,102,0.2)] text-[#25D366]"
-                  title="Chat with human agent via WhatsApp"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#25D366]/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                  <WhatsAppIcon />
-                </button>
-
-                <div className="flex-1 relative">
+            {/* Neural Input Interface */}
+            <div className="relative p-6 pt-2 shrink-0 z-10">
+              <div className="relative group">
+                <div className="relative bg-white/5 border border-white/10 rounded-full overflow-hidden backdrop-blur-xl flex items-center p-1.5 pl-5 gap-3 transition-all duration-300 group-within:bg-white/[0.08] group-within:border-white/20">
+                  <button
+                    onClick={() => setShowWhatsAppModal(true)}
+                    className="p-1.5 text-gray-400 hover:text-green-400 transition-all shrink-0"
+                    title="Direct Human Link"
+                  >
+                    <WhatsAppIcon className="w-5 h-5" />
+                  </button>
+                  
                   <input
                     value={input}
                     onChange={e => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                      }
-                    }}
-                    className="w-full rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none backdrop-blur-sm transition-all duration-200 bg-[rgba(12,25,55,0.5)] border border-[rgba(5,223,114,0.15)]"
-                    placeholder="Let's talk about your next project"
+                    onKeyDown={e => e.key === "Enter" && sendMessage()}
+                    placeholder="Ask Toque AI anything..."
+                    className="flex-1 bg-transparent py-3 text-white placeholder-gray-500 focus:outline-none text-[15px] font-normal"
                     disabled={loading}
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-500/30">↵</div>
-                </div>
 
-                <button
-                  onClick={sendMessage}
-                  disabled={!input.trim() || loading}
-                  className="px-4 rounded-lg text-white disabled:opacity-30 disabled:cursor-not-allowed hover:text-brand-500 transition-all duration-200 flex items-center justify-center backdrop-blur-sm group relative overflow-hidden bg-[rgba(12,25,55,0.5)] border border-brand-500/20"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-500/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                  <Send className="w-4 h-4 relative" />
-                </button>
+                  <button
+                    onClick={sendMessage}
+                    disabled={!input.trim() || loading}
+                    className="w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-95 disabled:opacity-20 disabled:grayscale relative overflow-hidden"
+                  >
+                    {/* Background layers */}
+                    <div className="absolute inset-0 bg-white/10" />
+                    <div className="absolute inset-0 border border-white/20 rounded-full" />
+                    
+                    {/* Icon */}
+                    <Send className="w-4.5 h-4.5 text-white relative z-10" />
+                  </button>
+                </div>
               </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-between mt-2">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-xs text-white/50">
-                    Powered by Toque AI •{' '}
-                    <button
-                      onClick={suggestWhatsApp}
-                      className="hover:text-[#25D366] transition-colors underline"
-                    >
-                      Need human help?
-                    </button>
-                  </p>
-                </div>
-                <p className="text-xs text-white/40">
-                  {messages.length} messages • Ctrl+K
-                </p>
+              
+              <div className="mt-4 flex items-center justify-between px-2">
+                 <div className="flex items-center gap-1.5">
+                    <Zap className="w-3 h-3 text-brand-400" />
+                    <span className="text-[10px] text-white/60 font-black uppercase tracking-widest leading-none">Hyper-Fast Processing</span>
+                 </div>
+                 <div className="flex gap-4">
+                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest font-mono leading-none">ID: TQ-911-RS</span>
+                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* WhatsApp Modal */}
+      {/* Neural Link Modal (WhatsApp) */}
       {showWhatsAppModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div
-            className="relative rounded-2xl overflow-hidden max-w-md w-full border border-[rgba(37,211,102,0.2)]"
-            style={{
-              background: 'linear-gradient(135deg, rgba(12,25,55,0.95) 0%, rgba(8,18,40,0.98) 100%)',
-              backdropFilter: 'blur(20px)',
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-            }}
-          >
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 rounded-xl bg-[rgba(37,211,102,0.1)] border border-[rgba(37,211,102,0.2)]">
-                  <WhatsAppIcon className="w-8 h-8" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white text-lg">Connect with Human Agent</h3>
-                  <p className="text-sm text-white/60">Get personalized assistance on WhatsApp</p>
-                </div>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl">
+          <div className="relative max-w-md w-full bg-[#0a0a0a] border border-white/10 rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(22,159,228,0.15)] animate-in slide-in-from-bottom-8 duration-500">
+            <div className="p-10 text-center">
+              <div className="mx-auto mb-8 flex items-center justify-center">
+                <WhatsAppIcon className="w-12 h-12 text-green-500" />
               </div>
-
-              <div className="space-y-4 mb-6">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/70">Response Time</span>
-                    <span className="text-sm font-medium text-white">{whatsappConfig.responseTime}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/70">Business Hours</span>
-                    <span className="text-sm font-medium text-white">{whatsappConfig.businessHours}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/70">Contact</span>
-                    <span className="text-sm font-medium text-white">{whatsappConfig.phoneNumber}</span>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-[rgba(37,211,102,0.05)] border border-[rgba(37,211,102,0.1)]">
-                  <p className="text-sm text-center text-white/70">
-                    Your recent conversation will be shared with the agent for context
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowWhatsAppModal(false)}
-                  className="flex-1 py-3 rounded-lg transition-colors text-white hover:text-brand-500 bg-[rgba(12,25,55,0.5)] border border-white/10"
-                >
-                  Cancel
-                </button>
+              <h3 className="text-3xl font-bold text-white mb-4 tracking-tight">Establish Neural Link?</h3>
+              <p className="text-gray-400 leading-relaxed mb-10 text-lg">
+                Connect directly with a human strategist on WhatsApp. Verified response within {whatsappConfig.responseTime}.
+              </p>
+              
+              <div className="grid gap-4">
                 <button
                   onClick={handleWhatsAppClick}
-                  className="flex-1 py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-medium group relative overflow-hidden bg-[rgba(37,211,102,0.1)] border border-[rgba(37,211,102,0.2)] text-[#25D366]"
+                  className="w-full py-5 rounded-2xl bg-green-500 text-black font-black text-lg hover:bg-green-400 transition-all shadow-xl shadow-green-500/20 flex items-center justify-center gap-3"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#25D366]/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                  <WhatsAppIcon className="w-5 h-5" />
-                  <span>Open WhatsApp</span>
+                  <WhatsAppIcon className="w-6 h-6" />
+                  INITIATE WHATSAPP
+                </button>
+                <button
+                  onClick={() => setShowWhatsAppModal(false)}
+                  className="w-full py-5 rounded-2xl bg-white/5 text-gray-500 font-bold hover:text-white transition-all border border-white/5 hover:border-white/10"
+                >
+                  STAY IN NEURAL MODE
                 </button>
               </div>
             </div>

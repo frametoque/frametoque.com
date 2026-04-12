@@ -16,54 +16,63 @@ export default function Testimonials() {
   return (
     <section
       id="testimonials"
-      className="py-16 sm:py-20 px-10 sm:px-6 lg:px-8 relative"
+      className="py-24 sm:py-32 px-6 sm:px-10 lg:px-16 relative bg-black overflow-hidden"
     >
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row items-start gap-8 sm:gap-12 lg:gap-16">
+      {/* Subtle background glow removed */}
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-12 lg:gap-20">
           <div className="lg:w-1/2 w-full text-center lg:text-left">
-            <h2 className="text-5xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6">
-              What Clients are saying about us
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-[1.1] tracking-tight">
+              <span className="bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent block">
+                What Clients&nbsp;
+              </span>
+              <span className="bg-gradient-to-r from-brand-300 to-brand-500 bg-clip-text text-transparent block">
+                Say About Us
+              </span>
             </h2>
-          <p className="text-gray-400 text-base text-xl sm:text-lg max-w-2xl mx-auto">
-           Our clients love what we do! See how we’ve helped businesses and creators grow with stunning designs, smooth websites, and eye-catching videos.
-          </p>
+            <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+              Our clients love what we do. See how we've helped businesses and
+              creators grow with stunning designs, fast websites, and cinematic
+              videos.
+            </p>
           </div>
-          
+
           <div className="lg:w-1/2 w-full">
-            <div className="space-y-6 sm:space-y-8">
+            <div className="grid gap-6 sm:gap-8">
               {testimonials.map((testimonial, key) => (
                 <div
                   key={key}
-                  className="bg-slate-900/50 p-4 sm:p-6 backdrop-blur-sm border border-slate-800 rounded-xl sm:rounded-2xl"
+                  className="group relative bg-white/[0.03] backdrop-blur-md border border-white/10 p-6 sm:p-8 rounded-2xl hover:border-brand-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-brand-500/10"
                 >
-                  <div className="flex items-start space-x-3 sm:space-x-4">
+                  <div className="flex items-start gap-4 sm:gap-6">
                     <div className="flex-shrink-0">
-                      <div
-                        className="text-2xl sm:text-3xl lg:text-4xl font-bold 
-                      bg-gradient-to-r from-brand-400 to-brand-400 bg-clip-text 
-                      text-transparent"
-                      >
-                        "
+                      <div className="text-4xl sm:text-5xl font-serif bg-gradient-to-br from-brand-400 to-brand-600 bg-clip-text text-transparent opacity-50 font-bold leading-none">
+                        “
                       </div>
                     </div>
 
                     <div className="flex-grow">
-                      <p className="text-white text-base sm:text-lg leading-relaxed mb-3 sm:mb-4">
+                      <p className="text-gray-200 text-base sm:text-lg leading-relaxed mb-6 italic">
                         {testimonial.content}
                       </p>
-                      <div className="flex items-center space-x-2 sm:space-x-3">
-                        <Image
-                          src={testimonial.image}
-                          alt={testimonial.name}
-                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
-                          width={48}
-                          height={48}
-                        />
+                      
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          <Image
+                            src={testimonial.image}
+                            alt={testimonial.name}
+                            className="w-12 h-12 rounded-full object-cover border border-white/10"
+                            width={48}
+                            height={48}
+                          />
+                          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-brand-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        </div>
                         <div>
-                          <h3 className="font-semibold text-white text-sm sm:text-base">
+                          <h3 className="font-bold text-white text-base">
                             {testimonial.name}
                           </h3>
-                          <p className="text-xs sm:text-sm text-gray-400">
+                          <p className="text-xs text-gray-400 uppercase tracking-widest font-medium mt-0.5">
                             {testimonial.role}
                           </p>
                         </div>
