@@ -14,99 +14,101 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
     { href: "/projects", label: "Work" },
     { href: "/services", label: "Services" },
     { href: "/contact", label: "Contact" },
-    { href: "/dashboard", label: "Dashboard", special: true },
   ];
 
   return (
     <nav
-      className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-        scrolled
-          ? "bg-white/[0.07] backdrop-blur-2xl border-b border-white/[0.08] shadow-[0_1px_0_rgba(255,255,255,0.06),0_4px_24px_rgba(0,0,0,0.3)] after:content-[''] after:absolute after:left-0 after:right-0 after:top-full after:h-12 after:pointer-events-none after:bg-gradient-to-b after:from-black/5 after:to-transparent"
-          : "bg-slate-950/20 backdrop-blur-sm"
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 flex items-center justify-between px-6 lg:px-16 py-3 bg-black/60 backdrop-blur-md ${
+        scrolled ? "shadow-2xl" : ""
       }`}
-      style={scrolled ? { WebkitBackdropFilter: "saturate(180%) blur(20px)", backdropFilter: "saturate(180%) blur(20px)" } : {}}
     >
+      <div className="flex items-center gap-2 group cursor-pointer z-50 w-[140px] sm:w-[180px]">
+        <Link href="/">
+          <Image
+            src="/logos/ft/name-logo.png"
+            alt="Frametoque"
+            width={200}
+            height={40}
+            className="h-auto transition-all duration-300 w-28 sm:w-36"
+          />
+        </Link>
+      </div>
 
-    {/* <nav
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled
-        ? "bg-slate-950/80 backdrop-blur-lg border-b border-slate-800"
-        : "bg-slate-950/20 backdrop-blur-sm"
-        }`}
-    > */}
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-14 sm:h-16 md:h-20">
-          <Link href="/">
-            <div className="flex items-center space-x-1 group cursor-pointer">
-              <div>
-                <Image
-                  src="/logos/ft/name-logo.png"
-                  alt="Frametoque"
-                  width={200}
-                  height={40}
-                  className="w-32 h-auto sm:w-48"
-                />
-              </div>
-            </div>
-          </Link>
-          <div className="hidden md:flex items-center space-x-6 lg:space-x-8 active">
+      <div className="hidden md:flex flex-1 items-center justify-center gap-2">
+        {links.map((link) => {
+          const isActive = link.href === "/services"
+            ? pathname === "/services" || pathname.startsWith("/services/")
+            : pathname === link.href || pathname.startsWith(`${link.href}/`);
+
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`relative px-5 py-1.5 text-sm font-medium transition-all duration-300 rounded-full group overflow-hidden ${
+                isActive ? "text-white bg-white/10 shadow-inner drop-shadow-md" : "text-white drop-shadow-md hover:bg-white/10"
+              }`}
+            >
+              <span className="relative z-10">{link.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="hidden md:flex items-center justify-end w-[140px] sm:w-[180px]">
+        <Link
+          href="/dashboard"
+          className="group relative flex items-center justify-center bg-white text-black hover:bg-gray-100 hover:scale-105 active:scale-95 transition-all duration-300 rounded-full px-6 py-2 text-sm font-semibold"
+        >
+          Dashboard
+        </Link>
+      </div>
+
+      {/* Mobile menu button */}
+      <button
+        aria-label="Toggle Menu"
+        className="md:hidden p-2 text-white drop-shadow-md transition-colors z-50 rounded-full hover:bg-white/10"
+        onClick={() => setMobileMenuIsOpen((prev) => !prev)}
+      >
+        {mobileMenuIsOpen ? (
+          <X className="w-6 h-6" />
+        ) : (
+          <Menu className="w-6 h-6" />
+        )}
+      </button>
+
+      {/* Mobile menu */}
+      {mobileMenuIsOpen && (
+        <div className="absolute top-full left-0 right-0 bg-[#0d0d0d] backdrop-blur-3xl border-t border-white/10 animate-in slide-in-from-top-2 duration-300 md:hidden pt-4 pb-6 px-6 shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden">
+          <div className="flex flex-col space-y-2">
             {links.map((link) => {
-
               const isActive = link.href === "/services"
                 ? pathname === "/services" || pathname.startsWith("/services/")
                 : pathname === link.href || pathname.startsWith(`${link.href}/`);
-
-              const baseClasses = link.special
-                ? "px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-b from-brand-500 to-brand-600 transition-transform duration-300"
-                : "text-sm lg:text-base transition-colors duration-300";
 
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`${baseClasses} ${!link.special && isActive
-                    ? "text-white font-bold"
-                    : "text-gray-300 hover:text-white"
-                    } ${link.special ? "hover:scale-102" : ""}`}
+                  onClick={() => setMobileMenuIsOpen(false)}
+                  className={`block px-4 py-3 rounded-xl text-base transition-all duration-300 ${
+                    isActive ? "text-white bg-white/10 font-medium" : "text-white hover:bg-white/10"
+                  }`}
                 >
                   {link.label}
                 </Link>
               );
             })}
-          </div>
-
-          {/* Mobile menu button */}
-          <button
-            aria-label="Toggle Menu"
-            className="md:hidden p-2 text-gray-300 hover:text-white"
-            onClick={() => setMobileMenuIsOpen((prev) => !prev)}
-          >
-            {mobileMenuIsOpen ? (
-              <X className="w-5 h-5 sm:w-6 sm:h-6" />
-            ) : (
-              <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile menu */}
-      {mobileMenuIsOpen && (
-        <div className="md:hidden bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 animate-in slide-in-from-top duration-300">
-          <div className="px-4 py-4 sm:py-6 space-y-3 sm:space-y-4">
-            {["about", "work", "services", "contact"].map((link) => (
+            <div className="pt-4 px-2">
               <Link
-                key={link}
-                href={`${link}`}
+                href="/dashboard"
                 onClick={() => setMobileMenuIsOpen(false)}
-                className="block text-gray-300 hover:text-white text-sm lg:text-base"
+                className="flex items-center justify-center w-full bg-white text-black rounded-xl px-6 py-3.5 text-base font-semibold hover:bg-gray-200 active:scale-[0.98] transition-all shadow-md"
               >
-                {link.charAt(0).toUpperCase() + link.slice(1)}
+                Dashboard
               </Link>
-            ))}
+            </div>
           </div>
         </div>
-
       )}
     </nav>
   );
