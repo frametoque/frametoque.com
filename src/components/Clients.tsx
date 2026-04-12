@@ -62,6 +62,7 @@ export default function Clients() {
         slider.classList.remove("cursor-grabbing");
       };
   
+      
       const moveDrag = (e) => {
         if (!isDown) return;
   
