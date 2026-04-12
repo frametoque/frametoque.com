@@ -24,7 +24,7 @@ export default function PhotographyPage() {
       <Navbar scrolled={scrolled} />
       <HeroSection />
       <GallerySection />
-      <NewsletterSection />
+      {/* <NewsletterSection /> */}
       <Footer />
     </main>
   );
