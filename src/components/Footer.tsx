@@ -32,7 +32,7 @@ const Telegram = () => (
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-950/40 backdrop-blur-xl border-t border-slate-800 relative overflow-hidden">
+    <footer className="bg-black backdrop-blur-xl border-t border-white/5 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative z-10">
         <div className="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-8 gap-6 sm:gap-8 lg:gap-12 mb-10 sm:mb-12">
           <div className="col-span-1 sm:col-span-4 lg:col-span-2 text-center sm:text-left">
