@@ -29,7 +29,7 @@ export default function AboutUs() {
   const teamMembers : TeamMember[] = [
     {
       name: "Kavinu Pasandul",
-      role: "Video Editor",
+      role: "Cinematographer, Video Editor",
       expertise: "Creative storytelling",
       social: {
         linkedin: "https://linkedin.com/in/",
