@@ -5,6 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Globe, Youtube, Eye, ExternalLink, X, Search, Grid3X3, List } from "lucide-react";
 
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+
 const protectImage = (e) => e.preventDefault();
 
 const projects = [
@@ -56,6 +59,15 @@ export default function ProjectsComponent() {
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
+
+    const [scrolled, setScrolled] = useState(false);
+    useEffect(() => {
+      function handleScroll() {
+        setScrolled(window.scrollY > 50);
+      }
+      window.addEventListener("scroll", handleScroll);
+      return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
   useEffect(() => { setSearch(""); }, [activeTab]);
 
@@ -131,6 +143,31 @@ export default function ProjectsComponent() {
 
   return (
     <>
+        <Navbar scrolled={scrolled} />
+        <div className="h-20" />
+        <div className="h-20" />
+
+                {/* Pulse Effects */}
+        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-brand-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-brand-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+
+        <div className="max-w-7xl mx-auto text-center mb-16 relative z-10">
+          <h2 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">
+            <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
+              What We&nbsp;
+            </span>
+            <span className="bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">
+              Did
+            </span>
+          </h2>
+
+          <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
+            A quick glimpse into some of our highlighted work.<br />
+            <i className="text-gray-600">We haven't added all projects we've completed due to legal reasons and client confidentiality.
+              Below are projects that our clients have chosen to showcase publicly.</i>
+          </p>
+        </div>
+
       <section className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-white">
 
         {/* ── Tabs ── */}
@@ -400,6 +437,8 @@ export default function ProjectsComponent() {
           </div>
         </div>
       )}
+        <br /><br />
+        <Footer />
     </>
   );
 }

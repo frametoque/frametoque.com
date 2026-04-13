@@ -20,8 +20,8 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 flex items-center justify-between px-6 lg:px-16 py-3 bg-black/60 backdrop-blur-md ${
-        scrolled ? "shadow-2xl" : ""
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 flex items-center justify-between px-6 lg:px-16 py-3 ${
+        scrolled ? "bg-black/60 backdrop-blur-md shadow-2xl" : "bg-transparent"
       }`}
     >
       <div className="flex items-center gap-2 group cursor-pointer z-50 w-[140px] sm:w-[180px]">
