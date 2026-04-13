@@ -106,6 +106,11 @@ export default function AIChatbot() {
         .toque-orb-float {
           animation: float 4s ease-in-out infinite;
         }
+        .prose a {
+          color: #169fe4 !important;
+          text-decoration: underline !important;
+          font-weight: 700 !important;
+        }
       `}</style>
 
       {/* Trigger Button (Orb) */}
@@ -187,7 +192,20 @@ export default function AIChatbot() {
                       : "bg-white/[0.03] border border-white/10 text-gray-200"
                   }`}>
                     <div className="prose prose-invert max-w-none text-sm leading-relaxed">
-                      <ReactMarkdown>{m.text}</ReactMarkdown>
+                      <ReactMarkdown
+                        components={{
+                          a: ({ node, ...props }) => (
+                            <a 
+                              {...props} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-brand-400 underline font-bold hover:text-brand-300 transition-colors"
+                            />
+                          )
+                        }}
+                      >
+                        {m.text}
+                      </ReactMarkdown>
                     </div>
                     <div className="mt-3 flex items-center justify-between">
                        <div className="flex gap-1">

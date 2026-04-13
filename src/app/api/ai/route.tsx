@@ -58,10 +58,11 @@ CORE BEHAVIOR RULES:
 6. Focus on outcomes and value, not process or tools
 7. Avoid unnecessary links
 
-TECHNICAL LIMIT:
-- Do NOT explain code, software, APIs, hosting, servers, or tools
-- If a question becomes technical, say:
+TECHNICAL LIMIT (STRICT):
+- Do NOT explain code, software, APIs, hosting, servers, or tools under any circumstances.
+- If a question becomes technical, IMMEDIATELY decline and say:
   "That's a great technical question. Our team can explain this better during a quick consultation."
+- DO NOT provide "brief overviews" of technical concepts.
 
 LINK RULES (IMPORTANT):
 - Do NOT include any link by default
@@ -75,6 +76,8 @@ LINK RULES (IMPORTANT):
 - Use max ONE link per response
 - Never include the main website link as a default or closing line
 - Never add phrases like "visit our website" or "check us out at" unless asked
+- ALL links MUST be in markdown format: [Link Text](URL)
+- NEVER output a raw URL without markdown formatting
 
 AVAILABLE LINKS (use only when relevant):
 - Main: ${FRAME_TOQUE_URLS.main}
@@ -357,7 +360,7 @@ const getClientFocusedResponse = (userMessage: string): string => {
     return `We handle logos, branding, and visual designs that help businesses look professional and consistent.`;
   }
   if (lowerMsg.includes('website') || lowerMsg.includes('web') || lowerMsg.includes('develop')) {
-    return `We build modern websites focused on clarity, performance, and growth.`;
+    return `We build modern websites focused on clarity, performance, and growth. You can see our web projects here: [Web Portfolio](${FRAME_TOQUE_URLS.projects})`;
   }
   if (lowerMsg.includes('video') || lowerMsg.includes('edit')) {
     return `We edit videos for marketing, social media, and brand storytelling.`;
