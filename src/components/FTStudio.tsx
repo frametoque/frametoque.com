@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function CollabCompact() {
   return (
-    <div className="bg-slate-950 py-2 px-6 relative max-w-7xl mx-auto">
+    <div className="bg-slate-950 py-2 px-6 relative max-w-8xl mx-auto">
       <div className="max-w-4xl mx-auto px-6">
         <div className="bg-gradient-to-br from-slate-950/50 to-slate-800/50 border border-slate-700/50 rounded-2xl p-8 shadow-xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
@@ -48,6 +48,7 @@ export default function CollabCompact() {
           </div>
         </div>
       </div>
+      <br /><br /><br />
     </div>
   );
 }

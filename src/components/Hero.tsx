@@ -62,5 +62,3 @@ export default function Hero() {
     </section>
   );
 }
-
-// backup update

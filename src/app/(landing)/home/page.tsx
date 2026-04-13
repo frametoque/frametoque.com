@@ -25,13 +25,13 @@ export default function HomeClient() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white overflow-hidden">
+    <main className="min-h-screen bg-black text-white overflow-hidden">
       <Navbar scrolled={scrolled} />
       <Hero />
       <ServicesHome />
-      <StudioPromo />
-      <ProjectsHome />
       <Collab />
+      <ProjectsHome />
+      <StudioPromo />
       <SoftwareWeUse />
       <Testimonials />
       <Clients />
