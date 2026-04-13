@@ -1,4 +1,6 @@
 import { Check, X } from "lucide-react";
+import Image from "next/image";
+const protectImage = (e) => e.preventDefault();
 
 const otherAgencies = [
   "Reactive communication",
@@ -20,19 +22,19 @@ export default function WhyChooseUs() {
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center px-6 py-24 overflow-hidden bg-[#111111] text-white">
       {/* Glow on right to match brand aesthetics */}
-      <div className="absolute right-0 top-0 bottom-0 w-[300px] bg-gradient-to-l from-brand-500 to-transparent opacity-20 blur-3xl pointer-events-none" />
+      {/* <div className="absolute right-0 top-0 bottom-0 w-[300px] bg-gradient-to-l from-brand-500 to-transparent opacity-20 blur-3xl pointer-events-none" /> */}
 
       {/* Badge */}
-      <div className="mb-8 relative z-10">
+      {/* <div className="mb-8 relative z-10">
         <span className="inline-block rounded-full border border-white/20 px-5 py-1.5 text-sm text-gray-400 tracking-wide bg-white/5 backdrop-blur-sm">
           Comparison
         </span>
-      </div>
+      </div> */}
 
       {/* Heading */}
       <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-center leading-tight mb-16 max-w-3xl relative z-10">
         But, why would you
-        want to work <em className="italic font-bold bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">with us?</em>
+        want to work <em className="italic font-bold bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent pr-2">with us?</em>
       </h2>
 
       {/* Comparison cards */}
@@ -53,10 +55,11 @@ export default function WhyChooseUs() {
         {/* Conversion */}
         <div>
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center">
-              <span className="text-black text-xs font-bold">F</span>
-            </div>
-            <span className="text-lg font-semibold text-white">Frametoque</span>
+            <span className="text-lg font-semibold text-white">
+              <Image src="/logos/ft/name-logo.png" alt="FT logo" width={130} height={15} className="inline-block" 
+                onContextMenu={protectImage}
+                onDragStart={protectImage} />
+            </span>
           </div>
           <div className="rounded-2xl border border-brand-500/30 bg-gradient-to-br from-white/5 via-brand-900/20 to-brand-800/30 p-8 space-y-5 h-full backdrop-blur-md">
             {conversionPoints.map((item) => (

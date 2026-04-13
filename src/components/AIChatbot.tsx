@@ -160,7 +160,7 @@ export default function AIChatbot() {
                     Toque AI <Sparkles className="w-3.5 h-3.5 text-brand-400" />
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-widest text-brand-400 font-bold">AI Engine v3.0</span>
+                    <span className="text-[10px] uppercase tracking-widest text-brand-400 font-bold">Simple.Better.Fast.</span>
                   </div>
                 </div>
               </div>
