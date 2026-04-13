@@ -166,7 +166,7 @@ export default function ProjectsHome() {
       return (
         <button
           onClick={() =>
-            setPopupVideo({ url: project.youtube, title: project.title })
+            setPopupVideo({ url: project.youtube!, title: project.title })
           }
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-brand-500/30 border border-white/15 hover:border-brand-400/50 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-300"
         >
@@ -212,7 +212,7 @@ export default function ProjectsHome() {
           <video
             src={`/projects/video/${project.video}`}
             poster={project.image}
-            className="absolute inset-0 w-full h-full pointer-events-none object-cover group-hover:scale-110 transition-transform duration-700"
+            className="absolute inset-0 w-full h-full pointer-events-none object-cover transition-transform duration-700"
             autoPlay
             muted
             loop
@@ -226,12 +226,12 @@ export default function ProjectsHome() {
             alt={project.title}
             onContextMenu={protectImage}
             onDragStart={protectImage}
-            className="object-cover transition-transform duration-700 group-hover:scale-110"
+            className="object-cover transition-transform duration-700"
             sizes="(max-width: 768px) 100vw, 50vw"
           />
         )}
 
-        {/* Gradient overlay — stronger when tapped on mobile */}
+        {/* Gradient overlay */}
         <div
           className={`absolute inset-0 transition-all duration-300 ${
             isTapped
@@ -240,10 +240,10 @@ export default function ProjectsHome() {
           }`}
         />
 
-        {/* Brand tint on hover (desktop) or tap (mobile) */}
+        {/* Brand tint on tap */}
         <div
           className={`absolute inset-0 transition-all duration-500 ${
-            isTapped ? "bg-brand-600/8" : "bg-brand-600/0 group-hover:bg-brand-600/8"
+            isTapped ? "bg-brand-600/8" : "bg-brand-600/0"
           }`}
         />
 
@@ -260,19 +260,8 @@ export default function ProjectsHome() {
             {project.title}
           </h3>
 
-          {/*
-            Desktop: show on hover via group-hover (existing behaviour)
-            Mobile:  show when isTapped via the `tapped-visible` class toggled below
-          */}
-          <div
-            className={`transition-all duration-500 ease-out ${
-              isTapped
-                ? 
-                  "max-h-20 opacity-100 translate-y-0"
-                : 
-                  "max-h-0 overflow-hidden opacity-0 translate-y-2 group-hover:max-h-20 group-hover:opacity-100 group-hover:translate-y-0"
-            }`}
-          >
+          {/* Action buttons (always visible now since hover is removed) */}
+          <div className="transition-all duration-500 ease-out max-h-20 opacity-100 translate-y-0">
             {getAction(project)}
           </div>
         </div>
@@ -281,7 +270,7 @@ export default function ProjectsHome() {
   };
 
   const card =
-    "group relative rounded-2xl overflow-hidden cursor-pointer border border-white/[0.07] hover:border-brand-500/40 transition-all duration-500 hover:shadow-2xl hover:shadow-brand-500/15 hover:-translate-y-1 hover:scale-[1.01]";
+    "relative rounded-2xl overflow-hidden cursor-pointer border border-white/[0.07] transition-all duration-500";
 
   const byArea = (letter: string): Project => projects.find((p) => p.area === letter)!;
 
@@ -312,32 +301,28 @@ export default function ProjectsHome() {
   );
 
   return (
-    <section className="py-16 px-6 sm:px-10 lg:px-16 bg-slate-950 text-white relative overflow-hidden">
-      <div className="absolute top-10 left-4 sm:left-10 w-32 sm:w-48 h-32 sm:h-48 bg-brand-500/10 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-10 right-4 sm:right-10 w-40 sm:w-64 h-40 sm:h-64 bg-brand-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-
+    <section className="py-16 px-6 sm:px-10 lg:px-16 bg-[#030303] text-white relative overflow-hidden">
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-12">
-          <h2 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
-            <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
+          <h2 className="text-5xl sm:text-4xl md:text-5xl lg:text-7xl font-black mb-6 tracking-tight">
+            <span className="bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">
               Featured&nbsp;
             </span>
-            <span className="bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-b from-brand-400 to-brand-600 bg-clip-text text-transparent">
               Projects
             </span>
           </h2>
-          <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
-            A quick glimpse into some of our highlighted work across different
-            domains.
+          <p className="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed font-medium">
+            Explore our diverse portfolio of digital products and cinematic experiences, categorized by expertise.
           </p>
         </div>
 
-        {/* ══ DESKTOP (lg+) ══ */}
+        {/* ── DESKTOP (lg+) ── */}
         <div
-          className="hidden lg:grid gap-3 mb-12"
+          className="hidden lg:grid gap-3 mb-12 max-w-5xl mx-auto"
           style={{
             gridTemplateColumns: "repeat(4, 1fr)",
-            gridTemplateRows: "220px 220px 280px",
+            gridTemplateRows: "160px 160px 220px",
             gridTemplateAreas: `
               "a b c d"
               "a e e d"
@@ -357,8 +342,8 @@ export default function ProjectsHome() {
           ))}
         </div>
 
-        {/* ══ TABLET (sm → lg) ══ */}
-        <div className="hidden sm:flex lg:hidden flex-col gap-3 mb-12">
+        {/* ── TABLET (sm → lg) ── */}
+        <div className="hidden sm:flex lg:hidden flex-col gap-3 mb-12 max-w-2xl mx-auto">
           <div className="grid gap-3" style={{ gridTemplateColumns: "1fr 1fr" }}>
             <CardWrap project={byArea("a")} className={`${card} relative`} style={{ aspectRatio: "9/16" }}>
               <CardInner project={byArea("a")} />
@@ -391,8 +376,8 @@ export default function ProjectsHome() {
           </CardWrap>
         </div>
 
-        {/* ══ MOBILE ══ */}
-        <div className="flex sm:hidden flex-col gap-3 mb-12">
+        {/* ── MOBILE ── */}
+        <div className="flex sm:hidden flex-col gap-3 mb-12 max-w-md mx-auto w-full">
           <CardWrap project={byArea("e")} className={`${card} relative w-full`} style={{ aspectRatio: "16/9" }}>
             <CardInner project={byArea("e")} />
           </CardWrap>

@@ -7,9 +7,8 @@ import Link from 'next/link';
 
 export default function AIChatbot() {
   const [open, setOpen] = useState(false);
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [messages, setMessages] = useState([
-    { role: "ai", text: "Neural pathways active. I'm Toque AI. How can I facilitate your digital evolution today?", timestamp: new Date() },
+    { role: "ai", text: "Hello! I'm your Frametoque AI assistant. How can I help with your project?", timestamp: new Date() },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +27,7 @@ export default function AIChatbot() {
 
   const whatsappConfig = {
     phoneNumber: "+94701901461",
-    defaultMessage: "Hello! I'd like to speak with a human agent regarding my project inquiry.",
+    defaultMessage: "Hello! I'd like to speak with agent regarding my project inquiry.",
     responseTime: "15 minutes",
     businessHours: "8 AM - 10 PM"
   };
@@ -36,7 +35,6 @@ export default function AIChatbot() {
   const handleWhatsAppClick = () => {
     const encodedMessage = encodeURIComponent(whatsappConfig.defaultMessage);
     window.open(`https://wa.me/${whatsappConfig.phoneNumber}?text=${encodedMessage}`, '_blank');
-    setShowWhatsAppModal(false);
   };
 
   const sendMessage = async () => {
@@ -118,7 +116,7 @@ export default function AIChatbot() {
         <button
           onClick={() => setOpen(!open)}
           className="relative w-12 h-12 group outline-none"
-          title="Toque AI Neural Interface"
+          title="Toque AI Assistant"
         >
           {/* Pulsing Back Glow removed as requested */}
 
@@ -134,7 +132,7 @@ export default function AIChatbot() {
         </button>
       </div>
 
-      {/* Neural Interface Chat Box */}
+      {/* AI Assistant Chat Box */}
       {open && (
         <div
           className="fixed z-[90] transition-all duration-500 ease-out bottom-24 right-6"
@@ -149,7 +147,7 @@ export default function AIChatbot() {
             <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
                  style={{ backgroundImage: `radial-gradient(circle, white 1px, transparent 1px)`, backgroundSize: '24px 24px' }} />
 
-            {/* Neural Header */}
+            {/* AI Header */}
             <div className="relative p-6 px-8 flex items-center justify-between border-b border-white/5 bg-white/[0.02] shrink-0">
               <div className="flex items-center gap-4">
                 <div className="relative group">
@@ -162,7 +160,7 @@ export default function AIChatbot() {
                     Toque AI <Sparkles className="w-3.5 h-3.5 text-brand-400" />
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-widest text-brand-400 font-bold">Neural Engine v3.0</span>
+                    <span className="text-[10px] uppercase tracking-widest text-brand-400 font-bold">AI Engine v3.0</span>
                   </div>
                 </div>
               </div>
@@ -176,7 +174,7 @@ export default function AIChatbot() {
               </div>
             </div>
 
-            {/* Neural Streams (Messages) */}
+            {/* Message Streams */}
             <div
               ref={messagesContainerRef}
               className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide overscroll-contain z-10"
@@ -233,12 +231,12 @@ export default function AIChatbot() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Neural Input Interface */}
+            {/* AI Input Interface */}
             <div className="relative p-6 pt-2 shrink-0 z-10">
               <div className="relative group">
                 <div className="relative bg-white/5 border border-white/10 rounded-full overflow-hidden backdrop-blur-xl flex items-center p-1.5 pl-5 gap-3 transition-all duration-300 group-within:bg-white/[0.08] group-within:border-white/20">
                   <button
-                    onClick={() => setShowWhatsAppModal(true)}
+                    onClick={handleWhatsAppClick}
                     className="p-1.5 text-gray-400 hover:text-green-400 transition-all shrink-0"
                     title="Direct Human Link"
                   >
@@ -283,38 +281,6 @@ export default function AIChatbot() {
         </div>
       )}
 
-      {/* Neural Link Modal (WhatsApp) */}
-      {showWhatsAppModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl">
-          <div className="relative max-w-md w-full bg-[#0a0a0a] border border-white/10 rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(22,159,228,0.15)] animate-in slide-in-from-bottom-8 duration-500">
-            <div className="p-10 text-center">
-              <div className="mx-auto mb-8 flex items-center justify-center">
-                <WhatsAppIcon className="w-12 h-12 text-green-500" />
-              </div>
-              <h3 className="text-3xl font-bold text-white mb-4 tracking-tight">Establish Neural Link?</h3>
-              <p className="text-gray-400 leading-relaxed mb-10 text-lg">
-                Connect directly with a human strategist on WhatsApp. Verified response within {whatsappConfig.responseTime}.
-              </p>
-              
-              <div className="grid gap-4">
-                <button
-                  onClick={handleWhatsAppClick}
-                  className="w-full py-5 rounded-2xl bg-green-500 text-black font-black text-lg hover:bg-green-400 transition-all shadow-xl shadow-green-500/20 flex items-center justify-center gap-3"
-                >
-                  <WhatsAppIcon className="w-6 h-6" />
-                  INITIATE WHATSAPP
-                </button>
-                <button
-                  onClick={() => setShowWhatsAppModal(false)}
-                  className="w-full py-5 rounded-2xl bg-white/5 text-gray-500 font-bold hover:text-white transition-all border border-white/5 hover:border-white/10"
-                >
-                  STAY IN NEURAL MODE
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
