@@ -21,7 +21,9 @@
   -ms-user-select: none;
   user-select: none;
 }
-input, textarea,
+
+input,
+textarea,
 [contenteditable] {
   -webkit-user-select: text;
   -moz-user-select: text;
@@ -32,6 +34,7 @@ input, textarea,
 body {
   font-family: var(--font-geist-sans), sans-serif;
 }
+
 code,
 pre,
 kbd,
@@ -157,7 +160,7 @@ html {
 }
 
 html {
-  scroll-padding-top: 15rem; 
+  scroll-padding-top: 15rem;
 }
 
 [id] {

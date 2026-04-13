@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 
+const protectImage = (e) => e.preventDefault();
+
 export default function Navbar({ scrolled }: { scrolled: boolean }) {
   const [mobileMenuIsOpen, setMobileMenuIsOpen] = useState(false);
   const pathname = usePathname();
@@ -29,6 +31,8 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
             alt="Frametoque"
             width={200}
             height={40}
+            onContextMenu={protectImage}
+            onDragStart={protectImage}
             className="h-auto transition-all duration-300 w-28 sm:w-36"
           />
         </Link>
