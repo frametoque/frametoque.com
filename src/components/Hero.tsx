@@ -6,9 +6,10 @@ import { Zap, FolderKanban, Layers } from "lucide-react";
 
 export default function Hero() {
   return (
+
     <section className="relative min-h-screen overflow-hidden bg-black">
       {/* Background Image */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 animate-hero-zoom">
         <Image
           src="/back3.png"
           alt="Hero Background"

@@ -166,3 +166,23 @@ html {
 [id] {
   scroll-margin-top: 5rem;
 }
+
+@keyframes hero-zoom {
+  0% {
+    transform: scale(1.06);
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@utility animate-hero-zoom {
+  animation: hero-zoom 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
