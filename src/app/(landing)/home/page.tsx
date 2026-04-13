@@ -31,7 +31,7 @@ export default function HomeClient() {
       <ServicesHome />
       <Collab />
       <ProjectsHome />
-      <StudioPromo />
+      {/* <StudioPromo /> */}
       <SoftwareWeUse />
       <Testimonials />
       <Clients />
