@@ -3,8 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Zap, FolderKanban, Layers } from "lucide-react";
+import { useState } from "react";
 
 export default function Hero() {
+  const [loaded, setLoaded] = useState(false);
   return (
 
     <section className="relative min-h-screen overflow-hidden bg-black">
@@ -17,6 +19,7 @@ export default function Hero() {
           priority
           className="object-cover"
           quality={100}
+          onLoad={() => setLoaded(true)}
         />
       </div>
 
