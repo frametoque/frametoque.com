@@ -33,6 +33,7 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
             height={40}
             onContextMenu={protectImage}
             onDragStart={protectImage}
+            loading="eager"
             className="h-auto transition-all duration-300 w-28 sm:w-36"
           />
         </Link>

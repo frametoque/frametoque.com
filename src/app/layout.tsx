@@ -5,7 +5,7 @@ import "./globals.css";
 import SWRegister from "../lib/sw-register";
 import SnowfallWrapper from "@/components/SnowfallWrapper";
 import FloatingButtons from '@/components/FloatingButtons';
-
+import type { Metadata } from 'next'
 import { Bricolage_Grotesque, DM_Mono } from "next/font/google";
 //import localFont from "next/font/local";
 
@@ -26,7 +26,7 @@ const dmMono = DM_Mono({
 //   variable: "--font-geist-sans",
 // });
 
-export const metadata = {
+export const metadata: Metadata = {
   metadataBase: new URL("https://frametoque.online"),
 
   title: {
@@ -51,7 +51,7 @@ export const metadata = {
   manifest: "/site.webmanifest",
 
   appleWebApp: {
-    title: "Frametoque",
+    title: "FrameToque",
   },
 
   openGraph: {

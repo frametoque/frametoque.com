@@ -10,7 +10,7 @@ export default function FloatingButtons() {
 
   useEffect(() => setMounted(true), []);
 
-  const hideAll = ['/login', '/register', '/404', '/projects/photography'].includes(pathname);
+  const hideAll = ['/login', '/register', '/404', ].includes(pathname) || pathname.startsWith('/projects/');
 
   const showCurrency = pathname === '/services' || pathname.startsWith('/dashboard/');
 

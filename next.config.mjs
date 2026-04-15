@@ -7,8 +7,15 @@ const nextConfig = {
         destination: '/projects',
         permanent: true,
       },
+       {
+        source: "/projects",
+        destination: "/projects/photography",
+        permanent: false,
+      },
     ];
+    
   },
+  
   images: {
     remotePatterns: [
       {
