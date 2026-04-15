@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect, useCallback } from "react";
 import { Globe, Youtube, Eye, ExternalLink, X, Camera } from "lucide-react";
 import Link from "next/link";
@@ -82,11 +83,11 @@ export default function ProjectsHome() {
     },
     {
       id: 6,
-      title: "Evendor '25 | Album",
+      title: "LIttle Guardians | Album",
       category: "Photography",
-      image: "/projects/graphic/photography-services.png",
+      image: "/projects/photography/lIttle-guardians.jpg",
       type: "photography",
-      live: "https://www.facebook.com/media/set/?set=a.122097815595271134&type=3",
+      live: "https://www.facebook.com/media/set?vanity=frametoque&set=a.122108823843271134",
       area: "f",
     },
     {
@@ -205,6 +206,7 @@ export default function ProjectsHome() {
 
   const CardInner = ({ project }: { project: Project }) => {
     const isTapped = tappedId === project.id;
+    const isRevealed = isTapped;
 
     return (
       <>
@@ -231,31 +233,43 @@ export default function ProjectsHome() {
           />
         )}
 
-        {/* Gradient overlay — stronger when tapped on mobile */}
+        {/* Gradient overlay — hidden by default, visible on hover/tap */}
         <div
-          className={`absolute inset-0 transition-all duration-300 ${
-            isTapped
-              ? "bg-gradient-to-t from-slate-950/95 via-slate-900/40 to-black/20"
-              : "bg-gradient-to-t from-slate-950/80 via-slate-900/5 to-transparent"
+          className={`absolute inset-0 transition-all duration-500 ${
+            isRevealed
+              ? "bg-gradient-to-t from-slate-950/95 via-slate-900/40 to-black/20 opacity-100"
+              : "bg-gradient-to-t from-slate-950/80 via-slate-900/5 to-transparent opacity-0 group-hover:opacity-100"
           }`}
         />
 
         {/* Brand tint on hover (desktop) or tap (mobile) */}
         <div
           className={`absolute inset-0 transition-all duration-500 ${
-            isTapped ? "bg-brand-600/8" : "bg-brand-600/0 group-hover:bg-brand-600/8"
+            isRevealed ? "bg-brand-600/8" : "bg-brand-600/0 group-hover:bg-brand-600/8"
           }`}
         />
 
-        {/* Category badge */}
-        <div className="absolute top-4 left-4 z-10">
+        {/* Category badge — hidden by default */}
+        <div
+          className={`absolute top-4 left-4 z-10 transition-all duration-500 ${
+            isRevealed
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0"
+          }`}
+        >
           <span className="px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-brand-300 text-[8px] font-bold tracking-widest uppercase">
             {project.category}
           </span>
         </div>
 
-        {/* Bottom info + action */}
-        <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+        {/* Bottom info + action — hidden by default */}
+        <div
+          className={`absolute bottom-0 left-0 right-0 p-5 z-10 transition-all duration-500 ${
+            isRevealed
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0"
+          }`}
+        >
           <h3 className="text-[15px] font-bold text-white leading-snug mb-1.5">
             {project.title}
           </h3>
@@ -267,10 +281,8 @@ export default function ProjectsHome() {
           <div
             className={`transition-all duration-500 ease-out ${
               isTapped
-                ? 
-                  "max-h-20 opacity-100 translate-y-0"
-                : 
-                  "max-h-0 overflow-hidden opacity-0 translate-y-2 group-hover:max-h-20 group-hover:opacity-100 group-hover:translate-y-0"
+                ? "max-h-20 opacity-100 translate-y-0"
+                : "max-h-0 overflow-hidden opacity-0 translate-y-2 group-hover:max-h-20 group-hover:opacity-100 group-hover:translate-y-0"
             }`}
           >
             {getAction(project)}

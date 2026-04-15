@@ -58,7 +58,7 @@ function getHeroForTab(tab: string): string {
     case "graphic-design":
       return graphicImages[0] ?? "/hero/graphic.jpg";
     case "video-editing":
-      return getYouTubeThumbnail(videoEditingURLs[0]) || "/hero/edit.jpg";
+      return "/projects/video/edit.jpg";
     case "web-dev":
       return (webDevProjects as WebDevProject[])[0]?.image ?? "/hero/web.jpg";
     default:

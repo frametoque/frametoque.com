@@ -75,6 +75,7 @@ export default function Hero() {
               alt=" Divider"
               width={1920}
               height={200}
+              quality={100}
               className="w-full h-auto block"
               priority
               onContextMenu={protectImage}
