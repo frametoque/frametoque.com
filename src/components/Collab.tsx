@@ -1,11 +1,51 @@
 import { Handshake, ArrowRight, Percent, Calendar } from 'lucide-react';
 import Link from "next/link";
+import Image from "next/image";
 
 export default function CollabCompact() {
   return (
     <div className="bg-[#111111] w-full py-16">
       <div className="max-w-4xl mx-auto px-6">
-        <div className="bg-gradient-to-br from-black/80 to-slate-900/50 border border-slate-700/50 rounded-2xl p-8 shadow-xl">
+        {/* Banner */}
+            <div className="relative mt-6 rounded-2xl overflow-hidden">
+              <Link href="/contact" >
+                  <Image
+                    src="/collab-banner.png"
+                    alt="FrameToque Digital Media"
+                    width={1920}
+                    height={480}
+                    className="w-full h-auto block"
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
+                  />
+        
+                  <div
+                    className="absolute inset-0 pointer-events-none overflow-hidden"
+                    style={{ borderRadius: "inherit" }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        background:
+                          "linear-gradient(115deg, transparent 45%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.06) 53%, transparent 58%)",
+                        transform: "translateX(-100%)",
+                        animation: "shineSweep 4s ease-in-out infinite",
+                      }}
+                    />
+                  </div>
+                  </Link>
+              </div>
+
+                <style>
+                    {`
+                    @keyframes shineSweep {
+                      0%   { transform: translateX(-100%); }
+                      100% { transform: translateX(100%); }
+                    }
+                  `}
+                </style>
+        {/* <div className="bg-gradient-to-br from-black/80 to-slate-900/50 border border-slate-700/50 rounded-2xl p-8 shadow-xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-500 to-brand-500 flex items-center justify-center flex-shrink-0">
@@ -43,7 +83,7 @@ export default function CollabCompact() {
               <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

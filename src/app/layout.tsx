@@ -26,7 +26,7 @@ const dmMono = DM_Mono({
 //   variable: "--font-geist-sans",
 // });
 
-export const metadata: Metadata = {
+export const metadata = {
   metadataBase: new URL("https://frametoque.online"),
 
   title: {
