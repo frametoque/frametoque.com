@@ -14,10 +14,8 @@ import { VideographyGallery } from "./VideographyGallery";
 import { VideoEditingGallery } from "./VideoEditingGallery";
 import { WebDevelopingGallery } from "./WebDevelopingGallery";
 
-import {
-  photographyImages,
-  graphicImages,
-} from "./images";
+import { photographyImages } from "./photography-data";
+import { graphicImages } from "./images";
 
 const TABS = [
   { label: "Photography", value: "photography" },
@@ -121,7 +119,7 @@ const GallerySection = ({ initialTab = "photography" }: GallerySectionProps) => 
 
   const lightboxSlides =
     activeTab === "photography"
-      ? photographyImages.map((src) => ({ src }))
+      ? photographyImages.map((img) => ({ src: img.src, width: img.width, height: img.height }))
       : activeTab === "graphic-design"
         ? graphicImages.map((src) => ({ src }))
         : [];
