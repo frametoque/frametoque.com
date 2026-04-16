@@ -291,7 +291,7 @@ export default function ProjectsComponent() {
                 <div className={`relative w-full ${getAspectClass(project)} overflow-hidden`}>
                   {project.type === "video" || project.type === "videography" ? (
                     <iframe
-                      src={`https://www.youtube.com/embed/${project.youtube}?autoplay=1&mute=1&loop=1&playlist=${project.youtube}&controls=0&modestbranding=1&playsinline=1`}
+                      src={`https://www.youtube.com/embed/${project.youtube}?autoplay=0&mute=1&loop=1&playlist=${project.youtube}&controls=0&modestbranding=1&playsinline=1`}
                       className="w-full h-full absolute inset-0 pointer-events-none"
                       allow="autoplay; encrypted-media"
                       allowFullScreen

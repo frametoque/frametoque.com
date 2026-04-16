@@ -1,4 +1,102 @@
-export const photographyImages = ["/projects/photography/recovered_488255944_1227529599154056_7242076457051787186_n.jpg", "/projects/photography/recovered_488655025_1227529525820730_5851393929495009428_n.jpg", "/projects/photography/recovered_487464497_1227446139162402_6574184450566537476_n.jpg", "/projects/photography/recovered_487831891_1227529352487414_5620261506576757468_n.jpg", "/projects/photography/recovered_487838080_1227529529154063_4593542361183995981_n.jpg", "/projects/photography/recovered_487857882_1227445985829084_6173920271718526585_n.jpg", "/projects/photography/recovered_487860897_1227445852495764_8199736593150119300_n.jpg", "/projects/photography/recovered_487875298_1227445912495758_4031985836536991423_n.jpg", "/projects/photography/recovered_487875433_1227445902495759_2147281469527499181_n.jpg", "/projects/photography/recovered_487878060_1227445909162425_6984248254513443908_n.jpg", "/projects/photography/recovered_488072394_1227529395820743_276894676863901718_n.jpg", "/projects/photography/recovered_488082416_1227529632487386_18905212995640102_n.jpg", "/projects/photography/recovered_488084235_1227534589153557_1589023839052771117_n.jpg", "/projects/photography/recovered_488158718_1227534489153567_1503220492704906427_n.jpg", "/projects/photography/recovered_488179244_1227534515820231_3608754977158123671_n.jpg", "/projects/photography/recovered_488182016_1227445855829097_4722766406404783185_n.jpg", "/projects/photography/recovered_488182556_1227529532487396_57941800845197576_n.jpg", "/projects/photography/recovered_488203466_1227529582487391_977892988835237763_n.jpg", "/projects/photography/recovered_488203938_1227540669152949_1074942309467553593_n.jpg", "/projects/photography/recovered_488212946_1227540775819605_880359193719956534_n.jpg", "/projects/photography/recovered_488225138_1227534579153558_8257113436665578392_n.jpg", "/projects/photography/recovered_488244139_1227529489154067_902811276762279131_n.jpg", "/projects/photography/recovered_488248676_1227529515820731_8743158131078704587_n.jpg", "/projects/photography/recovered_488256257_1227529512487398_8404457509886994425_n.jpg", "/projects/photography/recovered_488256774_1227529595820723_4530250898919345246_n.jpg", "/projects/photography/recovered_488256785_1227534829153533_1542184103170771047_n.jpg", "/projects/photography/recovered_488257580_1227529385820744_2092130488144121884_n.jpg", "/projects/photography/recovered_488257853_1227534859153530_3762219645348177239_n.jpg", "/projects/photography/recovered_488258628_1227540772486272_4554018637347078099_n.jpg", "/projects/photography/recovered_488258688_1227529435820739_7788638382997763301_n.jpg", "/projects/photography/recovered_488259937_1227529565820726_7348144685377398531_n.jpg", "/projects/photography/recovered_488260823_1227529642487385_4967791739365790201_n.jpg", "/projects/photography/recovered_488263700_1227529562487393_7950125692581709427_n.jpg", "/projects/photography/recovered_488310437_1227535959153420_8049575968905600611_n.jpg", "/projects/photography/recovered_488316507_1227534865820196_2386609837135439206_n.jpg", "/projects/photography/recovered_488364731_1227529555820727_8967643033962804190_n.jpg", "/projects/photography/recovered_488385977_1227546379152378_5606938412531002821_n.jpg", "/projects/photography/recovered_488417692_1227546069152409_279855047605494721_n.jpg", "/projects/photography/recovered_488450630_1227535769153439_2958450483921593692_n.jpg", "/projects/photography/recovered_488452809_1227546259152390_749378224336276147_n.jpg", "/projects/photography/recovered_488452891_1227529639154052_7585384538527683378_n.jpg", "/projects/photography/recovered_488455875_1227446055829077_628449421905439315_n.jpg", "/projects/photography/recovered_488467012_1227529452487404_7920419271938950916_n.jpg", "/projects/photography/recovered_488493031_1227529482487401_4260920930585277784_n.jpg", "/projects/photography/recovered_488510214_1227446015829081_3266143227498359723_n.jpg", "/projects/photography/recovered_488533965_1227529285820754_5193500425280441328_n.jpg", "/projects/photography/recovered_488534088_1227546332485716_8338629742537511217_n.jpg", "/projects/photography/recovered_488536281_1227529625820720_3358287831110558193_n.jpg", "/projects/photography/recovered_488536418_1227529602487389_8926359091970187303_n.jpg", "/projects/photography/recovered_488542609_1227446145829068_2187652880940014556_n.jpg", "/projects/photography/recovered_488566736_1227534902486859_4459038422918669744_n.jpg", "/projects/photography/recovered_488579365_1227529299154086_2038977051266032008_n.jpg", "/projects/photography/recovered_488593958_1227529635820719_8975319544646987465_n.jpg", "/projects/photography/recovered_488646472_1227534645820218_4179988592688747829_n.jpg", "/projects/photography/recovered_488646908_1227534485820234_4166505048985237713_n.jpg", "/projects/photography/recovered_488649055_1227529389154077_667813567021722583_n.jpg", "/projects/photography/recovered_488654156_1227529589154057_6355245575604859563_n.jpg", "/projects/photography/recovered_488655033_1227529492487400_6104864011737915954_n.jpg", "/projects/photography/recovered_488655172_1227446175829065_5599468106964707915_n.jpg", "/projects/photography/recovered_488655535_1227529622487387_6965870182654726742_n.jpg", "/projects/photography/recovered_488658292_1227535845820098_7108159907095958323_n.jpg", "/projects/photography/recovered_488871530_1227534529153563_7377500219965396843_n.jpg", "/projects/photography/recovered_488898199_1227445885829094_4121164107903583575_n.jpg", "/projects/photography/recovered_488934041_1227534609153555_7596200664888155093_n.jpg", "/projects/photography/recovered_488935639_1227529375820745_3904457371964547680_n.jpg", "/projects/photography/recovered_488942627_1227529289154087_8683684307779749621_n.jpg", "/projects/photography/recovered_489121078_1227529542487395_5620035578038646223_n.jpg"];
+export interface PhotographyEvent {
+  name: string;
+  images: string[];
+}
+
+export const photographyEvents: PhotographyEvent[] = [
+  {
+    name: "Cambrian Carnival 23'",
+    images: [
+      "/projects/photography/Cambrian Carnival 23'/recovered_487464497_1227446139162402_6574184450566537476_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_487831891_1227529352487414_5620261506576757468_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_487838080_1227529529154063_4593542361183995981_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_487857882_1227445985829084_6173920271718526585_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_487860897_1227445852495764_8199736593150119300_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_487875298_1227445912495758_4031985836536991423_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_487875433_1227445902495759_2147281469527499181_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_487878060_1227445909162425_6984248254513443908_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488072394_1227529395820743_276894676863901718_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488082416_1227529632487386_18905212995640102_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488084235_1227534589153557_1589023839052771117_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488158718_1227534489153567_1503220492704906427_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488179244_1227534515820231_3608754977158123671_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488182016_1227445855829097_4722766406404783185_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488182556_1227529532487396_57941800845197576_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488203466_1227529582487391_977892988835237763_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488203938_1227540669152949_1074942309467553593_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488212946_1227540775819605_880359193719956534_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488225138_1227534579153558_8257113436665578392_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488244139_1227529489154067_902811276762279131_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488248676_1227529515820731_8743158131078704587_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488255944_1227529599154056_7242076457051787186_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488256257_1227529512487398_8404457509886994425_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488256774_1227529595820723_4530250898919345246_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488256785_1227534829153533_1542184103170771047_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488257580_1227529385820744_2092130488144121884_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488257853_1227534859153530_3762219645348177239_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488258628_1227540772486272_4554018637347078099_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488258688_1227529435820739_7788638382997763301_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488259937_1227529565820726_7348144685377398531_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488260823_1227529642487385_4967791739365790201_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488263700_1227529562487393_7950125692581709427_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488310437_1227535959153420_8049575968905600611_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488316507_1227534865820196_2386609837135439206_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488364731_1227529555820727_8967643033962804190_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488385977_1227546379152378_5606938412531002821_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488417692_1227546069152409_279855047605494721_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488450630_1227535769153439_2958450483921593692_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488452809_1227546259152390_749378224336276147_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488452891_1227529639154052_7585384538527683378_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488455875_1227446055829077_628449421905439315_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488467012_1227529452487404_7920419271938950916_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488493031_1227529482487401_4260920930585277784_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488510214_1227446015829081_3266143227498359723_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488533965_1227529285820754_5193500425280441328_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488534088_1227546332485716_8338629742537511217_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488536281_1227529625820720_3358287831110558193_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488536418_1227529602487389_8926359091970187303_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488542609_1227446145829068_2187652880940014556_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488566736_1227534902486859_4459038422918669744_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488579365_1227529299154086_2038977051266032008_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488593958_1227529635820719_8975319544646987465_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488646472_1227534645820218_4179988592688747829_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488646908_1227534485820234_4166505048985237713_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488649055_1227529389154077_667813567021722583_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488654156_1227529589154057_6355245575604859563_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488655025_1227529525820730_5851393929495009428_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488655033_1227529492487400_6104864011737915954_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488655172_1227446175829065_5599468106964707915_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488655535_1227529622487387_6965870182654726742_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488658292_1227535845820098_7108159907095958323_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488871530_1227534529153563_7377500219965396843_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488898199_1227445885829094_4121164107903583575_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488934041_1227534609153555_7596200664888155093_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488935639_1227529375820745_3904457371964547680_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_488942627_1227529289154087_8683684307779749621_n.jpg",
+      "/projects/photography/Cambrian Carnival 23'/recovered_489121078_1227529542487395_5620035578038646223_n.jpg",
+    ]
+  },
+  {
+    name: "Evendor 25'",
+    images: [
+      "/projects/photography/Evendor 25'/DSC07106.jpg.jpeg",
+      "/projects/photography/Evendor 25'/DSC07256.jpg.jpeg",
+      "/projects/photography/Evendor 25'/DSC07325.jpg.jpeg",
+      "/projects/photography/Evendor 25'/DSC07403.jpg.jpeg",
+      "/projects/photography/Evendor 25'/DSC07546.jpg.jpeg",
+      "/projects/photography/Evendor 25'/DSC07642.jpg.jpeg",
+      "/projects/photography/Evendor 25'/DSC07696.jpg.jpeg",
+      "/projects/photography/Evendor 25'/DSC07762.jpg.jpeg",
+      "/projects/photography/Evendor 25'/DSC07897.jpg.jpeg",
+      "/projects/photography/Evendor 25'/DSC07996.jpg.jpeg",
+    ]
+  }
+];
+
+export const photographyImages = photographyEvents.flatMap(e => e.images);
+
+
+
 
 export const graphicImages = [
     "/projects/graphic/ncss.png",
