@@ -6,69 +6,114 @@ export const graphicImages = [
     "/projects/graphic/energycup.png",
     "/projects/graphic/photography-services.png",
     "/projects/graphic/smurfs.png",
+    "/projects/graphic/wedding.png",
     "/projects/graphic/soyuru-sathkara.png",
-    "/projects/graphic/wedding-inv.png",
 ];
 
 export interface VideoProject {
     url: string;
-    title: string;
 }
 
 export const videographyURLs: VideoProject[] = [
-    { url: "https://youtu.be/hMGyOVpEZKA", title: "Professional Videography" },
+    { url: "https://youtu.be/hMGyOVpEZKA", },
 ];
  
 export const videoEditingURLs: VideoProject[] = [
-    { url: "https://youtube.com/shorts/0Rvp6OTZl1w?feature=share", title: "Shorts Edit" },
-    { url: "https://youtube.com/shorts/fcm_iurb5dE?feature=share", title: "Creative Transitions" },
-    { url: "https://youtu.be/X75cDve1Fc8", title: "Cinematic Sequence" },
-    { url: "https://www.youtube.com/shorts/J6ASPaVTBvk", title: "Urban Shorts" },
-    { url: "https://youtube.com/shorts/bhcXWM37P-8?feature=share", title: "Rhythm Edit" },
-    { url: "https://youtube.com/shorts/ioEszNrM49o?feature=share", title: "Color Grading" },
-    { url: "https://youtube.com/shorts/DSjDmrtzAFE?feature=share", title: "Dynamic Motion" },
-    { url: "https://youtube.com/shorts/ztSOTGvMqXM?feature=share", title: "Fast-Paced Cut" },
-    { url: "https://youtube.com/shorts/PcI46u91p30?feature=share", title: "Vibe Showcase" }
+    { url: "https://youtube.com/shorts/0Rvp6OTZl1w?feature=share" },
+    { url: "https://youtube.com/shorts/fcm_iurb5dE?feature=share"  },
+    { url: "https://youtu.be/X75cDve1Fc8"},
+    { url: "https://www.youtube.com/shorts/J6ASPaVTBvk"  },
+    { url: "https://youtube.com/shorts/bhcXWM37P-8?feature=share" },
+    { url: "https://youtube.com/shorts/ioEszNrM49o?feature=share" },
+    { url: "https://youtube.com/shorts/DSjDmrtzAFE?feature=share" },
+    { url: "https://youtube.com/shorts/ztSOTGvMqXM?feature=share" },
+    { url: "https://youtube.com/shorts/PcI46u91p30?feature=share" }
 ];
  
-export const webDevProjects: { image: string; url: string; title: string }[] = [
-      {
-    image: "/projects/web/techrolk.png",
+// ─── Web Dev Site Details (keyed by domain) ─────────────────────────────────
+
+export interface SiteDetails {
+  domain: string;
+  title: string;
+  description: string;
+  techs: string[];
+  url: string;
+}
+
+export interface WebDevImage {
+  image: string;
+  domain: string;
+}
+
+export const siteDetailsMap: Record<string, SiteDetails> = {
+  "techrolk.com": {
+    domain: "techrolk.com",
+    title: "TechRolk | Company Landing Page",
+    description:
+      "Modern company landing page for TechRolk featuring product showcases, team section, testimonials, and a fully responsive layout optimized for conversions.",
+    techs: ["Next.js", "Tailwind CSS", "Framer Motion", "Vercel"],
     url: "https://techrolk.com",
-    title: "Company Landing Page",
   },
-      {
-    image: "/projects/web/eventpulse.png",
+  "eventpulse.duckdns.org": {
+    domain: "eventpulse.duckdns.org",
+    title: "EventPulse | Booking Platform",
+    description:
+      "Full-stack event booking platform with real-time availability, ticket management, QR-based check-in, and an admin dashboard for organizers.",
+    techs: ["Next.js", "Tailwind CSS", "Prisma", "PostgreSQL", "Stripe"],
     url: "https://eventpulse.duckdns.org",
-    title: "Booking Platform",
   },
-  {
-    image: "/projects/web/cmjr.png",
+  "mathswithjanidu.lk": {
+    domain: "mathswithjanidu.lk",
+    title: "Maths with Janidu | Class Landing Page",
+    description:
+      "Professional landing page for a mathematics tuition class featuring class schedules, student testimonials, course details, and an inquiry form.",
+    techs: ["Next.js", "Tailwind CSS", "Framer Motion"],
     url: "https://mathswithjanidu.lk",
-    title: "Class Landing Page",
   },
-
-  {
-    image: "/projects/web/itech.png",
+  "itechlk.store": {
+    domain: "itechlk.store",
+    title: "iTech LK | SaaS Subscription Marketplace",
+    description:
+      "E-commerce marketplace for SaaS subscriptions with multi-vendor support, subscription management, payment integration, and a modern storefront.",
+    techs: ["Next.js", "Tailwind CSS", "Stripe", "Supabase", "PostgreSQL"],
     url: "https://www.itechlk.store",
-    title: "SaaS Subscription Marketplace",
   },
-  {
-    image: "/projects/web/itsnelitha.png",
-    url: "https://itsnelitha.vercel.app",
+  "itsnelitha.vercel.app": {
+    domain: "itsnelitha.vercel.app",
     title: "Personal Portfolio",
+    description:
+      "Creative developer portfolio showcasing projects, skills, and experience with smooth animations and a dark-themed aesthetic.",
+    techs: ["Next.js", "Tailwind CSS", "Framer Motion", "Vercel"],
+    url: "https://itsnelitha.vercel.app",
   },
-  {
-    image: "/projects/web/pwc.png",
+  "princeofwales.edu.lk": {
+    domain: "princeofwales.edu.lk",
+    title: "Prince of Wales' College | School Website",
+    description:
+      "Official school website with news, events, academic information, gallery, and administrative resources for students and parents.",
+    techs: ["Next.js", "Tailwind CSS", "CMS Integration"],
     url: "https://princeofwales.edu.lk",
-    title: "School Website",
   },
-  {
-    image: "/projects/web/techrolk-store.png",
+  "techrolk.com/shop": {
+    domain: "techrolk.com/shop",
+    title: "TechRolk Store | E-Commerce Website",
+    description:
+      "Full-featured e-commerce store with product catalog, cart system, checkout flow, order tracking, and admin inventory management.",
+    techs: ["Next.js", "Tailwind CSS", "Stripe", "Supabase", "PostgreSQL"],
     url: "https://techrolk.com/shop",
-    title: "E Commerce Website",
   },
+};
 
+export const webDevProjects: WebDevImage[] = [
+  { image: "/projects/web/techrolk.png", domain: "techrolk.com" },
+  { image: "/projects/web/eventpulse.png", domain: "eventpulse.duckdns.org" },
+  { image: "/projects/web/cmjr.png", domain: "mathswithjanidu.lk" },
+  { image: "/projects/web/itech.png", domain: "itechlk.store" },
+  { image: "/projects/web/itsnelitha.png", domain: "itsnelitha.vercel.app" },
+  { image: "/projects/web/pwc.png", domain: "princeofwales.edu.lk" },
+  { image: "/projects/web/techrolk-store.png", domain: "techrolk.com/shop" },
 ];
+
+
 
  
