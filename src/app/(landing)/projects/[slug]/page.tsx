@@ -3,6 +3,26 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import GallerySection from "@/components/projects/GallerySection";
 
+export const metadata = {
+  title: "What We Do",
+  description: "Explore our range of services including web development, graphic design, and video editing tailored to make your brand shine.",
+  openGraph: {
+    title: "Our Projects | FrameToque Digital Media",
+    description: "Explore our range of services including web development, graphic design, and video editing tailored to make your brand shine.",
+    url: "https://frametoque.online/", 
+    siteName: "Frametoque",
+    images: [
+      {
+        url: "https://frametoque.online/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Frametoque",
+      },
+    ],
+    type: "website",
+  },
+};
+
 const VALID_SLUGS = [
   "photography",
   "videography",

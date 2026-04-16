@@ -69,7 +69,7 @@ export default function Hero() {
         </section>
 
           {/*  Divider */}
-          <div className="w-full leading-none -mt-13 relative z-2">
+          <div className="w-full leading-none -mt-15 relative z-2">
             <Image
               src="/divider.png"
               alt=" Divider"

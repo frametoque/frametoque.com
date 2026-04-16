@@ -30,7 +30,7 @@ export const videoEditingURLs: VideoProject[] = [
     { url: "https://youtube.com/shorts/PcI46u91p30?feature=share" }
 ];
  
-// ─── Web Dev Site Details (keyed by domain) ─────────────────────────────────
+
 
 export interface SiteDetails {
   domain: string;
@@ -39,12 +39,10 @@ export interface SiteDetails {
   techs: string[];
   url: string;
 }
-
 export interface WebDevImage {
   image: string;
   domain: string;
 }
-
 export const siteDetailsMap: Record<string, SiteDetails> = {
   "techrolk.com": {
     domain: "techrolk.com",

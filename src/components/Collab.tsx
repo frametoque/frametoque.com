@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function CollabCompact() {
   return (
-    <div className="bg-[#111111] w-full py-16">
+    <div className=" w-full pb-16">
       <div className="max-w-8xl mx-auto px-6">
         {/* Banner */}
             <div className="relative mt-6 rounded-2xl overflow-hidden">
