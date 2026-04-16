@@ -94,6 +94,7 @@ export const photographyEvents: PhotographyEvent[] = [
 ];
 
 export const photographyImages = photographyEvents.flatMap(e => e.images);
+// photography data consolidated — see photography-data.ts for image dimensions
 
 
 
