@@ -150,9 +150,20 @@ function VideoCard({ project, onClick, index, onExpand, isAnyModalOpen, activeIn
         </AnimatePresence>
         <iframe ref={iframeRef} src={embedUrl} title="YouTube video player" allow="autoplay; encrypted-media" className="w-full h-full border-0 pointer-events-none" />
       </div>
-      <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-300">
-        <div onClick={handleTogglePlay} className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 via-brand-500 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/40 pointer-events-auto hover:scale-110 transition-transform duration-300">
-          {!isPlaying ? <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white ml-1"><path d="M8 5v14l11-7z" /></svg> : <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>}
+     <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+        <div
+          onClick={handleTogglePlay}
+          className={`
+            w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 via-brand-500 to-brand-600
+            flex items-center justify-center shadow-lg shadow-brand-500/40
+            pointer-events-auto hover:scale-110 transition-all duration-300
+            ${isPlaying ? "opacity-0 group-hover:opacity-100" : "opacity-100"}
+          `}
+        >
+          {!isPlaying
+            ? <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white ml-1"><path d="M8 5v14l11-7z" /></svg>
+            : <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+          }
         </div>
       </div>
       <button onClick={handleExpandClick} className="absolute top-3 right-3 z-20 p-2 rounded-full bg-black/60 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-black/80"><svg viewBox="0 0 24 24" className="w-4 h-4 fill-white"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" /></svg></button>

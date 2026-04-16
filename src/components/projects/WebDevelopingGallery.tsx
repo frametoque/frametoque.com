@@ -156,7 +156,7 @@ export function WebProjectPopup({
                </span>
                {site.title.split('|')[1] && (
                  <span className="bg-gradient-to-b from-brand-400 to-brand-600 bg-clip-text text-transparent block mt-1 text-lg">
-                   | {site.title.split('|')[1]}
+                   {site.title.split('|')[1]}
                  </span>
                )}
             </h3>

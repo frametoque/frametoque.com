@@ -32,7 +32,7 @@ function getHeroForTab(tab: string): string {
     case "videography":
       return "/projects/videography-cover.jpg";
     case "graphic-design":
-      return graphicImages[0] ?? "/hero/graphic.jpg";
+      return "/projects/graphic-design-cover.jpg";
     case "video-editing":
       return "/projects/vid-edit-cover.jpg";
     case "web-dev":
