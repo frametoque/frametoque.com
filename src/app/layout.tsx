@@ -70,6 +70,12 @@ export const metadata = {
     ],
     type: "website",
   },
+    twitter: {
+    card: "summary_large_image",
+    title: "FrameToque Digital Media",
+    description: "Turning ideas into powerful digital visuals through web, video, and creative media.",
+    images: ["https://frametoque.online/og-image.png"],
+  },
 };
 
 

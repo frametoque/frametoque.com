@@ -16,6 +16,12 @@ export const metadata = {
     ],
     type: "website",
   },
+    twitter: {
+    card: "summary_large_image",
+    title: "FrameToque Digital Media | Simple.Better.Fast.",
+    description: "We craft fast websites, bold graphic, and pro videos that make your brand shine.",
+    images: ["https://frametoque.online/og-image.png"],
+  },
 };
 
 

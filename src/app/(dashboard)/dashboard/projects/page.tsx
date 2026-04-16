@@ -16,6 +16,12 @@ export const metadata = {
     ],
     type: "website",
   },
+    twitter: {
+    card: "summary_large_image",
+    title: "Projects | FrameToque Digital Media",
+    description: "Explore our range of services...",
+    images: ["https://frametoque.online/og-image.png"],
+  },
 };
 
 import React from 'react'

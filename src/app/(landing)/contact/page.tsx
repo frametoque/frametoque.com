@@ -3,7 +3,7 @@ export const metadata = {
   description:
     "Get in touch with Frametoque for inquiries about our web development, graphic design, and video editing services. We're here to help your brand shine.",
     openGraph: {
-    title: "Contact | Frametoque",
+    title: "Contact | FrameToque Digital Media",
     description: "Get in touch with Frametoque for inquiries about our web development, graphic design, and video editing services. We're here to help your brand shine.",
     url: "https://frametoque.online/contact", 
     siteName: "Frametoque",
@@ -16,6 +16,12 @@ export const metadata = {
       },
     ],
     type: "website",
+  },
+    twitter: {
+    card: "summary_large_image",
+    title: "Contact | FrameToque Digital Media",
+    description: "Get in touch with Frametoque for inquiries about our web development, graphic design, and video editing services. We're here to help your brand shine.",
+    images: ["https://frametoque.online/og-image.png"],
   },
 };
 

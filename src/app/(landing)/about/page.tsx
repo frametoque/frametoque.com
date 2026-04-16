@@ -2,8 +2,8 @@ export const metadata = {
   title: "About",
   description:
     "Learn more about Frametoque, our mission to empower brands with stunning web development, graphic design, and video editing services.",
-    openGraph: {
-    title: "About | Frametoque",
+  openGraph: {
+    title: "About | FrameToque Digital Media",
     description: "Learn more about Frametoque, our mission to empower brands with stunning web development, graphic design, and video editing services.",
     url: "https://frametoque.online/about", 
     siteName: "Frametoque",
@@ -16,6 +16,12 @@ export const metadata = {
       },
     ],
     type: "website",
+  },
+    twitter: {
+    card: "summary_large_image",
+    title: "About | FrameToque Digital Media",
+    description: "Explore our range of services...",
+    images: ["https://frametoque.online/og-image.png"],
   },
 };
 
