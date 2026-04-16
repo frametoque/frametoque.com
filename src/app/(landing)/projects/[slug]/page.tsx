@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import GallerySection from "@/components/projects/GallerySection";
 
 export const metadata = {
-  title: "What We Do",
+  title: "What We Did",
   description: "Explore our range of services including web development, graphic design, and video editing tailored to make your brand shine.",
   openGraph: {
     title: "Our Projects | FrameToque Digital Media",

@@ -8,10 +8,10 @@ const protectImage = (e) => e.preventDefault();
 const clients = [
   { name: "TechRoLK", logo: "/images/clients/logo/techrolk.png" },
   { name: "NextVibe", logo: "/images/clients/logo/nextvibe.png" },
-  { name: "TechRoLK", logo: "/images/clients/logo/techrolk.png" },
+  { name: "CM with Janindu", logo: "/images/clients/logo/cmjr.png" },
   { name: "NextVibe", logo: "/images/clients/logo/nextvibe.png" },
   { name: "TechRoLK", logo: "/images/clients/logo/techrolk.png" },
-  { name: "NextVibe", logo: "/images/clients/logo/nextvibe.png" },
+  { name: "CM with Janindu", logo: "/images/clients/logo/cmjr.png" },
 ];
 
 export default function Clients() {
