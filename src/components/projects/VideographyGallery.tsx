@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { type VideoProject, videographyURLs } from "./images";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { Volume2, VolumeX } from "lucide-react";
 
 declare global {
   interface Window {
@@ -135,7 +136,7 @@ function VideoCard({ project, onClick, index, onExpand, isAnyModalOpen, activeIn
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      style={{ gridColumn: `span 2 / span 2`, gridRow: `span ${isShort ? 2 : 1} / span ${isShort ? 2 : 1}` }}
+      style={{ gridColumn: `span ${isShort ? 1 : 2} / span ${isShort ? 1 : 2}`, gridRow: `span ${isShort ? 2 : 1} / span ${isShort ? 2 : 1}` }}
       className="relative cursor-pointer group overflow-hidden bg-neutral-900 rounded-sm"
       onClick={handleTogglePlay}
     >
@@ -190,7 +191,39 @@ function VideoModal({ url, startTime = 0, onClose }: any) {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(100);
   const [showControls, setShowControls] = useState(true);
+  const [speed, setSpeed] = useState(1);
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
+  const speedOptions = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+
+
+  const changeVolume = (val: number) => {
+  setVolume(val);
+  playerRef.current?.setVolume?.(val);
+
+  if (val === 0) setIsMuted(true);
+  else setIsMuted(false);
+};
+
+const toggleMute = () => {
+  if (!playerRef.current) return;
+
+  if (isMuted) {
+    playerRef.current.unMute();
+    playerRef.current.setVolume(volume || 100);
+    setIsMuted(false);
+  } else {
+    playerRef.current.mute();
+    setIsMuted(true);
+  }
+};
+
+const changeSpeed = (rate: number) => {
+  setSpeed(rate);
+  playerRef.current?.setPlaybackRate?.(rate);
+};
+
+
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -207,6 +240,8 @@ function VideoModal({ url, startTime = 0, onClose }: any) {
             events: {
               onReady: (event: any) => {
                 if (startTime > 0) event.target.seekTo(startTime, true);
+                event.target.setVolume(volume);
+                event.target.setPlaybackRate(speed); 
                 event.target.playVideo();
                 setDuration(event.target.getDuration() || 0);
               },
@@ -267,6 +302,52 @@ function VideoModal({ url, startTime = 0, onClose }: any) {
                     <input type="range" min={0} max={duration || 100} value={progress} onChange={handleSeek} className="absolute z-30 w-full h-full opacity-0 cursor-pointer" />
                     <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden relative"><div className="absolute inset-y-0 left-0 bg-brand-500" style={{ width: `${(progress / (duration || 1)) * 100}%` }} /></div>
                   </div>
+                 <div className="relative">
+                <button
+                  onClick={() => setShowSpeedMenu((prev) => !prev)}
+                  className="text-white text-xs px-2 py-1 rounded hover:bg-white/10 transition"
+                >
+                  {speed}x
+                </button>
+
+                {showSpeedMenu && (
+                  <div className="absolute bottom-full mb-2 left-0 bg-black/90 backdrop-blur-md rounded-md p-1 shadow-lg">
+                    {speedOptions.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => {
+                          changeSpeed(s);
+                          setShowSpeedMenu(false);
+                        }}
+                        className={`block w-full text-left px-3 py-1 text-xs rounded hover:bg-white/10 ${
+                          speed === s ? "text-brand-400" : "text-white"
+                        }`}
+                      >
+                        {s}x
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+                  <div className="flex items-center gap-2 w-24">
+                    <button onClick={toggleMute} className="text-white text-xs">
+                      {isMuted || volume === 0 ? (
+                        <VolumeX className="w-4 h-4 text-white" />
+                      ) : (
+                        <Volume2 className="w-4 h-4 text-white" />
+                      )}
+                    </button>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={volume}
+                      onChange={(e) => changeVolume(Number(e.target.value))}
+                      className="w-full accent-brand-500"
+                    />
+                  </div>
+
                 </motion.div>
               )}
             </AnimatePresence>
