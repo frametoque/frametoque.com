@@ -10,7 +10,12 @@ const nextConfig = {
        {
         source: "/projects",
         destination: "/projects/photography",
-        permanent: false,
+        permanent: true,
+      },
+       {
+        source: "/services",
+        destination: "/services/photo-video",
+        permanent: true,
       },
     ];
     

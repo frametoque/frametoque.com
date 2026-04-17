@@ -5,6 +5,30 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
+import { motion, Variants } from "framer-motion";
+
+const container: Variants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.12,
+    },
+  },
+};
+
+const card: Variants = {
+  hidden: { opacity: 0, },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.5,
+      ease: "easeOut",
+    },
+  },
+};
+
 const protectImage = (e) => e.preventDefault();
 
 const photocatprices = [
@@ -14,7 +38,7 @@ const photocatprices = [
     desc: "Professional photo coverage for small events, birthdays, and personal shoots.",
     price: "15,000",
     img: "/services/eventpulse.png",
-    link: "/services/basic-photography",
+    link: "/services/photo-video/basic-photography",
   },
 
   {
@@ -23,7 +47,7 @@ const photocatprices = [
     desc: "Cinematic highlight video coverage for small events and functions.",
     price: "18,000",
     img: "/services/eventpulse.png",
-    link: "/services/basic-videography",
+    link: "/services/photo-video/basic-videography",
   },
 
   {
@@ -32,7 +56,7 @@ const photocatprices = [
     desc: "Complete photography and videography coverage for events and engagements.",
     price: "30,000",
     img: "/services/eventpulse.png",
-    link: "/services/standard-photo-video",
+    link: "/services/photo-video/standard-photo-video",
   },
 
   {
@@ -41,7 +65,7 @@ const photocatprices = [
     desc: "Extended coverage with cinematic edits and social media reels.",
     price: "40,000",
     img: "/services/eventpulse.png",
-    link: "/services/extended-event-package",
+    link: "/services/photo-video/extended-event-package",
   },
 
   {
@@ -50,7 +74,7 @@ const photocatprices = [
     desc: "Luxury full-day coverage with drone and cinematic film production.",
     price: "50,000",
     img: "/services/eventpulse.png",
-    link: "/services/premium-cinematic-package",
+    link: "/services/photo-video/premium-cinematic-package",
   },
 
   {
@@ -59,7 +83,7 @@ const photocatprices = [
     desc: "High-end multi-crew production for weddings, brands, and large events.",
     price: "70,000",
     img: "/services/eventpulse.png",
-    link: "/services/ultimate-production-package",
+    link: "/services/photo-video/ultimate-production-package",
   },
 ];
 
@@ -144,66 +168,90 @@ export default function WebPackages() {
   //currency detection end
 
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 relative max-w-7xl mx-auto text-white">
-      <div className="text-center mb-12">
+    <section className="pb-12 px-4 sm:px-6 lg:px-8 relative max-w-7xl mx-auto text-white">
+      {/* <div className="text-center mb-12">
         <h2 className="text-3xl sm:text-4xl font-bold mb-4">
           <span className="text-brand-400">Photography & </span> Videography
         </h2>
         <p className="text-gray-400 max-w-2xl mx-auto">
           A picture is worth a thousand words, but a video captures a thousand moments. We create visual stories that resonate and leave a lasting impression.
         </p>
-      </div>
+      </div> */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-3">
-        {prices.map((cat, i) => (
-          <div
-            key={i}
-            className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 hover:scale-[1.02] flex flex-col"
+    <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-3"
+      >
+      {/* Dynamic Cards */}
+      {prices.map((cat, i) => (
+        <motion.div
+          key={i}
+          variants={card}
+          className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 flex flex-col"
+        >
+          {/* Image */}
+          <motion.div
+            className="relative aspect-[4/3] overflow-hidden"
           >
-            <div className="relative aspect-[4/3] overflow-hidden">
-              <Image
-                src={cat.img || "/images/services/default.jpg"}
-                alt={cat.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                onContextMenu={protectImage}
-                onDragStart={protectImage}
-              />
-            </div>
+            <Image
+              src={cat.img || "/images/services/default.jpg"}
+              alt={cat.title}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              onContextMenu={protectImage}
+              onDragStart={protectImage}
+            />
+          </motion.div>
 
-            <div className="p-6 flex flex-col flex-grow">
-              <h3 className="text-2xl font-bold mb-2">{cat.title}</h3>
-              <p className="text-gray-400 text-sm mb-4 line-clamp-2 flex-grow">
-                {cat.desc}
-              </p>
-              <div className="mb-6">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">
-                    {cat.price}
-                  </span>
-                  <span className="text-2xl font-semibold text-gray-300">{currency}</span>
-                  <span className="text-sm text-gray-500 self-end">onwards</span>
-                </div>
+          {/* Content */}
+          <div className="p-6 flex flex-col flex-grow">
+            <h3 className="text-2xl font-bold mb-2">{cat.title}</h3>
+
+            <p className="text-gray-400 text-sm mb-4 line-clamp-2 flex-grow">
+              {cat.desc}
+            </p>
+
+            {/* Price */}
+            <div className="mb-6">
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">
+                  {cat.price}
+                </span>
+                <span className="text-2xl font-semibold text-gray-300">
+                  {currency}
+                </span>
+                <span className="text-sm text-gray-500 self-end">
+                  onwards
+                </span>
               </div>
-              <Link
-                href={cat.link}
-                className="mt-auto w-full py-3 px-4 rounded-lg bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/20 hover:from-brand-500/20 hover:to-brand-600/20 hover:border-brand-500/30 transition-all duration-300 flex items-center justify-center group/btn"
-              >
-                <span className="font-medium">View Packages</span>
-                <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-              </Link>
             </div>
-          </div>
-        ))}
 
-        <div className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 hover:scale-[1.02] flex flex-col">
-          <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-brand-500/10 to-purple-500/10">
+            {/* Button */}
+            <Link
+              href={cat.link}
+              className="mt-auto w-full py-3 px-4 rounded-lg bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/20 hover:from-brand-500/20 hover:to-brand-600/20 hover:border-brand-500/30 transition-all duration-300 flex items-center justify-center group/btn"
+            >
+              <span className="font-medium">View Packages</span>
+              <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </motion.div>
+      ))}
+
+      {/* Custom Card */}
+      <motion.div
+        variants={card}
+        className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 flex flex-col"
+      >
+         <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-brand-500/10 to-purple-500/10">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center p-8">
                 <div className="text-5xl mb-4">✨</div>
-                <h3 className="text-xl font-bold mb-2">Custom Video Editing</h3>
-                <p className="text-gray-400">Tailored to your video needs</p>
+                <h3 className="text-xl font-bold mb-2">Custom Solution</h3>
+                <p className="text-gray-400">Tailored to your photography or videography needs</p>
               </div>
             </div>
           </div>
@@ -211,17 +259,17 @@ export default function WebPackages() {
           <div className="p-6 flex flex-col flex-grow">
             <h3 className="text-xl font-bold mb-2">Need Something Special?</h3>
             <p className="text-gray-400 text-sm mb-4 flex-grow">
-              Don't see the exact service you need? We create custom videos for your unique requirements.
+              Don't see the exact service you need? We offer custom photography & videography solutions for your unique requirements.
             </p>
 
             <div className="mb-6 space-y-3">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 rounded-full bg-brand-500" />
-                <span className="text-sm text-gray-300">Custom animation sequences</span>
+                <span className="text-sm text-gray-300">Custom photography sessions</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 rounded-full bg-brand-500" />
-                <span className="text-sm text-gray-300">Special effects & compositing</span>
+                <span className="text-sm text-gray-300">Custom videography shoots</span>
               </div>
             </div>
 
@@ -233,9 +281,8 @@ export default function WebPackages() {
               <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
             </Link>
           </div>
-        </div>
-
-      </div>
+      </motion.div>
+    </motion.div>
 
     </section>
   );

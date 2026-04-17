@@ -50,6 +50,33 @@ const VIDEO_PROCESS = [
 ];
 const VIDEO_TECHNOLOGIES = ["Adobe Premiere Pro", "Final Cut Pro", "DaVinci Resolve", "After Effects", "Adobe Audition"];
 
+// photography & videography
+
+const PHOTO_VIDEO_CATEGORY = "Photography & Videography";
+
+const PHOTO_VIDEO_FEATURES = [
+    { icon: "Camera", title: "High-Quality Capture", description: "Professional-grade photos and cinematic video production" },
+    { icon: "Image", title: "Creative Direction", description: "Story-driven visuals with attention to composition and lighting" },
+    { icon: "Sliders", title: "Advanced Editing", description: "Color grading, retouching, and cinematic post-production" },
+    { icon: "Share2", title: "Multi-Purpose Content", description: "Optimized visuals for social media, ads, and branding" }
+];
+
+const PHOTO_VIDEO_PROCESS = [
+    { step: 1, title: "Concept & Planning", description: "We discuss your vision, location, style, and objectives to plan the shoot." },
+    { step: 2, title: "Shoot Execution", description: "Capturing high-quality photos and videos using professional equipment and techniques." },
+    { step: 3, title: "Selection & Organization", description: "Sorting and selecting the best shots and clips for editing." },
+    { step: 4, title: "Editing & Enhancement", description: "Photo retouching, color correction, and cinematic video editing." },
+    { step: 5, title: "Final Delivery", description: "Delivery of fully edited content in high resolution and platform-ready formats." }
+];
+
+const PHOTO_VIDEO_TECHNOLOGIES = [
+    "Adobe Lightroom",
+    "Adobe Photoshop",
+    "Adobe Premiere Pro",
+    "DaVinci Resolve",
+    "After Effects"
+];
+
 
 const servicesData = [
     {
@@ -1090,6 +1117,181 @@ const servicesData = [
         process: VIDEO_PROCESS,
         technologies: VIDEO_TECHNOLOGIES,
     },
+
+   {
+    id: "basic-photography",
+    category: PHOTO_VIDEO_CATEGORY,
+    title: "Basic Photography Package",
+    description: "Professional photo coverage for small events, birthdays, and personal shoots.",
+    overview: "Professional photo coverage for small events, birthdays, and personal shoots.",
+    heroImage: "/services/eventpulse.png",
+    features: PHOTO_VIDEO_FEATURES,
+    packages: [
+        {
+            tier: "Basic Photography Package",
+            description: "Professional photo coverage for small events and shoots.",
+            price: "15,000",
+            popular: false,
+            duration: "3-5 hours coverage",
+            cta: "Book Now",
+            features: [
+                "Event photo coverage",
+                "High-resolution images",
+                "Basic color correction",
+                "Online gallery delivery",
+                "2 revisions",
+            ],
+        },
+    ],
+    process: PHOTO_VIDEO_PROCESS,
+    technologies: PHOTO_VIDEO_TECHNOLOGIES,
+},
+
+ {
+    id: "basic-videography",
+    category: PHOTO_VIDEO_CATEGORY,
+    title: "Basic Videography Package",
+    description: "Cinematic highlight video coverage for small events and functions.",
+    overview: "Cinematic highlight video coverage for small events and functions.",
+    heroImage: "/services/eventpulse.png",
+    features: PHOTO_VIDEO_FEATURES,
+    packages: [
+        {
+            tier: "Basic Videography Package",
+            description: "Short cinematic video for events.",
+            price: "18,000",
+            popular: false,
+            duration: "3-5 hours coverage",
+            cta: "Book Now",
+            features: [
+                "Highlight video (1-3 min)",
+                "Cinematic shots",
+                "Music sync",
+                "Basic editing",
+                "HD delivery",
+            ],
+        },
+    ],
+    process: PHOTO_VIDEO_PROCESS,
+    technologies: PHOTO_VIDEO_TECHNOLOGIES,
+},
+
+{
+    id: "standard-photo-video",
+    category: PHOTO_VIDEO_CATEGORY,
+    title: "Standard Photo + Video Package",
+    description: "Complete photography and videography coverage for events and engagements.",
+    overview: "Complete photography and videography coverage for events and engagements.",
+    heroImage: "/services/eventpulse.png",
+    features: PHOTO_VIDEO_FEATURES,
+    packages: [
+        {
+            tier: "Standard Photo + Video",
+            description: "Balanced coverage with both photo and video.",
+            price: "30,000",
+            popular: true,
+            duration: "5-7 hours coverage",
+            cta: "Choose Package",
+            features: [
+                "Full photo coverage",
+                "Highlight video",
+                "Color grading",
+                "Social media clips",
+                "Combined delivery",
+            ],
+        },
+    ],
+    process: PHOTO_VIDEO_PROCESS,
+    technologies: PHOTO_VIDEO_TECHNOLOGIES,
+},
+
+{
+    id: "extended-event-package",
+    category: PHOTO_VIDEO_CATEGORY,
+    title: "Extended Event Package",
+    description: "Extended coverage with cinematic edits and social media reels.",
+    overview: "Extended coverage with cinematic edits and social media reels.",
+    heroImage: "/services/eventpulse.png",
+    features: PHOTO_VIDEO_FEATURES,
+    packages: [
+        {
+            tier: "Extended Event Package",
+            description: "Full-day event coverage with extra content.",
+            price: "40,000",
+            popular: false,
+            duration: "Full-day coverage",
+            cta: "Get Extended",
+            features: [
+                "Full-day coverage",
+                "Cinematic highlight video",
+                "Multiple reels",
+                "Advanced color grading",
+                "Priority editing",
+            ],
+        },
+    ],
+    process: PHOTO_VIDEO_PROCESS,
+    technologies: PHOTO_VIDEO_TECHNOLOGIES,
+},
+
+{
+    id: "premium-cinematic-package",
+    category: PHOTO_VIDEO_CATEGORY,
+    title: "Premium Cinematic Package",
+    description: "Luxury full-day coverage with drone and cinematic film production.",
+    overview: "Luxury full-day coverage with drone and cinematic film production.",
+    heroImage: "/services/eventpulse.png",
+    features: PHOTO_VIDEO_FEATURES,
+    packages: [
+        {
+            tier: "Premium Cinematic Package",
+            description: "High-end cinematic production.",
+            price: "50,000",
+            popular: false,
+            duration: "Full-day + pre-shoot",
+            cta: "Go Premium",
+            features: [
+                "Drone footage",
+                "Cinematic storytelling",
+                "Pre-event shoot",
+                "Advanced editing",
+                "High-end delivery",
+            ],
+        },
+    ],
+    process: PHOTO_VIDEO_PROCESS,
+    technologies: PHOTO_VIDEO_TECHNOLOGIES,
+},
+
+{
+    id: "ultimate-production-package",
+    category: PHOTO_VIDEO_CATEGORY,
+    title: "Ultimate Production Package",
+    description: "High-end multi-crew production for weddings, brands, and large events.",
+    overview: "High-end multi-crew production for weddings, brands, and large events.",
+    heroImage: "/services/eventpulse.png",
+    features: PHOTO_VIDEO_FEATURES,
+    packages: [
+        {
+            tier: "Ultimate Production Package",
+            description: "Full-scale production for large events.",
+            price: "70,000",
+            popular: false,
+            duration: "Multi-day / large-scale",
+            cta: "Contact Team",
+            features: [
+                "Multi-camera setup",
+                "Full production crew",
+                "Drone + gimbal footage",
+                "Cinematic film edit",
+                "Unlimited revisions",
+            ],
+        },
+    ],
+    process: PHOTO_VIDEO_PROCESS,
+    technologies: PHOTO_VIDEO_TECHNOLOGIES,
+},
+
 ];
 
 export default servicesData;

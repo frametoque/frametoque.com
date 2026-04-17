@@ -104,12 +104,51 @@ const servicesData = {
         title: 'Content Creator Editing',
         description: 'Energetic edits made for streamers, YouTubers, and online creators.',
         image: '/services/eventpulse.png'
-    }
+    },
+
+    // photography & videography
+
+    'basic-photography': {
+        title: 'Basic Photography Package',
+        description: 'Professional photo coverage for small events, birthdays, and personal shoots.',
+        image: '/services/eventpulse.png'
+    },
+
+    'basic-videography': {
+        title: 'Basic Videography Package',
+        description: 'Cinematic highlight video coverage for small events and functions.',
+        image: '/services/eventpulse.png'
+    },
+
+    'standard-photo-video': {
+        title: 'Standard Photo + Video Package',
+        description: 'Complete photography and videography coverage for events and engagements.',
+        image: '/services/eventpulse.png'
+    },
+
+    'extended-event-package': {
+        title: 'Extended Event Package',
+        description: 'Extended coverage with cinematic edits and social media reels.',
+        image: '/services/eventpulse.png'
+    },
+
+    'premium-cinematic-package': {
+        title: 'Premium Cinematic Package',
+        description: 'Luxury full-day coverage with drone and cinematic film production.',
+        image: '/services/eventpulse.png'
+    },
+
+    'ultimate-production-package': {
+        title: 'Ultimate Production Package',
+        description: 'High-end multi-crew production for weddings, brands, and large events.',
+        image: '/services/eventpulse.png'
+    },
+
 };
 
 export async function generateMetadata({ params }) {
-    const { slug } = await params;
-    const service = servicesData[slug];
+    const { details_slug } = await params;
+    const service = servicesData[details_slug];
 
     if (!service) {
         return {
@@ -124,7 +163,7 @@ export async function generateMetadata({ params }) {
         openGraph: {
             title: `${service.title} | Frametoque`,
             description: service.description,
-            url: `https://frametoque.online/services/${slug}`,
+            url: `https://frametoque.online/services/${details_slug}`,
             siteName: 'Frametoque',
             images: [
                 {
@@ -146,12 +185,12 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function ServicePage({ params }) {
-    const { slug } = await params;
-    const service = servicesData[slug];
+    const { details_slug } = await params;
+    const service = servicesData[details_slug];
 
     if (!service) {
         notFound();
     }
 
-    return <ServiceDataPage serviceType={slug} />;
+    return <ServiceDataPage serviceType={details_slug} />;
 }

@@ -1,78 +1,180 @@
 "use client";
-import { useEffect, useState } from "react";
 
+import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 import WebSub from "@/components/services/WebSub";
 import GraphicsSub from "@/components/services/GraphicsSub";
 import VidSub from "@/components/services/VidSub";
 import PhotoSub from "@/components/services/PhotoSub";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 
+// ─── Tab config ────────────────────────────────────────────────────────────────
+const TABS = [
+  { label: "Photography & Videography", value: "photo-video"   },
+  { label: "Graphic Design",            value: "graphic-design" },
+  { label: "Video Editing",             value: "video-editing"  },
+  { label: "Web Development",           value: "web-dev"        },
+];
 
-export default function ServicesMain() {
+function getHeroForTab(tab: string): string {
+  switch (tab) {
+    case "photo-video":    return "/projects/photography-cover.jpg";
+    case "graphic-design": return "/projects/graphic-design-cover.jpg";
+    case "video-editing":  return "/projects/vid-edit-cover.jpg";
+    case "web-dev":        return "/projects/web-dev-cover.jpg";
+    default:               return "/projects/vid-edit-cover.jpg";
+  }
+}
 
-    const [scrolled, setScrolled] = useState(false);
-  
-    useEffect(() => {
-      function handleScroll() {
-        setScrolled(window.scrollY > 50);
-      }
-  
-      window.addEventListener("scroll", handleScroll);
-      return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
+// ─── Hero ──────────────────────────────────────────────────────────────────────
+function SingleHeroImage({ src, isActive, label }: { src: string; isActive: boolean; label: string }) {
+  return (
+    <Image
+      src={src}
+      alt={`${label} hero`}
+      fill
+      priority={isActive}
+      className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ${
+        isActive ? "opacity-100 scale-105 z-10" : "opacity-0 scale-100 z-0"
+      }`}
+      sizes="100vw"
+    />
+  );
+}
+
+function ServicesHero({ activeTab }: { activeTab: string }) {
+  return (
+    <section className="relative h-[40vh] md:h-[35vh] w-full bg-black overflow-hidden flex items-center justify-center">
+      {TABS.map((t) => (
+        <SingleHeroImage key={t.value} src={getHeroForTab(t.value)} label={t.label} isActive={activeTab === t.value} />
+      ))}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/40 to-black z-20 pointer-events-none" />
+    </section>
+  );
+}
+
+// ─── Main page ─────────────────────────────────────────────────────────────────
+export default function ServicesMain({ params }: { params?: { slug?: string } }) {
+  const router   = useRouter();
+  const pathname = usePathname();
+
+  // Derive active tab from the current path segment
+  // Matches /services/web-dev  → "web-dev"
+  // Matches /services          → "photo-video" (default)
+  const slugFromPath = pathname.split("/").pop();
+  const resolvedTab  = TABS.find((t) => t.value === slugFromPath)?.value ?? "photo-video";
+
+  const [activeTab, setActiveTab] = useState(resolvedTab);
+
+  // Keep state in sync if the user navigates back/forward
+  useEffect(() => {
+    setActiveTab(resolvedTab);
+  }, [resolvedTab]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    router.push(`/services/${tab}`, { scroll: false });
+  };
+
+  const activeLabel          = TABS.find((t) => t.value === activeTab)?.label ?? "";
+  const [firstWord, ...rest] = activeLabel.split(" ");
 
   return (
     <>
-    <Navbar scrolled={scrolled} />
+      <Navbar scrolled={true} />
 
-        <div className="h-20" />
-        <div className="h-20" />
+      <ServicesHero activeTab={activeTab} />
 
-        {/* Pulse */}
-        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-brand-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-[#3B82F6]-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      <section className="py-24 px-4 bg-black text-white">
 
-        <div className="max-w-7xl mx-auto text-center mb-8">
-          <h2 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">
-            <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">What We
+        {/* Section heading */}
+        <div className="text-center mb-10 sm:mb-14">
+          <h2 className="text-5xl sm:text-4xl md:text-4xl lg:text-6xl font-black mb-4 sm:mb-6 tracking-tight">
+            <span className="bg-gradient-to-b from-brand-400 to-brand-600 bg-clip-text text-transparent">
+              {firstWord}
             </span>
-            <span className="bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">
-              &nbsp;Do
-            </span>
+            {rest.length > 0 && (
+              <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
+                {" "}{rest.join(" ")}
+              </span>
+            )}
           </h2>
           <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
-            From websites to videos, we make your brand look amazing everywhere.
+            From websites and graphics to photography, videography, and editing, we create powerful digital experiences that elevate your brand everywhere.
           </p>
         </div>
 
-    <section className="py-16 sm:py-20 px-6 lg:px-8">
-      <section id="web" className="mb-12 sm:mb-16">
-        <WebSub />
+        {/* Tab bar */}
+        <div className="mb-12 sm:mb-16">
+          <div className="flex justify-center">
+
+            {/* Mobile: wrapped grid */}
+            <div className="flex sm:hidden flex-wrap gap-2 w-full pb-2 px-4">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => handleTabChange(tab.value)}
+                  className={`
+                    flex-1 min-w-[calc(50%-4px)] max-w-[calc(50%-4px)] px-3 py-2.5 rounded-full text-xs font-medium transition-all duration-300 text-center
+                    ${activeTab === tab.value
+                      ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30"
+                      : "text-gray-400 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10"
+                    }
+                  `}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Desktop: pill row */}
+            <div className="hidden sm:inline-flex p-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => handleTabChange(tab.value)}
+                  className={`
+                    relative whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300
+                    ${activeTab === tab.value ? "text-white" : "text-gray-400 hover:text-white"}
+                  `}
+                >
+                  {activeTab === tab.value && (
+                    <motion.div
+                      layoutId="activeServiceTab"
+                      className="absolute inset-0 bg-gradient-to-br from-brand-400 via-brand-500 to-brand-600 rounded-full shadow-lg shadow-brand-500/30"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Category content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
+            {activeTab === "web-dev"        && <WebSub />}
+            {activeTab === "graphic-design" && <GraphicsSub />}
+            {activeTab === "video-editing"  && <VidSub />}
+            {activeTab === "photo-video"    && <PhotoSub />}
+          </motion.div>
+        </AnimatePresence>
+
       </section>
 
-      <section id="graphic" className="mb-12 sm:mb-16">
-        <GraphicsSub />
-      </section>
-
-      <section id="video">
-        <VidSub />
-      </section>
-
-      <section id="photo">
-        <PhotoSub />
-      </section>
-      
-
-        
-     
-    </section>
-
-
-            <br /><br /><br /><br /><br />
-        <Footer />
-
+      <Footer />
     </>
   );
 }

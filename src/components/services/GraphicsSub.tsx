@@ -5,6 +5,30 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
+import { motion, Variants } from "framer-motion";
+
+const container: Variants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.12,
+    },
+  },
+};
+
+const card: Variants = {
+  hidden: { opacity: 0, },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.5,
+      ease: "easeOut",
+    },
+  },
+};
+
 const protectImage = (e) => e.preventDefault();
 
 const graphiccatprices = [
@@ -15,7 +39,7 @@ const graphiccatprices = [
     desc: "Crafting logos and visuals that define your brand.",
     price: "7,500",
     img: "/services/eventpulse.png",
-    link: "/services/logo-design",
+    link: "/services/graphic-design/logo-design",
   },
 
   {
@@ -24,7 +48,7 @@ const graphiccatprices = [
     desc: "Eye-catching posts and banners for all platforms.",
     price: "1,500",
     img: "/services/eventpulse.png",
-    link: "/services/socialmedia-post-design",
+    link: "/services/graphic-design/socialmedia-post-design",
   },
 
   {
@@ -33,7 +57,7 @@ const graphiccatprices = [
     desc: "Designs that boost your campaigns and sales.",
     price: "2,500",
     img: "/services/eventpulse.png",
-    link: "/services/promotional-design",
+    link: "/services/graphic-design/promotional-design",
   },
 
   {
@@ -42,7 +66,7 @@ const graphiccatprices = [
     desc: "Stylish business cards, flyers, and letterheads.",
     price: "2,000",
     img: "/services/eventpulse.png",
-    link: "/services/stationery-design",
+    link: "/services/graphic-design/stationery-design",
   },
 
   {
@@ -51,7 +75,7 @@ const graphiccatprices = [
     desc: "Graphics that make your website and apps pop.",
     price: "2,500",
     img: "/services/eventpulse.png",
-    link: "/services/webgraphic",
+    link: "/services/graphic-design/webgraphic",
   },
 
 
@@ -138,61 +162,85 @@ export default function WebPackages() {
   //currency detection end
 
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 relative max-w-7xl mx-auto text-white">
-      <div className="text-center mb-12">
+    <section className="pb-12 px-4 sm:px-6 lg:px-8 relative max-w-7xl mx-auto text-white">
+      {/* <div className="text-center mb-12">
         <h2 className="text-3xl sm:text-4xl font-bold mb-4">
           <span className="text-brand-400">Graphic </span>Design
         </h2>
         <p className="text-gray-400 max-w-2xl mx-auto">
           Choose from our creative graphic design solutions
         </p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-3">
-        {prices.map((cat, i) => (
-          <div
-            key={i}
-            className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 hover:scale-[1.02] flex flex-col"
+      </div> */}
+    <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-3"
+      >
+      {/* Dynamic Cards */}
+      {prices.map((cat, i) => (
+        <motion.div
+          key={i}
+          variants={card}
+          className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 flex flex-col"
+        >
+          {/* Image */}
+          <motion.div
+            className="relative aspect-[4/3] overflow-hidden"
           >
-            <div className="relative aspect-[4/3] overflow-hidden">
-              <Image
-                src={cat.img || "/images/services/default.jpg"}
-                alt={cat.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                onContextMenu={protectImage}
-                onDragStart={protectImage}
-              />
-            </div>
+            <Image
+              src={cat.img || "/images/services/default.jpg"}
+              alt={cat.title}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              onContextMenu={protectImage}
+              onDragStart={protectImage}
+            />
+          </motion.div>
 
-            <div className="p-6 flex flex-col flex-grow">
-              <h3 className="text-2xl font-bold mb-2">{cat.title}</h3>
-              <p className="text-gray-400 text-sm mb-4 line-clamp-2 flex-grow">
-                {cat.desc}
-              </p>
-              <div className="mb-6">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">
-                    {cat.price}
-                  </span>
-                  <span className="text-2xl font-semibold text-gray-300">{currency}</span>
-                  <span className="text-sm text-gray-500 self-end">onwards</span>
-                </div>
+          {/* Content */}
+          <div className="p-6 flex flex-col flex-grow">
+            <h3 className="text-2xl font-bold mb-2">{cat.title}</h3>
+
+            <p className="text-gray-400 text-sm mb-4 line-clamp-2 flex-grow">
+              {cat.desc}
+            </p>
+
+            {/* Price */}
+            <div className="mb-6">
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">
+                  {cat.price}
+                </span>
+                <span className="text-2xl font-semibold text-gray-300">
+                  {currency}
+                </span>
+                <span className="text-sm text-gray-500 self-end">
+                  onwards
+                </span>
               </div>
-              <Link
-                href={cat.link}
-                className="mt-auto w-full py-3 px-4 rounded-lg bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/20 hover:from-brand-500/20 hover:to-brand-600/20 hover:border-brand-500/30 transition-all duration-300 flex items-center justify-center group/btn"
-              >
-                <span className="font-medium">View Packages</span>
-                <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-              </Link>
             </div>
-          </div>
-        ))}
 
-        <div className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 hover:scale-[1.02] flex flex-col">
-          <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-brand-500/10 to-purple-500/10">
+            {/* Button */}
+            <Link
+              href={cat.link}
+              className="mt-auto w-full py-3 px-4 rounded-lg bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/20 hover:from-brand-500/20 hover:to-brand-600/20 hover:border-brand-500/30 transition-all duration-300 flex items-center justify-center group/btn"
+            >
+              <span className="font-medium">View Packages</span>
+              <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </motion.div>
+      ))}
+
+      {/* Custom Card */}
+      <motion.div
+        variants={card}
+        className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 flex flex-col"
+      >
+        {/* Header */}
+        <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-brand-500/10 to-purple-500/10">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center p-8">
                 <div className="text-5xl mb-4">✨</div>
@@ -227,10 +275,8 @@ export default function WebPackages() {
               <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
             </Link>
           </div>
-        </div>
-
-      </div>
-
+      </motion.div>
+    </motion.div>
 
     </section>
   );

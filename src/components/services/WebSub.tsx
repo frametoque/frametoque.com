@@ -4,6 +4,31 @@ import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { motion, Variants } from "framer-motion";
+
+const container: Variants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.12,
+    },
+  },
+};
+
+const card: Variants = {
+  hidden: { opacity: 0, },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.5,
+      ease: "easeOut",
+    },
+  },
+};
+
+
 
 
 const protectImage = (e) => e.preventDefault();
@@ -15,7 +40,7 @@ const webcatprices = [
     desc: "Clean digital identity for creators and professionals.",
     price: "20,000",
     img: "/services/eventpulse.png",
-    link: "/services/portfolio-websites",
+    link: "/services/web-dev/portfolio-websites",
 
   },
   {
@@ -24,7 +49,7 @@ const webcatprices = [
     desc: "Sleek online presence for businesses.",
     price: "40,000",
     img: "/services/eventpulse.png",
-    link: "/services/business-websites",
+    link: "/services/web-dev/business-websites",
   },
   {
     key: "ecommerce-websites",
@@ -32,7 +57,7 @@ const webcatprices = [
     desc: "Stylish platform to sell your products.",
     price: "75,000",
     img: "/services/eventpulse.png",
-    link: "/services/ecommerce-websites",
+    link: "/services/web-dev/ecommerce-websites",
   },
   {
     key: "learning-platforms",
@@ -40,7 +65,7 @@ const webcatprices = [
     desc: "Modern LMS for academics and tutors.",
     price: "95,000",
     img: "/services/eventpulse.png",
-    link: "/services/learning-platforms",
+    link: "/services/web-dev/learning-platforms",
   },
   {
     key: "media-websites",
@@ -48,7 +73,7 @@ const webcatprices = [
     desc: "Ideal for journalists, bloggers, and local news.",
     price: "60,000",
     img: "/services/eventpulse.png",
-    link: "/services/media-websites",
+    link: "/services/web-dev/media-websites",
   },
   {
     key: "booking-systems",
@@ -56,7 +81,7 @@ const webcatprices = [
     desc: "Reservation systems for salons, events, and rentals.",
     price: "60,000",
     img: "/services/eventpulse.png",
-    link: "/services/booking-systems"
+    link: "/services/web-dev/booking-systems"
   },
   {
     key: "education-websites",
@@ -64,7 +89,7 @@ const webcatprices = [
     desc: "Digital presence for schools, and tuition centers.",
     price: "50,000",
     img: "/services/eventpulse.png",
-    link: "/services/education-websites",
+    link: "/services/web-dev/education-websites",
   },
 ];
 
@@ -150,100 +175,136 @@ export default function WebPackages() {
 
 
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 relative max-w-7xl mx-auto text-white">
-      <div className="text-center mb-12">
+    <section className="pb-12 px-4 sm:px-6 lg:px-8 relative max-w-7xl mx-auto text-white">
+      {/* <div className="text-center mb-12">
         <h2 className="text-3xl sm:text-4xl font-bold mb-4">
           <span className="text-brand-400">Web </span>Development
         </h2>
         <p className="text-gray-400 max-w-2xl mx-auto">
           Choose from our specialized web development services
         </p>
-      </div>
+      </div> */}
 
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-3">
-        {prices.map((cat, i) => (
-          <div
-            key={i}
-            className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 hover:scale-[1.02] flex flex-col"
+    <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-3"
+      >
+      {/* Dynamic Cards */}
+      {prices.map((cat, i) => (
+        <motion.div
+          key={i}
+          variants={card}
+          className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 flex flex-col"
+        >
+          {/* Image */}
+          <motion.div
+            className="relative aspect-[4/3] overflow-hidden"
           >
-            <div className="relative aspect-[4/3] overflow-hidden">
-              <Image
-                src={cat.img || "/images/services/default.jpg"}
-                alt={cat.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                onContextMenu={protectImage}
-                onDragStart={protectImage}
-              />
-            </div>
+            <Image
+              src={cat.img || "/images/services/default.jpg"}
+              alt={cat.title}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              onContextMenu={protectImage}
+              onDragStart={protectImage}
+            />
+          </motion.div>
 
-            <div className="p-6 flex flex-col flex-grow">
-              <h3 className="text-2xl font-bold mb-2">{cat.title}</h3>
-              <p className="text-gray-400 text-sm mb-4 line-clamp-2 flex-grow">
-                {cat.desc}
-              </p>
-              <div className="mb-6">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">
-                    {cat.price}
-                  </span>
-                  <span className="text-2xl font-semibold text-gray-300">{currency}</span>
-                  <span className="text-sm text-gray-500 self-end">onwards</span>
-                </div>
-              </div>
-              <Link
-                href={cat.link}
-                className="mt-auto w-full py-3 px-4 rounded-lg bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/20 hover:from-brand-500/20 hover:to-brand-600/20 hover:border-brand-500/30 transition-all duration-300 flex items-center justify-center group/btn"
-              >
-                <span className="font-medium">View Packages</span>
-                <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-          </div>
-        ))}
-
-        <div className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 hover:scale-[1.02] flex flex-col">
-          <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-brand-500/10 to-purple-500/10">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center p-8">
-                <div className="text-5xl mb-4">✨</div>
-                <h3 className="text-xl font-bold mb-2">Custom Solution</h3>
-                <p className="text-gray-400">Tailored to your unique needs</p>
-              </div>
-            </div>
-          </div>
-
+          {/* Content */}
           <div className="p-6 flex flex-col flex-grow">
-            <h3 className="text-xl font-bold mb-2">Need Something Special?</h3>
-            <p className="text-gray-400 text-sm mb-4 flex-grow">
-              Don't see what you're looking for? We create custom web solutions for unique requirements.
+            <h3 className="text-2xl font-bold mb-2">{cat.title}</h3>
+
+            <p className="text-gray-400 text-sm mb-4 line-clamp-2 flex-grow">
+              {cat.desc}
             </p>
 
-            <div className="mb-6 space-y-3">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 rounded-full bg-brand-500" />
-                <span className="text-sm text-gray-300">Fully custom development</span>
+            {/* Price */}
+            <div className="mb-6">
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">
+                  {cat.price}
+                </span>
+                <span className="text-2xl font-semibold text-gray-300">
+                  {currency}
+                </span>
+                <span className="text-sm text-gray-500 self-end">
+                  onwards
+                </span>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 rounded-full bg-brand-500" />
-                <span className="text-sm text-gray-300">Advanced integrations</span>
-              </div>
-
             </div>
 
+            {/* Button */}
             <Link
-              href="/contact"
-              className="mt-auto w-full py-3 px-4 rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 transition-all duration-300 flex items-center justify-center group/btn"
+              href={cat.link}
+              className="mt-auto w-full py-3 px-4 rounded-lg bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/20 hover:from-brand-500/20 hover:to-brand-600/20 hover:border-brand-500/30 transition-all duration-300 flex items-center justify-center group/btn"
             >
-              <span className="font-medium">Get Custom Quote</span>
+              <span className="font-medium">View Packages</span>
               <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
             </Link>
           </div>
+        </motion.div>
+      ))}
+
+      {/* Custom Card */}
+      <motion.div
+        variants={card}
+        whileHover={{ scale: 1.05 }}
+        className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 flex flex-col"
+      >
+        {/* Header */}
+        <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-brand-500/10 to-purple-500/10">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center p-8">
+              <div className="text-5xl mb-4">✨</div>
+              <h3 className="text-xl font-bold mb-2">Custom Solution</h3>
+              <p className="text-gray-400">Tailored to your unique needs</p>
+            </div>
+          </div>
         </div>
 
-      </div>
+        {/* Content */}
+        <div className="p-6 flex flex-col flex-grow">
+          <h3 className="text-xl font-bold mb-2">
+            Need Something Special?
+          </h3>
+
+          <p className="text-gray-400 text-sm mb-4 flex-grow">
+            Don't see what you're looking for? We create custom web solutions
+            for unique requirements.
+          </p>
+
+          {/* Features */}
+          <div className="mb-6 space-y-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-brand-500" />
+              <span className="text-sm text-gray-300">
+                Fully custom development
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-brand-500" />
+              <span className="text-sm text-gray-300">
+                Advanced integrations
+              </span>
+            </div>
+          </div>
+
+          {/* Button */}
+          <Link
+            href="/contact"
+            className="mt-auto w-full py-3 px-4 rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 transition-all duration-300 flex items-center justify-center group/btn"
+          >
+            <span className="font-medium">Get Custom Quote</span>
+            <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+          </Link>
+        </div>
+      </motion.div>
+    </motion.div>
 
 
     </section>
