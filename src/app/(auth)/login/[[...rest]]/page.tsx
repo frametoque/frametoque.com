@@ -32,7 +32,7 @@ function page() {
   return (
     <>
     
-     <Login scrolled={false} />
+     <Login />
         
     </>
    
