@@ -20,7 +20,7 @@ const conversionPoints = [
 
 export default function WhyChooseUs() {
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center px-6 py-24 overflow-hidden bg-[#111111] text-white">
+    <section className="relative  flex flex-col items-center justify-center px-6 py-24 overflow-hidden bg-[#111111] text-white">
       {/* Glow on right to match brand aesthetics */}
       {/* <div className="absolute right-0 top-0 bottom-0 w-[300px] bg-gradient-to-l from-brand-500 to-transparent opacity-20 blur-3xl pointer-events-none" /> */}
 
@@ -56,7 +56,7 @@ export default function WhyChooseUs() {
         <div>
           <div className="flex items-center justify-center gap-2 mb-4">
             <span className="text-lg font-semibold text-white">
-              <Image src="/logos/ft/name-logo.png" alt="FT logo" width={130} height={15} className="inline-block" 
+              <Image src="/logos/ft/name-logo.png" alt="FT logo" width={130} height={15} className="inline-block pt-10 sm:pt-20 md:pt-1 lg:pt-1" 
                 onContextMenu={protectImage}
                 onDragStart={protectImage} />
             </span>

@@ -140,7 +140,7 @@ redirectTimeout.current = setTimeout(() => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-950 text-white flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6">
         <div className="text-center max-w-md">
           <div className="flex items-center justify-center gap-3 mb-8">
             <span className="text-2xl font-bold bg-gradient-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent">
@@ -169,7 +169,7 @@ redirectTimeout.current = setTimeout(() => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-950 text-white flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6">
       <div className="text-center max-w-md w-full">
         {/* Logo with Progress Spinner */}
         <div className="flex items-center justify-center mb-10">

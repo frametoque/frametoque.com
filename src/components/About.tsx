@@ -1,12 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import WhyChooseUs from "@/components/WhyChooseUs";
-import Clients from "@/components/Clients";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Linkedin, Facebook, Github, Mail, Instagram, Youtube, Music2 } from 'lucide-react';
-import Link from 'next/link';
-import Image from 'next/image';
+import FounderSpotlight from "@/components/about/FounderSpotlight";
+import TeamMemberCard from "@/components/about/TeamMemberCard";
+import Image from "next/image";
 
 export default function AboutUs() {
   const [scrolled, setScrolled] = useState(false);
@@ -20,27 +18,7 @@ export default function AboutUs() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  type TeamMember = {
-  name: string;
-  role: string;
-  expertise: string;
-  image?: string;
-  social: Record<string, string>;
-};
-
-  const teamMembers : TeamMember[] = [
-    {
-      name: "Kavinu Pasandul",
-      role: "Cinematographer & Video Editor",
-      expertise: "Creative storytelling",
-      image: "/images/team/kavinu.jpg",
-      social: {
-        linkedin: "https://linkedin.com/in/",
-        instagram: "https://instagram.com/", 
-        tiktok: "https://tiktok.com/",
-        email: "kavinu@frametoque.online"
-      }
-    },
+  const teamMembers = [
     {
       name: "Tharul Bandara",
       role: "Graphic Designer",
@@ -71,7 +49,7 @@ export default function AboutUs() {
       expertise: "Frontend development",
       image: "/images/team/sadaka.jpg",
       social: {
-        linkedin: "https://linkedin.com/in/",
+        instagram: "https://instagram.com/",
         facebook: "https://facebook.com/",
         github: "https://github.com/",
         email: "sadaka@frametoque.online"
@@ -91,164 +69,121 @@ export default function AboutUs() {
     },
   ];
 
+  const founder = {
+    name: "Kavinu Pasandul",
+    role: "Founder",
+    expertise: "Creative storytelling & Visual Excellence",
+    image: "/images/team/kavinu.jpg",
+    social: {
+      linkedin: "https://linkedin.com/in/",
+      instagram: "https://instagram.com/", 
+      tiktok: "https://tiktok.com/",
+      email: "kavinu@frametoque.online"
+    }
+  };
+
   return (
-    <div>
-      <Navbar scrolled={scrolled} />
-      <div className="h-20" />
-      <section className="min-h-screen bg-slate-950 text-white py-16 px-6 sm:px-10 lg:px-16 relative overflow-hidden">
-        {/* Pulse removed */}
-        
-        <div className="max-w-7xl mx-auto text-center mb-16 relative z-10">
-          <h2 className="text-5xl sm:text-6xl font-bold mb-6 leading-tight">
-            <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
-              About&nbsp;
-            </span>
-            <span className="bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">
-              Us
-            </span>
-          </h2>
+    <div className="bg-black text-white selection:bg-brand-500 selection:text-white">
+      <Navbar scrolled={true} />
+      
+      <main className="min-h-screen relative overflow-hidden">
+        {/* Hero Image Section (Matches /projects style) */}
+        <section className="relative h-[40vh] md:h-[35vh] w-full bg-black overflow-hidden flex items-center justify-center">
+          <Image
+            src="/projects/photography/Evendor 25'/DSC08054.jpg.jpeg"
+            alt="About Us Hero"
+            fill
+            priority
+            className="absolute inset-0 w-full h-full object-cover opacity-60 scale-105"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black z-20 pointer-events-none" />
+        </section>
 
-          <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
-            At Frametoque, we believe in bringing creativity to life. From web design to video editing, we help businesses and creators look professional and unforgettable online. Your vision, our skill - a perfect match.
-          </p>
-        </div>
+        {/* Hero / Header Section */}
+        <section className="py-24 px-6 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
 
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
-          
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              <span className="text-brand-400">Meet Our</span> Team
-            </h2>
+            <h1 className="text-5xl sm:text-6xl lg:text-5xl font-black mb-12 tracking-tight">
+              <span className="bg-gradient-to-b from-brand-400 to-brand-600 bg-clip-text text-transparent">
+                About
+              </span>
+              <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
+                {" "}Us
+              </span>
+            </h1>
+
+            <div className="space-y-12 text-left">
+
+            <p className="text-slate-300 text-lg leading-relaxed text-center sm:text-left">
+              Frametoque first started in Sri Lanka during our school days through media units and small creative projects.
+              What began as simple school-level media work and fun experiments with cameras and code has now grown into a creative studio making modern digital experiences.
+            </p>
+
+            <div className="border-l-2 border-brand-500/60 pl-6 space-y-2">
+              <h3 className="text-xl font-semibold text-white">
+                <span className="text-brand-400">Our Vision</span>
+              </h3>
+              <p className="text-slate-400 leading-relaxed">
+                To grow into one of Sri Lanka’s leading creative teams that helps brands
+                stand out. We want to mix creativity and technology to build fresh,
+                powerful digital stories.
+              </p>
+            </div>
+
+            <div className="border-l-2 border-brand-500/60 pl-6 space-y-2">
+              <h3 className="text-xl font-semibold text-white">
+                <span className="text-brand-400">Our Mission</span>
+              </h3>
+              <p className="text-slate-400 leading-relaxed">
+                To create real and meaningful experiences through design, video, and code.
+                Our goal is to help brands connect with people in a way that
+                feels honest, modern, and unforgettable.
+              </p>
+            </div>
+
+
+            </div>
           </div>
-          
-          <div className="flex flex-wrap justify-center gap-6">
-            {teamMembers.map((member, index) => (
-                <div
-                  key={index}
-                  className="group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-700/50 w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] max-w-xs"
-                >
-                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-slate-700/50 to-slate-800/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mt-4 overflow-hidden">
-                  {member.image ? (
-                    <Image
-                      src={member.image}
-                      alt={member.name}
-                      width={500}
-                      height={500}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-3xl font-bold text-white">
-                      {member.name.split(' ').map(n => n[0]).join('')}
-                    </span>
-                  )}
-                </div>
+        </section>
 
-                <div className="text-center mb-6">
-                  <h4 className="text-xl font-bold text-white mb-2 group-hover:text-brand-400 transition-colors">
-                    {member.name}
-                  </h4>
-                  <p className="text-brand-300 font-medium mb-1">{member.role}</p>
-                </div>
 
-                {member.expertise && (
-                  <p className="text-sm text-gray-400 text-center mb-6 line-clamp-2">
-                    {member.expertise}
-                  </p>
-                )}
 
-                <div className="flex justify-center space-x-3 mb-4 flex-wrap">
-                  {member.social?.linkedin && (
-                    <Link
-                      href={member.social.linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center hover:bg-[#0077B5] hover:text-white transition-all hover:scale-110"
-                      aria-label={`${member.name}'s LinkedIn`}
-                    >
-                      <Linkedin className="w-5 h-5" />
-                    </Link>
-                  )}
-                  
-                  {member.social?.facebook && (
-                    <Link
-                      href={member.social.facebook}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center hover:bg-[#1877F2] hover:text-white transition-all hover:scale-110"
-                      aria-label={`${member.name}'s Facebook`}
-                    >
-                      <Facebook className="w-5 h-5" />
-                    </Link>
-                  )}
-                  
-                  {member.social?.github && (
-                    <Link
-                      href={member.social.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center hover:bg-gray-900 hover:text-white transition-all hover:scale-110"
-                      aria-label={`${member.name}'s GitHub`}
-                    >
-                      <Github className="w-5 h-5" />
-                    </Link>
-                  )}
-                  
-                  {member.social?.instagram && (
-                    <Link
-                      href={member.social.instagram}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center hover:bg-gradient-to-br hover:from-purple-500 hover:via-pink-500 hover:to-orange-500 hover:text-white transition-all hover:scale-110"
-                      aria-label={`${member.name}'s Instagram`}
-                    >
-                      <Instagram className="w-5 h-5" />
-                    </Link>
-                  )}
-                  
-                  {member.social?.youtube && (
-                    <Link
-                      href={member.social.youtube}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center hover:bg-[#FF0000] hover:text-white transition-all hover:scale-110"
-                      aria-label={`${member.name}'s YouTube`}
-                    >
-                      <Youtube className="w-5 h-5" />
-                    </Link>
-                  )}
-                  
-                  {member.social?.tiktok && (
-                    <Link
-                      href={member.social.tiktok}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center hover:bg-black hover:text-white transition-all hover:scale-110"
-                      aria-label={`${member.name}'s TikTok`}
-                    >
-                      <Music2 className="w-5 h-5" />
-                    </Link>
-                  )}
-                  
-                  {member.social?.email && (
-                    <Link
-                      href={`mailto:${member.social.email}`}
-                      className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center hover:bg-brand-600 hover:text-white transition-all hover:scale-110"
-                      aria-label={`Email ${member.name}`}
-                    >
-                      <Mail className="w-5 h-5" />
-                    </Link>
-                  )}
-                </div>
+
+        {/* Founder / Lead Spotlight */}
+        <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/5">
+          <FounderSpotlight {...founder} />
+        </section>
+
+        {/* Board / Core Team Grid */}
+        <section className="bg-[#111111] py-24 border-y border-white/5">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="flex flex-col gap-6 mb-16">
+              <div className="max-w-4xl">
+                <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
+                  The Minds Behind <span className="text-brand-500">The Magic</span>
+                </h2>
               </div>
-            ))}
+              <p className="text-gray-400 text-sm md:text-base leading-relaxed max-w-2xl">
+                A diverse group of designers, developers, and creators dedicated to pushing the boundaries of digital excellence.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {teamMembers.map((member, index) => (
+                <TeamMemberCard
+                  key={member.name}
+                  {...member}
+                  accentColor={index % 2 === 0 ? "brand-500" : "brand-400"}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-        
-        <div className="pt-24" />
-        <Clients />
-        <div className="pb-16" />
-      </section>
-      <WhyChooseUs />
+        </section>
+
+        {/* Additional Sections */}
+      </main>
+
       <Footer />
     </div>
   );

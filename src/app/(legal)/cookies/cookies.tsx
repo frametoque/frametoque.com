@@ -17,10 +17,10 @@ export default function Cookies() {    const [scrolled, setScrolled] = useState(
 
   return (
     <>
-      <main  className="min-h-screen bg-slate-950 text-white overflow-hidden">
+      <main  className="min-h-screen bg-gray-950 text-white overflow-hidden">
         <Navbar scrolled={scrolled} />
         <div className="h-20" />
-        <div className="min-h-screen bg-slate-950 text-white px-6 sm:px-10 lg:px-16 py-16">
+        <div className="min-h-screen bg-gray-950 text-white px-6 sm:px-10 lg:px-16 py-16">
           <h1 className="text-4xl sm:text-5xl font-bold mb-8 text-center">Cookie Policy</h1>
 
           <section className="space-y-6 max-w-4xl mx-auto">

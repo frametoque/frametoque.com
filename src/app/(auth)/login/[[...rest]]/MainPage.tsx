@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSignIn, useUser } from "@clerk/nextjs";
+import { useSignIn, useUser, useSignUp } from "@clerk/nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Mail, Eye, EyeOff } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple, FaGithub } from "react-icons/fa";
-
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
+const protectImage = (e) => e.preventDefault();
 export default function CustomLogin({ scrolled }) {
   const { isLoaded, signIn } = useSignIn();
   const { isSignedIn, isLoaded: userLoaded } = useUser();
@@ -19,143 +19,353 @@ export default function CustomLogin({ scrolled }) {
   const [errorMsg, setErrorMsg] = useState("");
   const [loadingProvider, setLoadingProvider] = useState(null);
 
+  const { setActive } = useSignIn();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const { signUp, setActive: setSignUpActive } = useSignUp();
+
+  const [verifying, setVerifying] = useState(false);
+  const [code, setCode] = useState("");
+
   useEffect(() => {
     const error = searchParams.get("error");
-    if (error) {
-      setErrorMsg(decodeURIComponent(error));
-    }
+    if (error) setErrorMsg(decodeURIComponent(error));
   }, [searchParams]);
 
   useEffect(() => {
-    if (userLoaded && isSignedIn) {
-      router.replace("/dashboard");
-    }
+    if (userLoaded && isSignedIn) router.replace("/dashboard");
   }, [userLoaded, isSignedIn, router]);
 
-const socialProviders = [
-  { provider: "oauth_google", label: "Continue with Google", icon: <FcGoogle size={20} />, disabled: false },
-  { provider: "oauth_apple", label: "Continue with Apple", icon: <FaApple size={20} />, disabled: false },
-  { provider: "oauth_github", label: "Continue with Github", icon: <FaGithub size={20} />, disabled: false },
-];
+  const socialProviders = [
+    { provider: "oauth_google", label: "Continue with Google", icon: <FcGoogle size={18} /> },
+    { provider: "oauth_apple",  label: "Continue with Apple",  icon: <FaApple  size={18} color="#fff" /> },
+    { provider: "oauth_github", label: "Continue with GitHub", icon: <FaGithub size={18} color="#fff" /> },
+  ];
 
   async function handleSignIn(provider) {
-  if (!isLoaded || loadingProvider) return; // Changed from `loading` to `loadingProvider`
-  setLoadingProvider(provider);
+    if (!isLoaded || loadingProvider) return;
+    setLoadingProvider(provider);
+    setErrorMsg("");
+    try {
+      await signIn.authenticateWithRedirect({
+        strategy: provider,
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: "/dashboard",
+      });
+    } catch (err) {
+      console.error("Sign in error:", err);
+      setErrorMsg(err.errors?.[0]?.message || "Something went wrong. Please try again.");
+      setLoadingProvider(null);
+    }
+  }
+ async function handleEmailLogin(e) {
+  e.preventDefault();
+  if (!isLoaded || submitting) return;
+
   setErrorMsg("");
-  
+  setSubmitting(true);
+
   try {
-    await signIn.authenticateWithRedirect({
-      strategy: provider,
-      redirectUrl: "/sso-callback",
-      redirectUrlComplete: "/dashboard",
+    const result = await signIn.create({
+      identifier: email,
+      password,
     });
 
+    if (result.status === "complete") {
+      await setActive({ session: result.createdSessionId });
+      router.replace("/dashboard");
+      return;
+    }
+
   } catch (err) {
-    console.error("Sign in error:", err);
-    setErrorMsg(err.errors?.[0]?.message || "Something went wrong. Please try again.");
-    setLoadingProvider(null);
+  const code = err?.errors?.[0]?.code;
+
+  if (code === "strategy_for_user_invalid") {
+    setErrorMsg(
+      "This account was created using Google, Apple, or GitHub. Please use that method to sign in."
+    );
+  }
+
+  else if (code === "form_identifier_not_found") {
+    try {
+      const signUpResult = await signUp.create({
+        emailAddress: email,
+        password,
+      });
+
+    if (signUpResult.status === "missing_requirements") {
+      await signUp.prepareEmailAddressVerification({
+        strategy: "email_code",
+      });
+
+      setVerifying(true); 
+    } 
+    else if (signUpResult.status === "complete") {
+      await setSignUpActive({
+        session: signUpResult.createdSessionId,
+      });
+      router.replace("/dashboard");
+    }
+
+
+    } catch (signupErr) {
+      setErrorMsg(
+        signupErr?.errors?.[0]?.message || "Signup failed."
+      );
+    }
+  }
+
+  else {
+    setErrorMsg(
+      err?.errors?.[0]?.message || "Invalid email or password."
+    );
+  }
+}
+ finally {
+    setSubmitting(false);
   }
 }
 
+async function handleVerify(e) {
+  e.preventDefault();
+  if (!code) return;
+
+  setErrorMsg("");
+
+  try {
+    const completeSignUp = await signUp.attemptEmailAddressVerification({
+      code,
+    });
+
+    if (completeSignUp.status === "complete") {
+      await setSignUpActive({
+        session: completeSignUp.createdSessionId,
+      });
+
+      router.replace("/dashboard");
+    }
+
+  } catch (err) {
+    setErrorMsg("Invalid or expired code.");
+  }
+}
+
+
+
+
   if (userLoaded && isSignedIn) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white text-lg">Redirecting...</p>
+          <div className="w-12 h-12 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-slate-400 text-sm">Redirecting…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
-      <Navbar scrolled={scrolled} />
-      <div className="h-20" />
+    <>
+    <div className="min-h-screen bg-black flex">
+      <Navbar scrolled={true} />
 
-      <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-        <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-brand-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-4 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-brand-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      {/* ── LEFT PANEL ── */}
+      <div className="relative flex flex-col justify-center w-full lg:w-1/2 px-8 sm:px-16 py-16">
 
-        <div className="max-w-md w-full relative z-10">
-          <div className="text-center mb-10">
-            <Link href="/">
-              <Image
-                src="/logos/ft/name-logo.png"
-                alt="Frametoque"
-                width={200}
-                height={40}
-                className="w-48 h-auto mx-auto mb-8 opacity-90 hover:opacity-100 transition"
-              />
-            </Link>
+        <div className="relative z-10 max-w-sm w-full mx-auto">
 
-            <h1 className="text-4xl sm:text-5xl font-bold mb-3">
-              <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
-                Welcome
-              </span>
-              <span className="bg-gradient-to-b from-brand-400 to-brand-500 bg-clip-text text-transparent">
-                &nbsp;Back
-              </span>
-            </h1>
+          <Link href="/" className="inline-block mb-12">
+            <Image
+              src="/logos/ft/name-logo.png"
+              alt="Frametoque"
+              width={160}
+              height={32}
+              className="h-8 w-auto opacity-90 hover:opacity-100 transition-opacity"
+              onContextMenu={protectImage}
+              onDragStart={protectImage}
+            />
+          </Link>
 
-            <p className="text-gray-400 text-base sm:text-lg max-w-md mx-auto leading-relaxed">
-              Sign in to access your dashboard and continue your projects.
-            </p>
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-3">
+            <span className="bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent">
+              Welcome
+            </span>
+            <span className="bg-gradient-to-b from-brand-400 to-brand-600 bg-clip-text text-transparent">
+              {" "}back.
+            </span>
+          </h1>
+          <p className="text-slate-500 text-sm mb-10 leading-relaxed">
+            Login or create an account instantly with your email, 
+            or continue with a social provider.
+          </p>
 
-          </div>
-
-          <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/10">
-            {errorMsg && (
-              <div className="text-red-400 bg-red-400/10 p-3 rounded-3xl text-sm mb-4 text-center animate-pulse">
-                {errorMsg}
-              </div>
-            )}
-
-            <div className="flex flex-col gap-3">
-              {socialProviders.map((btn) => {
-                const isLoading = loadingProvider === btn.provider;
-                
-                return (
-                  <button
-                    key={btn.provider}
-                    onClick={() => handleSignIn(btn.provider)}
-                    disabled={btn.disabled || isLoading}
-                    className={`relative w-full flex items-center justify-center gap-3 px-6 py-3 bg-white/5 border border-white/10 text-gray-100 rounded-3xl font-medium shadow-sm hover:bg-white/20 transition-all duration-200 ${
-                      btn.disabled || isLoading ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
-                  >
-                    {isLoading ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>Connecting...</span>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex-shrink-0">{btn.icon}</div>
-                        <span>{btn.label}</span>
-                      </>
-                    )}
-                  </button>
-                );
-              })}
+          {errorMsg && (
+            <div className="text-red-400 bg-red-400/10 border border-red-400/20 px-4 py-3 rounded-2xl text-sm mb-6 text-center">
+              {errorMsg}
             </div>
+          )}
 
-            <div className="my-6 border-t border-white/10"></div>
+          {/* ── Email + Password ── */}
+{verifying ? (
+  <form onSubmit={handleVerify} className="space-y-4 mb-5">
 
-            <p className="text-center text-xs text-gray-500">
-              By continuing, you agree to our{" "}
-              <Link href="/terms" className="text-brand-400 hover:text-brand-300">
-                Terms
-              </Link>{" "}
-              and{" "}
-              <Link href="/privacy" className="text-brand-400 hover:text-brand-300">
-                Privacy Policy
-              </Link>
-            </p>
-          </div>
-        </div>
-      </section>
-      <Footer />
+    <h2 className="text-xl font-semibold text-white text-center">
+      Verify your email
+    </h2>
+
+    <p className="text-sm text-slate-500 text-center">
+      We sent a 6-digit code to{" "}
+      <span className="text-slate-300">{email}</span>
+    </p>
+
+    <input
+      type="text"
+      value={code}
+      onChange={(e) => setCode(e.target.value)}
+      placeholder="Enter code"
+      className="w-full text-center tracking-widest text-lg
+                 bg-slate-900 border border-slate-800
+                 focus:border-brand-500/50 focus:ring-2 focus:ring-brand-500/20
+                 rounded-2xl px-5 py-3.5 text-slate-200"
+    />
+
+    <button
+      type="submit"
+      className="w-full rounded-2xl bg-brand-500 hover:bg-brand-400
+                 text-white font-medium py-3.5 text-sm"
+    >
+      Verify & Continue
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setVerifying(false)}
+      className="w-full text-xs text-slate-500 hover:text-slate-300"
+    >
+      Back to login
+    </button>
+
+  </form>
+) : (
+  <form onSubmit={handleEmailLogin} className="space-y-3 mb-5">
+
+    <div className="relative">
+      <input
+        type="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+        className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700
+                   focus:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/20
+                   rounded-2xl px-5 py-3.5 pr-11 text-sm text-slate-200 placeholder-slate-500
+                   transition-all"
+      />
+      <Mail className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
     </div>
+
+    <div className="relative">
+      <input
+        type={showPassword ? "text" : "password"}
+        required
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+        className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700
+                   focus:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/20
+                   rounded-2xl px-5 py-3.5 pr-11 text-sm text-slate-200 placeholder-slate-500
+                   transition-all"
+      />
+      <button
+        type="button"
+        onClick={() => setShowPassword((s) => !s)}
+        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+      >
+        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+
+    <button
+      type="submit"
+      disabled={submitting || !!loadingProvider}
+      className="w-full mt-2 rounded-2xl bg-brand-500 hover:bg-brand-400
+                 disabled:opacity-50 disabled:cursor-not-allowed
+                 text-white font-medium py-3.5 text-sm transition-colors"
+    >
+      {submitting ? "Signing in…" : "Login"}
+    </button>
+
+    <div id="clerk-captcha" />
+
+  </form>
+)}
+
+
+<div className="flex items-center gap-3 my-5">
+  <div className="h-px flex-1 bg-slate-800" />
+  <span className="text-xs text-slate-500">or</span>
+  <div className="h-px flex-1 bg-slate-800" />
+</div>
+
+{/* Social buttons */}
+<div className="flex justify-center gap-4">
+  {socialProviders.map((btn) => {
+    const isLoading = loadingProvider === btn.provider;
+    return (
+      <button
+        key={btn.provider}
+        type="button"
+        onClick={() => handleSignIn(btn.provider)}
+        disabled={!!loadingProvider || submitting}
+        title={btn.label}
+        className="h-12 w-12 rounded-full bg-slate-900 border border-slate-800
+                   hover:bg-slate-800 hover:border-brand-500/40
+                   disabled:opacity-50 disabled:cursor-not-allowed
+                   flex items-center justify-center transition-all"
+      >
+        {isLoading ? (
+          <span className="h-4 w-4 rounded-full border-2 border-slate-600 border-t-brand-400 animate-spin" />
+        ) : (
+          btn.icon
+        )}
+      </button>
+    );
+  })}
+</div>
+
+
+          <p className="mt-8 text-center text-xs text-slate-600 leading-relaxed">
+            By continuing you agree to our{" "}
+            <Link href="/terms"   className="text-brand-500 hover:text-brand-400 transition-colors">Terms</Link>
+            {" "}and{" "}
+            <Link href="/privacy" className="text-brand-500 hover:text-brand-400 transition-colors">Privacy Policy</Link>
+          </p>
+
+        </div>
+      </div>
+
+      {/* ── RIGHT ─ */}
+      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
+
+        <Image
+          src="/login-cover.jpg"  
+          alt=""
+          fill
+          className="object-cover object-center"
+          priority
+        />
+
+        <div className="absolute inset-0 bg-slate-950/40" />
+
+        <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-slate-950 to-transparent" />
+
+      </div>
+
+    </div>
+      <Footer />
+</>
   );
 }

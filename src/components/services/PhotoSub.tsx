@@ -51,12 +51,12 @@ const photocatprices = [
   },
 
   {
-    key: "standard-photo-video",
-    title: "Standard Photo + Video Package",
-    desc: "Complete photography and videography coverage for events and engagements.",
+    key: "standard-videography",
+    title: "Standard Videography Package",
+    desc: "Comprehensive video coverage for weddings, corporate events, and larger functions.",
     price: "30,000",
     img: "/services/eventpulse.png",
-    link: "/services/photo-video/standard-photo-video",
+    link: "/services/photo-video/standard-videography",
   },
 
   {
@@ -189,7 +189,7 @@ export default function WebPackages() {
         <motion.div
           key={i}
           variants={card}
-          className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 flex flex-col"
+          className="group bg-gray-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 flex flex-col"
         >
           {/* Image */}
           <motion.div
@@ -244,7 +244,7 @@ export default function WebPackages() {
       {/* Custom Card */}
       <motion.div
         variants={card}
-        className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 flex flex-col"
+        className="group bg-gray-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 flex flex-col"
       >
          <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-brand-500/10 to-purple-500/10">
             <div className="absolute inset-0 flex items-center justify-center">

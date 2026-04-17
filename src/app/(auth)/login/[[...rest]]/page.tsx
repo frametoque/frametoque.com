@@ -2,7 +2,7 @@ export const metadata = {
   title: "Login | Frametoque",
   description: "Log in to your Frametoque account to manage your dashboard, track services, and access your projects securely.",
   openGraph: {
-    title: "Login | Frametoque",
+    title: "Login | FrameToque Digital Media",
     description: "Log in to your Frametoque account to manage your dashboard, track services, and access your projects securely.",
     url: "https://frametoque.online/login", 
     siteName: "Frametoque",
