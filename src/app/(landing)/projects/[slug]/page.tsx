@@ -3,31 +3,52 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import GallerySection from "@/components/projects/GallerySection";
 
-export const metadata = {
-  title: "What We Did",
-  description: "Explore our range of services including web development, graphic design, and video editing tailored to make your brand shine.",
-  openGraph: {
-    title: "Our Projects | FrameToque Digital Media",
-    description: "Explore our range of services including web development, graphic design, and video editing tailored to make your brand shine.",
-    url: "https://frametoque.online/", 
-    siteName: "Frametoque",
-    images: [
-      {
-        url: "https://frametoque.online/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Frametoque",
-      },
-    ],
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Our Projects | FrameToque Digital Media",
-    description: "Explore our range of services...",
-    images: ["https://frametoque.online/og-image.png"],
-  },
+import { Metadata } from "next";
+
+const titles: Record<string, string> = {
+  photography: "Photography Projects",
+  videography: "Videography Projects",
+  "graphic-design": "Graphic Design Projects",
+  "video-editing": "Video Editing Projects",
+  "web-dev": "Web Development Projects",
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+
+  const title = titles[slug] || "Our Projects";
+  const description = `Explore our ${title.toLowerCase()} at FrameToque.`;
+
+  return {
+    title: `${title}`,
+    description,
+    openGraph: {
+      title: `${title} | FrameToque Digital Media`,
+      description,
+      url: `https://frametoque.online/projects/${slug}`,
+      siteName: "Frametoque",
+      images: [
+        {
+          url: "https://frametoque.online/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: "Frametoque",
+        },
+      ],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} | FrameToque Digital Media`,
+      description,
+      images: ["https://frametoque.online/og-image.png"],
+    },
+  };
+}
 
 const VALID_SLUGS = [
   "photography",
