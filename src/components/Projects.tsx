@@ -99,7 +99,7 @@ export default function ProjectsComponent() {
           href={project.live}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500/15 hover:bg-brand-500/25 border border-brand-400/20 hover:border-brand-400/40 transition-all duration-200 group/btn"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-3xl bg-brand-500/15 hover:bg-brand-500/25 border border-brand-400/20 hover:border-brand-400/40 transition-all duration-200 group/btn"
           aria-label="View Live Site"
         >
           <Globe className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" />
@@ -111,7 +111,7 @@ export default function ProjectsComponent() {
           href={project.live}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/20 hover:border-amber-400/40 transition-all duration-200 group/btn"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-3xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/20 hover:border-amber-400/40 transition-all duration-200 group/btn"
           aria-label="View Album"
         >
           <ExternalLink className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" />
@@ -121,7 +121,7 @@ export default function ProjectsComponent() {
       {(project.type === "video" || project.type === "videography") && project.youtube && (
         <button
           onClick={() => setPopupVideo({ url: `https://www.youtube.com/watch?v=${project.youtube}`, title: project.title })}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/20 hover:border-rose-400/40 transition-all duration-200 group/btn"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-3xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/20 hover:border-rose-400/40 transition-all duration-200 group/btn"
           aria-label="Watch on YouTube"
         >
           <Youtube className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" />
@@ -131,7 +131,7 @@ export default function ProjectsComponent() {
       {project.type === "graphic" && (
         <button
           onClick={() => setPopupImage(project.image)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-400/20 hover:border-indigo-400/40 transition-all duration-200 group/btn"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-3xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-400/20 hover:border-indigo-400/40 transition-all duration-200 group/btn"
           aria-label="View full size"
         >
           <Eye className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" />
@@ -248,14 +248,14 @@ export default function ProjectsComponent() {
           <div className="flex gap-1 p-1 rounded-xl bg-white/5 border border-white/10 shrink-0">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${viewMode === "grid" ? "bg-brand-500 text-white shadow-md" : "text-gray-400 hover:text-white"}`}
+              className={`p-1.5 sm:p-2 rounded-3xl transition-all duration-200 ${viewMode === "grid" ? "bg-brand-500 text-white shadow-md" : "text-gray-400 hover:text-white"}`}
               aria-label="Grid view"
             >
               <Grid3X3 className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${viewMode === "list" ? "bg-brand-500 text-white shadow-md" : "text-gray-400 hover:text-white"}`}
+              className={`p-1.5 sm:p-2 rounded-3xl transition-all duration-200 ${viewMode === "list" ? "bg-brand-500 text-white shadow-md" : "text-gray-400 hover:text-white"}`}
               aria-label="List view"
             >
               <List className="w-4 h-4" />
@@ -380,7 +380,7 @@ export default function ProjectsComponent() {
               className="absolute -top-11 right-0 z-20"
               aria-label="Close"
             >
-              <span className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm flex items-center gap-2 text-sm text-white/80 hover:text-white transition-colors">
+              <span className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-3xl backdrop-blur-sm flex items-center gap-2 text-sm text-white/80 hover:text-white transition-colors">
                 <X className="w-4 h-4" /> Close
               </span>
             </button>
@@ -410,7 +410,7 @@ export default function ProjectsComponent() {
               className="absolute -top-11 right-0 z-20"
               aria-label="Close"
             >
-              <span className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm flex items-center gap-2 text-sm text-white/80 hover:text-white transition-colors">
+              <span className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-3xl backdrop-blur-sm flex items-center gap-2 text-sm text-white/80 hover:text-white transition-colors">
                 <X className="w-4 h-4" /> Close
               </span>
             </button>

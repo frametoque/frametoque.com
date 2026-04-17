@@ -19,7 +19,7 @@ export default function NotFound() {
           <p className="text-lg mb-6">Oops! Page not found.</p>
           <Link
             href="/"
-            className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition-colors"
+            className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-3xl font-medium transition-colors"
           >
             Go Home
           </Link>

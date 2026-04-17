@@ -209,7 +209,7 @@ export default function InvoicePage() {
         <button
           onClick={handleDownload}
           disabled={downloading}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           {downloading ? "Generating PDF..." : "Download PDF"}
@@ -231,7 +231,7 @@ export default function InvoicePage() {
           {/* Details Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-start gap-4">
-              <div className="p-2 rounded-lg bg-brand-500/10">
+              <div className="p-2 rounded-3xl bg-brand-500/10">
                 <FileText className="w-5 h-5 text-brand-400" />
               </div>
               <div>
@@ -241,7 +241,7 @@ export default function InvoicePage() {
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-start gap-4">
-              <div className="p-2 rounded-lg bg-brand-500/10">
+              <div className="p-2 rounded-3xl bg-brand-500/10">
                 <Calendar className="w-5 h-5 text-brand-400" />
               </div>
               <div>
@@ -251,7 +251,7 @@ export default function InvoicePage() {
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-start gap-4">
-              <div className="p-2 rounded-lg bg-brand-500/10">
+              <div className="p-2 rounded-3xl bg-brand-500/10">
                 <Briefcase className="w-5 h-5 text-brand-400" />
               </div>
               <div>
@@ -263,7 +263,7 @@ export default function InvoicePage() {
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-start gap-4">
-              <div className="p-2 rounded-lg bg-brand-500/10">
+              <div className="p-2 rounded-3xl bg-brand-500/10">
                 <Tag className="w-5 h-5 text-brand-400" />
               </div>
               <div>

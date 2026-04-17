@@ -106,7 +106,7 @@ const socialProviders = [
 
           <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/10">
             {errorMsg && (
-              <div className="text-red-400 bg-red-400/10 p-3 rounded-lg text-sm mb-4 text-center animate-pulse">
+              <div className="text-red-400 bg-red-400/10 p-3 rounded-3xl text-sm mb-4 text-center animate-pulse">
                 {errorMsg}
               </div>
             )}
@@ -120,7 +120,7 @@ const socialProviders = [
                     key={btn.provider}
                     onClick={() => handleSignIn(btn.provider)}
                     disabled={btn.disabled || isLoading}
-                    className={`relative w-full flex items-center justify-center gap-3 px-6 py-3 bg-white/5 border border-white/10 text-gray-100 rounded-lg font-medium shadow-sm hover:bg-white/20 transition-all duration-200 ${
+                    className={`relative w-full flex items-center justify-center gap-3 px-6 py-3 bg-white/5 border border-white/10 text-gray-100 rounded-3xl font-medium shadow-sm hover:bg-white/20 transition-all duration-200 ${
                       btn.disabled || isLoading ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                   >

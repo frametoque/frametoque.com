@@ -154,12 +154,12 @@ redirectTimeout.current = setTimeout(() => {
             </div>
           </div>
           <h2 className="text-2xl font-bold mb-3 text-red-400">Authentication Error</h2>
-          <p className="text-gray-300 mb-8 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+          <p className="text-gray-300 mb-8 p-4 bg-slate-800/50 rounded-3xl border border-slate-700">
             {error}
           </p>
           <button
             onClick={() => router.push("/login")}
-            className="px-8 py-3 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 rounded-lg transition-all duration-300 text-white font-medium border border-slate-700 hover:border-slate-600"
+            className="px-8 py-3 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 rounded-3xl transition-all duration-300 text-white font-medium border border-slate-700 hover:border-slate-600"
           >
             Return to Sign In
           </button>
@@ -200,8 +200,8 @@ redirectTimeout.current = setTimeout(() => {
           <div>
             <div className="flex items-center justify-center gap-3 mb-4">
             <div className="relative">
-              <div className="absolute -inset-1 rounded-lg blur-sm opacity-60"></div>
-              <div className="relative w-auto rounded-lg flex items-center justify-center overflow-hidden px-3 py-2">
+              <div className="absolute -inset-1 rounded-3xl blur-sm opacity-60"></div>
+              <div className="relative w-auto rounded-3xl flex items-center justify-center overflow-hidden px-3 py-2">
                 <img 
                   src="/logos/ft/name-logo.png" 
                   alt="Framtoque Logo" 
@@ -281,7 +281,7 @@ redirectTimeout.current = setTimeout(() => {
             <div className="mt-6 animate-fadeIn">
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-5 border border-brand-500/20">
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="w-10 h-10 bg-brand-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-brand-500/20 rounded-3xl flex items-center justify-center flex-shrink-0">
                     <svg className="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -340,7 +340,7 @@ redirectTimeout.current = setTimeout(() => {
                   }
                   router.push("/login");
                 }}
-                className="px-6 py-3 text-sm bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 rounded-lg transition-all duration-300 text-white font-medium border border-slate-700 hover:border-slate-600"
+                className="px-6 py-3 text-sm bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 rounded-3xl transition-all duration-300 text-white font-medium border border-slate-700 hover:border-slate-600"
               >
                 Cancel & Return to Sign In
               </button>

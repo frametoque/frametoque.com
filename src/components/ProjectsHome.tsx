@@ -457,7 +457,7 @@ export default function ProjectsHome() {
               onClick={() => setPopupImage(null)}
               className="absolute -top-12 right-0 text-white/80 hover:text-white text-sm font-medium transition-colors duration-200 z-20"
             >
-              <span className="px-3 py-1.5 bg-white/10 rounded-lg backdrop-blur-sm flex items-center gap-2">
+              <span className="px-3 py-1.5 bg-white/10 rounded-3xl backdrop-blur-sm flex items-center gap-2">
                 <X className="w-4 h-4" /> Close (ESC)
               </span>
             </button>
@@ -486,7 +486,7 @@ export default function ProjectsHome() {
               onClick={() => setPopupVideo(null)}
               className="absolute -top-12 right-0 text-white/80 hover:text-white text-sm font-medium transition-colors duration-200 z-20"
             >
-              <span className="px-3 py-1.5 bg-white/10 rounded-lg backdrop-blur-sm flex items-center gap-2">
+              <span className="px-3 py-1.5 bg-white/10 rounded-3xl backdrop-blur-sm flex items-center gap-2">
                 <X className="w-4 h-4" /> Close (ESC)
               </span>
             </button>

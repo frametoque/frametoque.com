@@ -136,7 +136,7 @@ export default function RecentProjectsWidget() {
                 </span>
 
                 <Link href={`/dashboard/invoice/${request.request_id}`}>
-                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 border border-white/10 text-xs font-medium text-white hover:bg-white/20 transition-colors">
+                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-3xl bg-white/10 border border-white/10 text-xs font-medium text-white hover:bg-white/20 transition-colors">
                   <Eye className="w-3.5 h-3.5" />
                   View Invoice
                 </button>

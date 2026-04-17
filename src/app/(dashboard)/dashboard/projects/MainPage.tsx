@@ -111,14 +111,14 @@ export default function DashboardProjectsPage() {
         <div className="flex flex-wrap gap-3">
           <Link
             href="/services"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity"
           >
             <Plus className="w-5 h-5" />
             New Project
           </Link>
           <Link
             href="/contact"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-white/5 border border-white/10 text-white font-semibold hover:bg-white/10 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-white/5 border border-white/10 text-white font-semibold hover:bg-white/10 transition-colors"
           >
             <MessageCircle className="w-5 h-5" />
             Talk to Support
@@ -160,7 +160,7 @@ export default function DashboardProjectsPage() {
                 {/* Right - Invoice button */}
                 <div className="shrink-0">
                   <Link href={`/dashboard/invoice/${request.request_id}`}>
-                  <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 border border-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors">
+                  <button className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl bg-white/10 border border-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors">
                     <Eye className="w-4 h-4" />
                     View Invoice
                   </button>
@@ -179,7 +179,7 @@ export default function DashboardProjectsPage() {
           </p>
           <Link
             href="/dashboard/services"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity"
           >
             <Plus className="w-5 h-5" />
             Browse Services

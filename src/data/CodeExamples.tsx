@@ -20,7 +20,7 @@ function FrametoqueApp() {
         Crafting clean, fast, and modern web experiences for your business.
       </p>
       <button className="bg-white text-[#3c327b] font-semibold px-6 py-3
-      rounded-lg shadow-lg hover:scale-105 transition-transform">
+      rounded-3xl shadow-lg hover:scale-105 transition-transform">
         Get Started
       </button>
     </div>

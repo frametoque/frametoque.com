@@ -78,7 +78,7 @@ export default function CollabCompact() {
             
             <Link 
               href="/contact" 
-              className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-600 text-white font-semibold rounded-lg hover:from-brand-700 hover:to-brand-700 transition-all duration-300 shadow-lg hover:shadow-xl whitespace-nowrap"
+              className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-600 text-white font-semibold rounded-3xl hover:from-brand-700 hover:to-brand-700 transition-all duration-300 shadow-lg hover:shadow-xl whitespace-nowrap"
             >
               Discuss Your Event
               <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />

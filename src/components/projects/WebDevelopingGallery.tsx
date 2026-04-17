@@ -220,7 +220,7 @@ export function WebDevelopingGallery() {
             <div
               key={i}
               onClick={() => site && setActiveSite(site)}
-              className="group relative overflow-hidden bg-neutral-900 cursor-pointer rounded-lg"
+              className="group relative overflow-hidden bg-neutral-900 cursor-pointer rounded-3xl"
             >
               <Image
                 src={item.image}

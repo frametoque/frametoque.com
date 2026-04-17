@@ -123,7 +123,7 @@ export default function ProfileProgress() {
 
       <Link
         href="/dashboard/settings"
-        className="inline-block px-5 py-2 bg-gradient-to-r from-brand-600 to-brand-700 hover:opacity-90 text-white font-semibold rounded-lg transition-colors"
+        className="inline-block px-5 py-2 bg-gradient-to-r from-brand-600 to-brand-700 hover:opacity-90 text-white font-semibold rounded-3xl transition-colors"
       >
         Complete Profile
       </Link>

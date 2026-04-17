@@ -166,7 +166,7 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
                         </p>
                         <Link
                             href="/services"
-                            className="inline-flex items-center px-6 py-3 rounded-lg bg-brand-500 hover:bg-brand-600 transition-colors"
+                            className="inline-flex items-center px-6 py-3 rounded-3xl bg-brand-500 hover:bg-brand-600 transition-colors"
                         >
                             View All Services
                         </Link>
@@ -212,7 +212,7 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
                                     <div className="flex flex-wrap gap-4">
                                         <Link
                                             href="/contact"
-                                            className="inline-flex items-center px-8 py-4 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 transition-all duration-300 font-semibold text-lg group"
+                                            className="inline-flex items-center px-8 py-4 rounded-3xl bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 transition-all duration-300 font-semibold text-sm group"
                                         >
                                             Custom Quote
                                             <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -220,7 +220,7 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
 
                                         <Link
                                             href="#packages"
-                                            className="inline-flex items-center px-8 py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 font-semibold text-lg"
+                                            className="inline-flex items-center px-8 py-4 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 font-semibold text-sm"
                                         >
                                             View Packages
                                         </Link>
@@ -262,15 +262,16 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
                             </p>
                         </div>
 
-                       
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="max-w-6xl mx-auto">
+                            <div className="flex flex-wrap justify-center items-stretch gap-8">
                                 {displayPackages.map((pkg, index) => (
                                     <div
-                                        key={index}
-                                        className={`relative bg-slate-900/50 backdrop-blur-sm border rounded-2xl p-8 transition-all duration-300 hover:scale-[1.02] flex flex-col h-full ${pkg.popular
-                                            ? "border-brand-500 shadow-2xl shadow-brand-500/20"
-                                            : "border-slate-800 hover:border-slate-700"
-                                            }`}
+                                    key={index}
+                                    className={`w-full sm:w-[320px] self-stretch relative bg-slate-900/50 backdrop-blur-sm border rounded-2xl p-8 transition-all duration-300 hover:scale-[1.02] flex flex-col ${
+                                    pkg.popular
+                                        ? "border-brand-500 shadow-2xl shadow-brand-500/20"
+                                        : "border-slate-800 hover:border-slate-700"
+                                    }`}
                                     >
                                         {pkg.popular && (
                                             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
@@ -305,7 +306,7 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
 
                                         <Link
                                             href="/contact"
-                                            className={`text-center w-full py-3 px-6 rounded-lg font-semibold transition-all duration-300 mt-auto ${pkg.popular
+                                            className={`text-center w-full py-3 px-6 rounded-3xl font-semibold transition-all duration-300 mt-auto ${pkg.popular
                                                 ? "bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700"
                                                 : "bg-white/5 border border-white/10 hover:bg-white/10"
                                                 }`}
@@ -315,7 +316,7 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
                                     </div>
                                 ))}
                             </div>
-                       
+                       </div>
                     </div>
                 </section>
 

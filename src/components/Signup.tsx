@@ -129,7 +129,7 @@ export default function SignupPage() {
                 key={idx}
                 onClick={button.onClick}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white text-gray-900 rounded-lg font-semibold hover:bg-gray-100 transition-colors mb-6"
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white text-gray-900 rounded-3xl font-semibold hover:bg-gray-100 transition-colors mb-6"
               >
                 {button.icon}
                 {button.label}
@@ -163,7 +163,7 @@ export default function SignupPage() {
                         value={field.value}
                         onChange={field.onChange}
                         required={field.required}
-                        className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-3xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
                         placeholder={field.placeholder}
                       />
                     </div>
@@ -197,7 +197,7 @@ export default function SignupPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full px-6 py-4 bg-gradient-to-b from-brand-600 to-brand-700 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                className="w-full px-6 py-4 bg-gradient-to-b from-brand-600 to-brand-700 text-white rounded-3xl font-semibold hover:opacity-90 transition-opacity"
               >
                 {loading ? "Creating account..." : "Create Account"}
               </button>

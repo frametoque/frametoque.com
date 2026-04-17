@@ -76,14 +76,14 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
 
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="lg:hidden p-2 hover:bg-white/10 rounded-lg"
+                className="lg:hidden p-2 hover:bg-white/10 rounded-3xl"
               >
                 <X className="w-5 h-5" />
               </button>
 
               <button
                 onClick={() => setCollapsed(!collapsed)}
-                className="hidden lg:block p-2 hover:bg-white/10 rounded-lg"
+                className="hidden lg:block p-2 hover:bg-white/10 rounded-3xl"
               >
                 {collapsed ? <ChevronRight /> : <ChevronLeft />}
               </button>
@@ -104,7 +104,7 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
                           ? "_blank"
                           : "_self"
                       }
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+                    className={`flex items-center gap-3 px-4 py-3 rounded-3xl transition-all
                       ${
                         active
                           ? "bg-gradient-to-r from-brand-600 to-brand-700 text-white"
@@ -124,7 +124,7 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
             <div className="p-4 border-t border-white/10">
             <Link href="/dashboard/settings" >
               <div
-                className={`flex items-center gap-3 p-3 bg-white/5 rounded-lg mb-3 ${
+                className={`flex items-center gap-3 p-3 bg-white/5 rounded-3xl mb-3 ${
                   collapsed ? "justify-center" : ""
                 }`}
               >
@@ -159,7 +159,7 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
               {/* Logout */}
               <SignOutButton redirectUrl="/login">
                 <button
-                  className={`flex items-center gap-3 px-4 py-3 w-full text-gray-300 hover:bg-red-500/10 hover:text-red-400 rounded-lg ${
+                  className={`flex items-center gap-3 px-4 py-3 w-full text-gray-300 hover:bg-red-500/10 hover:text-red-400 rounded-3xl ${
                     collapsed ? "justify-center" : ""
                   }`}
                 >
@@ -182,12 +182,12 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2 hover:bg-white/10 rounded-lg"
+              className="lg:hidden p-2 hover:bg-white/10 rounded-3xl"
             >
               <Menu className="w-6 h-6" />
             </button>
 
-            <div className="hidden sm:flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 w-64 lg:w-96">
+            <div className="hidden sm:flex items-center gap-2 bg-white/5 border border-white/10 rounded-3xl px-4 py-2 w-64 lg:w-96">
               <Search className="w-5 h-5 text-gray-400" />
               <input
                 placeholder="Search..."
@@ -198,11 +198,11 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
 
           {/* Right */}
           <div className="flex items-center gap-3">
-            <button className="sm:hidden p-2 hover:bg-white/10 rounded-lg">
+            <button className="sm:hidden p-2 hover:bg-white/10 rounded-3xl">
               <Search className="w-5 h-5" />
             </button>
 
-            <button className="relative p-2 hover:bg-white/10 rounded-lg">
+            <button className="relative p-2 hover:bg-white/10 rounded-3xl">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-brand-500 rounded-full"></span>
             </button>

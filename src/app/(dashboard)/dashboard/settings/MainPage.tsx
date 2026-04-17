@@ -215,7 +215,7 @@ export default function SettingsPage() {
         <p className="text-gray-400">You must be signed in to access settings.</p>
         <Link 
           href="/sign-in" 
-          className="px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
+          className="px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-3xl font-semibold hover:opacity-90 transition-opacity"
         >
           Sign In
         </Link>
@@ -248,7 +248,7 @@ export default function SettingsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-3xl transition-all ${
                     activeTab === tab.id
                       ? "bg-gradient-to-r from-brand-600 to-brand-700 text-white"
                       : "text-gray-400 hover:bg-white/5 hover:text-white"
@@ -263,7 +263,7 @@ export default function SettingsPage() {
             <div className="pt-4 mt-4 border-t border-white/10">
               <Link
                 href="/contact"
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white transition-all"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-3xl text-gray-400 hover:bg-white/5 hover:text-white transition-all"
               >
                 <MessageCircle className="w-5 h-5" />
                 <span className="font-medium">Contact Support</span>
@@ -293,7 +293,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/10 rounded-lg hover:bg-white/20 transition-colors mb-2 cursor-pointer">
+                    <label className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/10 rounded-3xl hover:bg-white/20 transition-colors mb-2 cursor-pointer">
                       <Upload className="w-4 h-4" />
                       Upload Photo
                       <input 
@@ -320,7 +320,7 @@ export default function SettingsPage() {
                       name="uid"
                       disabled
                       value={user.id || ""}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/5 rounded-lg text-gray-400 text-sm font-mono cursor-not-allowed pr-24"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/5 rounded-3xl text-gray-400 text-sm font-mono cursor-not-allowed pr-24"
                     />
                     
                     {/* Copy Button */}
@@ -373,7 +373,7 @@ export default function SettingsPage() {
                           name="name"
                           value={formData.name}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/30 transition-all duration-200"
+                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-3xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/30 transition-all duration-200"
                           placeholder="Enter your full name"
                           required
                         />
@@ -391,7 +391,7 @@ export default function SettingsPage() {
                             name="email"
                             disabled
                             value={formData.email}
-                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-gray-400 pr-10"
+                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-3xl text-gray-400 pr-10"
                           />
                           <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                             <span className="text-xs px-2 py-1 bg-brand-500/20 text-brand-400 rounded border border-brand-500/30">Verified</span>
@@ -414,7 +414,7 @@ export default function SettingsPage() {
                           required
                           value={formData.phone}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/30 transition-all duration-200"
+                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-3xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/30 transition-all duration-200"
                         />
                         <p className="text-xs text-gray-500 mt-2">Include country code</p>
                       </div>
@@ -431,7 +431,7 @@ export default function SettingsPage() {
                           name="company"
                           value={formData.company}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/30 transition-all duration-200"
+                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-3xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/30 transition-all duration-200"
                           placeholder="Your company name"
                         />
                       </div>
@@ -458,7 +458,7 @@ export default function SettingsPage() {
                           const value = e.target.value;
                           setFormData(prev => ({ ...prev, website: value.startsWith('http') ? value : `https://${value}` }));
                         }}
-                        className="w-full pl-20 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/30 transition-all duration-200"
+                        className="w-full pl-20 pr-4 py-3 bg-white/5 border border-white/10 rounded-3xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/30 transition-all duration-200"
                         placeholder="yourwebsite.com"
                       />
                     </div>
@@ -477,7 +477,7 @@ export default function SettingsPage() {
                         onChange={handleChange}
                         rows={3}
                         required
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 resize-y focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/30 transition-all duration-200"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-3xl text-white placeholder-gray-500 resize-y focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/30 transition-all duration-200"
                         placeholder="123 Business Street, Suite 100&#10;New York, NY 10001&#10;United States"
                       />
                       <div className="flex justify-between items-center mt-2">
@@ -499,7 +499,7 @@ export default function SettingsPage() {
                       <button
                         type="submit"
                         disabled={saving}
-                        className={`flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-brand-500/25 transition-all duration-300 min-w-[140px] justify-center ${
+                        className={`flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-3xl font-semibold shadow-lg hover:shadow-brand-500/25 transition-all duration-300 min-w-[140px] justify-center ${
                           saving ? "opacity-70 cursor-not-allowed" : "hover:scale-[1.02] hover:shadow-xl"
                         }`}
                       >
@@ -570,10 +570,10 @@ export default function SettingsPage() {
                       return (
                         <div
                           key={account.providerUserId}
-                          className="flex items-center justify-between p-4 bg-white/5 rounded-lg"
+                          className="flex items-center justify-between p-4 bg-white/5 rounded-3xl"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+                            <div className="w-10 h-10 bg-white/10 rounded-3xl flex items-center justify-center">
                               {icon}
                             </div>
                             <div>
@@ -600,7 +600,7 @@ export default function SettingsPage() {
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-4">Payment Methods</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
+                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-3xl border border-white/10">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-10 bg-gradient-to-r from-orange-600 to-orange-700 rounded flex items-center justify-center text-white text-sm font-bold">
                           TFR
@@ -613,7 +613,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   
-                  <button className="mt-4 px-6 py-3 bg-white/10 border border-white/10 rounded-lg hover:bg-white/20 transition-colors font-medium">
+                  <button className="mt-4 px-6 py-3 bg-white/10 border border-white/10 rounded-3xl hover:bg-white/20 transition-colors font-medium">
                     More Payment Methods Available Soon
                   </button>
                 </div>
@@ -621,13 +621,13 @@ export default function SettingsPage() {
                 {/* Billing Address */}
                 <div className="pt-6 border-t border-white/10">
                   <h3 className="text-lg font-semibold text-white mb-4">Billing Address</h3>
-                  <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <div className="bg-white/5 rounded-3xl p-4 border border-white/10">
                     <p className="text-white font-medium mb-1">{formData.name}</p>
                     <p className="text-gray-400 text-sm">{formData.address}</p>
                   </div>
                   <button
                     onClick={() => setActiveTab("profile")}
-                    className="mt-4 px-6 py-3 bg-white/10 border border-white/10 rounded-lg hover:bg-white/20 transition-colors font-medium text-white"
+                    className="mt-4 px-6 py-3 bg-white/10 border border-white/10 rounded-3xl hover:bg-white/20 transition-colors font-medium text-white"
                   >
                     Update Address
                   </button>
@@ -645,7 +645,7 @@ export default function SettingsPage() {
                     ].map((invoice, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                        className="flex items-center justify-between p-4 bg-white/5 rounded-3xl hover:bg-white/10 transition-colors"
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-1">

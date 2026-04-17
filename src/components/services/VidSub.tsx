@@ -232,7 +232,7 @@ export default function WebPackages() {
             {/* Button */}
             <Link
               href={cat.link}
-              className="mt-auto w-full py-3 px-4 rounded-lg bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/20 hover:from-brand-500/20 hover:to-brand-600/20 hover:border-brand-500/30 transition-all duration-300 flex items-center justify-center group/btn"
+              className="mt-auto w-full py-3 px-4 rounded-3xl bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/20 hover:from-brand-500/20 hover:to-brand-600/20 hover:border-brand-500/30 transition-all duration-300 flex items-center justify-center group/btn"
             >
               <span className="font-medium">View Packages</span>
               <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
@@ -275,7 +275,7 @@ export default function WebPackages() {
 
             <Link
               href="/contact"
-              className="mt-auto w-full py-3 px-4 rounded-lg bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 transition-all duration-300 flex items-center justify-center group/btn"
+              className="mt-auto w-full py-3 px-4 rounded-3xl bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 transition-all duration-300 flex items-center justify-center group/btn"
             >
               <span className="font-medium">Get Custom Video Quote</span>
               <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />

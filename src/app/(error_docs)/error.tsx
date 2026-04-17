@@ -14,7 +14,7 @@ export default function Error({ error, reset }) {
         <p className="text-lg mb-6">Something went wrong on our side.</p>
         <button
           onClick={() => reset()}
-          className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition-colors"
+          className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-3xl font-medium transition-colors"
         >
           Try Again
         </button>
