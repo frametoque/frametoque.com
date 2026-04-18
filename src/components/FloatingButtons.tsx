@@ -12,7 +12,7 @@ export default function FloatingButtons() {
 
   const hideAll = ['/login', '/register', '/404', ].includes(pathname) || pathname.startsWith('/projects/');
 
-  const showCurrency = pathname === '/services' || pathname.startsWith('/dashboard/') || pathname.startsWith('/services/');
+  const showCurrency = pathname === '/services' || pathname.startsWith('/services/');
 
   if (hideAll) return null;
 

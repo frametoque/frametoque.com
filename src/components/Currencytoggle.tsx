@@ -37,9 +37,8 @@ export default function CurrencyToggle() {
     <div className="relative" ref={wrapRef}>
       {/* Dropdown */}
       <div
-        className={`absolute bottom-full mb-2 right-0 flex flex-col gap-0.5 rounded-2xl p-1.5 min-w-[90px]
-          bg-[rgba(12,25,55,0.95)] border border-white/[0.08]
-          [box-shadow:0_8px_32px_rgba(2,12,45,0.4),0_0_25px_rgba(59,130,246,0.15)]
+        className={`absolute bottom-full mb-2 right-0 flex flex-col gap-0.5 rounded-3xl p-1.5 min-w-[90px]
+          border border-white/10 bg-black/40 backdrop-blur-[60px] shadow-[0_30px_100px_rgba(0,0,0,0.8)]
           transition-all duration-200 origin-bottom-right
           ${open ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}`}
       >
@@ -47,7 +46,7 @@ export default function CurrencyToggle() {
           <button
             key={c}
             onClick={() => select(c)}
-            className={`px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all duration-150 text-left whitespace-nowrap
+            className={`px-3.5 py-2 rounded-3xl text-[13px] font-semibold transition-all duration-150 text-left whitespace-nowrap
               ${currency === c ? 'text-white bg-white/10' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
           >
             {c === 'USD' ? '$ USD' : '₨ LKR'}
