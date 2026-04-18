@@ -34,14 +34,14 @@ export default function DashboardHome() {
       icon: ShoppingCart,
       label: "Browse Services",
       className:
-        "flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-3xl font-semibold hover:opacity-90 transition-opacity",
+        "flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 text-white rounded-3xl font-semibold hover:opacity-90 transition-opacity",
     },
     {
       href: "/contact",
       icon: MessageCircle,
       label: "Contact Us",
       className:
-        "flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 text-white rounded-3xl font-semibold hover:bg-white/20 transition-all duration-300",
+        "flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/20 text-white rounded-3xl font-semibold hover:bg-white/20 transition-all duration-300",
     },
   ];
 
@@ -52,9 +52,9 @@ export default function DashboardHome() {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
+      <div className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8">
         {/* Pulse Effect */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl" />
+        {/* <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl" /> */}
 
        <div className="flex items-center gap-2 mb-2">
   <Sparkles className="w-6 h-6 text-brand-400" />

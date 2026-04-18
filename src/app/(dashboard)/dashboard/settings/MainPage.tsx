@@ -241,7 +241,7 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-2 space-y-1">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-2 space-y-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -250,7 +250,7 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-3xl transition-all ${
                     activeTab === tab.id
-                      ? "bg-gradient-to-r from-brand-600 to-brand-700 text-white"
+                      ? "bg-gradient-to-r from-white to-white text-black font-semibold"
                       : "text-gray-400 hover:bg-white/5 hover:text-white"
                   }`}
                 >
@@ -274,7 +274,7 @@ export default function SettingsPage() {
 
         {/* Content */}
         <div className="lg:col-span-3">
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 sm:p-8">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8">
             {activeTab === "profile" && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-white mb-6">Profile Information</h2>
@@ -499,7 +499,7 @@ export default function SettingsPage() {
                       <button
                         type="submit"
                         disabled={saving}
-                        className={`flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-3xl font-semibold shadow-lg hover:shadow-brand-500/25 transition-all duration-300 min-w-[140px] justify-center ${
+                        className={`flex items-center gap-2 px-6 py-3 bg-white/10 text-white rounded-3xl font-semibold shadow-lg hover:shadow-white-500/25 transition-all duration-300 min-w-[140px] justify-center ${
                           saving ? "opacity-70 cursor-not-allowed" : "hover:scale-[1.02] hover:shadow-xl"
                         }`}
                       >

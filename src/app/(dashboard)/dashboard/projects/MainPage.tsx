@@ -87,7 +87,7 @@ export default function DashboardProjectsPage() {
   if (error) {
     return (
       <PageShell>
-        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 text-center">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-3xl p-6 text-center">
           <p className="text-red-400">{error}</p>
         </div>
       </PageShell>
@@ -111,7 +111,7 @@ export default function DashboardProjectsPage() {
         <div className="flex flex-wrap gap-3">
           <Link
             href="/services"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-white/10 border border-white/10 text-white font-semibold hover:opacity-90 transition-opacity"
           >
             <Plus className="w-5 h-5" />
             New Project
@@ -132,7 +132,7 @@ export default function DashboardProjectsPage() {
           {myRequests.map((request) => (
             <div
               key={request.id}
-              className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-brand-500/30 transition-colors"
+              className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 hover:border-brand-500/30 transition-colors"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 {/* Left - Info */}
@@ -171,7 +171,7 @@ export default function DashboardProjectsPage() {
           ))}
         </div>
       ) : (
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-12 text-center">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-12 text-center">
           <Package className="w-16 h-16 text-gray-600 mx-auto mb-6" />
           <h3 className="text-2xl font-semibold text-white mb-2">No Projects Yet</h3>
           <p className="text-gray-400 mb-6">

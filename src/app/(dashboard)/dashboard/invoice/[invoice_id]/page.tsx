@@ -175,7 +175,7 @@ export default function InvoicePage() {
 
   if (error) {
     return (
-      <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 text-center">
+      <div className="bg-red-500/10 border border-red-500/30 rounded-3xl p-6 text-center">
         <p className="text-red-400">{error}</p>
         <Link href="/dashboard/projects" className="text-brand-400 text-sm mt-3 inline-block">
           ← Back to Projects
@@ -223,14 +223,14 @@ export default function InvoicePage() {
         <div className="flex-1 space-y-4">
 
           {/* Project Name */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
             <h1 className="text-2xl font-bold text-white mb-1">{invoice.project_name || "Untitled Project"}</h1>
             <p className="text-gray-400 text-sm">{invoice.billing_address}</p>
           </div>
 
           {/* Details Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-start gap-4">
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 flex items-start gap-4">
               <div className="p-2 rounded-3xl bg-brand-500/10">
                 <FileText className="w-5 h-5 text-brand-400" />
               </div>
@@ -240,7 +240,7 @@ export default function InvoicePage() {
               </div>
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-start gap-4">
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 flex items-start gap-4">
               <div className="p-2 rounded-3xl bg-brand-500/10">
                 <Calendar className="w-5 h-5 text-brand-400" />
               </div>
@@ -250,7 +250,7 @@ export default function InvoicePage() {
               </div>
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-start gap-4">
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 flex items-start gap-4">
               <div className="p-2 rounded-3xl bg-brand-500/10">
                 <Briefcase className="w-5 h-5 text-brand-400" />
               </div>
@@ -262,7 +262,7 @@ export default function InvoicePage() {
               </div>
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-start gap-4">
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 flex items-start gap-4">
               <div className="p-2 rounded-3xl bg-brand-500/10">
                 <Tag className="w-5 h-5 text-brand-400" />
               </div>
@@ -277,7 +277,7 @@ export default function InvoicePage() {
 
           {/* Line Items Table */}
           {lineItems.length > 0 && (
-            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+            <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
               <div className="grid grid-cols-3 px-5 py-3 border-b border-white/10 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 <span>Description</span>
                 <span className="text-center">Price</span>
@@ -343,9 +343,8 @@ export default function InvoicePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               onClick={handleAppleWallet}
-              // disabled={addingToWallet !== null}
               disabled
-              className="inline-flex items-center justify-center gap-3 w-full px-5 py-4 rounded-2xl border border-white/20 bg-[#1a1a2e] hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-3 w-full px-5 py-4 rounded-3xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {addingToWallet === "apple" ? (
                 <Loader2 className="w-5 h-5 text-white animate-spin" />
@@ -360,9 +359,8 @@ export default function InvoicePage() {
 
             <button
               onClick={handleGoogleWallet}
-              // disabled={addingToWallet !== null}
               disabled
-              className="inline-flex items-center justify-center gap-3 w-full px-5 py-4 rounded-2xl border border-white/20 bg-[#1a1a2e] hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-3 w-full px-5 py-4 rounded-3xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {addingToWallet === "google" ? (
                 <Loader2 className="w-5 h-5 text-white animate-spin" />

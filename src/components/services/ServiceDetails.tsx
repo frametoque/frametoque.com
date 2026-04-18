@@ -267,7 +267,7 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
                                 {displayPackages.map((pkg, index) => (
                                     <div
                                     key={index}
-                                    className={`w-full sm:w-[320px] self-stretch relative bg-slate-900/50 backdrop-blur-sm border rounded-2xl p-8 transition-all duration-300 hover:scale-[1.02] flex flex-col ${
+                                    className={`w-full sm:w-[320px] self-stretch relative bg-gray-900/50 backdrop-blur-sm border rounded-2xl p-8 transition-all duration-300 hover:scale-[1.02] flex flex-col ${
                                     pkg.popular
                                         ? "border-brand-500 shadow-2xl shadow-brand-500/20"
                                         : "border-slate-800 hover:border-slate-700"
@@ -351,7 +351,7 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
                         </div>
 
                         <div className="relative">
-                            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-0.5 bg-gradient-to-b from-brand-500/30 via-brand-500/20 to-transparent hidden lg:block" />
+                            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-0.5 bg-gradient-to-b from-slate-500/30 via-slate-500/20 to-transparent hidden lg:block" />
 
                             <div className="space-y-12 lg:space-y-0">
                                 {data.process && data.process.map((step, index) => (
@@ -399,7 +399,7 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
                             {data.technologies && data.technologies.map((tech, index) => (
                                 <div
                                     key={index}
-                                    className="px-6 py-3 rounded-full bg-slate-900/50 border border-slate-800 hover:border-brand-500/50 hover:bg-brand-500/10 transition-all duration-300"
+                                    className="px-6 py-3 rounded-full bg-gray-900/50 border border-slate-800 hover:border-brand-500/50 hover:bg-gray-500/10 transition-all duration-300"
                                 >
                                     <span className="text-gray-300 font-medium">{tech}</span>
                                 </div>
@@ -420,7 +420,7 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-                            <div className="bg-gradient-to-br from-slate-900/50 to-brand-900/20 border border-slate-800 rounded-2xl p-8">
+                            <div className="bg-gradient-to-br from-gray-900/50 to-gray-900/20 border border-slate-800 rounded-2xl p-8">
                                 <div className="flex items-center mb-6">
                                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/20 border border-brand-500/30 flex items-center justify-center mr-4">
                                         <span className="text-2xl">🎯</span>
@@ -452,30 +452,30 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
                                 </div>
                             </div>
 
-                            <div className="bg-gradient-to-br from-slate-900/50 to-purple-900/20 border border-slate-800 rounded-2xl p-8">
+                            <div className="bg-gradient-to-br from-slate-900/50 to-brand-900/20 border border-slate-800 rounded-2xl p-8">
                                 <div className="flex items-center mb-6">
-                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/30 flex items-center justify-center mr-4">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/20 border border-brand-500/30 flex items-center justify-center mr-4">
                                         <span className="text-2xl">🤝</span>
                                     </div>
                                     <h3 className="text-2xl font-bold">Collaborative Partnership</h3>
                                 </div>
                                 <div className="space-y-4">
                                     <div className="flex items-start space-x-3">
-                                        <Check className="w-5 h-5 text-purple-400 flex-shrink-0 mt-1" />
+                                        <Check className="w-5 h-5 text-brand-400 flex-shrink-0 mt-1" />
                                         <div>
                                             <h4 className="font-semibold mb-1">Transparent Communication</h4>
                                             <p className="text-gray-400 text-sm">Regular updates, clear milestones, and open feedback loops</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start space-x-3">
-                                        <Check className="w-5 h-5 text-purple-400 flex-shrink-0 mt-1" />
+                                        <Check className="w-5 h-5 text-brand-400 flex-shrink-0 mt-1" />
                                         <div>
                                             <h4 className="font-semibold mb-1">Your Vision, Our Expertise</h4>
                                             <p className="text-gray-400 text-sm">We blend your business insights with our technical expertise</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start space-x-3">
-                                        <Check className="w-5 h-5 text-purple-400 flex-shrink-0 mt-1" />
+                                        <Check className="w-5 h-5 text-brand-400 flex-shrink-0 mt-1" />
                                         <div>
                                             <h4 className="font-semibold mb-1">Flexible Collaboration</h4>
                                             <p className="text-gray-400 text-sm">Adapt to your preferred communication and decision-making style</p>
@@ -486,25 +486,25 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                            <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 text-center">
+                            <div className="bg-gray-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 text-center">
                                 <div className="text-3xl font-bold bg-gradient-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent mb-2">
                                     95%
                                 </div>
                                 <p className="text-gray-400 text-sm">Client Satisfaction Rate</p>
                             </div>
-                            <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 text-center">
+                            <div className="bg-gray-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 text-center">
                                 <div className="text-3xl font-bold bg-gradient-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent mb-2">
                                     40%+
                                 </div>
                                 <p className="text-gray-400 text-sm">Average Performance Improvement</p>
                             </div>
-                            <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 text-center">
+                            <div className="bg-gray-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 text-center">
                                 <div className="text-3xl font-bold bg-gradient-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent mb-2">
                                     100%
                                 </div>
                                 <p className="text-gray-400 text-sm">On-Time Delivery</p>
                             </div>
-                            <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 text-center">
+                            <div className="bg-gray-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 text-center">
                                 <div className="text-3xl font-bold bg-gradient-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent mb-2">
                                     24/7
                                 </div>
@@ -512,7 +512,7 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
                             </div>
                         </div>
 
-                        <div className="mt-12 bg-gradient-to-br from-slate-900/50 to-slate-800/20 border border-slate-800 rounded-2xl p-8">
+                        <div className="mt-12 bg-gradient-to-br from-gray-900/50 to-gray-800/20 border border-slate-800 rounded-2xl p-8">
                             <div className="text-center mb-8">
                                 <h3 className="text-2xl font-bold mb-4">Why Clients Trust Us</h3>
                                 <p className="text-gray-400 max-w-2xl mx-auto">

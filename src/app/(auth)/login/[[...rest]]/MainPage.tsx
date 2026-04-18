@@ -243,8 +243,8 @@ export default function CustomLogin() {
 
   const stepMeta = {
     email: {
-      title: "Welcome",
-      titleAccent: "back.",
+      title: "Get",
+      titleAccent: "Started.",
       sub: "Enter your email to sign in or create an account.",
     },
     password: {
@@ -319,7 +319,6 @@ export default function CustomLogin() {
               </button>
             )}
 
-            {/* Heading */}
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-3">
               <span className="bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent">
                 {meta.title}{" "}
@@ -507,7 +506,6 @@ export default function CustomLogin() {
               </form>
             )}
 
-            {/* ── STEP: verify ── */}
             {step === "verify" && (
               <form onSubmit={handleVerify} className="space-y-4 mb-5">
                 <input
@@ -621,7 +619,7 @@ export default function CustomLogin() {
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-slate-950 to-transparent" />
         </div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </>
   );
 }

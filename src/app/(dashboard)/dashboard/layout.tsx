@@ -55,7 +55,7 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
         )}
 
         <aside
-          className={`fixed top-0 left-0 h-full bg-slate-900/95 backdrop-blur-xl border-r border-white/10 z-50 transition-all duration-300
+          className={`fixed top-0 left-0 h-full bg-black backdrop-blur-xl border-r border-white/10 z-50 transition-all duration-300
             ${collapsed ? "w-20" : "w-64"} 
             ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
         >
@@ -107,7 +107,7 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
                     className={`flex items-center gap-3 px-4 py-3 rounded-3xl transition-all
                       ${
                         active
-                          ? "bg-gradient-to-r from-brand-600 to-brand-700 text-white"
+                          ? "bg-gradient-to-r from-white to-white text-black font-semibold"
                           : "text-gray-300 hover:bg-white/5"
                       }
                       `}
@@ -177,7 +177,7 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
   // ------------------ Header ------------------
   const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     return (
-      <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-white/10">
+      <header className="sticky top-0 z-30 bg-black-950/80 backdrop-blur-xl border-b border-white/10">
         <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-4">
             <button
@@ -204,7 +204,7 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
 
             <button className="relative p-2 hover:bg-white/10 rounded-3xl">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-brand-500 rounded-full"></span>
+              <span className="absolute top-1 right-1 w-2 h-2 bg-black-500 rounded-full"></span>
             </button>
 
             {/* Mobile Avatar */}
@@ -228,7 +228,7 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
   const { user, isLoaded } = useUser();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-black text-white">
       <Sidebar
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}

@@ -82,9 +82,9 @@ export default function ProfileProgress() {
   if (progress === 100) return null;
 
   return (
-    <div className="p-6 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl relative overflow-hidden">
+    <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl relative overflow-hidden">
      
-      <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl" />
+      {/* <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl" /> */}
 
       <div className="flex items-center gap-2 mb-2">
         <UserCheck className="w-6 h-6 text-brand-400" />
@@ -123,7 +123,7 @@ export default function ProfileProgress() {
 
       <Link
         href="/dashboard/settings"
-        className="inline-block px-5 py-2 bg-gradient-to-r from-brand-600 to-brand-700 hover:opacity-90 text-white font-semibold rounded-3xl transition-colors"
+        className="inline-block px-5 py-2 bg-white/10 hover:opacity-90 text-white font-semibold rounded-3xl transition-colors"
       >
         Complete Profile
       </Link>
