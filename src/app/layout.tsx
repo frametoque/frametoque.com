@@ -58,6 +58,7 @@ export const metadata = {
     title: "FrameToque Digital Media",
     description:
       "Turning ideas into powerful digital visuals through web, video, and creative media.",
+    keywords: ['FrameToque', 'Digital Media', 'Creative Services', 'Web Development', 'Graphic Design', 'Video Editing', 'Photography', 'Videography'],
     url: "https://frametoque.online",
     siteName: "Frametoque",
     images: [
@@ -78,6 +79,19 @@ export const metadata = {
   },
 };
 
+const localBusiness = {
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "FrameToque Digital Media",
+  "description": "graphic design, Video editing, photography, videography & web development",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Colombo",
+    "addressCountry": "LK"
+  },
+  "url": "https://frametoque.online",
+  "serviceArea": "Sri Lanka"
+}
 
 export default function RootLayout({ children }) {
   
