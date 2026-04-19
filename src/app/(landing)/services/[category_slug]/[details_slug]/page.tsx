@@ -202,5 +202,38 @@ export default async function ServicePage({ params }) {
         notFound();
     }
 
-    return <ServiceDataPage serviceType={details_slug} />;
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: service.title,
+        description: service.description,
+        url: `https://frametoque.online/services/${details_slug}`,
+        image: `https://frametoque.online${service.image}`,
+        provider: {
+            '@type': 'LocalBusiness',
+            name: 'Frametoque',
+            url: 'https://frametoque.online',
+            address: {
+                '@type': 'PostalAddress',
+                addressLocality: 'Colombo',
+                addressCountry: 'LK',
+            },
+        },
+        areaServed: {
+            '@type': 'Country',
+            name: 'Sri Lanka',
+        },
+        serviceType: service.title,
+        keywords: service.keywords.join(', '),
+    };
+
+    return (
+        <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
+            <ServiceDataPage serviceType={details_slug} />
+        </>
+    );
 }
