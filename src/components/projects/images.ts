@@ -16,16 +16,28 @@ export interface VideoProject {
 
 export const videographyURLs: VideoProject[] = [
     { url: "https://youtu.be/hMGyOVpEZKA", },
+    { url: "https://youtu.be/K9PrM7nfYwY", },
+    { url: "https://youtu.be/oUmqy1tqxtU", },
+    { url: "https://youtu.be/f7g4kJxrG6s", },
+    { url: "https://youtu.be/gPCQG8rN-Pg", },
+    { url: "https://youtu.be/Jf__954Bm3M", },
 ];
  
 export const videoEditingURLs: VideoProject[] = [
     { url: "https://youtube.com/shorts/0Rvp6OTZl1w?feature=share" },
     { url: "https://youtube.com/shorts/fcm_iurb5dE?feature=share"  },
     { url: "https://youtu.be/X75cDve1Fc8"},
+    { url: "https://youtu.be/OIgAfIsFJ_I" },
+
     { url: "https://www.youtube.com/shorts/J6ASPaVTBvk"  },
     { url: "https://youtube.com/shorts/bhcXWM37P-8?feature=share" },
+
+
     { url: "https://youtube.com/shorts/ioEszNrM49o?feature=share" },
     { url: "https://youtube.com/shorts/DSjDmrtzAFE?feature=share" },
+
+    { url: "https://youtu.be/forNDSKndBo" },
+    
     { url: "https://youtube.com/shorts/ztSOTGvMqXM?feature=share" },
     { url: "https://youtube.com/shorts/PcI46u91p30?feature=share" }
 ];
