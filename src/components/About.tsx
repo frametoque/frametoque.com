@@ -21,7 +21,7 @@ export default function AboutUs() {
   const teamMembers = [
         {
       name: "Kavinu Pasandul",
-      role: "Cinematographer & Video Editor",
+      role: "Cinematographer | Video Editor",
       expertise: "Creative storytelling & Visual Excellence",
       image: "/images/team/kavinu.jpg",
       social: {
@@ -33,7 +33,7 @@ export default function AboutUs() {
     },
     {
       name: "Tharul Bandara",
-      role: "Graphic Designer",
+      role: "Video Editor | Graphic Designer",
       expertise: "Brand identity & UI/UX design",
       image: "/images/team/tharul.jpg",
       social: {
@@ -45,7 +45,7 @@ export default function AboutUs() {
     },
     {
       name: "Nelitha Priyawansha",
-      role: "Developer",
+      role: "Video Editor | Developer",
       expertise: "Frontend & Backend development",
       image: "/images/team/nelitha.jpg",
       social: {
