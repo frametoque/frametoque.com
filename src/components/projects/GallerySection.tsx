@@ -19,9 +19,9 @@ import { graphicImages } from "./images";
 
 const TABS = [
   { label: "Photography", value: "photography" },
-  { label: "Graphic Designing", value: "graphic-design" },
   { label: "Videography", value: "videography" },
   { label: "Video Editing", value: "video-editing" },
+  { label: "Graphic Designing", value: "graphic-design" },
   { label: "Web Developing", value: "web-dev" },
 ];
 
