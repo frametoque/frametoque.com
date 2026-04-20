@@ -19,6 +19,18 @@ export default function AboutUs() {
   }, []);
 
   const teamMembers = [
+        {
+      name: "Kavinu Pasandul",
+      role: "Cinematographer & Video Editor",
+      expertise: "Creative storytelling & Visual Excellence",
+      image: "/images/team/kavinu.jpg",
+      social: {
+        linkedin: "https://linkedin.com/in/",
+        facebook: "https://facebook.com/",
+        instagram: "https://instagram.com/",
+        email: "kavinu@frametoque.online"
+      }
+    },
     {
       name: "Tharul Bandara",
       role: "Graphic Designer",
@@ -67,7 +79,7 @@ export default function AboutUs() {
         email: "dasindu@frametoque.online"
       }
     },
-  ];
+  ];   
 
   const founder = {
     name: "Kavinu Pasandul",
@@ -152,7 +164,7 @@ export default function AboutUs() {
 
         {/* Founder / Lead Spotlight */}
         <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/5">
-          <FounderSpotlight {...founder} />
+          <FounderSpotlight />
         </section>
 
         {/* Board / Core Team Grid */}
