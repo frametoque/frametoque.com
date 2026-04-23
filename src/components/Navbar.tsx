@@ -12,9 +12,9 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
   const pathname = usePathname();
 
   const links = [
-    { href: "/about", label: "About" },
     { href: "/projects", label: "Work" },
     { href: "/services", label: "Services" },
+    { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];
 
