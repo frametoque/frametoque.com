@@ -25,8 +25,8 @@ const founders: Founder[] = [
     expertise: "Founder & Owner",
     description: "Leading the vision at Frametoque, ensuring every project tells a compelling story through high-quality cinematography.",
     social: {
-      linkedin: "#",
-      instagram: "#",
+      linkedin: "https://www.linkedin.com/in/kavinudigitalworks/",
+      instagram: "https://www.instagram.com/skingod.frrr/",
       email: "kavinu@frametoque.online",
     },
   },
@@ -36,8 +36,8 @@ const founders: Founder[] = [
     expertise: "Founder & Owner",
     description: "Focusing on brand identity and UI/UX design, ensures that Frametoque's visual storytelling is both impactful and memorable.",
     social: {
-      linkedin: "#",
-      instagram: "#",
+      linkedin: "https://linkedin.com/in/",
+      instagram: "https://www.instagram.com/bandara.tharul/",
       email: "tharul@frametoque.online",
     },
   },
@@ -46,7 +46,6 @@ const founders: Founder[] = [
 const protectImage = (e: React.SyntheticEvent) => e.preventDefault();
 
 const FounderSpotlight = () => {
-  // Shared Image for both founders
   const sharedImage = "/images/team/founders.jpg"; 
 
   const renderSocials = (social: Founder["social"]) => (
@@ -99,12 +98,12 @@ const FounderSpotlight = () => {
 </div>
 
       <div className="relative group max-w-md mx-auto md:mx-0">
-        <div className="relative overflow-hidden rounded-2xl aspect-square sm:aspect-[4/5]">
+        <div className="relative overflow-hidden rounded-2xl aspect-square sm:aspect-square md:aspect-square">
            <Image
             src={sharedImage}
             alt="'Founders Spotlight'"
             width={640}
-            height={720}
+            height={700}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             onContextMenu={protectImage}
             onDragStart={protectImage}

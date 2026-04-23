@@ -20,7 +20,7 @@ const TeamMemberCard = ({ image, name, role, expertise, social, accentColor = "b
   };
 
   return (
-    <div className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-white/5 transition-all duration-300 group hover:-translate-y-2 flex flex-col h-full">
+    <div className="bg-[#0a0a0a] rounded-xl overflow-hidden border border-white/5 transition-all duration-300 group hover:-translate-y-2 flex flex-col h-full justify-center">
       <div className="relative">
         <div className="relative aspect-[4/5] overflow-hidden">
           {image ? (
@@ -58,6 +58,16 @@ const TeamMemberCard = ({ image, name, role, expertise, social, accentColor = "b
                 aria-label="LinkedIn"
                 >
                 <Linkedin size={14} />
+                </Link>
+            )}
+            {social?.facebook && (
+                <Link
+                href={social.facebook}
+                target="_blank"
+                className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all"
+                aria-label="Facebook"
+                >
+                <Facebook size={14} />
                 </Link>
             )}
             {social?.instagram && (

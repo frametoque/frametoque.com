@@ -25,9 +25,9 @@ export default function AboutUs() {
       expertise: "Creative storytelling & Visual Excellence",
       image: "/images/team/kavinu.jpg",
       social: {
-        linkedin: "https://linkedin.com/in/",
-        facebook: "https://facebook.com/",
-        instagram: "https://instagram.com/",
+        linkedin: "https://www.linkedin.com/in/kavinudigitalworks/",
+        facebook: "https://facebook.com/podismoka",
+        instagram: "https://www.instagram.com/skingod.frrr/",
         email: "kavinu@frametoque.online"
       }
     },
@@ -37,9 +37,10 @@ export default function AboutUs() {
       expertise: "Brand identity & UI/UX design",
       image: "/images/team/tharul.jpg",
       social: {
+
         linkedin: "https://linkedin.com/in/",
-        facebook: "https://facebook.com/",
-        instagram: "https://instagram.com/",
+        facebook: "https://www.facebook.com/profile.php?id=100085498870782",
+        instagram: "https://instagram.com/bandara.tharul",
         email: "tharul@frametoque.online"
       }
     },
@@ -61,9 +62,9 @@ export default function AboutUs() {
       expertise: "Frontend development",
       image: "/images/team/sadaka.jpg",
       social: {
-        instagram: "https://instagram.com/",
-        facebook: "https://facebook.com/",
-        github: "https://github.com/",
+        instagram: "https://www.instagram.com/sadaka.wijerathna/",
+        facebook: "https://www.facebook.com/profile.php?id=61563544419694",
+        github: "https://github.com/Sadaka-Wijerathna",
         email: "sadaka@frametoque.online"
       }
     },
@@ -73,33 +74,18 @@ export default function AboutUs() {
       expertise: "Portrait & Commercial photography",
       image: "/images/team/dasindu.jpg",
       social: {
-        instagram: "https://instagram.com/",
-        facebook: "https://facebook.com/",
-        tiktok: "https://tiktok.com/",
+        instagram: "https://www.instagram.com/dazuu.jay/",
+        facebook: "https://www.facebook.com/profile.php?id=100082846762501",
         email: "dasindu@frametoque.online"
       }
     },
   ];   
-
-  const founder = {
-    name: "Kavinu Pasandul",
-    role: "Founder",
-    expertise: "Creative storytelling & Visual Excellence",
-    image: "/images/team/kavinu.jpg",
-    social: {
-      linkedin: "https://linkedin.com/in/",
-      instagram: "https://instagram.com/", 
-      tiktok: "https://tiktok.com/",
-      email: "kavinu@frametoque.online"
-    }
-  };
 
   return (
     <div className="bg-black text-white selection:bg-brand-500 selection:text-white">
       <Navbar scrolled={true} />
       
       <main className="min-h-screen relative overflow-hidden">
-        {/* Hero Image Section (Matches /projects style) */}
         <section className="relative h-[40vh] md:h-[35vh] w-full bg-black overflow-hidden flex items-center justify-center">
           <Image
             src="/projects/photography/Evendor 25'/DSC08054.jpg.jpeg"
@@ -160,14 +146,10 @@ export default function AboutUs() {
         </section>
 
 
-
-
-        {/* Founder / Lead Spotlight */}
         <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/5">
           <FounderSpotlight />
         </section>
 
-        {/* Board / Core Team Grid */}
         <section className="bg-[#111111] py-24 border-y border-white/5">
           <div className="max-w-6xl mx-auto px-6">
             <div className="flex flex-col gap-6 mb-16">
@@ -193,7 +175,6 @@ export default function AboutUs() {
           </div>
         </section>
 
-        {/* Additional Sections */}
       </main>
 
       <Footer />
