@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Globe, X, ExternalLink, Monitor, Loader2, Smartphone } from "lucide-react";
-import { siteDetailsMap, webDevProjects, type WebDevImage, type SiteDetails } from "./images";
+import { type WebDevImage, type SiteDetails } from "../../lib/workdata"; 
 
 export function WebProjectPopup({
   site,
@@ -208,14 +208,20 @@ export function WebProjectPopup({
   );
 }
 
-export function WebDevelopingGallery() {
+export function WebDevelopingGallery({
+  projects,
+  detailsMap,
+}: {
+  projects: WebDevImage[];
+  detailsMap: Record<string, SiteDetails>;
+}) {
   const [activeSite, setActiveSite] = useState<SiteDetails | null>(null);
 
   return (
     <>
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {webDevProjects.map((item, i) => {
-          const site = siteDetailsMap[item.domain];
+        {projects.map((item, i) => {         
+          const site = detailsMap[item.domain]; 
           return (
             <div
               key={i}
@@ -231,10 +237,7 @@ export function WebDevelopingGallery() {
                 sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
               />
               <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/40">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="w-8 h-8 fill-white mb-2"
-                >
+                <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white mb-2">
                   <path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" />
                 </svg>
                 <span className="text-white text-sm font-medium tracking-wide">
@@ -245,13 +248,7 @@ export function WebDevelopingGallery() {
           );
         })}
       </div>
-
-      {activeSite && (
-        <WebProjectPopup
-          site={activeSite}
-          onClose={() => setActiveSite(null)}
-        />
-      )}
+      {activeSite && <WebProjectPopup site={activeSite} onClose={() => setActiveSite(null)} />}
     </>
   );
 }

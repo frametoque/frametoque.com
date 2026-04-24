@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import GallerySection from "@/components/projects/GallerySection";
-
+import { getPhotography, getGraphics, getVideography, getVideoEditing, getWebProjects } from "@/lib/workdata";
 import { Metadata } from "next";
 
 const titles: Record<string, string> = {
@@ -71,10 +71,32 @@ export default async function ProjectSlugPage({
 
   if (!VALID_SLUGS.includes(slug)) notFound();
 
+const [
+  photographyEvents,
+  graphicImages,
+  videographyUrls,
+  videoEditingUrls,
+  { projects: webProjects, detailsMap: webDetailsMap }, 
+] = await Promise.all([
+  getPhotography(),
+  getGraphics(),
+  getVideography(),
+  getVideoEditing(),
+  getWebProjects(),
+]);
+
   return (
     <main className="min-h-screen bg-black text-white">
       <Navbar scrolled={true} />
-      <GallerySection initialTab={slug} />
+      <GallerySection
+        initialTab={slug}
+        photographyEvents={photographyEvents}
+        graphicImages={graphicImages}
+        videographyUrls={videographyUrls}
+        videoEditingUrls={videoEditingUrls}
+        webProjects={webProjects}
+        webDetailsMap={webDetailsMap} 
+      />
       <Footer />
     </main>
   );

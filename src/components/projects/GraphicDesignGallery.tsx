@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { graphicImages } from "./images";
 
 export function GalleryImage({
   src,
@@ -60,10 +59,16 @@ export function GalleryImage({
   );
 }
 
-export function GraphicDesignGallery({ onOpen }: { onOpen: (i: number) => void }) {
+export function GraphicDesignGallery({
+  images,
+  onOpen,
+}: {
+  images: string[];
+  onOpen: (i: number) => void;
+}) {
   return (
     <div className="max-w-7xl mx-auto columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 px-4 overflow-hidden">
-      {graphicImages.map((src, i) => (
+      {images.map((src, i) => (
         <GalleryImage
           key={`${src}-${i}`}
           src={src}

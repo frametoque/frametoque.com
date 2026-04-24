@@ -14,8 +14,7 @@ import { VideographyGallery } from "./VideographyGallery";
 import { VideoEditingGallery } from "./VideoEditingGallery";
 import { WebDevelopingGallery } from "./WebDevelopingGallery";
 
-import { photographyImages } from "./photography-data";
-import { graphicImages } from "./images";
+import { type PhotographyEvent, type VideoProject, type WebDevImage, type SiteDetails } from "../../lib/workdata";
 
 const TABS = [
   { label: "Photography", value: "photography" },
@@ -27,39 +26,24 @@ const TABS = [
 
 function getHeroForTab(tab: string): string {
   switch (tab) {
-    case "photography":
-      return "/projects/photography-cover.jpg";
-    case "videography":
-      return "/projects/videography-cover.jpg";
-    case "graphic-design":
-      return "/projects/graphic-design-cover.jpg";
-    case "video-editing":
-      return "/projects/vid-edit-cover.jpg";
-    case "web-dev":
-      return "/projects/web-dev-cover.jpg";
-    default:
-      return "/projects/vid-edit-cover.jpg";
+    case "photography":      return "/projects/photography-cover.jpg";
+    case "videography":      return "/projects/videography-cover.jpg";
+    case "graphic-design":   return "/projects/graphic-design-cover.jpg";
+    case "video-editing":    return "/projects/vid-edit-cover.jpg";
+    case "web-dev":          return "/projects/web-dev-cover.jpg";
+    default:                 return "/projects/vid-edit-cover.jpg";
   }
 }
 
 function SingleHeroImage({
-  tab,
-  label,
-  src,
-  isActive,
+  tab, label, src, isActive,
 }: {
-  tab: string;
-  label: string;
-  src: string;
-  isActive: boolean;
+  tab: string; label: string; src: string; isActive: boolean;
 }) {
   const [currentSrc, setCurrentSrc] = useState(src);
   const isYoutube = tab === "videography" && src.includes("ytimg.com");
 
-  // Keep state in sync if src prop changes
-  useEffect(() => {
-    setCurrentSrc(src);
-  }, [src]);
+  useEffect(() => { setCurrentSrc(src); }, [src]);
 
   const handleError = () => {
     if (isYoutube && currentSrc.includes("maxresdefault")) {
@@ -72,7 +56,7 @@ function SingleHeroImage({
       src={currentSrc}
       alt={`${label} hero`}
       fill
-      priority={isActive} // Only prioritize fetching the active one instantly
+      priority={isActive}
       onError={handleError}
       className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ${
         isActive ? "opacity-100 scale-105 z-10" : "opacity-0 scale-100 z-0"
@@ -101,9 +85,24 @@ function ProjectHero({ activeTab }: { activeTab: string }) {
 
 interface GallerySectionProps {
   initialTab?: string;
+  photographyEvents: PhotographyEvent[]; 
+  graphicImages: string[];
+  videographyUrls: VideoProject[];  
+  videoEditingUrls: VideoProject[];
+  webProjects: WebDevImage[];      
+  webDetailsMap: Record<string, SiteDetails>; 
 }
 
-const GallerySection = ({ initialTab = "photography" }: GallerySectionProps) => {
+const GallerySection = ({
+  initialTab = "photography",
+  photographyEvents,
+  graphicImages,
+  videographyUrls,
+  videoEditingUrls,
+  webProjects,
+  webDetailsMap,
+}: GallerySectionProps) => {
+
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(initialTab);
   const [lightboxIndex, setLightboxIndex] = useState(-1);
@@ -115,11 +114,10 @@ const GallerySection = ({ initialTab = "photography" }: GallerySectionProps) => 
   };
 
   const activeLabel = TABS.find((t) => t.value === activeTab)?.label ?? "";
-  const heroImage = getHeroForTab(activeTab);
 
   const lightboxSlides =
     activeTab === "photography"
-      ? photographyImages.map((img) => ({ src: img.src, width: img.width, height: img.height }))
+      ? photographyEvents.flatMap(e => e.images.map(img => ({ src: img.src, width: img.width, height: img.height })))
       : activeTab === "graphic-design"
         ? graphicImages.map((src) => ({ src }))
         : [];
@@ -136,8 +134,7 @@ const GallerySection = ({ initialTab = "photography" }: GallerySectionProps) => 
             </span>
             {activeLabel.split(" ").length > 1 && (
               <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
-                {" "}
-                {activeLabel.split(" ").slice(1).join(" ")}
+                {" "}{activeLabel.split(" ").slice(1).join(" ")}
               </span>
             )}
           </h2>
@@ -149,25 +146,24 @@ const GallerySection = ({ initialTab = "photography" }: GallerySectionProps) => 
 
         <div className="mb-12 sm:mb-16">
           <div className="flex justify-center">
-          {/* Mobile: Wrapped */}
-          <div className="flex sm:hidden flex-wrap gap-2 w-full pb-2 px-4">
-            {TABS.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => handleTabChange(tab.value)}
-                className={`
-                  flex-1 min-w-[calc(50%-4px)] max-w-[calc(50%-4px)] px-3 py-2.5 rounded-full text-xs font-medium transition-all duration-300 text-center
-                  ${
-                    activeTab === tab.value
+            {/* Mobile: Wrapped */}
+            <div className="flex sm:hidden flex-wrap gap-2 w-full pb-2 px-4">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => handleTabChange(tab.value)}
+                  className={`
+                    flex-1 min-w-[calc(50%-4px)] max-w-[calc(50%-4px)] px-3 py-2.5 rounded-full text-xs font-medium transition-all duration-300 text-center
+                    ${activeTab === tab.value
                       ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30"
                       : "text-gray-400 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10"
-                  }
-                `}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+                    }
+                  `}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
             {/* Desktop: Centered pill row */}
             <div className="hidden sm:inline-flex p-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
@@ -202,11 +198,15 @@ const GallerySection = ({ initialTab = "photography" }: GallerySectionProps) => 
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
           >
-            {activeTab === "photography" && <PhotographyGallery onOpen={setLightboxIndex} />}
-            {activeTab === "graphic-design" && <GraphicDesignGallery onOpen={setLightboxIndex} />}
-            {activeTab === "videography" && <VideographyGallery />}
-            {activeTab === "video-editing" && <VideoEditingGallery />}
-            {activeTab === "web-dev" && <WebDevelopingGallery />}
+            {activeTab === "photography" && (
+              <PhotographyGallery events={photographyEvents} onOpen={setLightboxIndex} />
+            )}
+            {activeTab === "graphic-design" && (
+              <GraphicDesignGallery images={graphicImages} onOpen={setLightboxIndex} />
+            )}
+            {activeTab === "videography"   && <VideographyGallery urls={videographyUrls} />}
+            {activeTab === "video-editing" && <VideoEditingGallery urls={videoEditingUrls} />}
+            {activeTab === "web-dev"       && <WebDevelopingGallery projects={webProjects} detailsMap={webDetailsMap} />}
           </motion.div>
         </AnimatePresence>
 

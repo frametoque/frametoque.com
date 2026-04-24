@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { type VideoProject, videoEditingURLs } from "./images";
+import { type VideoProject } from "../../lib/workdata";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Volume2, VolumeX } from "lucide-react";
@@ -358,16 +358,15 @@ const changeSpeed = (rate: number) => {
   );
 }
 
-export function VideoEditingGallery() {
+export function VideoEditingGallery({ urls }: { urls: VideoProject[] }) { 
   const [activeProject, setActiveProject] = useState<any>(null);
   const [unmuteIndex, setUnmuteIndex] = useState<number | null>(null);
-
   const handleExpand = (url: string, startTime: number) => { setActiveProject({ url, startTime }); };
 
   return (
     <>
       <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-6 gap-4 auto-rows-min">
-        {videoEditingURLs.map((project, i) => (
+        {urls.map((project, i) => ( 
           <VideoCard key={i} project={project} index={i} onClick={() => handleExpand(project.url, 0)} onExpand={handleExpand} isAnyModalOpen={!!activeProject} activeInlineIndex={unmuteIndex} onPlayStart={setUnmuteIndex} />
         ))}
       </div>

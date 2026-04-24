@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { photographyEvents, type PhotographyImage } from "./photography-data";
+import { type PhotographyEvent, type PhotographyImage } from "@/lib/workdata";
 
 export function GalleryImage({
   img,
@@ -49,13 +49,19 @@ export function GalleryImage({
 
 const INITIAL_LIMIT = 25;
 
-export function PhotographyGallery({ onOpen }: { onOpen: (i: number) => void }) {
+export function PhotographyGallery({
+  events,
+  onOpen,
+}: {
+  events: PhotographyEvent[];   
+  onOpen: (i: number) => void;
+}) {
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   let globalIndex = 0;
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 flex flex-col gap-24 pb-20">
-      {photographyEvents.map((event, eventIdx) => {
+      {events.map((event, eventIdx) => {
         const startIndex = globalIndex;
         globalIndex += event.images.length;
 
@@ -93,7 +99,7 @@ export function PhotographyGallery({ onOpen }: { onOpen: (i: number) => void }) 
                 if (!isExtra) {
                   return (
                     <GalleryImage
-                      key={`${img.src}-${localIndex}`}
+                      key={`${eventIdx}-${localIndex}`}
                       img={img}
                       alt={`${event.name} photo ${localIndex + 1}`}
                       index={localIndex}
@@ -103,7 +109,7 @@ export function PhotographyGallery({ onOpen }: { onOpen: (i: number) => void }) 
                 }
 
                 return (
-                  <AnimatePresence key={`extra-${img.src}`}>
+                  <AnimatePresence key={`extra-${eventIdx}-${localIndex}`}>
                     {isExpanded && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
