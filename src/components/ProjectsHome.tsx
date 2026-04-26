@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Globe, Youtube, Eye, ExternalLink, X, Camera } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -26,6 +26,42 @@ interface PopupVideo {
 }
 
 const protectImage = (e: React.SyntheticEvent) => e.preventDefault();
+
+function ProjectVideo({ src, poster }: { src: string; poster: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.src = src;
+          el.play().catch(() => {});
+        } else {
+          el.pause();
+          el.removeAttribute("src");
+          el.load();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [src]);
+
+  return (
+    <video
+      ref={ref}
+      poster={poster}
+      className="absolute inset-0 w-full h-full pointer-events-none object-cover group-hover:scale-110 transition-transform duration-700"
+      muted
+      loop
+      playsInline
+      preload="none"
+    />
+  );
+}
 
 export default function ProjectsHome() {
   const [popupImage, setPopupImage] = useState<string | null>(null);
@@ -211,16 +247,10 @@ export default function ProjectsHome() {
     return (
       <>
         {project.video ? (
-          <video
-            src={`/projects/video/${project.video}`}
-            poster={project.image}
-            className="absolute inset-0 w-full h-full pointer-events-none object-cover group-hover:scale-110 transition-transform duration-700"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="none"
-          />
+            <ProjectVideo
+              src={`/projects/video/${project.video}`}
+              poster={project.image}
+            />
         ) : (
           <Image
             fill
