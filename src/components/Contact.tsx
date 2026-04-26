@@ -61,7 +61,7 @@ export default function ContactPage() {
 
         <section className="relative h-[40vh] md:h-[35vh] w-full bg-black overflow-hidden flex items-center justify-center">
           <Image
-            src="/projects/photography/Evendor 25'/DSC08054.jpg.jpeg"
+            src="/projects/photography/Evendor '25/DSC08054.jpg.jpeg"
             alt="Contact Hero"
             fill
             priority
@@ -107,7 +107,7 @@ export default function ContactPage() {
                   <Mail className="w-5 h-5 text-brand-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 mb-0.5 uppercase tracking-wider">Email</p>
+                  <p className="text-xs text-slate-400 mb-0.5 uppercase tracking-wider">Email</p>
                   <p className="text-sm text-slate-200 group-hover:text-brand-400 transition-colors">
                     contact@frametoque.online
                   </p>
@@ -123,7 +123,7 @@ export default function ContactPage() {
                   <WhatsApp className="text-brand-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 mb-0.5 uppercase tracking-wider">WhatsApp</p>
+                  <p className="text-xs text-slate-400 mb-0.5 uppercase tracking-wider">WhatsApp</p>
                   <p className="text-sm text-slate-200 group-hover:text-brand-400 transition-colors">
                     +94 70 190 1461
                   </p>
@@ -181,7 +181,7 @@ export default function ContactPage() {
                   key={i}
                   className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-2 hover:border-brand-500/30 transition-colors"
                 >
-                  <h4 className="font-semibold text-white text-base">{faq.q}</h4>
+                  <h3 className="font-semibold text-white text-base">{faq.q}</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">{faq.a}</p>
                 </div>
               ))}

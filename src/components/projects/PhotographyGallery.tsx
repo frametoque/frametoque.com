@@ -86,7 +86,7 @@ export function PhotographyGallery({
                 {event.name}
               </h3>
               <div className="flex-1 h-px bg-gradient-to-r from-white/20 to-transparent" />
-              <span className="text-xs font-bold tracking-[0.2em] uppercase text-white/30">
+              <span className="text-xs font-bold tracking-[0.2em] uppercase text-white/60">
                 {event.images.length} Captures
               </span>
             </div>
@@ -146,7 +146,7 @@ export function PhotographyGallery({
                       className="flex items-center gap-2 px-6 py-2.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-sm font-semibold tracking-wide transition-colors duration-300"
                     >
                       Show More
-                      <span className="text-white/30 text-xs">({event.images.length - INITIAL_LIMIT} more)</span>
+                      <span className="text-white/60 text-xs">({event.images.length - INITIAL_LIMIT} more)</span>
                     </motion.button>
                   ) : (
                     <motion.button

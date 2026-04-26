@@ -88,7 +88,7 @@ export default function AboutUs() {
       <main className="min-h-screen relative overflow-hidden">
         <section className="relative h-[40vh] md:h-[35vh] w-full bg-black overflow-hidden flex items-center justify-center">
           <Image
-            src="/projects/photography/Evendor 25'/DSC08054.jpg.jpeg"
+            src="/projects/photography/Evendor '25/DSC08054.jpg.jpeg"
             alt="About Us Hero"
             fill
             priority
@@ -119,9 +119,9 @@ export default function AboutUs() {
             </p>
 
             <div className="border-l-2 border-brand-500/60 pl-6 space-y-2">
-              <h3 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-white">
                 <span className="text-brand-400">Our Vision</span>
-              </h3>
+              </h2>
               <p className="text-slate-400 leading-relaxed">
                 To grow into one of Sri Lanka’s leading creative teams that helps brands
                 stand out. We want to mix creativity and technology to build fresh,
@@ -130,9 +130,9 @@ export default function AboutUs() {
             </div>
 
             <div className="border-l-2 border-brand-500/60 pl-6 space-y-2">
-              <h3 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-white">
                 <span className="text-brand-400">Our Mission</span>
-              </h3>
+              </h2>
               <p className="text-slate-400 leading-relaxed">
                 To create real and meaningful experiences through design, video, and code.
                 Our goal is to help brands connect with people in a way that

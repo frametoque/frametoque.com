@@ -55,7 +55,7 @@ const TeamMemberCard = ({ image, name, role, expertise, social, accentColor = "b
                 href={social.linkedin}
                 target="_blank"
                 className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all"
-                aria-label="LinkedIn"
+                aria-label={`${name} on LinkedIn`}
                 >
                 <Linkedin size={14} />
                 </Link>
@@ -65,7 +65,7 @@ const TeamMemberCard = ({ image, name, role, expertise, social, accentColor = "b
                 href={social.facebook}
                 target="_blank"
                 className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all"
-                aria-label="Facebook"
+                aria-label={`${name} on Facebook`}
                 >
                 <Facebook size={14} />
                 </Link>
@@ -75,7 +75,7 @@ const TeamMemberCard = ({ image, name, role, expertise, social, accentColor = "b
                 href={social.instagram}
                 target="_blank"
                 className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all"
-                aria-label="Instagram"
+                aria-label={`${name} on Instagram`}
                 >
                 <Instagram size={14} />
                 </Link>
@@ -85,7 +85,7 @@ const TeamMemberCard = ({ image, name, role, expertise, social, accentColor = "b
                 href={social.github}
                 target="_blank"
                 className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all"
-                aria-label="GitHub"
+                aria-label={`${name} on GitHub`}
                 >
                 <Github size={14} />
                 </Link>
@@ -95,7 +95,7 @@ const TeamMemberCard = ({ image, name, role, expertise, social, accentColor = "b
                 href={social.tiktok}
                 target="_blank"
                 className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all"
-                aria-label="TikTok"
+                aria-label={`${name} on TikTok`}
                 >
                 <Music2 size={14} />
                 </Link>
@@ -104,7 +104,7 @@ const TeamMemberCard = ({ image, name, role, expertise, social, accentColor = "b
                 <Link
                 href={`mailto:${social.email}`}
                 className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all"
-                aria-label="Email"
+                aria-label={`Email ${name}`}
                 >
                 <Mail size={14} />
                 </Link>
