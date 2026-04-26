@@ -219,7 +219,7 @@ export default function ProjectsHome() {
             muted
             loop
             playsInline
-            preload="metadata"
+            preload="none"
           />
         ) : (
           <Image
