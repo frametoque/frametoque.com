@@ -10,7 +10,7 @@ export default function CollabCompact() {
             <div className="relative mt-6 rounded-2xl overflow-hidden">
               <Link href="/contact" >
                   <Image
-                    src="/collab-banner.png"
+                    src="/collab-banner.webp"
                     alt="FrameToque Digital Media"
                     width={1920}
                     height={480}

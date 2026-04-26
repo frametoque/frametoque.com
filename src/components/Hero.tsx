@@ -71,7 +71,7 @@ export default function Hero() {
           {/*  Divider */}
           <div className="w-full leading-none -mt-15 relative z-2">
             <Image
-              src="/divider.png"
+              src="/divider.webp"
               alt=" Divider"
               width={1920}
               height={200}

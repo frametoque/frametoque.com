@@ -13,6 +13,7 @@ interface Project {
   category: string;
   image: string;
   type: ProjectType;
+  popupImage?: string;
   youtube?: string;
   video?: string;
   live?: string;
@@ -83,7 +84,7 @@ export default function ProjectsHome() {
       id: 2,
       title: "TechRolk | E-commerce Website",
       category: "Web Development",
-      image: "/projects/web/techrolk-store.png",
+      image: "/projects/web/techrolk-store.webp",
       type: "web",
       live: "https://techrolk.com/shop",
       area: "b",
@@ -92,7 +93,7 @@ export default function ProjectsHome() {
       id: 3,
       title: "School Website",
       category: "Web Development",
-      image: "/projects/web/pwc.png",
+      image: "/projects/web/pwc.webp",
       type: "web",
       live: "https://princeofwales.edu.lk/",
       area: "c",
@@ -101,8 +102,9 @@ export default function ProjectsHome() {
       id: 4,
       title: "Magazine Launch Poster",
       category: "Graphic Design",
-      image: "/projects/graphic/ncss.png",
+      image: "/projects/graphic/ncss-poster.webp",
       type: "graphic",
+      popupImage: "/projects/graphic/ncss.png",
       youtube: "https://www.youtube.com/watch?v=ztSOTGvMqXM",
       video: "graphics.mp4",
       area: "d",
@@ -121,7 +123,7 @@ export default function ProjectsHome() {
       id: 6,
       title: "LIttle Guardians | Album",
       category: "Photography",
-      image: "/projects/photography/lIttle-guardians.jpg",
+      image: "/projects/photography/lIttle-guardians.webp",
       type: "photography",
       live: "https://www.facebook.com/media/set?vanity=frametoque&set=a.122108823843271134",
       area: "f",
@@ -140,7 +142,7 @@ export default function ProjectsHome() {
       id: 8,
       title: "Product Poster Design",
       category: "Graphic Design",
-      image: "/projects/graphic/energycup.png",
+      image: "/projects/graphic/energycup.webp",
       type: "graphic",
       area: "h",
     },
@@ -213,7 +215,7 @@ export default function ProjectsHome() {
     if (project.type === "graphic")
       return (
         <button
-          onClick={() => setPopupImage(project.image)}
+          onClick={() => setPopupImage(project.popupImage ?? project.image)}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-brand-500/30 border border-white/15 hover:border-brand-400/50 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-300"
         >
           <Eye className="w-3.5 h-3.5" /> Full View
@@ -259,7 +261,7 @@ export default function ProjectsHome() {
             onContextMenu={protectImage}
             onDragStart={protectImage}
             className="object-cover transition-transform duration-700 group-hover:scale-110"
-            sizes="(max-width: 768px) 100vw, 50vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         )}
 
