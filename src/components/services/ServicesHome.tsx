@@ -8,7 +8,7 @@ const features = [
       "We create spaces that inspire trust and leave a lasting impression.",
     icon: Laptop,
     imagePosition: "left",
-    link: "/services#web",
+    link: "/services/web-dev",
   },
   {
     title: "Graphic Design",
@@ -16,7 +16,7 @@ const features = [
       "Every piece we craft tells your story and makes your brand unforgettable.",
     icon: PenTool,
     imagePosition: "left",
-    link: "/services#graphic",
+    link: "/services/graphic-design",
 
   },
   {
@@ -25,7 +25,7 @@ const features = [
       "We turn ideas into videos that spark emotion and stay in people’s minds forever.",
     icon: Film,
     imagePosition: "left",
-    link: "/services#video",
+    link: "/services/video-editing",
 
   },
   {
@@ -34,7 +34,7 @@ const features = [
       "We capture the essence of your brand in images that resonate and leave a lasting impression.",
     icon: Camera,
     imagePosition: "left",
-    link: "/services#photo",
+    link: "/services/photo-video",
 
   },
 
@@ -44,7 +44,7 @@ const features = [
       "We create cinematic stories that captivate your audience and make your brand unforgettable.",
     icon: Video,
     imagePosition: "left",
-    link: "/services#photo",
+    link: "/services/photo-video",
 
   },
 
@@ -54,7 +54,7 @@ const features = [
       "We craft strategies that resonate with your audience and make your brand unforgettable.",
     icon: Megaphone,
     imagePosition: "left",
-    link: "/services#photo",
+    link: "/services",
 
   },
 ];
