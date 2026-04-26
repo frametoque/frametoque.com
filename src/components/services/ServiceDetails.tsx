@@ -292,7 +292,7 @@ const displayPackages = convertedPackages.length > 0 ? convertedPackages : origi
                                                 </span>
                                                 <span className="text-gray-400">{currency}</span>
                                             </div>
-                                            <div className="text-sm text-gray-500">{pkg.duration}</div>
+                                            <div className="text-sm text-gray-400">{pkg.duration}</div>
                                         </div>
 
                                         <ul className="space-y-3 mb-8 flex-grow">

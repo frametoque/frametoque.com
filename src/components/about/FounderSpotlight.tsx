@@ -51,27 +51,27 @@ const FounderSpotlight = () => {
   const renderSocials = (social: Founder["social"]) => (
     <div className="flex gap-3">
       {social.linkedin && (
-        <Link href={social.linkedin} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-brand-500 transition-all">
+        <Link href={social.linkedin} aria-label={`${name} on Linkedin`} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-brand-500 transition-all">
           <Linkedin size={18} />
         </Link>
       )}
       {social.instagram && (
-        <Link href={social.instagram} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-brand-500 transition-all">
+        <Link href={social.instagram} aria-label={`${name} on Instagram`} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-brand-500 transition-all">
           <Instagram size={18} />
         </Link>
       )}
       {social.tiktok && (
-        <Link href={social.tiktok} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-brand-500 transition-all">
+        <Link href={social.tiktok} aria-label={`${name} on TikTok`} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-brand-500 transition-all">
           <Music2 size={18} />
         </Link>
       )}
       {social.facebook && (
-        <Link href={social.facebook} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-brand-500 transition-all">
+        <Link href={social.facebook} aria-label={`${name} on Facebook`} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-brand-500 transition-all">
           <Facebook size={18} />
         </Link>
       )}
       {social.email && (
-        <Link href={`mailto:${social.email}`} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-brand-500 transition-all">
+        <Link href={`mailto:${social.email}`} aria-label={`Email ${name}`} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-brand-500 transition-all">
           <Mail size={18} />
         </Link>
       )}
