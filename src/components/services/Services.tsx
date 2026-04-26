@@ -7,17 +7,14 @@ import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-import WebSub from "@/components/services/WebSub";
-import GraphicsSub from "@/components/services/GraphicsSub";
-import VidSub from "@/components/services/VidSub";
-import PhotoSub from "@/components/services/PhotoSub";
+import ServicesSub from "@/components/services/ServicesSub";
 
 // ─── Tab config ────────────────────────────────────────────────────────────────
 const TABS = [
-  { label: "Photography & Videography", value: "photo-video"   },
-  { label: "Graphic Design",            value: "graphic-design" },
-  { label: "Video Editing",             value: "video-editing"  },
-  { label: "Web Development",           value: "web-dev"        },
+  { label: "Photography & Videography", value: "photo-video" },
+  { label: "Graphic Design", value: "graphic-design" },
+  { label: "Video Editing", value: "video-editing" },
+  { label: "Web Development", value: "web-dev" },
 ];
 
 function getHeroForTab(tab: string): string {
@@ -62,15 +59,11 @@ export default function ServicesMain({ params }: { params?: { slug?: string } })
   const router   = useRouter();
   const pathname = usePathname();
 
-  // Derive active tab from the current path segment
-  // Matches /services/web-dev  → "web-dev"
-  // Matches /services          → "photo-video" (default)
   const slugFromPath = pathname.split("/").pop();
   const resolvedTab  = TABS.find((t) => t.value === slugFromPath)?.value ?? "photo-video";
 
   const [activeTab, setActiveTab] = useState(resolvedTab);
 
-  // Keep state in sync if the user navigates back/forward
   useEffect(() => {
     setActiveTab(resolvedTab);
   }, [resolvedTab]);
@@ -156,7 +149,6 @@ export default function ServicesMain({ params }: { params?: { slug?: string } })
           </div>
         </div>
 
-        {/* Category content */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -165,10 +157,7 @@ export default function ServicesMain({ params }: { params?: { slug?: string } })
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
           >
-            {activeTab === "web-dev"        && <WebSub />}
-            {activeTab === "graphic-design" && <GraphicsSub />}
-            {activeTab === "video-editing"  && <VidSub />}
-            {activeTab === "photo-video"    && <PhotoSub />}
+            <ServicesSub categorySlug={activeTab} />
           </motion.div>
         </AnimatePresence>
 

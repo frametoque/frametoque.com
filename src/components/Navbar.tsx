@@ -4,7 +4,8 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { useUser, SignInButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
+import { AnimatePresence, motion } from "framer-motion";
 
 const protectImage = (e) => e.preventDefault();
 
@@ -90,65 +91,116 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
         className="md:hidden p-2 text-white drop-shadow-md transition-colors z-50 rounded-full hover:bg-white/10"
         onClick={() => setMobileMenuIsOpen((prev) => !prev)}
       >
-        {mobileMenuIsOpen ? (
-          <X className="w-6 h-6" />
-        ) : (
-          <Menu className="w-6 h-6" />
-        )}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={mobileMenuIsOpen ? "close" : "open"}
+            initial={{ rotate: -90, opacity: 0 }}
+            animate={{ rotate: 0, opacity: 1 }}
+            exit={{ rotate: 90, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="block"
+          >
+            {mobileMenuIsOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
+          </motion.span>
+        </AnimatePresence>
       </button>
 
       {/* Mobile menu */}
-      {mobileMenuIsOpen && (
-        <div className="absolute top-full left-0 right-0 bg-[#0d0d0d] backdrop-blur-3xl border-t border-white/10 animate-in slide-in-from-top-2 duration-300 md:hidden pt-4 pb-6 px-6 shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden">
-          <div className="flex flex-col space-y-2">
-            {links.map((link) => {
-              const isActive =
-                link.href === "/services"
-                  ? pathname === "/services" || pathname.startsWith("/services/")
-                  : pathname === link.href ||
-                    pathname.startsWith(`${link.href}/`);
+      <AnimatePresence>
+        {mobileMenuIsOpen && (
+          <motion.div
+            key="mobile-menu"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+            className={`absolute top-full left-0 right-0 border-t border-white/20 md:hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden ${
+              scrolled
+                ? "bg-black/90 backdrop-blur-3xl shadow-2xl"
+                : "bg-black/80 backdrop-blur-3xl shadow-2xl"
+            }`}
+          >
+            <motion.div
+              initial={{ y: -10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -10, opacity: 0 }}
+              transition={{ duration: 0.25, delay: 0.05, ease: "easeOut" }}
+              className="flex flex-col space-y-2 pt-4 pb-6 px-6"
+            >
+              {links.map((link, i) => {
+                const isActive =
+                  link.href === "/services"
+                    ? pathname === "/services" ||
+                      pathname.startsWith("/services/")
+                    : pathname === link.href ||
+                      pathname.startsWith(`${link.href}/`);
 
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuIsOpen(false)}
-                  className={`block px-4 py-3 rounded-xl text-base transition-all duration-300 ${
-                    isActive
-                      ? "text-white bg-white/10 font-medium"
-                      : "text-white hover:bg-white/10"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
+                return (
+                  <motion.div
+                    key={link.href}
+                    initial={{ x: -16, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: -16, opacity: 0 }}
+                    transition={{
+                      duration: 0.2,
+                      delay: 0.07 + i * 0.05,
+                      ease: "easeOut",
+                    }}
+                  >
+                    <Link
+                      href={link.href}
+                      onClick={() => setMobileMenuIsOpen(false)}
+                      className={`block px-4 py-3 rounded-xl text-base transition-all duration-300 ${
+                        isActive
+                          ? "text-white bg-white/10 font-medium"
+                          : "text-white hover:bg-white/10"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.div>
+                );
+              })}
 
-            {/* Mobile CTA */}
-            <div className="pt-4 px-2">
-              {isLoaded && (
-                isSignedIn ? (
-                  <Link
-                    href="/dashboard"
-                    onClick={() => setMobileMenuIsOpen(false)}
-                    className="flex items-center justify-center w-full bg-white text-black rounded-xl px-6 py-3.5 text-base font-semibold hover:bg-gray-200 active:scale-[0.98] transition-all shadow-md"
-                  >
-                    Dashboard
-                  </Link>
-                ) : (
-                  <Link
-                    href="/login"
-                    onClick={() => setMobileMenuIsOpen(false)}
-                    className="flex items-center justify-center w-full bg-white text-black rounded-xl px-6 py-3.5 text-base font-semibold hover:bg-gray-200 active:scale-[0.98] transition-all shadow-md"
-                  >
-                    Book Now
-                  </Link>
-                )
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+              {/* Mobile CTA */}
+              <motion.div
+                className="pt-4 px-2"
+                initial={{ x: -16, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -16, opacity: 0 }}
+                transition={{
+                  duration: 0.2,
+                  delay: 0.07 + links.length * 0.05,
+                  ease: "easeOut",
+                }}
+              >
+                {isLoaded &&
+                  (isSignedIn ? (
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setMobileMenuIsOpen(false)}
+                      className="flex items-center justify-center w-full bg-white text-black rounded-xl px-6 py-3.5 text-base font-semibold hover:bg-gray-200 active:scale-[0.98] transition-all shadow-md"
+                    >
+                      Dashboard
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/login"
+                      onClick={() => setMobileMenuIsOpen(false)}
+                      className="flex items-center justify-center w-full bg-white text-black rounded-xl px-6 py-3.5 text-base font-semibold hover:bg-gray-200 active:scale-[0.98] transition-all shadow-md"
+                    >
+                      Book Now
+                    </Link>
+                  ))}
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }
