@@ -63,7 +63,6 @@ export default function Features() {
   return (
     <section id="features" className="py-16 sm:py-20 px-6 sm:px-10 lg:px-16 relative bg-[#111111]">
 
-      {/* Pulse removed */}
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12 sm:mb-16 lg:mb-20">
           <h2 className="text-5xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6">

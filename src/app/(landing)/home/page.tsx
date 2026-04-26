@@ -29,13 +29,13 @@ export default function HomeClient() {
       <Navbar scrolled={scrolled} />
       <Hero />
       <ServicesHome />
-      <Collab />
       <ProjectsHome />
       {/* <StudioPromo /> */}
       <SoftwareWeUse />
       <Testimonials />
       <Clients />
       <WhyChooseUs />
+      <Collab />
       <Footer />
     </main>
   );

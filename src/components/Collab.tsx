@@ -4,10 +4,10 @@ import Image from "next/image";
 
 export default function CollabCompact() {
   return (
-    <div className="bg-[#111111] w-full pt-1 pb-16">
+    <div className="bg-[#111111] w-full py-6 sm:py-16">
       <div className="max-w-8xl mx-auto px-6">
         {/* Banner */}
-            <div className="relative mt-6 rounded-2xl overflow-hidden">
+            <div className="relative rounded-2xl overflow-hidden leading-[0]">
               <Link href="/contact" >
                   <Image
                     src="/collab-banner.webp"
@@ -15,7 +15,7 @@ export default function CollabCompact() {
                     width={1920}
                     height={480}
                     quality={100}
-                    className="w-full h-auto block"
+                    className="w-full align-top block"
                     draggable={false}
                     onDragStart={(e) => e.preventDefault()}
                   />

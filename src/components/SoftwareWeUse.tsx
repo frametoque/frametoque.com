@@ -114,8 +114,8 @@ export default function SoftwareWeUse() {
       </div>
 
       <div className="relative max-w-6xl mx-auto px-6">
-        <div className="pointer-events-none absolute left-0 top-0 h-full w-24 bg-gradient-to-r from-slate-950 to-transparent z-20"></div>
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-slate-950 to-transparent z-20"></div>
+        <div className="pointer-events-none absolute left-0 top-0 h-full w-24 bg-gradient-to-r from-black to-transparent z-20"></div>
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-black to-transparent z-20"></div>
 
         <div
           ref={sliderRef}
