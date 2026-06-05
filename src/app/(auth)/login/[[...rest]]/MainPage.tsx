@@ -15,7 +15,7 @@ const protectImage = (e) => e.preventDefault();
 
 export default function CustomLogin() {
   const { isLoaded, signIn, setActive } = useSignIn();
-  const { isSignedIn, isLoaded: userLoaded, user } = useUser();
+  const { isSignedIn, isLoaded: userLoaded } = useUser();
   const { signUp, setActive: setSignUpActive } = useSignUp();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -40,6 +40,22 @@ export default function CustomLogin() {
     const error = searchParams.get("error");
     if (error) setErrorMsg(decodeURIComponent(error));
   }, [searchParams]);
+
+  useEffect(() => {
+    if (userLoaded && isSignedIn) {
+      const checkAndRedirect = async () => {
+        try {
+          const response = await fetch("/api/auth/check-role");
+          const data = await response.json();
+          const redirectPath = data.isAdmin ? "/admin" : "/dashboard";
+          router.replace(redirectPath);
+        } catch (err) {
+          router.replace("/dashboard");
+        }
+      };
+      checkAndRedirect();
+    }
+  }, [userLoaded, isSignedIn, router]);
 
   const clearMessages = () => {
     setErrorMsg("");
@@ -123,17 +139,14 @@ export default function CustomLogin() {
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         
-        // Add a small delay to ensure session is fully set
         await new Promise(resolve => setTimeout(resolve, 200));
         
-        // Check role from API before redirecting
         try {
           const response = await fetch("/api/auth/check-role");
           const data = await response.json();
           const redirectPath = data.isAdmin ? "/admin" : "/dashboard";
           router.replace(redirectPath);
         } catch (err) {
-          // Fallback to dashboard
           router.replace("/dashboard");
         }
       }
