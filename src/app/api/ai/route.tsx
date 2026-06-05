@@ -4,6 +4,14 @@ export const dynamic = "force-dynamic";
 import Groq from 'groq-sdk';
 import * as cheerio from 'cheerio';
 
+let _groq: Groq | null = null;
+function getGroqClient(): Groq {
+  if (!_groq) {
+    _groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  }
+  return _groq;
+}
+
 const host = typeof window === 'undefined' ? 'frametoque.online' : window.location.host;
 const protocol = 'https';
 const DOMAIN = `${protocol}://${host}`;
@@ -385,23 +393,6 @@ const getClientFocusedResponse = (userMessage: string): string => {
 };
 
 export async function POST(req: Request) {
-  const Groq = (await import("groq-sdk")).default;
-
-  const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY!,
-  });
-
-  const body = await req.json();
-
-  const completion = await groq.chat.completions.create({
-    model: "llama-3.1-8b-instant",
-    messages: body.messages,
-  });
-
-  return Response.json({
-    reply: completion.choices[0]?.message?.content ?? "",
-  });
-
   let message = '';
   let format = 'markdown';
 
@@ -461,7 +452,7 @@ export async function POST(req: Request) {
       try {
         console.log(`🔄 Trying Groq model: ${modelName}`);
 
-        const completion = await groq.chat.completions.create({
+        const completion = await getGroqClient().chat.completions.create({
           model: modelName,
           messages: [
             {
