@@ -2,13 +2,14 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense, useRef } from "react";
-import { useClerk } from "@clerk/nextjs";
+import { useClerk, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 
 function SSOCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { handleRedirectCallback } = useClerk();
+  const { user } = useUser();
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
@@ -69,18 +70,33 @@ function SSOCallbackContent() {
           throw new Error(decodeURIComponent(errorParam));
         }
 
+        // Complete the OAuth flow
         await handleRedirectCallback({
-  afterSignInUrl: "/dashboard",
-  afterSignUpUrl: "/dashboard",
-});
+          afterSignInUrl: "/sso-callback",
+          afterSignUpUrl: "/sso-callback",
+        });
 
-setProgress(100);
-setStatusMessage("Authentication successful!");
-setIsComplete(true);
-setShowManualButton(false);
-redirectTimeout.current = setTimeout(() => {
-  router.push("/dashboard");
-}, 600);
+        setProgress(100);
+        setStatusMessage("Authentication successful!");
+        setIsComplete(true);
+        setShowManualButton(false);
+        
+        // Wait for session to be ready, then check role and redirect
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        try {
+          const response = await fetch("/api/auth/check-role");
+          const data = await response.json();
+          const redirectPath = data.isAdmin ? "/admin" : "/dashboard";
+          
+          redirectTimeout.current = setTimeout(() => {
+            router.push(redirectPath);
+          }, 200);
+        } catch (err) {
+          redirectTimeout.current = setTimeout(() => {
+            router.push("/dashboard");
+          }, 200);
+        }
 
       } catch (err) {
         console.error("Authentication error:", err);

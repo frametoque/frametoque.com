@@ -15,7 +15,7 @@ const protectImage = (e) => e.preventDefault();
 
 export default function CustomLogin() {
   const { isLoaded, signIn, setActive } = useSignIn();
-  const { isSignedIn, isLoaded: userLoaded } = useUser();
+  const { isSignedIn, isLoaded: userLoaded, user } = useUser();
   const { signUp, setActive: setSignUpActive } = useSignUp();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -41,10 +41,6 @@ export default function CustomLogin() {
     if (error) setErrorMsg(decodeURIComponent(error));
   }, [searchParams]);
 
-  useEffect(() => {
-    if (userLoaded && isSignedIn) router.replace("/dashboard");
-  }, [userLoaded, isSignedIn, router]);
-
   const clearMessages = () => {
     setErrorMsg("");
     setSuccessMsg("");
@@ -64,7 +60,7 @@ export default function CustomLogin() {
       await signIn.authenticateWithRedirect({
         strategy: provider,
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/dashboard",
+        redirectUrlComplete: "/sso-callback",
       });
     } catch (err) {
       setErrorMsg(err.errors?.[0]?.message || "Something went wrong. Please try again.");
@@ -126,7 +122,20 @@ export default function CustomLogin() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.replace("/dashboard");
+        
+        // Add a small delay to ensure session is fully set
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Check role from API before redirecting
+        try {
+          const response = await fetch("/api/auth/check-role");
+          const data = await response.json();
+          const redirectPath = data.isAdmin ? "/admin" : "/dashboard";
+          router.replace(redirectPath);
+        } catch (err) {
+          // Fallback to dashboard
+          router.replace("/dashboard");
+        }
       }
     } catch (err) {
       const code = err?.errors?.[0]?.code;
@@ -135,7 +144,6 @@ export default function CustomLogin() {
       } else {
         setErrorMsg(err?.errors?.[0]?.message || "Sign in failed. Please try again.");
       }
-    } finally {
       setSubmitting(false);
     }
   }

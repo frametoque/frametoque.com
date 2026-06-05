@@ -117,7 +117,7 @@ export default function InvoicePage() {
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pageHeight);
-      pdf.save(`Invoice-${invoice_id}.pdf`);
+      pdf.save(`${invoice_id}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert("Failed to generate PDF. Please try again.");
@@ -137,7 +137,7 @@ export default function InvoicePage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Invoice-${invoice_id}.pkpass`;
+      a.download = `${invoice_id}.pkpass`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -184,12 +184,7 @@ export default function InvoicePage() {
     );
   }
 
-  const lineItems = [
-    { desc: invoice.description_1, price: invoice.price_1, total: invoice.total_1 },
-    { desc: invoice.description_2, price: invoice.price_2, total: invoice.total_2 },
-    { desc: invoice.description_3, price: invoice.price_3, total: invoice.total_3 },
-    { desc: invoice.description_4, price: invoice.price_4, total: invoice.total_4 },
-  ].filter((item) => item.desc);
+  const lineItems = invoice.items || [];
 
   const currencyLabel = invoice.currency === "LKR" ? "Rs." : invoice.currency;
 
@@ -286,7 +281,7 @@ export default function InvoicePage() {
 
               {lineItems.map((item, i) => (
                 <div key={i} className="grid grid-cols-3 px-5 py-4 border-b border-white/5 last:border-0">
-                  <span className="text-white text-sm">{item.desc}</span>
+                  <span className="text-white text-sm">{item.description}</span>
                   <span className="text-gray-300 text-sm text-center">
                     {item.price ? `${currencyLabel} ${item.price}` : "-"}
                   </span>

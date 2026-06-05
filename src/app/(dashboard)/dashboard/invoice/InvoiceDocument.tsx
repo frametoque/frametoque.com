@@ -38,23 +38,13 @@ export default function InvoiceDocument({ invoice }) {
     billing_address,
     date,
     currency,
-    description_1, price_1, total_1,
-    description_2, price_2, total_2,
-    description_3, price_3, total_3,
-    description_4, price_4, total_4,
     subtotal,
     discount,
     advance,
     total,
     total_due,
+    items = []
   } = invoice;
-
-  const items = [
-    { description: description_1, price: price_1, total: total_1 },
-    { description: description_2, price: price_2, total: total_2 },
-    { description: description_3, price: price_3, total: total_3 },
-    { description: description_4, price: price_4, total: total_4 },
-  ];
 
   // Row Y positions from original 2480x3508 design
   const rowTops = [1470, 1645, 1820, 1995];
@@ -123,12 +113,13 @@ export default function InvoiceDocument({ invoice }) {
       </div>
 
       {/* Line Items */}
-      {items.map((item, i) =>
-        item.description ? (
+      {items.map((item, i) => {
+        const rowTop = rowTops[i] || (1470 + i * 175);
+        return item.description ? (
           <div key={i}>
             {/* Description */}
             <div style={{
-              ...pos(rowTops[i], 875, 37, { color: "#222" }),
+              ...pos(rowTop, 875, 37, { color: "#222" }),
               width: px(702, 2480),
               overflow: "visible",
               whiteSpace: "nowrap",
@@ -139,7 +130,7 @@ export default function InvoiceDocument({ invoice }) {
 
             {/* Price */}
             <div style={{
-              ...pos(rowTops[i], 1525, 37, { color: "#222", textAlign: "center" }),
+              ...pos(rowTop, 1525, 37, { color: "#222", textAlign: "center" }),
               width: px(439, 2480),
             }}>
              {item.price ? `${invoice.currency === "LKR" ? "Rs." : invoice.currency} ${item.price}` : "-"}
@@ -147,14 +138,14 @@ export default function InvoiceDocument({ invoice }) {
 
             {/* Total */}
             <div style={{
-              ...pos(rowTops[i], 1700, 37, { color: "#222", textAlign: "right" }),
+              ...pos(rowTop, 1700, 37, { color: "#222", textAlign: "right" }),
               width: px(562, 2480),
             }}>
               {formatMoney(item.total, currency)}
             </div>
           </div>
-        ) : null
-      )}
+        ) : null;
+      })}
 
       {/* Subtotal */}
       <div style={{

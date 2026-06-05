@@ -42,10 +42,6 @@ export async function GET(request, { params }) {
         billing_address,
         date,
         currency,
-        description_1, price_1, total_1,
-        description_2, price_2, total_2,
-        description_3, price_3, total_3,
-        description_4, price_4, total_4,
         subtotal,
         discount,
         total,
@@ -77,7 +73,18 @@ export async function GET(request, { params }) {
       }
     }
 
-    return NextResponse.json(result.rows[0]);
+    const itemsResult = await dbClient.query(
+      `SELECT description, price, total, quantity 
+       FROM invoice_items 
+       WHERE invoice_id = $1
+       ORDER BY id ASC`,
+      [invoice_id]
+    );
+
+    const invoice = result.rows[0];
+    invoice.items = itemsResult.rows;
+
+    return NextResponse.json(invoice);
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch invoice" },
