@@ -8,6 +8,8 @@ import FloatingButtons from '@/components/FloatingButtons';
 import type { Metadata } from 'next'
 import { Bricolage_Grotesque, DM_Mono } from "next/font/google";
 //import localFont from "next/font/local";
+import UmamiScript from "@/components/UmamiScript";
+
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-geist-sans",
@@ -125,7 +127,7 @@ export default function RootLayout({ children }) {
           <Analytics />
           <FloatingButtons />
           <SnowfallWrapper />
-          <Script src="/stats/script.js" data-website-id="5866b6ab-7d7e-438d-b64c-177737566967" data-host-url="https://cloud.umami.is" />
+          <UmamiScript />
         </ClerkProvider>
         
       </body>

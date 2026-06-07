@@ -44,7 +44,7 @@ const deviceColorMap: Record<string, string> = {
 export default function AnalyticsPage() {
   const [data, setData]                 = useState<any>(null);
   const [loading, setLoading]           = useState(true);
-  const [dateRange, setDateRange]       = useState("life time");
+  const [dateRange, setDateRange] = useState("all time");
   const [activeVisitors, setActiveVisitors] = useState<number>(0);
 
   useEffect(() => {
@@ -131,11 +131,13 @@ export default function AnalyticsPage() {
           onChange={(e) => setDateRange(e.target.value)}
           className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium"
         >
-          <option value="lifetime"      className="bg-black">Lifetime</option>
-          <option value="this year"     className="bg-black">This Year</option>
-          <option value="6 months"      className="bg-black">Last 6 Months</option>
-          <option value="three months"  className="bg-black">Last 3 Months</option>
+          <option value="today"         className="bg-black">Today</option>
+          <option value="24 hours"      className="bg-black">Last 24 Hours</option>
           <option value="one month"     className="bg-black">Last Month</option>
+          <option value="three months"  className="bg-black">Last 3 Months</option>
+          <option value="6 months"      className="bg-black">Last 6 Months</option>
+          <option value="this year"     className="bg-black">This Year</option>
+          <option value="all time"      className="bg-black">All Time</option>
         </select>
       </div>
 
