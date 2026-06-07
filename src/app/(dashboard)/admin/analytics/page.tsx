@@ -15,7 +15,7 @@ import { formatDuration } from "../actions/utils";
 import {
   decodeRegion, regionToCountry,
   getBrowserLogo, getOsLogo, decodeCountry
-} from "@/lib/analyticsUtils";
+} from "@/app/(dashboard)/admin/actions/analyticsUtils";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
