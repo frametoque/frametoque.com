@@ -85,7 +85,6 @@ function MetricList({ items, icon }: {
 }) {
   if (!items || items.length === 0)
     return <p className="text-gray-500 text-sm">No data for this period.</p>;
-console.log("umami id:", process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID);
 
   return (
     <div className="space-y-3">
@@ -295,7 +294,30 @@ export default function AnalyticsPage() {
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
           <h2 className="text-xl font-semibold mb-4">Traffic Sources</h2>
           <Tabs tabs={["referrers", "channels"]} active={sourceTab} onChange={setSourceTab} />
-          <MetricList items={sourceData[sourceTab]} />
+          <MetricList
+            items={sourceData[sourceTab]}
+            icon={(label) => {
+              if (sourceTab === "referrers") {
+                if (!label || label === "Direct" || label === "(direct)") {
+                  return <Globe className="w-4 h-4 text-gray-400 shrink-0" />;
+                }
+                let domain = label;
+                try {
+                  if (label.startsWith("http")) domain = new URL(label).hostname;
+                } catch {}
+                return (
+                  <img
+                    src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
+                    alt=""
+                    className="w-4 h-4 object-contain shrink-0 rounded-sm"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                );
+              }
+            }}
+          />
         </div>
       </div>
 
