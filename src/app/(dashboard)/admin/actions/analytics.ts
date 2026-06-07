@@ -59,93 +59,100 @@ function formatChartLabel(dateStr: string, unit: string): string {
   }
 }
 
-export async function getAnalyticsData(dateRange = "this year") {
+export async function getAnalyticsData(dateRange = "all time") {
   const { startAt, endAt } = getDateRange(dateRange);
   const unit = getChartUnit(dateRange);
   const params = `startAt=${startAt}&endAt=${endAt}`;
   const base = `${UMAMI_URL}/v1/websites/${WEBSITE_ID}`;
 
-  console.log("UMAMI_URL:", UMAMI_URL);
-  console.log("WEBSITE_ID:", WEBSITE_ID);
-  console.log("Fetching:", `${base}/stats?${params}`);
+  const [
+    statsRes, pageviewsRes,
+    countriesRes, regionsRes, citiesRes,
+    devicesRes, browsersRes, osRes,
+    referrersRes, channelsRes,
+    urlsRes, entryRes, exitRes,
+  ] = await Promise.all([
+    fetch(`${base}/stats?${params}`,                          { headers, cache: "no-store" }),
+    fetch(`${base}/pageviews?${params}&unit=${unit}`,         { headers, cache: "no-store" }),
+    fetch(`${base}/metrics?${params}&type=country&limit=10`,  { headers, cache: "no-store" }),
+    fetch(`${base}/metrics?${params}&type=region&limit=10`,   { headers, cache: "no-store" }),
+    fetch(`${base}/metrics?${params}&type=city&limit=10`,     { headers, cache: "no-store" }),
+    fetch(`${base}/metrics?${params}&type=device&limit=10`,   { headers, cache: "no-store" }),
+    fetch(`${base}/metrics?${params}&type=browser&limit=10`,  { headers, cache: "no-store" }),
+    fetch(`${base}/metrics?${params}&type=os&limit=10`,       { headers, cache: "no-store" }),
+    fetch(`${base}/metrics?${params}&type=referrer&limit=10`, { headers, cache: "no-store" }),
+    fetch(`${base}/metrics?${params}&type=channel&limit=10`,  { headers, cache: "no-store" }),
+    fetch(`${base}/metrics?${params}&type=url&limit=10`,      { headers, cache: "no-store" }),
+    fetch(`${base}/metrics?${params}&type=entry&limit=10`,    { headers, cache: "no-store" }),
+    fetch(`${base}/metrics?${params}&type=exit&limit=10`,     { headers, cache: "no-store" }),
+  ]);
 
-  const [statsRes, pageviewsRes, countriesRes, devicesRes, referrersRes, topPagesRes] =
-    await Promise.all([
-      fetch(`${base}/stats?${params}`,                         { headers, cache: "no-store" }),
-      fetch(`${base}/pageviews?${params}&unit=${unit}`,        { headers, cache: "no-store" }),
-      fetch(`${base}/metrics?${params}&type=country&limit=5`,  { headers, cache: "no-store" }),
-      fetch(`${base}/metrics?${params}&type=device&limit=5`,   { headers, cache: "no-store" }),
-      fetch(`${base}/metrics?${params}&type=referrer&limit=5`, { headers, cache: "no-store" }),
-      fetch(`${base}/metrics?${params}&type=url&limit=10`,     { headers, cache: "no-store" }),
-    ]);
-
-  // Check for API errors
   if (!statsRes.ok) {
     throw new Error(`Umami API error: ${statsRes.status} ${statsRes.statusText}`);
   }
 
-  const [stats, pageviews, countries, devices, referrers, topPages] =
-    await Promise.all([
-      statsRes.json(),
-      pageviewsRes.json(),
-      countriesRes.json(),
-      devicesRes.json(),
-      referrersRes.json(),
-      topPagesRes.json(),
-    ]);
+  const [
+    stats, pageviews,
+    countries, regions, cities,
+    devices, browsers, os,
+    referrers, channels,
+    urls, entryPages, exitPages,
+  ] = await Promise.all([
+    statsRes.json(), pageviewsRes.json(),
+    countriesRes.json(), regionsRes.json(), citiesRes.json(),
+    devicesRes.json(), browsersRes.json(), osRes.json(),
+    referrersRes.json(), channelsRes.json(),
+    urlsRes.json(), entryRes.json(), exitRes.json(),
+  ]);
 
-  // Chart data — pageviews + sessions per month
   const chartData = (pageviews.pageviews ?? []).map((pv: any, i: number) => ({
     name: formatChartLabel(pv.x, unit),
     pageviews: pv.y,
     visitors: pageviews.sessions?.[i]?.y ?? 0,
   }));
 
-  // Traffic sources — referrers
-  const totalReferrers = (referrers ?? []).reduce((s: number, r: any) => s + r.y, 0);
-  const trafficSources = (referrers ?? []).map((r: any) => ({
-    source: r.x || "Direct",
-    visitors: r.y,
-    pct: totalReferrers ? Math.round((r.y / totalReferrers) * 100) : 0,
-  }));
-
-  // Devices with percentages
-  const totalDevices = (devices ?? []).reduce((s: number, d: any) => s + d.y, 0);
-  const deviceData = (devices ?? []).map((d: any) => ({
-    name: d.x,
-    value: d.y,
-    pct: totalDevices ? Math.round((d.y / totalDevices) * 100) : 0,
-  }));
-
-  // Countries with percentages
+  function toList(arr: any[], labelKey = "x", valueKey = "y") {
+    const total = (arr ?? []).reduce((s: number, r: any) => s + r[valueKey], 0);
+    return (arr ?? []).map((r: any) => ({
+      label: r[labelKey] || "Direct",
+      value: r[valueKey],
+      pct: total ? Math.round((r[valueKey] / total) * 100) : 0,
+    }));
+  }
   const totalCountryVisitors = (countries ?? []).reduce((s: number, c: any) => s + c.y, 0);
   const countryData = (countries ?? []).map((c: any) => ({
-    country: c.x,
-    visitors: c.y,
+    label: c.x,
+    value: c.y,
+    _code: c.x,
     pct: totalCountryVisitors ? Math.round((c.y / totalCountryVisitors) * 100) : 0,
-  }));
-
-  // Top pages
-  const topPagesData = (topPages ?? []).map((p: any) => ({
-    path: p.x,
-    views: p.y,
   }));
 
   return {
     totalVisitors:  stats.visitors  ?? 0,
     totalPageviews: stats.pageviews ?? 0,
     avgSessionTime: stats.totaltime ?? 0,
-    bounceRate:     stats.visits
+    bounceRate: stats.visits
       ? Math.round((stats.bounces / stats.visits) * 100)
       : 0,
 
     chartData,
-    trafficSources,
-    deviceData,
-    countries: countryData,
-    topPages:  topPagesData,
+
+    urls:       toList(urls),
+    entryPages: toList(entryPages),
+    exitPages:  toList(exitPages),
+
+    referrers: toList(referrers),
+    channels:  toList(channels),
+
+    devices:  toList(devices),
+    browsers: toList(browsers),
+    os:       toList(os),
+
+    countries: toList(countries),
+    regions:   toList(regions),
+    cities:    toList(cities),
   };
-  }
+}
 
 export async function getActiveVisitors(): Promise<number> {
   try {
@@ -155,7 +162,7 @@ export async function getActiveVisitors(): Promise<number> {
     );
     if (!res.ok) return 0;
     const data = await res.json();
-    return data.x ?? 0;
+    return data.visitors ?? 0;
   } catch {
     return 0;
   }
