@@ -88,7 +88,7 @@ export default function AboutUs() {
       <main className="min-h-screen relative overflow-hidden">
         <section className="relative h-[40vh] md:h-[35vh] w-full bg-black overflow-hidden flex items-center justify-center">
           <Image
-            src="/images/team/team.jpg"
+            src="/images/team/banner ft.png"
             alt="About Us Hero"
             fill
             priority
