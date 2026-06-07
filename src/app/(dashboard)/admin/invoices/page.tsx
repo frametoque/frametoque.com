@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { FileText, CheckCircle, Clock, AlertCircle, Search, Eye, Edit2, Send, Download, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { getInvoices, deleteInvoice } from "../actions";
+import { getInvoices, deleteInvoice } from "../actions/actions";
 
 const filters = ["All", "Unpaid", "Paid", "Overdue", "Pending"];
 

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Plus, Trash2, ArrowLeft, Send, Save, Eye } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createInvoice } from "../../actions";
+import { createInvoice } from "../../actions/actions";
 
 export default function NewInvoicePage() {
   const router = useRouter();

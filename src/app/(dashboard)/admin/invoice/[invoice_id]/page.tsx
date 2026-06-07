@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, Eye } from "lucide-react";
 import Link from "next/link";
 import InvoiceDocument from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
-import { getInvoiceByIdAdmin } from "../../actions";
+import { getInvoiceByIdAdmin } from "../../actions/actions";
 
 const workStatusStyles = {
   "in progress": "bg-brand-500/20 text-brand-400 border-brand-500/30",

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Search, ChevronRight, Users } from "lucide-react";
 import Link from "next/link";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { getClients } from "../actions";
+import { getClients } from "../actions/actions";
 
 const formatLKR = (amount: number) => {
   return new Intl.NumberFormat('en-LK', {

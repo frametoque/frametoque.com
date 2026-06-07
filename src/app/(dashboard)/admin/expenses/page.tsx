@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Receipt, Calendar, CreditCard, Plus, Edit2, Trash2, X, UploadCloud, Loader2, Eye } from "lucide-react";
-import { getExpenses, createExpense, deleteExpense, updateExpense, uploadReceipt } from "../actions";
+import { getExpenses, createExpense, deleteExpense, updateExpense, uploadReceipt } from "../actions/actions";
 
 const filters = ["All", "Software", "Equipment", "Freelancers", "Transport", "Other"];
 

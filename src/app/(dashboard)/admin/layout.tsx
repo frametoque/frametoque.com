@@ -18,7 +18,9 @@ import {
   LogOut,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FilePenLine,
+  ChartLine
 } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
@@ -34,9 +36,11 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Income", href: "/admin/income", icon: Wallet },
   { name: "Expenses", href: "/admin/expenses", icon: Receipt },
-  { name: "Invoices", href: "/admin/invoices", icon: FileText },
-  { name: "Clients", href: "/admin/clients", icon: Users },
   { name: "Reports", href: "/admin/reports", icon: BarChart3 },
+  { name: "Invoices", href: "/admin/invoices", icon: FileText },
+  { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
+  { name: "Clients", href: "/admin/clients", icon: Users },
+  { name: "Web Analytics", href: "/admin/analytics", icon: ChartLine },
 ];
 
     const isActive = (href) => {

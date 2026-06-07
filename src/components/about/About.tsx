@@ -88,11 +88,11 @@ export default function AboutUs() {
       <main className="min-h-screen relative overflow-hidden">
         <section className="relative h-[40vh] md:h-[35vh] w-full bg-black overflow-hidden flex items-center justify-center">
           <Image
-            src="/projects/photography/Evendor '25/DSC08054.jpg.jpeg"
+            src="/images/team/team.jpg"
             alt="About Us Hero"
             fill
             priority
-            className="absolute inset-0 w-full h-full object-cover opacity-60 scale-105"
+            className="absolute inset-0 w-full h-full object-cover opacity-60 scale-100"
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black z-20 pointer-events-none" />

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { getClientById } from "../../actions";
+import { getClientById } from "../../actions/actions";
 import { ArrowLeft, Mail, Phone, Building, Globe, MapPin, Receipt, Loader2, FileText, ChevronRight } from "lucide-react";
 import Link from "next/link";
 

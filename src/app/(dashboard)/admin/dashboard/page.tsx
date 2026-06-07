@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, FileText } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { getDashboardData } from "../actions";
+import { getDashboardData } from "../actions/actions";
 
 const formatLKR = (amount: number) => {
   return new Intl.NumberFormat('en-LK', {

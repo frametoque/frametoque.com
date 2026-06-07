@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Trash2, ArrowLeft, Send, Save, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { updateInvoice, getInvoiceByIdAdmin } from "../../../actions";
+import { updateInvoice, getInvoiceByIdAdmin } from "../../../actions/actions";
 
 export default function EditInvoicePage() {
   const router = useRouter();

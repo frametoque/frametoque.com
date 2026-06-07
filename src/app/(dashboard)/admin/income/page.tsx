@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2, Eye } from "lucide-react";
 import Link from "next/link";
-import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient } from "../actions";
+import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient } from "../actions/actions";
 
 const filters = ["All", "Web dev", "Graphic design", "Video editing", "Photography", "Videography"];
 
