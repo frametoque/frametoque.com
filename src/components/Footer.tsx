@@ -7,7 +7,7 @@ const footerLinks = {
   Legal: ["Privacy", "Terms", "Cookies"],
 };
 const urls = [
-  "https://instagram.com/frametoque",
+  "https://instagram.com/frame.toque",
   "https://facebook.com/frametoque",
   "https://www.linkedin.com/company/frametoque/",
   "https://youtube.com/@Frametoque",

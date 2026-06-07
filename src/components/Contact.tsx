@@ -30,7 +30,7 @@ const WhatsApp = ({ className = "" }) => (
 
 const socialLinks = [
   { href: "https://www.facebook.com/Frametoque/",         icon: <Facebook className="w-5 h-5" />,   label: "Facebook"  },
-  { href: "https://instagram.com/frametoque",             icon: <Instagram className="w-5 h-5" />,  label: "Instagram" },
+  { href: "https://instagram.com/frame.toque",             icon: <Instagram className="w-5 h-5" />,  label: "Instagram" },
   { href: "https://www.linkedin.com/company/frametoque/", icon: <Linkedin className="w-5 h-5" />,   label: "LinkedIn"  },
   { href: "https://www.youtube.com/@Frametoque",          icon: <Youtube className="w-5 h-5" />,    label: "YouTube"   },
   { href: "https://tiktok.com/@frame.toque",              icon: <TikTok />,                          label: "TikTok"    },

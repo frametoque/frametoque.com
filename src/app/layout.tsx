@@ -110,7 +110,7 @@ export default function RootLayout({ children }) {
               url: "https://frametoque.online",
               logo: "https://frametoque.online/logos/ft/logo-main.png",
               sameAs: [
-                "https://instagram.com/frametoque",
+                "https://instagram.com/frame.toque",
                 "https://linkedin.com/company/frametoque",
               ],
             }),
