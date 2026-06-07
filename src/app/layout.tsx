@@ -125,13 +125,7 @@ export default function RootLayout({ children }) {
           <Analytics />
           <FloatingButtons />
           <SnowfallWrapper />
-          <Script
-            defer
-            src="https://cloud.umami.is/script.js"
-            data-website-id="5866b6ab-7d7e-438d-b64c-177737566967"
-            data-domains="frametoque.online"
-            strategy="afterInteractive"
-          />
+          <Script src="/stats/script.js" data-website-id="5866b6ab-7d7e-438d-b64c-177737566967" data-host-url="https://cloud.umami.is" />
         </ClerkProvider>
         
       </body>

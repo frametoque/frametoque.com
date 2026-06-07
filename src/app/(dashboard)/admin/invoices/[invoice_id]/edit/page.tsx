@@ -171,7 +171,6 @@ export default function EditInvoicePage() {
                 <input 
                   type="text" name="clientName" value={formData.clientName} onChange={handleFormChange}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" 
-                  placeholder="John Doe"
                 />
               </div>
               <div className="space-y-1">
@@ -179,7 +178,6 @@ export default function EditInvoicePage() {
                 <input 
                   type="text" name="company" value={formData.company} onChange={handleFormChange}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" 
-                  placeholder="Acme Corp"
                 />
               </div>
             </div>
@@ -240,8 +238,6 @@ export default function EditInvoicePage() {
                 >
                   <option value="LKR" className="bg-black">LKR (₨)</option>
                   <option value="USD" className="bg-black">USD ($)</option>
-                  <option value="EUR" className="bg-black">EUR (€)</option>
-                  <option value="GBP" className="bg-black">GBP (£)</option>
                 </select>
               </div>
               <div className="space-y-1">

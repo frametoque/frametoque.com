@@ -61,7 +61,7 @@ export default function ContactPage() {
 
         <section className="relative h-[40vh] md:h-[35vh] w-full bg-black overflow-hidden flex items-center justify-center">
           <Image
-            src="/projects/photography/Evendor '25/DSC08054.jpg.jpeg"
+            src="/images/team/banner ft.png"
             alt="Contact Hero"
             fill
             priority

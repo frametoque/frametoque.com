@@ -63,7 +63,6 @@ export default function SignupPage() {
       type: "text",
       value: name,
       onChange: (e) => setName(e.target.value),
-      placeholder: "John Doe",
       icon: User,
       required: true,
     },
