@@ -118,7 +118,7 @@ export async function getAnalyticsData(dateRange = "all time") {
     fetch(`${base}/metrics?${params}&type=os&limit=10`,       { headers, cache: "no-store" }),
     fetch(`${base}/metrics?${params}&type=referrer&limit=10`, { headers, cache: "no-store" }),
     fetch(`${base}/metrics?${params}&type=channel&limit=10`,  { headers, cache: "no-store" }),
-    fetch(`${base}/metrics?${params}&type=url&limit=10`,      { headers, cache: "no-store" }),
+    fetch(`${base}/metrics?${params}&type=path&limit=10`,     { headers, cache: "no-store" }),
     fetch(`${base}/metrics?${params}&type=entry&limit=10`,    { headers, cache: "no-store" }),
     fetch(`${base}/metrics?${params}&type=exit&limit=10`,     { headers, cache: "no-store" }),
   ]);
@@ -140,6 +140,8 @@ export async function getAnalyticsData(dateRange = "all time") {
     referrersRes.json(), channelsRes.json(),
     urlsRes.json(), entryRes.json(), exitRes.json(),
   ]);
+console.log("URLS RAW:", JSON.stringify(urls));
+console.log("ENTRY RAW:", JSON.stringify(entryPages));
 
   const chartData = (pageviews.pageviews ?? []).map((pv: any, i: number) => ({
     name:      formatChartLabel(pv.x, unit),
@@ -149,11 +151,14 @@ export async function getAnalyticsData(dateRange = "all time") {
 
   function toList(arr: any, labelKey = "x", valueKey = "y") {
     const safeArr = Array.isArray(arr) ? arr : (arr?.data ?? arr?.items ?? []);
-    const total = safeArr.reduce((s: number, r: any) => s + (r[valueKey] ?? 0), 0);
+    const resolvedValueKey = safeArr.length > 0
+      ? (safeArr[0][valueKey] !== undefined ? valueKey : "v")
+      : valueKey;
+    const total = safeArr.reduce((s: number, r: any) => s + (r[resolvedValueKey] ?? 0), 0);
     return safeArr.map((r: any) => ({
-      label: r[labelKey] || "Direct",
-      value: r[valueKey] ?? 0,
-      pct:   total ? Math.round(((r[valueKey] ?? 0) / total) * 100) : 0,
+      label: r[labelKey] || r["x"] || "Direct",
+      value: r[resolvedValueKey] ?? 0,
+      pct:   total ? Math.round(((r[resolvedValueKey] ?? 0) / total) * 100) : 0,
     }));
   }
 
@@ -167,11 +172,11 @@ export async function getAnalyticsData(dateRange = "all time") {
   }));
 
   return {
-    totalVisitors:  stats.visitors?.value  ?? 0,
-    totalPageviews: stats.pageviews?.value ?? 0,
-    avgSessionTime: stats.totaltime?.value ?? 0,
-    bounceRate: stats.visits?.value
-      ? Math.round((stats.bounces?.value / stats.visits?.value) * 100)
+    totalVisitors:  stats.visitors  ?? 0,
+    totalPageviews: stats.pageviews ?? 0,
+    avgSessionTime: stats.totaltime ?? 0,
+    bounceRate: stats.visits
+      ? Math.round((stats.bounces / stats.visits) * 100)
       : 0,
 
     chartData,
