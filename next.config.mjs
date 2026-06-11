@@ -1,12 +1,4 @@
 /** @type {import('next').NextConfig} */
-
-import withPWAInit from 'next-pwa';
-
-const withPWA = withPWAInit({
-  dest: 'public',
-  exclude: [/^\/admin/],
-});
-
 const nextConfig = {
   async redirects() {
     return [
@@ -15,20 +7,19 @@ const nextConfig = {
         destination: '/projects',
         permanent: true,
       },
-       {
+      {
         source: "/projects",
         destination: "/projects/photography",
         permanent: true,
       },
-       {
+      {
         source: "/services",
         destination: "/services/photo-video",
         permanent: true,
       },
     ];
-    
   },
-  
+
   images: {
     qualities: [100, 75],
     formats: ['image/avif', 'image/webp'],
@@ -37,16 +28,16 @@ const nextConfig = {
         protocol: 'https',
         hostname: '**.youtube.com',
         port: '',
-        pathname: '/vi/**', 
+        pathname: '/vi/**',
       },
       {
         protocol: 'https',
         hostname: '**.ytimg.com',
         port: '',
-        pathname: '/vi/**', 
+        pathname: '/vi/**',
       },
     ],
   },
 };
 
-export default withPWA(nextConfig);
+export default nextConfig;
