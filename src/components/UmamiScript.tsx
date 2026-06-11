@@ -11,7 +11,7 @@ export default function UmamiScript() {
   return (
     <Script
       src="/stats/script.js"
-      data-website-id="5866b6ab-7d7e-438d-b64c-177737566967"
+      data-website-id="6264d0f7-9ca8-42cc-96c9-71c55fb25e0c"
       data-host-url="/stats"
       strategy="afterInteractive"
     />

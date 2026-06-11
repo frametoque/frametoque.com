@@ -1,20 +1,54 @@
 "use server";
 
 const UMAMI_URL = process.env.UMAMI_URL;
-const UMAMI_KEY = process.env.UMAMI_API_KEY;
+const UMAMI_USERNAME = process.env.UMAMI_USERNAME;
+const UMAMI_PASSWORD = process.env.UMAMI_PASSWORD;
 const WEBSITE_ID = process.env.UMAMI_WEBSITE_ID;
 
-const headers = {
-  Accept: "application/json",
-  "x-umami-api-key": UMAMI_KEY!,
-};
+let cachedToken: string | null = null;
+let tokenExpiry: number = 0;
+
+async function getBearerToken(): Promise<string> {
+  const now = Date.now();
+
+  if (cachedToken && now < tokenExpiry) {
+    return cachedToken;
+  }
+
+  const res = await fetch(`${UMAMI_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: UMAMI_USERNAME,
+      password: UMAMI_PASSWORD,
+    }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`Umami login failed: ${res.status} ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  cachedToken = data.token;
+  tokenExpiry = now + 23 * 60 * 60 * 1000;
+  return cachedToken!;
+}
+
+async function getHeaders() {
+  const token = await getBearerToken();
+  return {
+    Accept: "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
 
 function getDateRange(range: string): { startAt: number; endAt: number } {
   const now = Date.now();
   const day = 86400000;
   const ranges: Record<string, number> = {
     "today":        new Date().setHours(0, 0, 0, 0),
-    "24 hours":     1  * day,
+    "24 hours":     1   * day,
     "one month":    30  * day,
     "three months": 90  * day,
     "6 months":     180 * day,
@@ -38,13 +72,13 @@ function getDateRange(range: string): { startAt: number; endAt: number } {
 function getChartUnit(range: string): string {
   switch (range) {
     case "today":
-    case "24 hours":   return "hour";
-    case "one month":  return "day";
+    case "24 hours":      return "hour";
+    case "one month":     return "day";
     case "three months":
-    case "6 months":   return "week";
+    case "6 months":      return "week";
     case "this year":
-    case "all time":   return "month";
-    default:           return "month";
+    case "all time":      return "month";
+    default:              return "month";
   }
 }
 
@@ -63,7 +97,9 @@ export async function getAnalyticsData(dateRange = "all time") {
   const { startAt, endAt } = getDateRange(dateRange);
   const unit = getChartUnit(dateRange);
   const params = `startAt=${startAt}&endAt=${endAt}`;
-  const base = `${UMAMI_URL}/v1/websites/${WEBSITE_ID}`;
+  const base = `${UMAMI_URL}/api/websites/${WEBSITE_ID}`;
+
+  const headers = await getHeaders();
 
   const [
     statsRes, pageviewsRes,
@@ -106,33 +142,36 @@ export async function getAnalyticsData(dateRange = "all time") {
   ]);
 
   const chartData = (pageviews.pageviews ?? []).map((pv: any, i: number) => ({
-    name: formatChartLabel(pv.x, unit),
+    name:      formatChartLabel(pv.x, unit),
     pageviews: pv.y,
-    visitors: pageviews.sessions?.[i]?.y ?? 0,
+    visitors:  pageviews.sessions?.[i]?.y ?? 0,
   }));
 
-  function toList(arr: any[], labelKey = "x", valueKey = "y") {
-    const total = (arr ?? []).reduce((s: number, r: any) => s + r[valueKey], 0);
-    return (arr ?? []).map((r: any) => ({
+  function toList(arr: any, labelKey = "x", valueKey = "y") {
+    const safeArr = Array.isArray(arr) ? arr : (arr?.data ?? arr?.items ?? []);
+    const total = safeArr.reduce((s: number, r: any) => s + (r[valueKey] ?? 0), 0);
+    return safeArr.map((r: any) => ({
       label: r[labelKey] || "Direct",
-      value: r[valueKey],
-      pct: total ? Math.round((r[valueKey] / total) * 100) : 0,
+      value: r[valueKey] ?? 0,
+      pct:   total ? Math.round(((r[valueKey] ?? 0) / total) * 100) : 0,
     }));
   }
-  const totalCountryVisitors = (countries ?? []).reduce((s: number, c: any) => s + c.y, 0);
-  const countryData = (countries ?? []).map((c: any) => ({
+
+  const safeCountries = Array.isArray(countries) ? countries : (countries?.data ?? countries?.items ?? []);
+  const totalCountryVisitors = safeCountries.reduce((s: number, c: any) => s + c.y, 0);
+  const countryData = safeCountries.map((c: any) => ({
     label: c.x,
     value: c.y,
     _code: c.x,
-    pct: totalCountryVisitors ? Math.round((c.y / totalCountryVisitors) * 100) : 0,
+    pct:   totalCountryVisitors ? Math.round((c.y / totalCountryVisitors) * 100) : 0,
   }));
 
   return {
-    totalVisitors:  stats.visitors  ?? 0,
-    totalPageviews: stats.pageviews ?? 0,
-    avgSessionTime: stats.totaltime ?? 0,
-    bounceRate: stats.visits
-      ? Math.round((stats.bounces / stats.visits) * 100)
+    totalVisitors:  stats.visitors?.value  ?? 0,
+    totalPageviews: stats.pageviews?.value ?? 0,
+    avgSessionTime: stats.totaltime?.value ?? 0,
+    bounceRate: stats.visits?.value
+      ? Math.round((stats.bounces?.value / stats.visits?.value) * 100)
       : 0,
 
     chartData,
@@ -148,7 +187,7 @@ export async function getAnalyticsData(dateRange = "all time") {
     browsers: toList(browsers),
     os:       toList(os),
 
-    countries: toList(countries),
+    countries: countryData,
     regions:   toList(regions),
     cities:    toList(cities),
   };
@@ -156,8 +195,9 @@ export async function getAnalyticsData(dateRange = "all time") {
 
 export async function getActiveVisitors(): Promise<number> {
   try {
+    const headers = await getHeaders();
     const res = await fetch(
-      `${UMAMI_URL}/v1/websites/${WEBSITE_ID}/active`,
+      `${UMAMI_URL}/api/websites/${WEBSITE_ID}/active`,
       { headers, cache: "no-store" }
     );
     if (!res.ok) return 0;

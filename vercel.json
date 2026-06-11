@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/stats/:match*",
-      "destination": "https://cloud.umami.is/:match*"
+      "destination": "https://umami-liart-omega.vercel.app/:match*"
     }
   ]
 }
