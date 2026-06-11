@@ -41,4 +41,9 @@ const nextConfig = {
   },
 };
 
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  exclude: [/^\/admin/], 
+});
+
 export default nextConfig;
