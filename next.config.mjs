@@ -1,4 +1,12 @@
 /** @type {import('next').NextConfig} */
+
+import withPWAInit from 'next-pwa';
+
+const withPWA = withPWAInit({
+  dest: 'public',
+  exclude: [/^\/admin/],
+});
+
 const nextConfig = {
   async redirects() {
     return [
@@ -40,10 +48,5 @@ const nextConfig = {
     ],
   },
 };
-
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  exclude: [/^\/admin/], 
-});
 
 export default nextConfig;
