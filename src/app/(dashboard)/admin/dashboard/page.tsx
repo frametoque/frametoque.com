@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, FileText } from "lucide-react";
+import { Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, FileText, Users, Eye } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { getDashboardData } from "../actions/actions";
+import { getAnalyticsData } from "../actions/analytics";
 
 const formatLKR = (amount: number) => {
   return new Intl.NumberFormat('en-LK', {
@@ -14,13 +15,18 @@ const formatLKR = (amount: number) => {
 
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await getDashboardData();
+        const [res, analyticsRes] = await Promise.all([
+          getDashboardData(),
+          getAnalyticsData("all time").catch(() => null),
+        ]);
         setData(res);
+        setAnalytics(analyticsRes);
       } catch (e) {
         console.error("Failed to load dashboard data", e);
       } finally {
@@ -41,6 +47,13 @@ export default function DashboardPage() {
     { label: "Unpaid Invoices", value: data.unpaidCount.toString(), icon: AlertCircle, color: "text-amber-400", bg: "bg-amber-400/10" },
   ];
 
+  const analyticsStats = analytics
+    ? [
+        { label: "Visitors (All Time)", value: (analytics.totalVisitors ?? 0).toLocaleString(), icon: Users, color: "text-indigo-400", bg: "bg-indigo-400/10" },
+        { label: "Pageviews (All Time)", value: (analytics.totalPageviews ?? 0).toLocaleString(), icon: Eye, color: "text-cyan-400", bg: "bg-cyan-400/10" },
+      ]
+    : [];
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
@@ -59,6 +72,23 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Analytics Stats Cards */}
+      {analyticsStats.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {analyticsStats.map((stat, i) => (
+            <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors">
+              <div className={`p-4 rounded-2xl ${stat.bg}`}>
+                <stat.icon className={`w-6 h-6 ${stat.color}`} />
+              </div>
+              <div>
+                <p className="text-gray-400 text-sm">{stat.label}</p>
+                <p className="text-2xl font-semibold">{stat.value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart */}

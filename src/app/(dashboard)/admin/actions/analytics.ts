@@ -140,8 +140,6 @@ export async function getAnalyticsData(dateRange = "all time") {
     referrersRes.json(), channelsRes.json(),
     urlsRes.json(), entryRes.json(), exitRes.json(),
   ]);
-console.log("URLS RAW:", JSON.stringify(urls));
-console.log("ENTRY RAW:", JSON.stringify(entryPages));
 
   const chartData = (pageviews.pageviews ?? []).map((pv: any, i: number) => ({
     name:      formatChartLabel(pv.x, unit),
@@ -211,4 +209,84 @@ export async function getActiveVisitors(): Promise<number> {
   } catch {
     return 0;
   }
+}
+
+// ── Traffic chart zoom data ───────────────────────────────────────────────
+// Dedicated to the Traffic Overview chart's zoom control. Each zoom level
+// has its own time window AND bucket size (unit), so:
+//   year  -> one point per calendar year   (multi-year window)
+//   month -> one point per calendar month  (multi-year window)
+//   week  -> one point per week            (last ~6 months)
+//   day   -> one point per day             (last ~3 months)
+//   time  -> one point per hour            (last 48 hours)
+const CHART_ZOOM_CONFIG: Record<string, { unit: string; spanMs: number }> = {
+  year:  { unit: "year",  spanMs: 5 * 365 * 86400000 },  // last 5 years
+  month: { unit: "month", spanMs: 2 * 365 * 86400000 },  // last 24 months
+  day:   { unit: "day",   spanMs: 90 * 86400000 },       // last 90 days (~3 months)
+  time:  { unit: "hour",  spanMs: 48 * 3600000 },        // last 48 hours
+};
+
+function formatChartZoomLabel(dateStr: string, unit: string): string {
+  const date = new Date(dateStr);
+  switch (unit) {
+    case "year":  return date.getFullYear().toString();
+    case "month": return date.toLocaleString("default", { month: "short", year: "2-digit" });
+    case "day":   return date.toLocaleString("default", { month: "short", day: "numeric" });
+    case "hour":  return date.toLocaleString("default", { hour: "numeric", hour12: true });
+    default:      return dateStr;
+  }
+}
+
+// zoomLevel: "year" | "month"| "day" | "time"
+export async function getChartData(zoomLevel: string) {
+  const config = CHART_ZOOM_CONFIG[zoomLevel] ?? CHART_ZOOM_CONFIG.day;
+  const now = Date.now();
+  const startAt = now - config.spanMs;
+  const endAt = now;
+
+  // Umami's pageviews endpoint doesn't support a "year" unit directly,
+  // so request "month" and aggregate into years on our side.
+  const requestUnit = config.unit === "year" ? "month" : config.unit;
+
+  const params = `startAt=${startAt}&endAt=${endAt}&unit=${requestUnit}`;
+  const base = `${UMAMI_URL}/api/websites/${WEBSITE_ID}`;
+  const headers = await getHeaders();
+
+  const res = await fetch(`${base}/pageviews?${params}`, { headers, cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`Umami pageviews error: ${res.status} ${res.statusText}`);
+  }
+  const pageviews = await res.json();
+
+  const rawPoints = (pageviews.pageviews ?? []).map((pv: any, i: number) => ({
+    date:      pv.x,
+    pageviews: pv.y,
+    visitors:  pageviews.sessions?.[i]?.y ?? 0,
+  }));
+
+  if (config.unit !== "year") {
+    return rawPoints.map((p: any) => ({
+      name: formatChartZoomLabel(p.date, config.unit),
+      visitors: p.visitors,
+      pageviews: p.pageviews,
+    }));
+  }
+
+  // Aggregate monthly points into yearly buckets.
+  const byYear = new Map<number, { visitors: number; pageviews: number }>();
+  for (const p of rawPoints) {
+    const year = new Date(p.date).getFullYear();
+    const existing = byYear.get(year) ?? { visitors: 0, pageviews: 0 };
+    existing.visitors += p.visitors;
+    existing.pageviews += p.pageviews;
+    byYear.set(year, existing);
+  }
+
+  return Array.from(byYear.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([year, vals]) => ({
+      name: year.toString(),
+      visitors: vals.visitors,
+      pageviews: vals.pageviews,
+    }));
 }

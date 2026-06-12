@@ -5,12 +5,13 @@ import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
   Users, Eye, MousePointerClick, Clock,
   Globe, Monitor, Smartphone, Tablet, Activity,
+  ZoomIn, ZoomOut,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { getAnalyticsData, getActiveVisitors } from "../actions/analytics";
+import { getAnalyticsData, getActiveVisitors, getChartData } from "../actions/analytics";
 import { formatDuration } from "../actions/utils";
 import {
   decodeRegion, regionToCountry,
@@ -44,6 +45,18 @@ const deviceIconMap: Record<string, any> = {
 const deviceColorMap: Record<string, string> = {
   desktop: "text-brand-400", mobile: "text-green-400", tablet: "text-amber-400",
 };
+
+// Zoom levels for the Traffic chart's X-axis, mapped to the dateRange values
+// already supported by getAnalyticsData. Changing zoom re-fetches data at a
+// different time window AND server-side unit (hour/day/week/month), so the
+// chart genuinely shows more/less granular data — not just a client-side
+// re-grouping of the same points.
+const CHART_ZOOM_LEVELS = [
+  { key: "year",  label: "Year" },   // 1 point per calendar year
+  { key: "month", label: "Month" },  // 1 point per calendar month
+  { key: "day",   label: "Day" },    // 1 point per day
+  { key: "time",  label: "Time" },   // 1 point per hour
+] as const;
 
 // ── Animated counter ──────────────────────────────────────────────────────────
 function AnimatedNumber({ value, format }: { value: number; format?: (n: number) => string }) {
@@ -139,6 +152,12 @@ export default function AnalyticsPage() {
   const [envTab,    setEnvTab]    = useState("devices");
   const [locTab,    setLocTab]    = useState("countries");
 
+  // Chart X-axis zoom level: index into CHART_ZOOM_LEVELS
+  // 0 = year (most zoomed out) ... 4 = time (most zoomed in)
+  const [chartZoomIndex, setChartZoomIndex] = useState(2); // default to "week"
+  const [chartData, setChartData] = useState<any[] | null>(null);
+  const [chartLoading, setChartLoading] = useState(true);
+
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -149,12 +168,39 @@ export default function AnalyticsPage() {
     load();
   }, [dateRange]);
 
+  // Fetch chart-specific data whenever the zoom level changes. This is
+  // independent of the page-wide `dateRange` selector so zooming the chart
+  // doesn't affect the other widgets (stat cards, pages, sources, etc).
+  useEffect(() => {
+    const zoomLevel = CHART_ZOOM_LEVELS[chartZoomIndex];
+    let cancelled = false;
+    async function loadChart() {
+      setChartLoading(true);
+      try {
+        const points = await getChartData(zoomLevel.key);
+        if (!cancelled) setChartData(Array.isArray(points) ? points : []);
+      } catch (e) {
+        console.error(e);
+        if (!cancelled) setChartData([]);
+      } finally {
+        if (!cancelled) setChartLoading(false);
+      }
+    }
+    loadChart();
+    return () => { cancelled = true; };
+  }, [chartZoomIndex]);
+
   useEffect(() => {
     const fetch_ = async () => setActiveVisitors(await getActiveVisitors());
     fetch_();
     const id = setInterval(fetch_, 30000);
     return () => clearInterval(id);
   }, []);
+
+  const chartZoomLevel = CHART_ZOOM_LEVELS[chartZoomIndex];
+
+  const zoomOut = () => setChartZoomIndex((i) => Math.max(0, i - 1));
+  const zoomIn  = () => setChartZoomIndex((i) => Math.min(CHART_ZOOM_LEVELS.length - 1, i + 1));
 
   if (loading || !data) {
     return (
@@ -249,13 +295,47 @@ export default function AnalyticsPage() {
 
       {/* Traffic Chart */}
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
-        <h2 className="text-xl font-semibold mb-6">Traffic Overview</h2>
-        {data.chartData.length === 0 ? (
+        <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+          <h2 className="text-xl font-semibold">Traffic Overview</h2>
+
+          {/* Zoom controls */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={zoomOut}
+              disabled={chartZoomIndex === 0}
+              aria-label="Zoom out"
+              title="Zoom out"
+              className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+
+            <span className="text-xs font-medium text-gray-400 w-12 text-center select-none">
+              {chartZoomLevel.label}
+            </span>
+
+            <button
+              onClick={zoomIn}
+              disabled={chartZoomIndex === CHART_ZOOM_LEVELS.length - 1}
+              aria-label="Zoom in"
+              title="Zoom in"
+              className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {chartLoading || !chartData ? (
+          <div className="h-[300px] w-full flex items-center justify-center">
+            <p className="text-gray-500 text-sm animate-pulse">Loading chart…</p>
+          </div>
+        ) : chartData.length === 0 ? (
           <p className="text-gray-500 text-sm py-12 text-center">No traffic data for this period yet.</p>
         ) : (
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%"  stopColor="#818cf8" stopOpacity={0.3} />
