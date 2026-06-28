@@ -254,7 +254,7 @@ export default function AgreementsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden">
+      {/* <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -331,7 +331,7 @@ export default function AgreementsPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </div> */}
 
       {/* ── Create / Edit Modal ───────────────────────────────────────────────── */}
       {isModalOpen && (

@@ -40,7 +40,7 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
   { name: "Reports", href: "/admin/reports", icon: BarChart3 },
   { name: "Invoices", href: "/admin/invoices", icon: FileText },
   { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
-  { name: "Agreements", href: "/admin/#", icon: FilePenLine },
+  { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
   { name: "Clients", href: "/admin/clients", icon: Users },
   { name: "Web Analytics", href: "/admin/analytics", icon: ChartLine },
 ];
