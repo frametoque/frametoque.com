@@ -45,10 +45,20 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
   { name: "Web Analytics", href: "/admin/analytics", icon: ChartLine },
 ];
 
-    const isActive = (href) => {
-      if (href === "/admin/dashboard") return pathname === href;
-      return pathname.startsWith(href);
-    };
+const isActive = (href: string) => {
+  if (href === "/admin/dashboard") {
+    return pathname === href;
+  }
+
+  if (href === "/admin/invoices") {
+    return (
+      pathname.startsWith("/admin/invoices") ||
+      pathname.startsWith("/admin/invoice")
+    );
+  }
+
+  return pathname.startsWith(href);
+};
 
     return (
       <>
