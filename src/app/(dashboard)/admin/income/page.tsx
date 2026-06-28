@@ -4,15 +4,23 @@ import { useEffect, useState } from "react";
 import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2, Eye } from "lucide-react";
 import Link from "next/link";
 import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient } from "../actions/actions";
+import CategoryPicker from "../components/CategoryPicker";
 
-const filters = ["All", "Web dev", "Graphic design", "Video editing", "Photography", "Videography"];
+const ALL_CATEGORIES = ["Web dev", "Graphic design", "Video editing", "Photography", "Videography", "Other"];
+const filters = ["All", ...ALL_CATEGORIES];
 
-const formatLKR = (amount: number) => {
-  return new Intl.NumberFormat('en-LK', {
-    style: 'currency',
-    currency: 'LKR',
-  }).format(amount || 0);
+const formatLKR = (amount: number) =>
+  new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount || 0);
+
+// Helper: parse stored comma-separated category string → array
+const parseCategories = (raw: string | string[] | undefined): string[] => {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  return raw.split(",").map((s) => s.trim()).filter(Boolean);
 };
+
+// Helper: array → comma-separated string for storage
+const joinCategories = (cats: string[]): string => cats.join(", ");
 
 export default function IncomePage() {
   const [activeFilter, setActiveFilter] = useState("All");
@@ -25,7 +33,8 @@ export default function IncomePage() {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
   const [clients, setClients] = useState<any[]>([]);
-  // New client fields
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([ALL_CATEGORIES[0]]);
+
   const [newClientName, setNewClientName] = useState("");
   const [newClientEmail, setNewClientEmail] = useState("");
   const [newClientCompany, setNewClientCompany] = useState("");
@@ -36,18 +45,16 @@ export default function IncomePage() {
     amount: '',
     clientId: '',
     description: '',
-    category: filters[1],
     paymentMethod: 'Bank Transfer',
     invoiceId: '',
-    receiptUrl: ''
+    receiptUrl: '',
   });
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await getIncomes(dateRange);
+      const [res, cls] = await Promise.all([getIncomes(dateRange), getClients()]);
       setData(res);
-      const cls = await getClients();
       setClients(cls);
     } catch (e) {
       console.error("Failed to load incomes", e);
@@ -56,14 +63,31 @@ export default function IncomePage() {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, [dateRange]);
+  useEffect(() => { loadData(); }, [dateRange]);
+
+  const openNew = () => {
+    setEditingId(null);
+    setFormData({ date: new Date().toISOString().split('T')[0], amount: '', clientId: '', description: '', paymentMethod: 'Bank Transfer', invoiceId: '', receiptUrl: '' });
+    setSelectedCategories([ALL_CATEGORIES[0]]);
+    setNewClientName(''); setNewClientEmail(''); setNewClientCompany(''); setNewClientPhone('');
+    setReceiptFile(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (row: any) => {
+    let formattedDate = new Date().toISOString().split('T')[0];
+    try { if (row.date) formattedDate = new Date(row.date).toISOString().split('T')[0]; } catch (e) {}
+    setEditingId(row.id);
+    setFormData({ date: formattedDate, amount: row.amount.toString(), clientId: row.clientId || '', description: row.desc || '', paymentMethod: row.paymentMethod || 'Bank Transfer', invoiceId: row.invoice || '', receiptUrl: row.receiptUrl || '' });
+    setSelectedCategories(parseCategories(row.category));
+    setReceiptFile(null);
+    setIsModalOpen(true);
+  };
 
   const handleSave = async () => {
+    if (selectedCategories.length === 0) { alert("Please select at least one category."); return; }
     setSaving(true);
     try {
-      // Upload receipt if provided
       let uploadedUrl = formData.receiptUrl;
       if (receiptFile) {
         const fileData = new FormData();
@@ -71,47 +95,25 @@ export default function IncomePage() {
         uploadedUrl = await uploadReceipt(fileData, 'income');
       }
 
-      // Handle new client creation
       let clientId = formData.clientId;
       if (clientId === 'new') {
-        // create new client via API
-        clientId = await createClient({
-          name: newClientName,
-          email: newClientEmail,
-          company: newClientCompany || null,
-          phone: newClientPhone || null,
-        });
+        clientId = await createClient({ name: newClientName, email: newClientEmail, company: newClientCompany || null, phone: newClientPhone || null });
       }
 
       const payload = {
         ...formData,
         clientId,
         amount: parseFloat(formData.amount) || 0,
+        category: joinCategories(selectedCategories),
         receiptUrl: uploadedUrl,
       };
-      if (editingId) {
-        await updateIncome(editingId, payload);
-      } else {
-        await createIncome(payload);
-      }
+
+      if (editingId) { await updateIncome(editingId, payload); } 
+      else { await createIncome(payload); }
+
       setIsModalOpen(false);
       setEditingId(null);
       setReceiptFile(null);
-      // Reset form and new client fields
-      setFormData({
-        date: new Date().toISOString().split('T')[0],
-        amount: '',
-        clientId: '',
-        description: '',
-        category: filters[1],
-        paymentMethod: 'Bank Transfer',
-        invoiceId: '',
-        receiptUrl: ''
-      });
-      setNewClientName('');
-      setNewClientEmail('');
-      setNewClientCompany('');
-      setNewClientPhone('');
       await loadData();
     } catch (e) {
       console.error(e);
@@ -121,39 +123,13 @@ export default function IncomePage() {
     }
   };
 
-  const handleEdit = (row: any) => {
-    let formattedDate = new Date().toISOString().split('T')[0];
-    try { if (row.date) formattedDate = new Date(row.date).toISOString().split('T')[0]; } catch(e) {}
-    
-    setEditingId(row.id);
-    setFormData({
-      date: formattedDate,
-      amount: row.amount.toString(),
-      clientId: row.clientId || '',
-      description: row.desc || '',
-      category: row.category || filters[1],
-      paymentMethod: row.paymentMethod || 'Bank Transfer',
-      invoiceId: row.invoice || '',
-      receiptUrl: row.receiptUrl || ''
-    });
-    setReceiptFile(null);
-    setIsModalOpen(true);
-  };
-
   const handleDelete = async (id: number) => {
     if (confirm("Are you sure you want to delete this record?")) {
-      try {
-        await deleteIncome(id);
-        await loadData();
-      } catch (e) {
-        console.error("Failed to delete", e);
-      }
+      try { await deleteIncome(id); await loadData(); } catch (e) { console.error("Failed to delete", e); }
     }
   };
 
-  if (loading || !data) {
-    return <div className="p-8 text-center text-gray-400 animate-pulse">Loading income data...</div>;
-  }
+  if (loading || !data) return <div className="p-8 text-center text-gray-400 animate-pulse">Loading income data...</div>;
 
   const stats = [
     { label: "This Month", value: formatLKR(data.thisMonth), icon: Wallet, color: "text-green-400", bg: "bg-green-400/10" },
@@ -161,20 +137,19 @@ export default function IncomePage() {
     { label: "Year to Date", value: formatLKR(data.ytd), icon: TrendingUp, color: "text-brand-400", bg: "bg-brand-400/10" },
   ];
 
-  const filteredIncome = data.items.filter((row: any) => 
-    activeFilter === "All" || row.category === activeFilter
-  );
+  // Filter: match if any of the row's categories includes the active filter
+  const filteredIncome = data.items.filter((row: any) => {
+    if (activeFilter === "All") return true;
+    return parseCategories(row.category).includes(activeFilter);
+  });
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">Income</h1>
-          <select 
-            value={dateRange} 
-            onChange={(e) => setDateRange(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium"
-          >
+          <select value={dateRange} onChange={(e) => setDateRange(e.target.value)}
+            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium">
             <option value="lifetime" className="bg-black">Lifetime</option>
             <option value="this year" className="bg-black">This Year</option>
             <option value="6 months" className="bg-black">Last 6 Months</option>
@@ -182,45 +157,17 @@ export default function IncomePage() {
             <option value="one month" className="bg-black">Last Month</option>
           </select>
         </div>
-        <button 
-          onClick={() => {
-            setEditingId(null);
-          setFormData({
-            date: new Date().toISOString().split('T')[0],
-            amount: '',
-            clientId: '',
-            description: '',
-            category: filters[1],
-            paymentMethod: 'Bank Transfer',
-            invoiceId: '',
-            receiptUrl: ''
-          });
-          // Reset new client fields
-          setNewClientName('');
-          setNewClientEmail('');
-          setNewClientCompany('');
-          setNewClientPhone('');
-          setReceiptFile(null);
-          setIsModalOpen(true);
-          }}
-          className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Record Income
+        <button onClick={openNew} className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors">
+          <Plus className="w-5 h-5" /> Record Income
         </button>
       </div>
-      
-      {/* Stats Cards */}
+
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {stats.map((stat, i) => (
           <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors">
-            <div className={`p-4 rounded-2xl ${stat.bg}`}>
-              <stat.icon className={`w-6 h-6 ${stat.color}`} />
-            </div>
-            <div>
-              <p className="text-gray-400 text-sm">{stat.label}</p>
-              <p className="text-2xl font-semibold">{stat.value}</p>
-            </div>
+            <div className={`p-4 rounded-2xl ${stat.bg}`}><stat.icon className={`w-6 h-6 ${stat.color}`} /></div>
+            <div><p className="text-gray-400 text-sm">{stat.label}</p><p className="text-2xl font-semibold">{stat.value}</p></div>
           </div>
         ))}
       </div>
@@ -228,15 +175,8 @@ export default function IncomePage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
         {filters.map((f) => (
-          <button
-            key={f}
-            onClick={() => setActiveFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              activeFilter === f 
-                ? "bg-white text-black" 
-                : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
-            }`}
-          >
+          <button key={f} onClick={() => setActiveFilter(f)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeFilter === f ? "bg-white text-black" : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"}`}>
             {f}
           </button>
         ))}
@@ -252,7 +192,7 @@ export default function IncomePage() {
                 <th className="p-4 font-medium">Amount</th>
                 <th className="p-4 font-medium">Client</th>
                 <th className="p-4 font-medium">Description</th>
-                <th className="p-4 font-medium">Category</th>
+                <th className="p-4 font-medium">Categories</th>
                 <th className="p-4 font-medium">Invoice</th>
                 <th className="p-4 font-medium text-right">Actions</th>
               </tr>
@@ -265,73 +205,78 @@ export default function IncomePage() {
                   <td className="p-4 text-sm">{row.client || '-'}</td>
                   <td className="p-4 text-sm text-gray-300">{row.desc}</td>
                   <td className="p-4">
-                    <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-white/10 border border-white/10">
-                      {row.category}
-                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {parseCategories(row.category).map((cat) => (
+                        <span key={cat} className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-white/10 border border-white/10 whitespace-nowrap">
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
                   </td>
                   <td className="p-4">
                     {row.invoice ? (
                       <Link href={`/admin/invoice/${row.invoice}`} className="flex items-center gap-1 text-sm text-brand-400 hover:text-brand-300 transition-colors">
-                        <FileText className="w-4 h-4" />
-                        {row.invoice}
+                        <FileText className="w-4 h-4" />{row.invoice}
                       </Link>
                     ) : '-'}
                   </td>
-                  <td className="p-4 flex items-center justify-end gap-2">
-                    {row.receiptUrl && (
-                      <button onClick={() => setViewingReceipt(row)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-blue-400 hover:text-blue-300">
-                        <Eye className="w-4 h-4" />
+                  <td className="p-4">
+                    <div className="flex items-center justify-end gap-2">
+                      {row.receiptUrl && (
+                        <button onClick={() => setViewingReceipt(row)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-blue-400 hover:text-blue-300">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button onClick={() => handleEdit(row)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white">
+                        <Edit2 className="w-4 h-4" />
                       </button>
-                    )}
-                    <button onClick={() => handleEdit(row)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleDelete(row.id)} className="p-2 hover:bg-red-400/10 rounded-xl transition-colors text-gray-400 hover:text-red-400">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      <button onClick={() => handleDelete(row.id)} className="p-2 hover:bg-red-400/10 rounded-xl transition-colors text-gray-400 hover:text-red-400">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
               {filteredIncome.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="p-6 text-center text-gray-500">No income records found.</td>
-                </tr>
+                <tr><td colSpan={7} className="p-6 text-center text-gray-500">No income records found.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Modal Form */}
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <h2 className="text-xl font-semibold">{editingId ? 'Edit Income' : 'Record Income'}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-sm text-gray-400">Date</label>
-                  <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
+                  <input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm text-gray-400">Amount (LKR)</label>
-                  <input type="number" placeholder="0.00" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
+                  <input type="number" placeholder="0.00" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
                 </div>
               </div>
+
               <div className="space-y-1">
                 <label className="text-sm text-gray-400">Client</label>
-                <select value={formData.clientId} onChange={e => setFormData({...formData, clientId: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
+                <select value={formData.clientId} onChange={e => setFormData({ ...formData, clientId: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
                   <option value="" className="bg-black">None</option>
                   <option value="new" className="bg-brand-900">+ Add New Client</option>
                   {clients.map(c => <option key={c.id} value={c.id} className="bg-black">{c.name}</option>)}
                 </select>
               </div>
-              
+
               {formData.clientId === 'new' && (
                 <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-3">
                   <input type="text" placeholder="Client Name" value={newClientName} onChange={e => setNewClientName(e.target.value)} className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm" />
@@ -345,18 +290,19 @@ export default function IncomePage() {
 
               <div className="space-y-1">
                 <label className="text-sm text-gray-400">Description</label>
-                <input type="text" placeholder="What was this for?" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
+                <input type="text" placeholder="What was this for?" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Category</label>
-                  <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
-                    {filters.filter(f => f !== "All").map(f => <option key={f} value={f} className="bg-black">{f}</option>)}
-                  </select>
+                  <label className="text-sm text-gray-400">Categories</label>
+                  <CategoryPicker categories={ALL_CATEGORIES} value={selectedCategories} onChange={setSelectedCategories} placeholder="Select categories..." />
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm text-gray-400">Payment Method</label>
-                  <select value={formData.paymentMethod} onChange={e => setFormData({...formData, paymentMethod: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
+                  <select value={formData.paymentMethod} onChange={e => setFormData({ ...formData, paymentMethod: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
                     <option className="bg-black">Bank Transfer</option>
                     <option className="bg-black">Stripe</option>
                     <option className="bg-black">PayPal</option>
@@ -364,20 +310,24 @@ export default function IncomePage() {
                   </select>
                 </div>
               </div>
+
               <div className="space-y-1">
                 <label className="text-sm text-gray-400">Linked Invoice (Optional)</label>
-                <input type="text" placeholder="e.g. INV-001" value={formData.invoiceId} onChange={e => setFormData({...formData, invoiceId: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
+                <input type="text" placeholder="e.g. INV-001" value={formData.invoiceId} onChange={e => setFormData({ ...formData, invoiceId: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
               </div>
+
               <div className="space-y-1">
                 <label className="text-sm text-gray-400">Receipt Image</label>
-                <input type="file" accept="image/*" onChange={e => setReceiptFile(e.target.files?.[0] || null)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
-                {formData.receiptUrl && !receiptFile && <a href={formData.receiptUrl} target="_blank" className="text-xs text-blue-400 underline mt-1 block px-2">View current receipt</a>}
+                <input type="file" accept="image/*" onChange={e => setReceiptFile(e.target.files?.[0] || null)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
+                {formData.receiptUrl && !receiptFile && (
+                  <a href={formData.receiptUrl} target="_blank" className="text-xs text-blue-400 underline mt-1 block px-2">View current receipt</a>
+                )}
               </div>
             </div>
             <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-white/5">
-              <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-full font-medium hover:bg-white/10 transition-colors" disabled={saving}>
-                Cancel
-              </button>
+              <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-full font-medium hover:bg-white/10 transition-colors" disabled={saving}>Cancel</button>
               <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-full font-medium transition-colors disabled:opacity-50">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {saving ? "Saving..." : (editingId ? "Update Income" : "Save Income")}
@@ -387,19 +337,18 @@ export default function IncomePage() {
         </div>
       )}
 
+      {/* Receipt Viewer */}
       {viewingReceipt && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={() => setViewingReceipt(null)}>
           <div className="relative flex flex-col md:flex-row bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden max-w-5xl w-full max-h-[90vh] shadow-2xl" onClick={e => e.stopPropagation()}>
             <button className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md" onClick={() => setViewingReceipt(null)}>
               <X className="w-5 h-5" />
             </button>
-            
             <div className="w-full md:w-1/3 bg-white/5 p-6 sm:p-8 flex flex-col gap-6 border-b md:border-b-0 md:border-r border-white/10 overflow-y-auto">
               <div>
                 <h3 className="text-xl font-bold text-white mb-1">Receipt Details</h3>
                 <p className="text-sm text-gray-400">Transaction Information</p>
               </div>
-              
               <div className="space-y-5">
                 <div>
                   <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Amount</p>
@@ -416,10 +365,12 @@ export default function IncomePage() {
                   </div>
                 )}
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Category</p>
-                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-white/10 border border-white/10 inline-block">
-                    {viewingReceipt.category}
-                  </span>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2">Categories</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {parseCategories(viewingReceipt.category).map((cat) => (
+                      <span key={cat} className="px-2.5 py-1 text-xs font-medium rounded-full bg-white/10 border border-white/10">{cat}</span>
+                    ))}
+                  </div>
                 </div>
                 {viewingReceipt.desc && (
                   <div>
@@ -431,20 +382,14 @@ export default function IncomePage() {
                   <div>
                     <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Linked Invoice</p>
                     <Link href={`/admin/invoices/${viewingReceipt.invoice}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500/10 text-sm font-medium text-brand-400 hover:bg-brand-500/20 transition-colors">
-                      <FileText className="w-4 h-4" />
-                      {viewingReceipt.invoice}
+                      <FileText className="w-4 h-4" />{viewingReceipt.invoice}
                     </Link>
                   </div>
                 )}
               </div>
             </div>
-
             <div className="w-full md:w-2/3 bg-black/50 flex items-center justify-center p-6 min-h-[300px] overflow-hidden">
-              <img 
-                src={viewingReceipt.receiptUrl} 
-                alt="Receipt" 
-                className="max-w-full max-h-full object-contain rounded-xl shadow-lg border border-white/5"
-              />
+              <img src={viewingReceipt.receiptUrl} alt="Receipt" className="max-w-full max-h-full object-contain rounded-xl shadow-lg border border-white/5" />
             </div>
           </div>
         </div>

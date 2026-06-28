@@ -29,7 +29,6 @@ export async function getDashboardData() {
   const totalExpenses = expenses[0]?.total ? parseFloat(expenses[0].total) : 0;
   const netProfit = totalIncome - totalExpenses;
 
-  // Chart data: Group by month for the last 6 months
   const chartDataRaw = await sql`
     SELECT 
       TO_CHAR(date, 'Mon') as name,
@@ -46,7 +45,6 @@ export async function getDashboardData() {
     ORDER BY EXTRACT(MONTH FROM date)
   `;
 
-  // Recent Invoices
   const recentInvoicesRaw = await sql`
     SELECT invoice_id as id, user_email as client, total as amount, payment_status as status
     FROM invoices
@@ -54,7 +52,6 @@ export async function getDashboardData() {
     LIMIT 4
   `;
 
-  // Recent Transactions
   const recentTransactionsRaw = await sql`
     SELECT id, 'income' as type, description as name, date, amount FROM admin_incomes
     UNION ALL
@@ -95,7 +92,7 @@ function getCutoffDate(range: string) {
   if (range === '6 months') { d.setMonth(d.getMonth() - 6); return d.toISOString(); }
   if (range === 'three months') { d.setMonth(d.getMonth() - 3); return d.toISOString(); }
   if (range === 'one month') { d.setMonth(d.getMonth() - 1); return d.toISOString(); }
-  return new Date(0).toISOString(); // lifetime
+  return new Date(0).toISOString();
 }
 
 // -- INCOMES --
@@ -132,14 +129,25 @@ export async function createIncome(data: any) {
   `;
 }
 
-// Create a new client and return its ID
-export async function createClient(data: { name: string; email: string; company?: string | null; phone?: string | null }): Promise<string> {
+export async function createClient(data: { name: string; email: string; company?: string | null; phone?: string | null; address?: string | null }): Promise<string> {
   const clientId = 'C-' + Date.now();
   await sql`
-    INSERT INTO admin_clients (id, name, email, company, phone, active)
-    VALUES (${clientId}, ${data.name}, ${data.email}, ${data.company || null}, ${data.phone || null}, true)
+    INSERT INTO admin_clients (id, name, email, company, phone, address, active)
+    VALUES (${clientId}, ${data.name}, ${data.email}, ${data.company || null}, ${data.phone || null}, ${data.address || null}, true)
   `;
   return clientId;
+}
+
+export async function updateClient(clientId: string, data: { name?: string; company?: string | null; phone?: string | null; address?: string | null }) {
+  await sql`
+    UPDATE admin_clients
+    SET 
+      name = COALESCE(${data.name || null}, name),
+      company = ${data.company || null},
+      phone = ${data.phone || null},
+      address = ${data.address || null}
+    WHERE id = ${clientId}
+  `;
 }
 
 export async function updateIncome(id: number, data: any) {
@@ -207,7 +215,7 @@ export async function getInvoices() {
   const overdueCount = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status = 'overdue'`;
 
   const rows = await sql`
-    SELECT invoice_id as id, user_email as client, project_name as service, total as amount, date as due_date, payment_status as status
+    SELECT invoice_id as id, user_email as client, project_name as service, total as amount, date as due_date, payment_status as status, work_status
     FROM invoices
     ORDER BY created_at DESC
   `;
@@ -224,33 +232,44 @@ export async function getInvoices() {
       amount: parseFloat(r.amount),
       due: r.due_date ? new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
       status: r.status,
+      work_status: r.work_status,
       overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && r.status !== 'paid')
     }))
   };
 }
 
 export async function deleteInvoice(id: string) {
+  await sql`
+    UPDATE admin_quotations
+    SET linked_invoice_id = NULL,
+        status = 'draft',
+        project_confirmed = false
+    WHERE linked_invoice_id = ${id}
+  `;
   await sql`DELETE FROM invoices WHERE invoice_id = ${id}`;
 }
 
 export async function getInvoiceByIdAdmin(invoiceId: string) {
+  // Join with admin_clients and users to get billing address
   const result = await sql`
     SELECT
-      invoice_id,
-      user_email,
-      project_name,
-      billing_address,
-      date,
-      currency,
-      subtotal,
-      discount,
-      total,
-      advance,
-      total_due,
-      work_status,
-      payment_status
-    FROM invoices
-    WHERE invoice_id = ${invoiceId}
+      i.invoice_id,
+      i.user_email,
+      i.project_name,
+      i.date,
+      i.currency,
+      i.subtotal,
+      i.discount,
+      i.total,
+      i.advance,
+      i.total_due,
+      i.work_status,
+      i.payment_status,
+      COALESCE(ac.address, u.address) as billing_address
+    FROM invoices i
+    LEFT JOIN admin_clients ac ON LOWER(i.user_email) = LOWER(ac.email)
+    LEFT JOIN users u ON LOWER(i.user_email) = LOWER(u.email)
+    WHERE i.invoice_id = ${invoiceId}
   `;
 
   if (result.length === 0) return null;
@@ -276,13 +295,16 @@ export async function getClients() {
            c.active,
            COALESCE(u.company, c.company) as company,
            COALESCE(u.phone, c.phone) as phone,
+           COALESCE(c.address, u.address) as address,
            u.clerk_id,
-           COUNT(i.invoice_id) as invoices, 
-           COALESCE(SUM(i.total), 0) as revenue
+           COUNT(DISTINCT i.invoice_id) as invoices, 
+           COALESCE(SUM(inc.amount), 0) as revenue
     FROM admin_clients c
     LEFT JOIN users u ON c.email = u.email
+    LEFT JOIN admin_incomes inc ON c.id = inc.client_id
     LEFT JOIN invoices i ON c.email = i.user_email
-    GROUP BY c.id, c.name, c.email, c.active, c.company, c.phone, u.full_name, u.company, u.phone, u.clerk_id
+    GROUP BY c.id, c.name, c.email, c.active, c.company, c.phone, c.address, u.full_name, u.company, u.phone, u.address, u.clerk_id
+    HAVING COALESCE(SUM(inc.amount), 0) >= 0
     ORDER BY revenue DESC
   `;
 
@@ -306,6 +328,7 @@ export async function getClients() {
       active: r.active,
       company: r.company,
       phone: r.phone,
+      address: r.address,
       imageUrl: imageUrl,
       invoices: parseInt(r.invoices),
       revenue: parseFloat(r.revenue)
@@ -325,8 +348,8 @@ export async function getClientById(clientId: string) {
            c.active,
            COALESCE(u.company, c.company) as company,
            COALESCE(u.phone, c.phone) as phone,
+           COALESCE(c.address, u.address) as address,
            u.clerk_id,
-           u.address,
            u.website
     FROM admin_clients c
     LEFT JOIN users u ON c.email = u.email
@@ -353,6 +376,44 @@ export async function getClientById(clientId: string) {
     ORDER BY date DESC
   `;
 
+  // Also fetch manual income entries linked to this client
+  const incomes = await sql`
+    SELECT id, description as service, amount, date, category, invoice_id
+    FROM admin_incomes
+    WHERE client_id = ${clientId}
+    ORDER BY date DESC
+  `;
+
+  // Build unified orders list — skip income rows already represented by a linked invoice
+  const invoiceIds = new Set(invoices.map((r: any) => r.id));
+
+  const invoiceOrders = invoices.map((r: any) => ({
+    id: r.id,
+    type: 'invoice',
+    service: r.service,
+    amount: parseFloat(r.amount),
+    date: r.due_date ? new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
+    status: r.status,
+    overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && r.status !== 'paid'),
+    rawDate: r.due_date ? new Date(r.due_date) : new Date(0),
+  }));
+
+  const incomeOrders = incomes
+    .filter((r: any) => !r.invoice_id || !invoiceIds.has(r.invoice_id))
+    .map((r: any) => ({
+      id: `INC-${r.id}`,
+      type: 'income',
+      service: r.service || r.category || 'Income',
+      amount: parseFloat(r.amount),
+      date: r.date ? new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
+      status: 'paid', // manual incomes are already received
+      overdue: false,
+      rawDate: r.date ? new Date(r.date) : new Date(0),
+    }));
+
+  const orders = [...invoiceOrders, ...incomeOrders]
+    .sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime());
+
   return {
     id: c.id,
     name: c.name || c.email.split('@')[0],
@@ -363,44 +424,51 @@ export async function getClientById(clientId: string) {
     address: c.address,
     website: c.website,
     imageUrl,
-    invoices: invoices.map(r => ({
-      id: r.id,
-      service: r.service,
-      amount: parseFloat(r.amount),
-      due: r.due_date ? new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
-      status: r.status,
-      overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && r.status !== 'paid')
-    }))
+    orders,
+    invoices: invoiceOrders, // kept for backward compatibility
   };
 }
 
 export async function createInvoice(invoiceData: any, lineItems: any[]) {
-  // 1. Check if client exists by email, if not create them in admin_clients
-  const existingClient = await sql`SELECT id FROM admin_clients WHERE email = ${invoiceData.userEmail}`;
+  // Upsert client — also save billing address if provided
+  const existingClient = await sql`SELECT id FROM admin_clients WHERE LOWER(email) = LOWER(${invoiceData.userEmail})`;
   
   if (existingClient.length === 0 && invoiceData.userEmail) {
     const clientId = 'C-' + Date.now();
     await sql`
-      INSERT INTO admin_clients (id, name, company, email, phone)
-      VALUES (${clientId}, ${invoiceData.clientName || invoiceData.userEmail.split('@')[0]}, ${invoiceData.company || null}, ${invoiceData.userEmail}, ${invoiceData.phone || null})
+      INSERT INTO admin_clients (id, name, company, email, phone, address, active)
+      VALUES (
+        ${clientId},
+        ${invoiceData.clientName || invoiceData.userEmail.split('@')[0]},
+        ${invoiceData.company || null},
+        ${invoiceData.userEmail},
+        ${invoiceData.phone || null},
+        ${invoiceData.billingAddress || null},
+        true
+      )
+    `;
+  } else if (existingClient.length > 0 && invoiceData.billingAddress) {
+    // Update address on existing client if a billing address was entered
+    await sql`
+      UPDATE admin_clients
+      SET address = ${invoiceData.billingAddress}
+      WHERE LOWER(email) = LOWER(${invoiceData.userEmail}) AND (address IS NULL OR address = '')
     `;
   }
 
-  // 2. Generate Invoice ID and Insert Invoice
   const invoiceId = 'INV-' + Date.now();
   await sql`
     INSERT INTO invoices (
-      invoice_id, user_email, project_name, billing_address, date, 
+      invoice_id, user_email, project_name, date, 
       subtotal, discount, total, advance, total_due, 
       work_status, payment_status, currency
     ) VALUES (
-      ${invoiceId}, ${invoiceData.userEmail}, ${invoiceData.projectName}, ${invoiceData.billingAddress}, ${invoiceData.date},
+      ${invoiceId}, ${invoiceData.userEmail}, ${invoiceData.projectName}, ${invoiceData.date},
       ${invoiceData.subtotal}, ${invoiceData.discount}, ${invoiceData.total}, ${invoiceData.advance}, ${invoiceData.totalDue},
       ${invoiceData.workStatus}, ${invoiceData.paymentStatus}, ${invoiceData.currency}
     )
   `;
 
-  // 3. Insert Line Items
   for (const item of lineItems) {
     if (item.description) {
       await sql`
@@ -414,11 +482,19 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
 }
 
 export async function updateInvoice(invoiceId: string, invoiceData: any, lineItems: any[]) {
+  // If a billing address was edited, persist it back to admin_clients
+  if (invoiceData.billingAddress) {
+    await sql`
+      UPDATE admin_clients
+      SET address = ${invoiceData.billingAddress}
+      WHERE LOWER(email) = LOWER(${invoiceData.userEmail})
+    `;
+  }
+
   await sql`
     UPDATE invoices SET
       user_email = ${invoiceData.userEmail},
       project_name = ${invoiceData.projectName},
-      billing_address = ${invoiceData.billingAddress},
       date = ${invoiceData.date},
       subtotal = ${invoiceData.subtotal},
       discount = ${invoiceData.discount},
@@ -481,4 +557,288 @@ export async function getReports(range = 'lifetime') {
     incomeByService: incomeByService.map(r => ({ name: r.name || 'Other', value: parseFloat(r.value) })),
     expensesBreakdown: expensesBreakdown.map(r => ({ name: r.name || 'Other', value: parseFloat(r.value) }))
   };
+}
+
+// -- QUOTATIONS --
+export async function getQuotations(range = 'lifetime') {
+  const cutoff = getCutoffDate(range);
+  
+  const rows = await sql`
+    SELECT q.id, q.date, q.amount, q.advance, q.total_due as "totalDue",
+           c.name as client, q.client_id as "clientId", q.description as desc, q.category,
+           q.invoice_id as invoice, q.receipt_url as "receiptUrl", q.status, q.project_confirmed as "projectConfirmed"
+    FROM admin_quotations q
+    LEFT JOIN admin_clients c ON q.client_id = c.id
+    WHERE q.date >= ${cutoff}
+    ORDER BY q.date DESC
+  `;
+ 
+  const confirmedCount = rows.filter((r: any) => r.status === 'confirmed').length;
+  const totalValue = rows.reduce((sum: number, r: any) => sum + parseFloat(r.amount), 0);
+ 
+  return {
+    confirmedCount,
+    totalValue,
+    items: rows.map(r => ({
+      ...r,
+      date: new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      amount: parseFloat(r.amount),
+      advance: parseFloat(r.advance || 0),
+      totalDue: parseFloat(r.totalDue || r.amount),
+      paymentMethod: 'Bank Transfer'
+    }))
+  };
+}
+ 
+export async function createQuotation(data: any, lineItems: any[] = []) {
+  const advance = data.advance || 0;
+  const totalDue = data.totalDue ?? (data.amount - advance);
+
+  // Persist billing address back to the client record
+  if (data.clientId && data.billingAddress) {
+    await sql`
+      UPDATE admin_clients
+      SET address = ${data.billingAddress}
+      WHERE id = ${data.clientId} AND (address IS NULL OR address = '')
+    `;
+  }
+
+  const result = await sql`
+    INSERT INTO admin_quotations (
+      date, amount, advance, total_due,
+      description, category, payment_method, invoice_id, client_id, receipt_url, status
+    )
+    VALUES (
+      ${data.date}, ${data.amount}, ${advance}, ${totalDue},
+      ${data.description}, ${data.category}, ${data.paymentMethod},
+      ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, 'draft'
+    )
+    RETURNING id
+  `;
+
+  const quotationId = result[0].id;
+
+  for (const item of lineItems) {
+    if (item.description) {
+      await sql`
+        INSERT INTO quotation_items (quotation_id, description, quantity, price, total)
+        VALUES (${quotationId}, ${item.description}, ${item.quantity}, ${item.rate}, ${item.quantity * item.rate})
+      `;
+    }
+  }
+}
+ 
+export async function deleteQuotation(id: number) {
+  const q = await sql`SELECT linked_invoice_id FROM admin_quotations WHERE id = ${id}`;
+  const linkedInvoiceId = q[0]?.linked_invoice_id;
+
+  if (linkedInvoiceId) {
+    await sql`UPDATE admin_quotations SET linked_invoice_id = NULL WHERE id = ${id}`;
+    await sql`DELETE FROM invoice_items WHERE invoice_id = ${linkedInvoiceId}`;
+    await sql`DELETE FROM invoices WHERE invoice_id = ${linkedInvoiceId}`;
+  }
+
+  await sql`DELETE FROM admin_quotations WHERE id = ${id}`;
+}
+ 
+export async function confirmQuotation(quotationId: number, quotationData: any) {
+  const quotation = await sql`
+    SELECT q.*, c.email, c.name as client_name, c.company, COALESCE(c.address, u.address) as billing_address
+    FROM admin_quotations q
+    LEFT JOIN admin_clients c ON q.client_id = c.id
+    LEFT JOIN users u ON LOWER(c.email) = LOWER(u.email)
+    WHERE q.id = ${quotationId}
+  `;
+
+  if (quotation.length === 0) throw new Error(`Quotation #${quotationId} not found`);
+
+  const q = quotation[0];
+
+  if (q.status === 'confirmed') {
+    throw new Error("Quotation is already confirmed");
+  }
+
+  const userEmail = q.email || null;
+  if (!userEmail) throw new Error("Quotation has no linked client email — please assign a client before confirming");
+
+  const amount   = parseFloat(q.amount   || 0);
+  const advance  = parseFloat(q.advance  || 0);
+  const totalDue = parseFloat(q.total_due != null ? q.total_due : amount - advance);
+  const description = q.description || 'Project';
+
+  const existingClient = await sql`SELECT id FROM admin_clients WHERE LOWER(email) = LOWER(${userEmail})`;
+  if (existingClient.length === 0) {
+    const clientId = 'C-' + Date.now();
+    await sql`
+      INSERT INTO admin_clients (id, name, company, email, phone, address, active)
+      VALUES (
+        ${clientId},
+        ${q.client_name || userEmail.split('@')[0]},
+        ${q.company || null},
+        ${userEmail},
+        null,
+        ${q.billing_address || null},
+        true
+      )
+    `;
+  }
+
+  const invoiceId = 'INV-' + Date.now();
+
+  try {
+    await sql`
+      INSERT INTO invoices (
+        invoice_id, user_email, project_name, date,
+        subtotal, discount, total, advance, total_due,
+        work_status, payment_status, currency
+      ) VALUES (
+        ${invoiceId},
+        ${userEmail},
+        ${description},
+        ${q.date},
+        ${amount},
+        ${q.discount || 0},
+        ${amount},
+        ${advance},
+        ${totalDue},
+        'pending',
+        'unpaid',
+        'LKR'
+      )
+    `;
+
+    const qItems = await sql`
+      SELECT description, quantity, price, total FROM quotation_items WHERE quotation_id = ${quotationId}
+    `;
+
+    if (qItems.length > 0) {
+      for (const item of qItems) {
+        await sql`
+          INSERT INTO invoice_items (invoice_id, description, quantity, price, total)
+          VALUES (${invoiceId}, ${item.description}, ${item.quantity}, ${item.price}, ${item.total})
+        `;
+      }
+    } else {
+      await sql`
+        INSERT INTO invoice_items (invoice_id, description, quantity, price, total)
+        VALUES (${invoiceId}, ${description}, 1, ${amount}, ${amount})
+      `;
+    }
+
+    await sql`
+      UPDATE admin_quotations
+      SET status = 'confirmed', project_confirmed = true, linked_invoice_id = ${invoiceId}
+      WHERE id = ${quotationId}
+    `;
+
+    return { success: true, invoiceId };
+
+  } catch (e: any) {
+    console.error("confirmQuotation DB error:", e);
+    throw new Error(e?.message ?? "Failed to confirm quotation and create invoice");
+  }
+}
+
+export async function getQuotationById(quotationId: string) {
+  try {
+    const quotation = await sql`
+      SELECT q.*, 
+             c.name as client_name, c.email, c.company, c.phone,
+             COALESCE(c.address, u.address) as billing_address
+      FROM admin_quotations q
+      LEFT JOIN admin_clients c ON q.client_id = c.id
+      LEFT JOIN users u ON LOWER(c.email) = LOWER(u.email)
+      WHERE q.id = ${parseInt(quotationId)}
+    `;
+ 
+    if (quotation.length === 0) return null;
+ 
+    const q = quotation[0];
+
+    const itemRows = await sql`
+      SELECT id, description, quantity, price, total
+      FROM quotation_items
+      WHERE quotation_id = ${parseInt(quotationId)}
+      ORDER BY id ASC
+    `;
+ 
+    return {
+      id: q.id,
+      date: q.date,
+      amount: parseFloat(q.amount),
+      advance: parseFloat(q.advance || 0),
+      total_due: parseFloat(q.total_due || q.amount),
+      billing_address: q.billing_address || '',
+      client_name: q.client_name || q.email?.split('@')[0] || '',
+      email: q.email,
+      company: q.company,
+      phone: q.phone,
+      project_name: q.description,
+      description: q.description,
+      category: q.category,
+      payment_method: q.payment_method,
+      invoice_id: q.invoice_id,
+      receipt_url: q.receipt_url,
+      status: q.status,
+      project_confirmed: q.project_confirmed,
+      created_at: q.created_at,
+      updated_at: q.updated_at,
+      discount: q.discount || 0,
+      items: itemRows.map((i: any) => ({
+        id: i.id,
+        description: i.description,
+        quantity: parseInt(i.quantity),
+        rate: parseFloat(i.price),
+        total: parseFloat(i.total),
+      }))
+    };
+  } catch (e) {
+    console.error("Failed to fetch quotation by ID:", e);
+    throw new Error("Failed to fetch quotation");
+  }
+}
+ 
+export async function updateQuotation(id: number, data: any, lineItems: any[] = []) {
+  try {
+    const advance = data.advance || 0;
+    const totalDue = data.totalDue ?? (data.amount - advance);
+
+    // Persist billing address back to the client record if changed
+    if (data.clientId && data.billingAddress) {
+      await sql`
+        UPDATE admin_clients
+        SET address = ${data.billingAddress}
+        WHERE id = ${data.clientId}
+      `;
+    }
+
+    await sql`
+      UPDATE admin_quotations 
+      SET 
+        date = ${data.date}, 
+        amount = ${data.amount},
+        advance = ${advance},
+        total_due = ${totalDue},
+        description = ${data.description}, 
+        category = ${data.category}, 
+        payment_method = ${data.paymentMethod}, 
+        invoice_id = ${data.invoiceId || null}, 
+        receipt_url = ${data.receiptUrl || null}
+      WHERE id = ${id} AND status != 'confirmed'
+    `;
+
+    await sql`DELETE FROM quotation_items WHERE quotation_id = ${id}`;
+
+    for (const item of lineItems) {
+      if (item.description) {
+        await sql`
+          INSERT INTO quotation_items (quotation_id, description, quantity, price, total)
+          VALUES (${id}, ${item.description}, ${item.quantity}, ${item.rate}, ${item.quantity * item.rate})
+        `;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to update quotation:", e);
+    throw new Error("Failed to update quotation");
+  }
 }

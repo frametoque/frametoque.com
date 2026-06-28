@@ -20,20 +20,6 @@ export default function InvoicesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await getInvoices();
-        setData(res);
-      } catch (e) {
-        console.error("Failed to load invoices", e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
-
   const loadData = async () => {
     try {
       const res = await getInvoices();
@@ -44,6 +30,8 @@ export default function InvoicesPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => { loadData(); }, []);
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this invoice?")) {
@@ -75,7 +63,9 @@ export default function InvoicesPage() {
 
   const filteredInvoices = data.items.filter((row: any) => {
     const statusMatch = activeFilter === "All" || row.status?.toLowerCase() === activeFilter.toLowerCase();
-    const searchMatch = row.client.toLowerCase().includes(searchTerm.toLowerCase()) || row.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchMatch =
+      row.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      row.id.toLowerCase().includes(searchTerm.toLowerCase());
     return statusMatch && searchMatch;
   });
 
@@ -83,7 +73,7 @@ export default function InvoicesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-3xl font-bold">Invoices</h1>
-        <Link 
+        <Link
           href="/admin/invoices/new"
           className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors"
         >
@@ -91,7 +81,7 @@ export default function InvoicesPage() {
           Create Invoice
         </Link>
       </div>
-      
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
@@ -111,9 +101,9 @@ export default function InvoicesPage() {
         {/* Search */}
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Search invoices..." 
+          <input
+            type="text"
+            placeholder="Search invoices..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-white/5 border border-white/10 rounded-full pl-11 pr-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm text-white"
@@ -127,8 +117,8 @@ export default function InvoicesPage() {
               key={f}
               onClick={() => setActiveFilter(f)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                activeFilter === f 
-                  ? "bg-white text-black" 
+                activeFilter === f
+                  ? "bg-white text-black"
                   : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
               }`}
             >
@@ -144,22 +134,30 @@ export default function InvoicesPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/10 text-gray-400 text-sm">
-                <th className="p-4 font-medium">Invoice Number</th>
+                <th className="p-4 font-medium">Invoice #</th>
                 <th className="p-4 font-medium">Client</th>
                 <th className="p-4 font-medium">Service</th>
                 <th className="p-4 font-medium">Amount</th>
-                <th className="p-4 font-medium">Due Date</th>
-                <th className="p-4 font-medium">Status</th>
+                <th className="p-4 font-medium">Date</th>
+                <th className="p-4 font-medium">Work Status</th>
+                <th className="p-4 font-medium">Payment Status</th>
                 <th className="p-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {filteredInvoices.map((row: any) => {
-                let statusColor = "text-gray-400 bg-gray-400/10 border-gray-400/20";
-                const statusStr = row.status?.toLowerCase() || '';
-                if (statusStr === 'paid') statusColor = "text-green-400 bg-green-400/10 border-green-400/20";
-                else if (statusStr === 'unpaid' || statusStr === 'pending') statusColor = "text-amber-400 bg-amber-400/10 border-amber-400/20";
-                else if (statusStr === 'overdue') statusColor = "text-red-400 bg-red-400/10 border-red-400/20";
+                const paymentStatus = row.status?.toLowerCase() || '';
+                const workStatus = row.work_status?.toLowerCase() || '';
+
+                let paymentColor = "text-gray-400 bg-gray-400/10 border-gray-400/20";
+                if (paymentStatus === 'paid') paymentColor = "text-green-400 bg-green-400/10 border-green-400/20";
+                else if (paymentStatus === 'unpaid' || paymentStatus === 'pending') paymentColor = "text-amber-400 bg-amber-400/10 border-amber-400/20";
+                else if (paymentStatus === 'overdue') paymentColor = "text-red-400 bg-red-400/10 border-red-400/20";
+
+                let workColor = "text-gray-400 bg-gray-400/10 border-gray-400/20";
+                if (workStatus === 'completed') workColor = "text-green-400 bg-green-400/10 border-green-400/20";
+                else if (workStatus === 'in-progress') workColor = "text-blue-400 bg-blue-400/10 border-blue-400/20";
+                else if (workStatus === 'pending') workColor = "text-amber-400 bg-amber-400/10 border-amber-400/20";
 
                 return (
                   <tr key={row.id} className="hover:bg-white/5 transition-colors">
@@ -168,40 +166,47 @@ export default function InvoicesPage() {
                         {row.id}
                       </Link>
                     </td>
-                    <td className="p-4 text-sm">{row.client}</td>
+                    <td className="p-4 text-sm text-gray-300">{row.client}</td>
                     <td className="p-4 text-sm text-gray-300">{row.service}</td>
                     <td className="p-4 font-semibold">{formatLKR(row.amount)}</td>
                     <td className={`p-4 text-sm ${row.overdue ? 'text-red-400 font-semibold' : 'text-gray-300'}`}>
                       {row.due}
                     </td>
                     <td className="p-4">
-                      <span className={`px-2.5 py-1 text-[10px] uppercase font-bold rounded-full border ${statusColor}`}>
+                      <span className={`px-2.5 py-1 text-[10px] uppercase font-bold rounded-full border ${workColor}`}>
+                        {row.work_status || '—'}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-2.5 py-1 text-[10px] uppercase font-bold rounded-full border ${paymentColor}`}>
                         {row.status}
                       </span>
                     </td>
-                    <td className="p-4 flex items-center justify-end gap-1">
-                      <Link href={`/admin/invoice/${row.id}`} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white" title="View">
-                        <Eye className="w-4 h-4" />
-                      </Link>
-                      <Link href={`/admin/invoices/${row.id}/edit`} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white" title="Edit">
-                        <Edit2 className="w-4 h-4" />
-                      </Link>
-                      <button onClick={() => handleSend(row.id)} className="p-2 hover:bg-brand-400/10 rounded-xl transition-colors text-gray-400 hover:text-brand-400" title="Copy Link">
-                        <Send className="w-4 h-4" />
-                      </button>
-                      <Link href={`/admin/invoice/${row.id}?download=true`} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white" title="Download PDF">
-                        <Download className="w-4 h-4" />
-                      </Link>
-                      <button onClick={() => handleDelete(row.id)} className="p-2 hover:bg-red-400/10 rounded-xl transition-colors text-gray-400 hover:text-red-400" title="Delete">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <td className="p-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <Link href={`/admin/invoice/${row.id}`} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white" title="View">
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                        <Link href={`/admin/invoices/${row.id}/edit`} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white" title="Edit">
+                          <Edit2 className="w-4 h-4" />
+                        </Link>
+                        <button onClick={() => handleSend(row.id)} className="p-2 hover:bg-brand-400/10 rounded-xl transition-colors text-gray-400 hover:text-brand-400" title="Copy Link">
+                          <Send className="w-4 h-4" />
+                        </button>
+                        <Link href={`/admin/invoice/${row.id}?download=true`} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white" title="Download PDF">
+                          <Download className="w-4 h-4" />
+                        </Link>
+                        <button onClick={() => handleDelete(row.id)} className="p-2 hover:bg-red-400/10 rounded-xl transition-colors text-gray-400 hover:text-red-400" title="Delete">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
               })}
               {filteredInvoices.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-6 text-center text-gray-500">No invoices found.</td>
+                  <td colSpan={8} className="p-6 text-center text-gray-500">No invoices found.</td>
                 </tr>
               )}
             </tbody>
