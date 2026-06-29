@@ -11,6 +11,8 @@ import { Bricolage_Grotesque, DM_Mono } from "next/font/google";
 //import localFont from "next/font/local";
 import UmamiScript from "@/components/UmamiScript";
 
+import SmoothScroll from "@/components/SmoothScroll";
+
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-geist-sans",
@@ -125,6 +127,7 @@ export default function RootLayout({ children }) {
         <ClerkProvider>
           <CartProvider>
             <SWRegister />
+            <SmoothScroll />
             {children}
             <Analytics />
             <FloatingButtons />
