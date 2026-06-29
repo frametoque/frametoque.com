@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useUser } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "framer-motion";
+import { useCart } from "@/context/CartContext";
 
 const protectImage = (e) => e.preventDefault();
 
@@ -13,6 +14,12 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
   const [mobileMenuIsOpen, setMobileMenuIsOpen] = useState(false);
   const pathname = usePathname();
   const { isSignedIn, isLoaded } = useUser();
+  const { cartCount } = useCart();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const links = [
     { href: "/projects", label: "Work" },
@@ -27,7 +34,7 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
         scrolled ? "bg-black/60 backdrop-blur-md shadow-2xl" : "bg-transparent"
       }`}
     >
-      <div className="flex items-center gap-2 group cursor-pointer z-50 w-[140px] sm:w-[180px]">
+      <div className="flex items-center gap-2 group cursor-pointer z-50 w-[180px] sm:w-[220px]">
         <Link href="/">
           <Image
             src="/logos/ft/name-logo.png"
@@ -67,7 +74,19 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
       </div>
 
       {/* Desktop CTA */}
-      <div className="hidden md:flex items-center justify-end w-[140px] sm:w-[180px]">
+      <div className="hidden md:flex items-center justify-end gap-4 w-[180px] sm:w-[220px]">
+        <Link
+          href="/cart"
+          className="relative p-2 text-white hover:bg-white/10 rounded-full transition-all duration-300 hover:scale-105 active:scale-95"
+          title="Shopping Cart"
+        >
+          <ShoppingCart className="w-5 h-5" />
+          {mounted && cartCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-brand-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
+              {cartCount}
+            </span>
+          )}
+        </Link>
         {!isLoaded ? null : isSignedIn ? (
           <Link
             href="/dashboard"
@@ -85,29 +104,43 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
         )}
       </div>
 
-      {/* Mobile menu button */}
-      <button
-        aria-label="Toggle Menu"
-        className="md:hidden p-2 text-white drop-shadow-md transition-colors z-50 rounded-full hover:bg-white/10"
-        onClick={() => setMobileMenuIsOpen((prev) => !prev)}
-      >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.span
-            key={mobileMenuIsOpen ? "close" : "open"}
-            initial={{ rotate: -90, opacity: 0 }}
-            animate={{ rotate: 0, opacity: 1 }}
-            exit={{ rotate: 90, opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="block"
-          >
-            {mobileMenuIsOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
-          </motion.span>
-        </AnimatePresence>
-      </button>
+      {/* Mobile Cart & menu button */}
+      <div className="flex items-center gap-2 md:hidden z-50">
+        <Link
+          href="/cart"
+          className="relative p-2 text-white hover:bg-white/10 rounded-full transition-all duration-300"
+          title="Shopping Cart"
+        >
+          <ShoppingCart className="w-6 h-6" />
+          {mounted && cartCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-brand-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
+              {cartCount}
+            </span>
+          )}
+        </Link>
+        <button
+          aria-label="Toggle Menu"
+          className="p-2 text-white drop-shadow-md transition-colors rounded-full hover:bg-white/10"
+          onClick={() => setMobileMenuIsOpen((prev) => !prev)}
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={mobileMenuIsOpen ? "close" : "open"}
+              initial={{ rotate: -90, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              exit={{ rotate: 90, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="block"
+            >
+              {mobileMenuIsOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </motion.span>
+          </AnimatePresence>
+        </button>
+      </div>
 
       {/* Mobile menu */}
       <AnimatePresence>

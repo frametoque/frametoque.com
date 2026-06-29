@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/react";
 import Script from "next/script";
 import "./globals.css";
+import { CartProvider } from "@/context/CartContext";
 import SWRegister from "../lib/sw-register";
 import SnowfallWrapper from "@/components/SnowfallWrapper";
 import FloatingButtons from '@/components/FloatingButtons';
@@ -122,12 +123,14 @@ export default function RootLayout({ children }) {
         className={`${bricolage.variable} ${dmMono.variable} antialiased`}
       >
         <ClerkProvider>
-          <SWRegister />
-          {children}
-          <Analytics />
-          <FloatingButtons />
-          <SnowfallWrapper />
-          <UmamiScript />
+          <CartProvider>
+            <SWRegister />
+            {children}
+            <Analytics />
+            <FloatingButtons />
+            <SnowfallWrapper />
+            <UmamiScript />
+          </CartProvider>
         </ClerkProvider>
         
       </body>

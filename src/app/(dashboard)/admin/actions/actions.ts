@@ -652,9 +652,9 @@ export async function deleteQuotation(id: number) {
   await sql`DELETE FROM admin_quotations WHERE id = ${id}`;
 }
  
-export async function confirmQuotation(quotationId: number, quotationData: any) {
+export async function confirmQuotation(quotationId: number, quotationData: any, projectName: string) {
   const quotation = await sql`
-    SELECT q.*, c.email, c.name as client_name, c.company, COALESCE(c.address, u.address) as billing_address
+    SELECT q.*, c.id as client_id_val, c.email, c.name as client_name, c.company, COALESCE(c.address, u.address) as billing_address
     FROM admin_quotations q
     LEFT JOIN admin_clients c ON q.client_id = c.id
     LEFT JOIN users u ON LOWER(c.email) = LOWER(u.email)
@@ -677,6 +677,8 @@ export async function confirmQuotation(quotationId: number, quotationData: any) 
   const totalDue = parseFloat(q.total_due != null ? q.total_due : amount - advance);
   const description = q.description || 'Project';
 
+  // Resolve or create client
+  let resolvedClientId: string | null = q.client_id_val || null;
   const existingClient = await sql`SELECT id FROM admin_clients WHERE LOWER(email) = LOWER(${userEmail})`;
   if (existingClient.length === 0) {
     const clientId = 'C-' + Date.now();
@@ -692,11 +694,15 @@ export async function confirmQuotation(quotationId: number, quotationData: any) 
         true
       )
     `;
+    resolvedClientId = clientId;
+  } else {
+    resolvedClientId = existingClient[0].id;
   }
 
   const invoiceId = 'INV-' + Date.now();
 
   try {
+    // Create invoice with work_status = 'in progress'
     await sql`
       INSERT INTO invoices (
         invoice_id, user_email, project_name, date,
@@ -705,14 +711,14 @@ export async function confirmQuotation(quotationId: number, quotationData: any) 
       ) VALUES (
         ${invoiceId},
         ${userEmail},
-        ${description},
+        ${projectName},
         ${q.date},
         ${amount},
         ${q.discount || 0},
         ${amount},
         ${advance},
         ${totalDue},
-        'pending',
+        'in progress',
         'unpaid',
         'LKR'
       )
@@ -740,6 +746,25 @@ export async function confirmQuotation(quotationId: number, quotationData: any) 
       UPDATE admin_quotations
       SET status = 'confirmed', project_confirmed = true, linked_invoice_id = ${invoiceId}
       WHERE id = ${quotationId}
+    `;
+
+    // Auto-create project with status='in progress' and progress=0
+    await sql`
+      INSERT INTO projects (
+        title, description, type, status, progress, price, invoice_number, user_email, client_id, submitted_at, updated_at
+      ) VALUES (
+        ${projectName},
+        ${description},
+        ${q.category || null},
+        'in progress',
+        0,
+        ${amount},
+        ${invoiceId},
+        ${userEmail},
+        ${resolvedClientId},
+        now(),
+        now()
+      )
     `;
 
     return { success: true, invoiceId };
@@ -851,5 +876,112 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
   } catch (e) {
     console.error("Failed to update quotation:", e);
     throw new Error("Failed to update quotation");
+  }
+}
+
+export async function getProjects() {
+  try {
+    const rows = await sql`
+      SELECT p.*, c.name as client_name, c.company as client_company
+      FROM projects p
+      LEFT JOIN admin_clients c ON p.client_id = c.id
+      ORDER BY p.updated_at DESC, p.id DESC
+    `;
+    return rows;
+  } catch (e) {
+    console.error("Failed to fetch projects:", e);
+    throw new Error("Failed to fetch projects");
+  }
+}
+
+export async function getProjectById(id: number) {
+  try {
+    const rows = await sql`
+      SELECT p.*, c.name as client_name, c.company as client_company
+      FROM projects p
+      LEFT JOIN admin_clients c ON p.client_id = c.id
+      WHERE p.id = ${id}
+    `;
+    return rows[0] || null;
+  } catch (e) {
+    console.error("Failed to fetch project by ID:", e);
+    throw new Error("Failed to fetch project");
+  }
+}
+
+export async function createProject(data: any) {
+  try {
+    if (data.clientId && data.billingAddress) {
+      await sql`
+        UPDATE admin_clients
+        SET address = ${data.billingAddress}
+        WHERE id = ${data.clientId}
+      `;
+    }
+    const invoiceNum = data.invoiceNumber || 'PRJ-' + Date.now();
+    const result = await sql`
+      INSERT INTO projects (
+        title, description, type, request_id, status, progress, price, invoice_number, user_email, client_id, submitted_at, updated_at
+      ) VALUES (
+        ${data.title},
+        ${data.description || null},
+        ${data.type || null},
+        ${data.requestId || null},
+        ${data.status || 'pending'},
+        ${data.progress || 0},
+        ${data.price || 0},
+        ${invoiceNum},
+        ${data.userEmail},
+        ${data.clientId || null},
+        now(),
+        now()
+      )
+      RETURNING id
+    `;
+    return result[0].id;
+  } catch (e) {
+    console.error("Failed to create project:", e);
+    throw new Error("Failed to create project");
+  }
+}
+
+export async function updateProject(id: number, data: any) {
+  try {
+    if (data.clientId && data.billingAddress) {
+      await sql`
+        UPDATE admin_clients
+        SET address = ${data.billingAddress}
+        WHERE id = ${data.clientId}
+      `;
+    }
+    const invoiceNum = data.invoiceNumber || 'PRJ-' + Date.now();
+    await sql`
+      UPDATE projects
+      SET 
+        title = ${data.title},
+        description = ${data.description || null},
+        type = ${data.type || null},
+        request_id = ${data.requestId || null},
+        status = ${data.status || 'pending'},
+        progress = ${data.progress || 0},
+        price = ${data.price || 0},
+        invoice_number = ${invoiceNum},
+        user_email = ${data.userEmail},
+        client_id = ${data.clientId || null},
+        updated_at = now()
+      WHERE id = ${id}
+    `;
+  } catch (e) {
+    console.error("Failed to update project:", e);
+    throw new Error("Failed to update project");
+  }
+}
+
+export async function deleteProject(id: number) {
+  try {
+    await sql`DELETE FROM projects WHERE id = ${id}`;
+  } catch (e) {
+    console.error("Failed to delete project:", e);
+    throw new Error("Failed to delete project");
   }
 }

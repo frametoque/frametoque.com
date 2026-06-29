@@ -8,7 +8,7 @@ import { useUser } from "@clerk/nextjs";
 
 
 import ProfileProgress from "./ProfileProgress";
-import RecentProjectsWidget from "./projects/RecentProjectsWidget";
+import RecentProjectsWidget from "../dashboard/projects/RecentProjectsWidget";
 
 function getGreeting() {
   const hour = new Date().getHours();

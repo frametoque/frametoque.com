@@ -20,15 +20,19 @@ const paymentStatusStyles = {
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
   return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric", month: "short", day: "numeric",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 };
 
-const formatMoney = (value, currency = "") => {
+const formatMoney = (value, currency = "LKR") => {
   if (!value || isNaN(parseFloat(value))) return "N/A";
-  return `${currency} ${parseFloat(value).toLocaleString("en-US", {
-    minimumFractionDigits: 2, maximumFractionDigits: 2,
-  })}`.trim();
+  const currencySymbol = currency === "LKR" ? "Rs." : currency;
+  return `${currencySymbol} ${parseFloat(value).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 };
 
 /* ── Wallet SVG icons ── */
@@ -184,13 +188,15 @@ export default function InvoicePage() {
     );
   }
 
-  const lineItems = invoice.items || [];
-
-  const currencyLabel = invoice.currency === "LKR" ? "Rs." : invoice.currency;
+  const currencyLabel = invoice?.currency === "LKR" || !invoice?.currency ? "Rs." : invoice.currency;
+  const subtotal = parseFloat(invoice?.subtotal || 0);
+  const discount = parseFloat(invoice?.discount || 0);
+  const advance = parseFloat(invoice?.advance || 0);
+  const total = parseFloat(invoice?.total || subtotal - discount);
+  const totalDue = parseFloat(invoice?.total_due || total - advance);
 
   return (
     <div className="space-y-6">
-
       {/* Top Bar */}
       <div className="flex items-center justify-between">
         <Link
@@ -206,21 +212,25 @@ export default function InvoicePage() {
           disabled={downloading}
           className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          {downloading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4" />
+          )}
           {downloading ? "Generating PDF..." : "Download PDF"}
         </button>
       </div>
 
       {/* Main Layout */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
-
-        {/* Right — Invoice Details */}
+        {/* Invoice Details */}
         <div className="flex-1 space-y-4">
-
           {/* Project Name */}
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-            <h1 className="text-2xl font-bold text-white mb-1">{invoice.project_name || "Untitled Project"}</h1>
-            <p className="text-gray-400 text-sm">{invoice.billing_address}</p>
+            <h1 className="text-2xl font-bold text-white mb-1">
+              {invoice?.project_name || "Untitled Project"}
+            </h1>
+            <p className="text-gray-400 text-sm">Invoice #{invoice?.invoice_id}</p>
           </div>
 
           {/* Details Grid */}
@@ -231,7 +241,7 @@ export default function InvoicePage() {
               </div>
               <div>
                 <p className="text-gray-400 text-xs mb-1">Invoice ID</p>
-                <p className="text-white font-semibold">{invoice.invoice_id}</p>
+                <p className="text-white font-semibold">{invoice?.invoice_id}</p>
               </div>
             </div>
 
@@ -241,7 +251,7 @@ export default function InvoicePage() {
               </div>
               <div>
                 <p className="text-gray-400 text-xs mb-1">Date</p>
-                <p className="text-white font-semibold">{formatDate(invoice.date)}</p>
+                <p className="text-white font-semibold">{formatDate(invoice?.date)}</p>
               </div>
             </div>
 
@@ -251,8 +261,12 @@ export default function InvoicePage() {
               </div>
               <div>
                 <p className="text-gray-400 text-xs mb-2">Project Status</p>
-                <span className={`px-3 py-1 text-xs font-medium rounded-full border ${workStatusStyles[invoice.work_status] || workStatusStyles.pending}`}>
-                  {invoice.work_status || "pending"}
+                <span
+                  className={`px-3 py-1 text-xs font-medium rounded-full border ${
+                    workStatusStyles[invoice?.work_status] || workStatusStyles.pending
+                  }`}
+                >
+                  {invoice?.work_status || "pending"}
                 </span>
               </div>
             </div>
@@ -263,76 +277,60 @@ export default function InvoicePage() {
               </div>
               <div>
                 <p className="text-gray-400 text-xs mb-2">Payment Status</p>
-                <span className={`px-3 py-1 text-xs font-medium rounded-full border ${paymentStatusStyles[invoice.payment_status] || paymentStatusStyles.unpaid}`}>
-                  {invoice.payment_status || "unpaid"}
+                <span
+                  className={`px-3 py-1 text-xs font-medium rounded-full border ${
+                    paymentStatusStyles[invoice?.payment_status] || paymentStatusStyles.unpaid
+                  }`}
+                >
+                  {invoice?.payment_status || "unpaid"}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Line Items Table */}
-          {lineItems.length > 0 && (
-            <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
-              <div className="grid grid-cols-3 px-5 py-3 border-b border-white/10 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                <span>Description</span>
-                <span className="text-center">Price</span>
-                <span className="text-right">Total</span>
+          {/* Billing Summary */}
+          <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
+            <div className="px-5 py-4 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Subtotal</span>
+                <span className="text-white font-semibold">
+                  {formatMoney(subtotal, invoice?.currency)}
+                </span>
               </div>
 
-              {lineItems.map((item, i) => (
-                <div key={i} className="grid grid-cols-3 px-5 py-4 border-b border-white/5 last:border-0">
-                  <span className="text-white text-sm">{item.description}</span>
-                  <span className="text-gray-300 text-sm text-center">
-                    {item.price ? `${currencyLabel} ${item.price}` : "-"}
-                  </span>
-                  <span className="text-white text-sm text-right font-medium">
-                    {!isNaN(parseFloat(item.total))
-                      ? `${currencyLabel} ${parseFloat(item.total).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
-                      : "-"}
+              {discount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Discount</span>
+                  <span className="text-red-400">
+                    − {formatMoney(discount, invoice?.currency)}
                   </span>
                 </div>
-              ))}
+              )}
 
-              {/* Subtotal / Discount / Total */}
-              <div className="px-5 py-4 space-y-2 border-t border-white/10 bg-white/5">
-                {invoice.subtotal && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Subtotal</span>
-                    <span className="text-white">
-                      {currencyLabel} {parseFloat(invoice.subtotal).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                )}
-                {invoice.discount && parseFloat(invoice.discount) > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Discount</span>
-                    <span className="text-red-400">
-                      − {currencyLabel} {parseFloat(invoice.discount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                )}
-                {invoice.advance && parseFloat(invoice.advance) > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Advance Paid</span>
-                    <span className="text-green-400">
-                      − {currencyLabel} {parseFloat(invoice.advance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between pt-2 border-t border-white/10">
-                  <span className="text-white font-semibold">Total Due</span>
-                  <span className="text-white font-bold text-lg">
-                    {currencyLabel}{" "}
-                    {(
-                      parseFloat(invoice.subtotal || 0) -
-                      parseFloat(invoice.discount || 0) -
-                      parseFloat(invoice.advance || 0)
-                    ).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              <div className="flex justify-between pt-2 border-t border-white/10">
+                <span className="text-gray-300">Total</span>
+                <span className="text-white font-semibold">
+                  {formatMoney(total, invoice?.currency)}
+                </span>
+              </div>
+
+              {advance > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Advance Paid</span>
+                  <span className="text-green-400">
+                    − {formatMoney(advance, invoice?.currency)}
                   </span>
                 </div>
+              )}
+
+              <div className="flex justify-between pt-2 border-t border-white/10">
+                <span className="text-white font-semibold">Total Due</span>
+                <span className="text-white font-bold text-lg">
+                  {formatMoney(totalDue, invoice?.currency)}
+                </span>
               </div>
             </div>
-          )}
+          </div>
 
           {/* ── Wallet Buttons ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -368,7 +366,6 @@ export default function InvoicePage() {
               </div>
             </button>
           </div>
-
         </div>
       </div>
 
@@ -391,7 +388,6 @@ export default function InvoicePage() {
       >
         <InvoiceDocument invoice={invoice} />
       </div>
-
     </div>
   );
 }

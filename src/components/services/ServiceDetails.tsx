@@ -10,6 +10,7 @@ import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import type { ServiceRow, Package } from "@/lib/services";
+import { useCart } from "@/context/CartContext";
 
 const protectImage = (e: React.SyntheticEvent) => e.preventDefault();
 
@@ -72,6 +73,8 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
   const [data, setData] = useState<ServiceRow | null>(null);
   const [convertedPackages, setConvertedPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart();
+  const [addedIndexes, setAddedIndexes] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     function handleScroll() {
@@ -122,6 +125,25 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
     window.addEventListener("currencyChange", handler as EventListener);
     return () => window.removeEventListener("currencyChange", handler as EventListener);
   }, [originalPackages]);
+
+  const handleAddToCart = (pkg: Package, idx: number) => {
+    const origPkg = originalPackages[idx] || pkg;
+    const itemId = `${categorySlug}-${serviceType}-${pkg.tier.toLowerCase().replace(/\s+/g, "-")}`;
+    addToCart({
+      id: itemId,
+      serviceId: serviceType,
+      serviceTitle: data?.title || "",
+      categorySlug: categorySlug,
+      categoryName: data?.category || "",
+      tier: pkg.tier,
+      price: origPkg.price,
+      duration: pkg.duration,
+    });
+    setAddedIndexes((prev) => ({ ...prev, [idx]: true }));
+    setTimeout(() => {
+      setAddedIndexes((prev) => ({ ...prev, [idx]: false }));
+    }, 2000);
+  };
 
   const displayPackages = convertedPackages.length > 0 ? convertedPackages : originalPackages;
 
@@ -283,16 +305,24 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
                       ))}
                     </ul>
 
-                    <Link
-                      href="/contact"
-                      className={`text-center w-full py-3 px-6 rounded-3xl font-semibold transition-all duration-300 mt-auto ${
-                        pkg.popular
-                          ? "bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700"
-                          : "bg-white/5 border border-white/10 hover:bg-white/10"
+                    <button
+                      onClick={() => handleAddToCart(pkg, index)}
+                      className={`text-center w-full py-3 px-6 rounded-3xl font-semibold transition-all duration-300 mt-auto flex items-center justify-center gap-2 ${
+                        addedIndexes[index]
+                          ? "bg-green-600 border border-green-600 text-white scale-[1.02]"
+                          : pkg.popular
+                          ? "bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white"
+                          : "bg-white/5 border border-white/10 hover:bg-white/10 text-white"
                       }`}
                     >
-                      {pkg.cta || "Get Started"}
-                    </Link>
+                      {addedIndexes[index] ? (
+                        <>
+                          <Check className="w-5 h-5 animate-scaleUp" /> Added to Cart
+                        </>
+                      ) : (
+                        "Add to Cart"
+                      )}
+                    </button>
                   </div>
                 ))}
               </div>

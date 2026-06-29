@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useUser, SignOutButton } from "@clerk/nextjs";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Bell,
   Menu,
@@ -14,16 +15,25 @@ import {
   Settings,
   LogOut,
   X,
-  ChevronLeft,
   ChevronRight,
   FilePenLine,
   NotepadTextDashed
 } from "lucide-react";
 
+// Framer Motion spring config for sidebar width
+const sidebarSpring = { type: "spring", stiffness: 280, damping: 28, mass: 0.8 };
+
+// Fade + slide config for labels
+const labelVariants = {
+  hidden: { opacity: 0, x: -8, width: 0 },
+  visible: { opacity: 1, x: 0, width: "auto", transition: { duration: 0.2, ease: "easeOut" } },
+  exit:    { opacity: 0, x: -8, width: 0,    transition: { duration: 0.15, ease: "easeIn" } },
+};
+
 export default function DashboardLayout({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   const [collapsed, setCollapsed] = useState(false);
+  const [sidebarHovered, setSidebarHovered] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("client-sidebar-collapsed") === "true";
@@ -38,8 +48,12 @@ export default function DashboardLayout({ children }) {
     });
   };
 
+  // On desktop, the sidebar is visually expanded if it is not collapsed,
+  // OR if the user is hovering over it while it is collapsed.
+  const desktopExpanded = !collapsed || sidebarHovered;
+
   // ------------------ Sidebar ------------------
-  const Sidebar = ({ mobileMenuOpen, setMobileMenuOpen, collapsed, toggleCollapsed }) => {
+  const Sidebar = ({ mobileMenuOpen, setMobileMenuOpen, collapsed, toggleCollapsed, sidebarHovered, setSidebarHovered }) => {
     const pathname = usePathname();
     const { user, isLoaded } = useUser();
 
@@ -59,47 +73,73 @@ export default function DashboardLayout({ children }) {
 
     return (
       <>
-        {mobileMenuOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-        )}
+        {/* Mobile backdrop */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+          )}
+        </AnimatePresence>
 
-        <aside
-          className={`fixed top-0 left-0 h-full bg-black backdrop-blur-xl border-r border-white/10 z-50 transition-all duration-300
+        {/* Sidebar */}
+        <motion.aside
+          onMouseEnter={() => setSidebarHovered(true)}
+          onMouseLeave={() => setSidebarHovered(false)}
+          animate={{
+            width: desktopExpanded ? 256 : 80,
+          }}
+          transition={sidebarSpring}
+          className={`fixed top-0 left-0 h-full bg-black backdrop-blur-xl border-r border-white/10 z-50
             w-64
-            ${collapsed ? "lg:w-20" : "lg:w-64"}
             ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+          style={{ overflow: "hidden" }}
         >
           <div className="flex flex-col h-full">
 
             {/* Logo + Collapse toggle */}
             <div className="flex items-center justify-between p-6 border-b border-white/10 min-h-[80px]">
 
-              {/* Logo: always visible on mobile; hidden on desktop when collapsed */}
-              {!collapsed && (
-                <Link href="/" className="lg:block">
-                  <Image
-                    src="/logos/ft/name-logo.png"
-                    alt="Frametoque"
-                    width={150}
-                    height={30}
-                    className="h-8 w-auto"
-                  />
-                </Link>
-              )}
-              {collapsed && (
-                <Link href="/" className="lg:hidden">
-                  <Image
-                    src="/logos/ft/name-logo.png"
-                    alt="Frametoque"
-                    width={150}
-                    height={30}
-                    className="h-8 w-auto"
-                  />
-                </Link>
-              )}
+              {/* Logo: desktop — show when expanded; mobile — always show */}
+              <AnimatePresence mode="wait">
+                {desktopExpanded && (
+                  <motion.div
+                    key="logo"
+                    variants={labelVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    className="overflow-hidden"
+                  >
+                    <Link href="/" className="lg:block">
+                      <Image
+                        src="/logos/ft/name-logo.png"
+                        alt="Frametoque"
+                        width={150}
+                        height={30}
+                        className="h-8 w-auto"
+                      />
+                    </Link>
+                  </motion.div>
+                )}
+                {!desktopExpanded && (
+                  <Link key="logo-mobile" href="/" className="lg:hidden">
+                    <Image
+                      src="/logos/ft/name-logo.png"
+                      alt="Frametoque"
+                      width={150}
+                      height={30}
+                      className="h-8 w-auto"
+                    />
+                  </Link>
+                )}
+              </AnimatePresence>
 
               {/* Mobile: close button */}
               <button
@@ -109,41 +149,70 @@ export default function DashboardLayout({ children }) {
                 <X className="w-5 h-5" />
               </button>
 
-              {/* Desktop: collapse toggle */}
-              <button
+              {/* Desktop: collapse toggle with animated chevron */}
+              <motion.button
                 onClick={toggleCollapsed}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 className={`hidden lg:flex items-center justify-center p-2 hover:bg-white/10 rounded-3xl
-                  ${collapsed ? "mx-auto" : "ml-auto"}`}
+                  ${desktopExpanded ? "ml-auto" : "mx-auto"}`}
               >
-                {collapsed
-                  ? <ChevronRight className="w-5 h-5" />
-                  : <ChevronLeft className="w-5 h-5" />
-                }
-              </button>
+                <motion.span
+                  animate={{ rotate: collapsed ? 0 : 180 }}
+                  transition={sidebarSpring}
+                  className="flex"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </motion.span>
+              </motion.button>
             </div>
 
             {/* Nav links */}
-            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-              {links.map((item) => {
+            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+              {links.map((item, i) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    target={item.newtab ? "_blank" : "_self"}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-3xl transition-all
-                      ${collapsed ? "lg:justify-center lg:px-0" : ""}
-                      ${active
-                        ? "bg-white text-black font-semibold"
-                        : "text-gray-300 hover:bg-white/5"
-                      }`}
-                  >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    {/* Always visible on mobile; hidden on desktop when collapsed */}
-                    <span className={collapsed ? "lg:hidden" : ""}>{item.name}</span>
-                  </Link>
+                  <div key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      target={item.newtab ? "_blank" : "_self"}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-3xl transition-colors duration-150 overflow-hidden
+                        ${desktopExpanded ? "" : "lg:justify-center lg:px-0"}
+                        ${active
+                          ? "bg-white text-black font-semibold"
+                          : "text-gray-300 hover:bg-white/5"
+                        }`}
+                    >
+                      <motion.span
+                        whileHover={{ scale: 1.15 }}
+                        whileTap={{ scale: 0.9 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 18 }}
+                        className="flex-shrink-0"
+                      >
+                        <Icon className="w-5 h-5" />
+                      </motion.span>
+
+                      <AnimatePresence mode="wait">
+                        {desktopExpanded && (
+                          <motion.span
+                            key={`label-${item.href}`}
+                            variants={labelVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            className="overflow-hidden whitespace-nowrap"
+                          >
+                            {item.name}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                      {/* Always visible on mobile */}
+                      <span className="lg:hidden">{item.name}</span>
+                    </Link>
+                  </div>
                 );
               })}
             </nav>
@@ -151,9 +220,11 @@ export default function DashboardLayout({ children }) {
             {/* User section */}
             <div className="p-4 border-t border-white/10">
               <Link href="/dashboard/settings">
-                <div
-                  className={`flex items-center gap-3 p-3 bg-white/5 rounded-3xl mb-3
-                    ${collapsed ? "lg:justify-center" : ""}`}
+                <motion.div
+                  whileHover={{ backgroundColor: "rgba(255,255,255,0.07)" }}
+                  transition={{ duration: 0.15 }}
+                  className={`flex items-center gap-3 p-3 bg-white/5 rounded-3xl mb-3 overflow-hidden
+                    ${desktopExpanded ? "" : "lg:justify-center"}`}
                 >
                   <div className="flex-shrink-0 w-10 h-10">
                     {isLoaded && user?.imageUrl ? (
@@ -168,8 +239,30 @@ export default function DashboardLayout({ children }) {
                       </div>
                     )}
                   </div>
+
+                  <AnimatePresence mode="wait">
+                    {desktopExpanded && user && (
+                      <motion.div
+                        key="user-info"
+                        variants={labelVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        className="overflow-hidden"
+                      >
+                        <p className="text-sm font-semibold whitespace-nowrap">{user.fullName}</p>
+                        <p className="text-xs text-gray-400 whitespace-nowrap">
+                          {user.emailAddresses[0]?.emailAddress?.length > 20
+                            ? `${user.emailAddresses[0].emailAddress.substring(0, 20)}...`
+                            : user.emailAddresses[0]?.emailAddress}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Always visible on mobile */}
                   {user && (
-                    <div className={collapsed ? "lg:hidden" : ""}>
+                    <div className="lg:hidden">
                       <p className="text-sm font-semibold">{user.fullName}</p>
                       <p className="text-xs text-gray-400">
                         {user.emailAddresses[0]?.emailAddress?.length > 20
@@ -178,21 +271,39 @@ export default function DashboardLayout({ children }) {
                       </p>
                     </div>
                   )}
-                </div>
+                </motion.div>
               </Link>
 
               <SignOutButton redirectUrl="/login">
-                <button
-                  className={`flex items-center gap-3 px-4 py-3 w-full text-gray-300 hover:bg-red-500/10 hover:text-red-400 rounded-3xl
-                    ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
+                <motion.button
+                  whileHover={{ backgroundColor: "rgba(239,68,68,0.1)" }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ duration: 0.15 }}
+                  className={`flex items-center gap-3 px-4 py-3 w-full text-gray-300 hover:text-red-400 rounded-3xl overflow-hidden
+                    ${desktopExpanded ? "" : "lg:justify-center lg:px-0"}`}
                 >
                   <LogOut className="w-5 h-5 flex-shrink-0" />
-                  <span className={collapsed ? "lg:hidden" : ""}>Logout</span>
-                </button>
+
+                  <AnimatePresence mode="wait">
+                    {desktopExpanded && (
+                      <motion.span
+                        key="logout-label"
+                        variants={labelVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        className="overflow-hidden whitespace-nowrap"
+                      >
+                        Logout
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                  <span className="lg:hidden">Logout</span>
+                </motion.button>
               </SignOutButton>
             </div>
           </div>
-        </aside>
+        </motion.aside>
       </>
     );
   };
@@ -255,15 +366,24 @@ export default function DashboardLayout({ children }) {
         setMobileMenuOpen={setMobileMenuOpen}
         collapsed={collapsed}
         toggleCollapsed={toggleCollapsed}
+        sidebarHovered={sidebarHovered}
+        setSidebarHovered={setSidebarHovered}
       />
 
-      <div className={`transition-all duration-300 ${collapsed ? "lg:pl-20" : "lg:pl-64"}`}>
-        <Header
-          user={user}
-          isLoaded={isLoaded}
-          setMobileMenuOpen={setMobileMenuOpen}
-        />
+      {/* Content padding is driven by the *persistent* collapsed state, not hover, so layout doesn't shift on hover */}
+      <motion.div
+        animate={{ paddingLeft: collapsed ? 80 : 256 }}
+        transition={sidebarSpring}
+        className="min-h-screen lg:block hidden"
+      >
+        <Header user={user} isLoaded={isLoaded} setMobileMenuOpen={setMobileMenuOpen} />
         <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+      </motion.div>
+
+      {/* Mobile: no left padding */}
+      <div className="lg:hidden">
+        <Header user={user} isLoaded={isLoaded} setMobileMenuOpen={setMobileMenuOpen} />
+        <main className="p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );

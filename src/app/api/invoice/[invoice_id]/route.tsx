@@ -9,7 +9,7 @@ const pool = new Pool({
 
 export async function GET(request, { params }) {
   const { invoice_id } = await params;
-  let client;
+  let dbClient;
 
   try {
     const { userId } = await auth();
@@ -32,14 +32,13 @@ export async function GET(request, { params }) {
       );
     }
 
-    const dbClient = await pool.connect();
+    dbClient = await pool.connect();
 
     const result = await dbClient.query(
       `SELECT
         invoice_id,
         user_email,
         project_name,
-        billing_address,
         date,
         currency,
         subtotal,
@@ -48,15 +47,16 @@ export async function GET(request, { params }) {
         advance,
         total_due,
         work_status,
-        payment_status
-      FROM invoices
+        payment_status,
+        created_at
+      FROM public.invoices
       WHERE invoice_id = $1 AND LOWER(user_email) = LOWER($2)`,
       [invoice_id, userEmail]
     );
 
     if (result.rows.length === 0) {
       const invoiceExists = await dbClient.query(
-        "SELECT user_email FROM invoices WHERE invoice_id = $1",
+        "SELECT user_email FROM public.invoices WHERE invoice_id = $1",
         [invoice_id]
       );
       
@@ -73,24 +73,18 @@ export async function GET(request, { params }) {
       }
     }
 
-    const itemsResult = await dbClient.query(
-      `SELECT description, price, total, quantity 
-       FROM invoice_items 
-       WHERE invoice_id = $1
-       ORDER BY id ASC`,
-      [invoice_id]
-    );
-
     const invoice = result.rows[0];
-    invoice.items = itemsResult.rows;
+    // Flattened schema - no separate line items table
+    invoice.items = [];
 
     return NextResponse.json(invoice);
   } catch (error) {
+    console.error("Invoice fetch error:", error);
     return NextResponse.json(
       { error: "Failed to fetch invoice" },
       { status: 500 }
     );
   } finally {
-    if (client) client.release();
+    if (dbClient) dbClient.release();
   }
 }

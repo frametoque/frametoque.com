@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Wallet, TrendingUp, Plus, Edit2, Trash2, Eye, Loader2, CheckCircle2 } from "lucide-react";
+import { Wallet, TrendingUp, Plus, Edit2, Trash2, Eye, Loader2, CheckCircle2, FolderOpen, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
@@ -29,6 +29,11 @@ export default function QuotationsPage() {
   const [confirmingLoading, setConfirmingLoading] = useState(false);
   const [dateRange, setDateRange] = useState("lifetime");
 
+  // Project name modal state
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [pendingConfirmRow, setPendingConfirmRow] = useState<any | null>(null);
+  const [projectNameInput, setProjectNameInput] = useState("");
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -45,19 +50,35 @@ export default function QuotationsPage() {
     loadData();
   }, [dateRange]);
 
-  const handleConfirmProject = async (quotationId: number, quotationData: any) => {
-    setConfirmingId(quotationId);
+  // Step 1: open modal to ask for project name
+  const handleConfirmProject = (quotationId: number, quotationData: any) => {
+    setPendingConfirmRow({ id: quotationId, ...quotationData });
+    setProjectNameInput(quotationData.desc || "");
+    setShowProjectModal(true);
+  };
+
+  // Step 2: submit after admin enters project name
+  const handleConfirmSubmit = async () => {
+    if (!pendingConfirmRow) return;
+    if (!projectNameInput.trim()) {
+      alert("Please enter a project name.");
+      return;
+    }
+    setConfirmingId(pendingConfirmRow.id);
     setConfirmingLoading(true);
+    setShowProjectModal(false);
     try {
-      await confirmQuotation(quotationId, quotationData);
+      await confirmQuotation(pendingConfirmRow.id, pendingConfirmRow, projectNameInput.trim());
       await loadData();
-      alert("Quotation confirmed! Invoice has been automatically created.");
+      alert("Quotation confirmed! Invoice and project have been created.");
     } catch (e) {
       console.error("Failed to confirm quotation", e);
       alert("Failed to confirm quotation");
     } finally {
       setConfirmingLoading(false);
       setConfirmingId(null);
+      setPendingConfirmRow(null);
+      setProjectNameInput("");
     }
   };
 
@@ -302,6 +323,88 @@ const handleDelete = async (id: number) => {
                 alt="Quotation Attachment" 
                 className="max-w-full max-h-full object-contain rounded-xl shadow-lg border border-white/5"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Project Name Modal */}
+      {showProjectModal && pendingConfirmRow && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          onClick={() => setShowProjectModal(false)}
+        >
+          <div
+            className="relative bg-[#0d0d0d] border border-white/10 rounded-3xl p-8 w-full max-w-md shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close */}
+            <button
+              onClick={() => setShowProjectModal(false)}
+              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Icon + heading */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 rounded-2xl bg-brand-500/10">
+                <FolderOpen className="w-6 h-6 text-brand-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Confirm Quotation</h2>
+                <p className="text-sm text-gray-400 mt-0.5">Enter a project name to proceed</p>
+              </div>
+            </div>
+
+            {/* Quotation summary */}
+            <div className="mb-6 p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Client</span>
+                <span className="text-white font-medium">{pendingConfirmRow.client || '—'}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Quotation</span>
+                <span className="text-white font-medium">{pendingConfirmRow.desc || '—'}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Amount</span>
+                <span className="text-blue-400 font-semibold">{formatLKR(pendingConfirmRow.amount)}</span>
+              </div>
+            </div>
+
+            {/* Project name input */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Project Name <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={projectNameInput}
+                onChange={(e) => setProjectNameInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleConfirmSubmit()}
+                placeholder="e.g. Company Website Redesign"
+                autoFocus
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none focus:border-brand-500 focus:bg-white/8 transition-colors text-sm"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowProjectModal(false)}
+                className="flex-1 py-3 rounded-xl border border-white/10 text-gray-300 hover:bg-white/5 transition-colors text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmSubmit}
+                disabled={!projectNameInput.trim()}
+                className="flex-1 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors text-sm font-semibold flex items-center justify-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Confirm & Create
+              </button>
             </div>
           </div>
         </div>

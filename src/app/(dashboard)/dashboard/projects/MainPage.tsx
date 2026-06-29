@@ -11,18 +11,19 @@ const workStatusStyles = {
   pending: "bg-amber-500/20 text-amber-400 border-amber-500/30",
 };
 
-const paymentStatusStyles = {
-  paid: "bg-green-500/20 text-green-400 border-green-500/30",
-  unpaid: "bg-red-500/20 text-red-400 border-red-500/30",
-};
-
 const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
   });
+};
+
+const formatPrice = (price) => {
+  if (!price || isNaN(parseFloat(price))) return "N/A";
+  return `Rs. ${parseFloat(price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 export default function DashboardProjectsPage() {
@@ -142,28 +143,33 @@ export default function DashboardProjectsPage() {
                     <span className={`px-3 py-1 text-xs font-medium rounded-full border ${workStatusStyles[request.status] || workStatusStyles.pending}`}>
                       {request.status || "pending"}
                     </span>
-                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${paymentStatusStyles[request.payment_status] || paymentStatusStyles.unpaid}`}>
-                      {request.payment_status || "unpaid"}
+                  </div>
+                  <p className="text-gray-400 text-sm mb-3">
+                    Invoice: {request.invoice_number || request.id} • Type: {request.type || "N/A"} • Submitted: {formatDate(request.submitted_at)}
+                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-gray-400 text-sm">Total: </span>
+                    <span className="text-lg font-semibold text-white">
+                      {formatPrice(request.price)}
                     </span>
                   </div>
-                  <p className="text-gray-400 text-sm mb-2">
-                    Invoice ID: {request.request_id} • Date: {request.submitted_at ? formatDate(request.submitted_at) : "N/A"}
-                  </p>
-                  <span className="text-gray-400 text-sm">Total: </span>
-                  <span className="text-lg font-semibold text-white">
-                    {!isNaN(parseFloat(request.total))
-                    ? `${request.currency || ""} ${parseFloat(request.total).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                    : "N/A"}
-                  </span>
+                  {request.progress > 0 && (
+                    <div className="mt-3 w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-brand-400 to-brand-500 h-full rounded-full transition-all"
+                        style={{ width: `${Math.min(request.progress, 100)}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Right - Invoice button */}
                 <div className="shrink-0">
-                  <Link href={`/dashboard/invoice/${request.request_id}`}>
-                  <button className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl bg-white/10 border border-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors">
-                    <Eye className="w-4 h-4" />
-                    View Invoice
-                  </button>
+                  <Link href={`/dashboard/invoice/${request.invoice_number}`}>
+                    <button className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl bg-white/10 border border-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors">
+                      <Eye className="w-4 h-4" />
+                      View Invoice
+                    </button>
                   </Link>
                 </div>
               </div>

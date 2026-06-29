@@ -28,29 +28,40 @@ export async function GET(request) {
     
     const result = await client.query(`
       SELECT 
-        invoice_id,
-        project_name,
-        date,
-        work_status,
-        total,
+        id,
+        invoice_number,
+        title,
+        description,
+        type,
+        request_id,
+        submitted_at,
+        status,
+        progress,
+        price,
         user_email,
-        currency
-      FROM invoices 
+        client_id,
+        created_at
+      FROM public.projects
       WHERE user_email = $1 
-      ORDER BY invoice_id DESC
+      ORDER BY created_at DESC
     `, [user_email]);
     
-    console.log(`Found ${result.rows.length} requests for user_email: ${user_email}`);
+    console.log(`Found ${result.rows.length} projects for user_email: ${user_email}`);
     
     const formattedRequests = result.rows.map(row => ({
-      id: row.invoice_id,
-      title: row.project_name || 'Untitled Request',
-      request_id: row.invoice_id,
-      submitted_at: row.date ? new Date(row.date).toISOString() : new Date().toISOString(),
-      status: row.work_status || 'pending',
-      total: row.total,
+      id: row.id,
+      title: row.title || 'Untitled Project',
+      request_id: row.request_id,
+      invoice_number: row.invoice_number,
+      submitted_at: row.submitted_at ? new Date(row.submitted_at).toISOString() : new Date().toISOString(),
+      status: row.status || 'pending',
+      progress: row.progress || 0,
+      price: row.price,
+      type: row.type,
+      description: row.description,
       user_email: row.user_email,
-      currency: row.currency,
+      client_id: row.client_id,
+      created_at: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
     }));
     
     return NextResponse.json(formattedRequests);
@@ -58,13 +69,13 @@ export async function GET(request) {
   } catch (error) {
     console.error('Database error:', error);
     
-    if (error.message.includes('relation "invoices" does not exist')) {
-      console.log('Invoices table does not exist, returning empty array');
+    if (error.message.includes('relation "public.projects" does not exist')) {
+      console.log('Projects table does not exist, returning empty array');
       return NextResponse.json([]);
     }
     
     if (error.message.includes('column "user_email" does not exist')) {
-      console.log('user_email column does not exist in invoices table');
+      console.log('user_email column does not exist in projects table');
       return NextResponse.json(
         { error: 'Database schema missing user_email column. Please run migrations.' },
         { status: 500 }

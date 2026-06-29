@@ -157,7 +157,7 @@ export default function InvoicesPage() {
 
                 let workColor = "text-gray-400 bg-gray-400/10 border-gray-400/20";
                 if (workStatus === 'completed') workColor = "text-green-400 bg-green-400/10 border-green-400/20";
-                else if (workStatus === 'in-progress') workColor = "text-blue-400 bg-blue-400/10 border-blue-400/20";
+                else if (workStatus === 'in progress') workColor = "text-blue-400 bg-blue-400/10 border-blue-400/20";
                 else if (workStatus === 'pending') workColor = "text-amber-400 bg-amber-400/10 border-amber-400/20";
 
                 return (
