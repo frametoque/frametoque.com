@@ -24,10 +24,10 @@ import {
 
 export default function DashboardLayout({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   // ------------------ Sidebar ------------------
-  const Sidebar = ({ mobileMenuOpen, setMobileMenuOpen }) => {
-    const [collapsed, setCollapsed] = useState(false);
+  const Sidebar = ({ mobileMenuOpen, setMobileMenuOpen, collapsed, setCollapsed }) => {
     const pathname = usePathname();
     const { user, isLoaded } = useUser();
 
@@ -233,12 +233,14 @@ const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Sidebar
+    <Sidebar
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
       />
 
-      <div className="lg:pl-64 transition-all duration-300">
+      <div className={`transition-all duration-300 ${collapsed ? "lg:pl-20" : "lg:pl-64"}`}>
         <Header
           user={user}
           isLoaded={isLoaded}
