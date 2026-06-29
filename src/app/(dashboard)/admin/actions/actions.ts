@@ -524,7 +524,6 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
 // -- REPORTS --
 export async function getReports(range = 'lifetime') {
   const cutoff = getCutoffDate(range);
-
   const incomeStats = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${cutoff}`;
   const expenseStats = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${cutoff}`;
   
@@ -533,13 +532,25 @@ export async function getReports(range = 'lifetime') {
   const netProfit = annualRevenue - annualExpenses;
   const profitMargin = annualRevenue > 0 ? ((netProfit / annualRevenue) * 100).toFixed(1) : '0.0';
 
-  const incomeByService = await sql`
-    SELECT category as name, SUM(amount) as value
+  const rawIncome = await sql`
+    SELECT category, amount
     FROM admin_incomes
     WHERE date >= ${cutoff}
-    GROUP BY category
-    ORDER BY value DESC
   `;
+
+  const serviceMap: Record<string, number> = {};
+  for (const row of rawIncome) {
+    const services = (row.category || 'Other')
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter(Boolean);
+    for (const service of services) {
+      serviceMap[service] = (serviceMap[service] || 0) + parseFloat(row.amount);
+    }
+  }
+  const incomeByService = Object.entries(serviceMap)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
 
   const expensesBreakdown = await sql`
     SELECT category as name, SUM(amount) as value
@@ -554,7 +565,7 @@ export async function getReports(range = 'lifetime') {
     annualExpenses,
     netProfit,
     profitMargin,
-    incomeByService: incomeByService.map(r => ({ name: r.name || 'Other', value: parseFloat(r.value) })),
+    incomeByService,
     expensesBreakdown: expensesBreakdown.map(r => ({ name: r.name || 'Other', value: parseFloat(r.value) }))
   };
 }
