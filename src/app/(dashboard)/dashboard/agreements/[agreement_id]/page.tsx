@@ -350,7 +350,7 @@ export default function ClientAgreementViewPage() {
                 <input
                   type="text"
                   placeholder="Enter full name"
-                  value={clientSigName}
+                  required
                   onChange={e => setClientSigName(e.target.value)}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
                 />
