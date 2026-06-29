@@ -29,14 +29,14 @@ const countryFlag = (code: string) => {
 const gradients = [
   "from-brand-600 to-brand-400",
   "from-blue-600 to-blue-400",
-  "from-blue-500 to-cyan-400",
-  "from-cyan-600 to-cyan-400",
+  "from-blue-500 to-brand-400",
+  "from-brand-600 to-brand-400",
   "from-sky-600 to-sky-400",
   "from-indigo-600 to-blue-400",
   "from-blue-700 to-blue-500",
-  "from-cyan-500 to-blue-400",
-  "from-sky-500 to-cyan-400",
-  "from-indigo-500 to-cyan-400",
+  "from-brand-500 to-blue-400",
+  "from-sky-500 to-brand-400",
+  "from-indigo-500 to-brand-400",
 ];
 
 const deviceIconMap: Record<string, any> = {

@@ -50,7 +50,7 @@ export default function DashboardPage() {
   const analyticsStats = analytics
     ? [
         { label: "Visitors (All Time)", value: (analytics.totalVisitors ?? 0).toLocaleString(), icon: Users, color: "text-indigo-400", bg: "bg-indigo-400/10" },
-        { label: "Pageviews (All Time)", value: (analytics.totalPageviews ?? 0).toLocaleString(), icon: Eye, color: "text-cyan-400", bg: "bg-cyan-400/10" },
+        { label: "Pageviews (All Time)", value: (analytics.totalPageviews ?? 0).toLocaleString(), icon: Eye, color: "text-brand-400", bg: "bg-brand-400/10" },
       ]
     : [];
 
