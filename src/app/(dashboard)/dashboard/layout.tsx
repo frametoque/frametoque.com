@@ -5,7 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useUser, SignOutButton } from "@clerk/nextjs";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  type Transition,
+  type Variants,
+} from "framer-motion";
+
 import {
   Bell,
   Menu,
@@ -24,10 +30,30 @@ import {
 const sidebarSpring = { type: "spring", stiffness: 280, damping: 28, mass: 0.8 };
 
 // Fade + slide config for labels
-const labelVariants = {
-  hidden: { opacity: 0, x: -8, width: 0 },
-  visible: { opacity: 1, x: 0, width: "auto", transition: { duration: 0.2, ease: "easeOut" } },
-  exit:    { opacity: 0, x: -8, width: 0,    transition: { duration: 0.15, ease: "easeIn" } },
+const labelVariants: Variants = {
+  hidden: {
+    opacity: 0,
+    x: -8,
+    width: 0,
+  },
+  visible: {
+    opacity: 1,
+    x: 0,
+    width: "auto",
+    transition: {
+      duration: 0.2,
+      ease: "easeOut",
+    },
+  },
+  exit: {
+    opacity: 0,
+    x: -8,
+    width: 0,
+    transition: {
+      duration: 0.15,
+      ease: "easeIn",
+    },
+  },
 };
 
 export default function DashboardLayout({ children }) {
@@ -95,7 +121,12 @@ export default function DashboardLayout({ children }) {
           animate={{
             width: desktopExpanded ? 256 : 80,
           }}
-          transition={sidebarSpring}
+          transition={{
+            type: "spring",
+            stiffness: 280,
+            damping: 28,
+            mass: 0.8,
+          }}
           className={`fixed top-0 left-0 h-full bg-black backdrop-blur-xl border-r border-white/10 z-50
             w-64
             ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
@@ -160,7 +191,12 @@ export default function DashboardLayout({ children }) {
               >
                 <motion.span
                   animate={{ rotate: collapsed ? 0 : 180 }}
-                  transition={sidebarSpring}
+                  transition={{
+                    type: "spring",
+                    stiffness: 280,
+                    damping: 28,
+                    mass: 0.8,
+                  }}
                   className="flex"
                 >
                   <ChevronRight className="w-5 h-5" />
@@ -373,7 +409,12 @@ export default function DashboardLayout({ children }) {
       {/* Content padding is driven by the *persistent* collapsed state, not hover, so layout doesn't shift on hover */}
       <motion.div
         animate={{ paddingLeft: collapsed ? 80 : 256 }}
-        transition={sidebarSpring}
+        transition={{
+          type: "spring",
+          stiffness: 280,
+          damping: 28,
+          mass: 0.8,
+        }}
         className="min-h-screen lg:block hidden"
       >
         <Header user={user} isLoaded={isLoaded} setMobileMenuOpen={setMobileMenuOpen} />

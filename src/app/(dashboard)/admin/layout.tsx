@@ -5,7 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useUser, SignOutButton } from "@clerk/nextjs";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  type Transition,
+  type Variants,
+} from "framer-motion";
+
 import {
   Bell,
   Menu,
@@ -27,13 +33,38 @@ import {
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
-const sidebarSpring = { type: "spring", stiffness: 280, damping: 28, mass: 0.8 };
+const sidebarSpring = {
+  type: "spring",
+  stiffness: 280,
+  damping: 28,
+  mass: 0.8,
+} as const;
 
 // Fade + slide config for labels
-const labelVariants = {
-  hidden: { opacity: 0, x: -8, width: 0 },
-  visible: { opacity: 1, x: 0, width: "auto", transition: { duration: 0.2, ease: "easeOut" } },
-  exit:    { opacity: 0, x: -8, width: 0,    transition: { duration: 0.15, ease: "easeIn" } },
+const labelVariants: Variants = {
+  hidden: {
+    opacity: 0,
+    x: -8,
+    width: 0,
+  },
+  visible: {
+    opacity: 1,
+    x: 0,
+    width: "auto",
+    transition: {
+      duration: 0.2,
+      ease: "easeOut",
+    },
+  },
+  exit: {
+    opacity: 0,
+    x: -8,
+    width: 0,
+    transition: {
+      duration: 0.15,
+      ease: "easeIn",
+    },
+  },
 };
 
 export default function DashboardLayout({ children }) {
@@ -66,16 +97,16 @@ export default function DashboardLayout({ children }) {
     const { user, isLoaded } = useUser();
 
     const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
-      { name: "Dashboard",     href: "/admin/dashboard",  icon: LayoutDashboard },
-      { name: "Income",        href: "/admin/income",     icon: Wallet },
-      { name: "Expenses",      href: "/admin/expenses",   icon: Receipt },
-      { name: "Reports",       href: "/admin/reports",    icon: BarChart3 },
-      { name: "Projects",      href: "/admin/projects",   icon: FolderOpenDot },
-      { name: "Invoices",      href: "/admin/invoices",   icon: FileText },
-      { name: "Quotations",    href: "/admin/quotations", icon: NotepadTextDashed },
-      { name: "Agreements",    href: "/admin/agreements", icon: FilePenLine },
-      { name: "Clients",       href: "/admin/clients",    icon: Users },
-      { name: "Web Analytics", href: "/admin/analytics",  icon: ChartLine },
+      { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+      { name: "Income", href: "/admin/income", icon: Wallet },
+      { name: "Expenses", href: "/admin/expenses", icon: Receipt },
+      { name: "Reports", href: "/admin/reports", icon: BarChart3 },
+      { name: "Projects", href: "/admin/projects", icon: FolderOpenDot },
+      { name: "Invoices", href: "/admin/invoices", icon: FileText },
+      { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
+      { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
+      { name: "Clients", href: "/admin/clients", icon: Users },
+      { name: "Web Analytics", href: "/admin/analytics", icon: ChartLine },
     ];
 
     const isActive = (href: string) => {
