@@ -1,16 +1,26 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-// Protect `/admin` and `/dashboard` routes
+const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 const isProtectedRoute = createRouteMatcher(["/admin(.*)", "/dashboard(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
-    const { userId } = await auth();
+    const { userId, sessionClaims } = await auth();
 
     if (!userId) {
       // No authenticated user — redirect to login page
       return NextResponse.redirect(new URL("/login", req.url));
+    }
+
+    if (isAdminRoute(req)) {
+      const role = (sessionClaims?.metadata as { role?: string } | undefined)?.role;
+
+      if (role !== "admin") {
+        // Logged in, but not an admin — send them to their own dashboard
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
     }
   }
 });
