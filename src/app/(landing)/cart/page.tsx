@@ -2,10 +2,10 @@ import { Metadata } from "next";
 import CartClient from "@/components/cart/CartClient";
 
 export const metadata: Metadata = {
-  title: "Shopping Cart | FrameToque Digital Media",
+  title: "Cart | FrameToque Digital Media",
   description: "Review and book your selected photography, videography, graphic design, video editing, and web development packages.",
   openGraph: {
-    title: "Shopping Cart | FrameToque Digital Media",
+    title: "Cart | FrameToque Digital Media",
     description: "Review and book your selected photography, videography, graphic design, video editing, and web development packages.",
     url: "https://frametoque.online/cart",
     siteName: "Frametoque",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Shopping Cart | FrameToque Digital Media",
+    title: "Cart | FrameToque Digital Media",
     description: "Review and book your selected photography, videography, graphic design, video editing, and web development packages.",
     images: ["https://frametoque.online/og-image.png"],
   },
