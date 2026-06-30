@@ -258,6 +258,7 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
       i.project_name,
       i.date,
       i.currency,
+      i.category,
       i.subtotal,
       i.discount,
       i.total,
@@ -461,17 +462,17 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
 
   const invoiceId = 'INV-' + Date.now();
   await sql`
-    INSERT INTO invoices (
-      invoice_id, user_email, project_name, date, 
-      subtotal, discount, total, advance, total_due, 
-      work_status, payment_status, currency
-    ) VALUES (
-      ${invoiceId}, ${invoiceData.userEmail},
-      ${invoiceData.projectName}, ${invoiceData.date},
-      ${invoiceData.subtotal}, ${invoiceData.discount}, ${invoiceData.total}, ${invoiceData.advance}, ${invoiceData.totalDue},
-      ${invoiceData.workStatus}, ${invoiceData.paymentStatus}, ${invoiceData.currency}
-    )
-  `;
+  INSERT INTO invoices (
+    invoice_id, user_email, project_name, date, 
+    subtotal, discount, total, advance, total_due, 
+    work_status, payment_status, currency, category
+  ) VALUES (
+    ${invoiceId}, ${invoiceData.userEmail},
+    ${invoiceData.projectName}, ${invoiceData.date},
+    ${invoiceData.subtotal}, ${invoiceData.discount}, ${invoiceData.total}, ${invoiceData.advance}, ${invoiceData.totalDue},
+    ${invoiceData.workStatus}, ${invoiceData.paymentStatus}, ${invoiceData.currency}, ${invoiceData.category || null}
+  )
+`;
 
   for (const item of lineItems) {
     if (item.description) {
@@ -496,20 +497,21 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
   }
 
   await sql`
-    UPDATE invoices SET
-      user_email = ${invoiceData.userEmail},
-      project_name = ${invoiceData.projectName},
-      date = ${invoiceData.date},
-      subtotal = ${invoiceData.subtotal},
-      discount = ${invoiceData.discount},
-      total = ${invoiceData.total},
-      advance = ${invoiceData.advance},
-      total_due = ${invoiceData.totalDue},
-      work_status = ${invoiceData.workStatus},
-      payment_status = ${invoiceData.paymentStatus},
-      currency = ${invoiceData.currency}
-    WHERE invoice_id = ${invoiceId}
-  `;
+  UPDATE invoices SET
+    user_email = ${invoiceData.userEmail},
+    project_name = ${invoiceData.projectName},
+    date = ${invoiceData.date},
+    subtotal = ${invoiceData.subtotal},
+    discount = ${invoiceData.discount},
+    total = ${invoiceData.total},
+    advance = ${invoiceData.advance},
+    total_due = ${invoiceData.totalDue},
+    work_status = ${invoiceData.workStatus},
+    payment_status = ${invoiceData.paymentStatus},
+    currency = ${invoiceData.currency},
+    category = ${invoiceData.category || null}
+  WHERE invoice_id = ${invoiceId}
+`;
 
   await sql`DELETE FROM invoice_items WHERE invoice_id = ${invoiceId}`;
 
