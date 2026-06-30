@@ -7,6 +7,26 @@ import { useRouter, useParams } from "next/navigation";
 import { updateQuotation, getQuotationById } from "../../../actions/actions";
 import CategoryPicker from "../../../components/CategoryPicker";
 
+/** Returns today's date as YYYY-MM-DD in local time (avoids UTC off-by-one). */
+function localToday() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/** Formats a stored date (string or Date) as YYYY-MM-DD without UTC shifting. */
+function toLocalDateInput(value: any) {
+  if (!value) return localToday();
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return localToday();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function EditQuotationPage() {
   const router = useRouter();
   const { quotation_id } = useParams();
@@ -25,7 +45,7 @@ export default function EditQuotationPage() {
     billingAddress: "",
     projectName: "",
     description: "",
-    date: new Date().toISOString().split("T")[0],
+    date: localToday(),
     category: "Web dev",
     paymentMethod: "Bank Transfer",
     referenceDoc: "",
@@ -49,11 +69,6 @@ export default function EditQuotationPage() {
       try {
         const data = await getQuotationById(quotation_id as string);
         if (!data) throw new Error("Quotation not found");
-        
-        let formattedDate = "";
-        try {
-          formattedDate = new Date(data.date).toISOString().split('T')[0];
-        } catch(e) {}
 
         setQuotationStatus(data.status || "draft");
 
@@ -67,14 +82,14 @@ export default function EditQuotationPage() {
           billingAddress: data.billing_address || "",
           projectName: data.project_name || "",
           description: data.description || "",
-          date: formattedDate || new Date().toISOString().split("T")[0],
+          date: toLocalDateInput(data.date),
           category: data.category || "Web dev",
           paymentMethod: data.payment_method || "Bank Transfer",
           referenceDoc: data.invoice_id || "",
           notes: "",
           taxRate: 0,
-          discount: data.discount || 0,
-          advance: data.advance || 0,
+          discount: Number(data.discount) || 0,   // ← pulled from DB
+          advance: Number(data.advance) || 0,
         });
 
         // Seed multi-select from stored comma-separated value
@@ -127,8 +142,10 @@ export default function EditQuotationPage() {
 
   const subtotal = lineItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
   const taxAmount = subtotal * (formData.taxRate / 100);
-  const total = subtotal + taxAmount - formData.discount;
-  const totalDue = total - formData.advance;
+  const discount = Number(formData.discount) || 0;
+  const total = subtotal + taxAmount - discount;
+  const advance = Number(formData.advance) || 0;
+  const totalDue = total - advance;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-LK', {
@@ -155,7 +172,8 @@ export default function EditQuotationPage() {
       await updateQuotation(parseInt(quotation_id as string), {
         date: formData.date,
         amount: total,
-        advance: formData.advance,
+        advance,
+        discount,                                // ← now sent to DB
         totalDue,
         billingAddress: formData.billingAddress,
         clientId: formData.clientId,
@@ -397,7 +415,7 @@ export default function EditQuotationPage() {
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-400">Advance</span>
-                <span className="text-green-400">− {formatCurrency(formData.advance)}</span>
+                <span className="text-green-400">− {formatCurrency(advance)}</span>
               </div>
               <div className="flex justify-between items-center text-lg font-semibold border-t border-white/10 pt-3 text-brand-400">
                 <span>Balance Due</span>

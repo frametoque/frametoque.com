@@ -1,4 +1,6 @@
-const formatDate = (dateString) => {
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+
+const formatDate = (dateString: string | Date) => {
   if (!dateString) return "";
   const date = new Date(dateString);
   return date.toLocaleDateString("en-GB", {
@@ -8,7 +10,7 @@ const formatDate = (dateString) => {
   });
 };
 
-const formatMoney = (value, currency = "") => {
+const formatMoney = (value: any, currency = "") => {
   if (!value || isNaN(parseFloat(value))) return "";
   const prefix = currency === "LKR" ? "Rs." : currency;
   return `${prefix} ${parseFloat(value).toLocaleString("en-US", {
@@ -17,7 +19,7 @@ const formatMoney = (value, currency = "") => {
   })}`.trim();
 };
 
-const formatMoneySlash = (value, currency = "") => {
+const formatMoneySlash = (value: any, currency = "") => {
   if (!value || isNaN(parseFloat(value))) return "-";
   const prefix = currency === "LKR" ? "Rs." : currency;
   const suffix = currency === "LKR" ? "/-" : "";
@@ -27,11 +29,78 @@ const formatMoneySlash = (value, currency = "") => {
   })}${suffix}`.trim();
 };
 
-// Convert original 2480x3508 pixel coords to percentages
-const px = (v, total) => `${((v / total) * 100).toFixed(4)}%`;
+const hexToRgb = (hex: string) => {
+  const cleanHex = hex.replace("#", "");
+  let r = 0, g = 0, b = 0;
+  if (cleanHex.length === 3) {
+    r = parseInt(cleanHex[0] + cleanHex[0], 16) / 255;
+    g = parseInt(cleanHex[1] + cleanHex[1], 16) / 255;
+    b = parseInt(cleanHex[2] + cleanHex[2], 16) / 255;
+  } else if (cleanHex.length === 6) {
+    r = parseInt(cleanHex.substring(0, 2), 16) / 255;
+    g = parseInt(cleanHex.substring(2, 4), 16) / 255;
+    b = parseInt(cleanHex.substring(4, 6), 16) / 255;
+  }
+  return rgb(r, g, b);
+};
 
-export default function InvoiceDocument({ invoice }) {
-  if (!invoice) return null;
+function wrapText(text: string, font: any, size: number, maxWidth: number): string[] {
+  const paragraphs = text.split("\n");
+  const lines: string[] = [];
+
+  for (const para of paragraphs) {
+    const words = para.split(/\s+/);
+    let currentLine = "";
+
+    for (const word of words) {
+      if (!word) continue;
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const width = font.widthOfTextAtSize(testLine, size);
+      if (width <= maxWidth) {
+        currentLine = testLine;
+      } else {
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+        currentLine = word;
+      }
+    }
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+  }
+
+  return lines;
+}
+
+export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
+  console.log("generateInvoicePDF input:", invoice);
+  const pdfDoc = await PDFDocument.create();
+  
+  // A4 size: 595.276 x 841.89 points
+  const page = pdfDoc.addPage([595.276, 841.89]);
+  
+  // Embed fonts
+  const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  // Fetch the background template image
+  try {
+    const bgResponse = await fetch("/invoice.png");
+    if (!bgResponse.ok) {
+      throw new Error(`Failed to fetch /invoice.png: ${bgResponse.statusText}`);
+    }
+    const bgBytes = await bgResponse.arrayBuffer();
+    const bgImage = await pdfDoc.embedPng(bgBytes);
+    page.drawImage(bgImage, {
+      x: 0,
+      y: 0,
+      width: 595.276,
+      height: 841.89,
+    });
+  } catch (error) {
+    console.error("Could not load invoice background image, proceeding without background:", error);
+  }
 
   const {
     invoice_id,
@@ -46,138 +115,203 @@ export default function InvoiceDocument({ invoice }) {
     items = []
   } = invoice;
 
-  // Row Y positions from original 2480x3508 design
-  const rowTops = [1470, 1645, 1820, 1995];
+  const width = 595.276;
+  const height = 841.89;
+  const scaleX = width / 2480;
+  const scaleY = height / 3508;
+  const scaleFont = scaleX;
 
-  // Helper: build absolute position style using % coords
-  // fontScale: font size as fraction of container width (original_px / 2480)
-  const pos = (topPx, leftPx, fontPx = 37, extra = {}) => ({
-    position: "absolute" as const,
-    top: px(topPx, 3508),
-    left: px(leftPx, 2480),
-    fontSize: `${((fontPx / 2480) * 100).toFixed(4)}cqw`,
-    fontFamily: "Arial, Helvetica, sans-serif",
-    lineHeight: "1.35",
-    ...extra,
+  const convert = (topPx: number, leftPx: number, fontPx: number = 37) => {
+    const x = leftPx * scaleX;
+    const y = height - (topPx * scaleY);
+    const size = fontPx * scaleFont;
+    return { x, y, size };
+  };
+
+  const drawTextAligned = (
+    text: string,
+    leftPx: number,
+    topPx: number,
+    fontPx: number,
+    font: any,
+    colorHexStr: string,
+    align: "left" | "center" | "right" = "left",
+    widthPx?: number
+  ) => {
+    if (!text) return;
+    const { x, y, size } = convert(topPx, leftPx, fontPx);
+    const yAdjusted = y - size;
+    const color = hexToRgb(colorHexStr);
+
+    let finalX = x;
+    if (align !== "left" && widthPx !== undefined) {
+      const boxWidth = widthPx * scaleX;
+      const textWidth = font.widthOfTextAtSize(text, size);
+      if (align === "right") {
+        finalX = x + boxWidth - textWidth;
+      } else if (align === "center") {
+        finalX = x + (boxWidth - textWidth) / 2;
+      }
+    }
+
+    page.drawText(text, {
+      x: finalX,
+      y: yAdjusted,
+      size,
+      font,
+      color,
+    });
+  };
+
+  // 1. Invoice Number
+  drawTextAligned(
+    invoice_id || "",
+    1942,
+    440,
+    49,
+    helveticaBold,
+    "#1a3a4a"
+  );
+
+  // 2. Billing Address
+  if (billing_address) {
+    const { x, y, size } = convert(940, 130, 45);
+    const color = hexToRgb("#1a3a4a");
+    const lines = wrapText(billing_address, helveticaBold, size, 470 * scaleX);
+    let currentY = y - size;
+    const lineSpacing = size * 1.35;
+    for (const line of lines) {
+      page.drawText(line, {
+        x,
+        y: currentY,
+        size,
+        font: helveticaBold,
+        color,
+      });
+      currentY -= lineSpacing;
+    }
+  }
+
+  // 3. Date
+  drawTextAligned(
+    formatDate(date),
+    930,
+    842,
+    46,
+    helvetica,
+    "#222222"
+  );
+
+  // 4. Total Due
+  drawTextAligned(
+    formatMoney(total_due || total, currency),
+    769,
+    955,
+    70,
+    helveticaBold,
+    "#1a3a4a"
+  );
+
+  // 5. Line Items
+  const rowTops = [1470, 1645, 1820, 1995];
+  items.forEach((item: any, i: number) => {
+    if (!item.description) return;
+    const rowTop = rowTops[i] || (1470 + i * 175);
+
+    // Description
+    const { x, y, size } = convert(rowTop, 875, 37);
+    const color = hexToRgb("#222222");
+    const descLines = wrapText(item.description, helvetica, size, (1525 - 875 - 30) * scaleX);
+    let descY = y - size;
+    const descLineSpacing = size * 1.35;
+    descLines.forEach((line) => {
+      page.drawText(line, {
+        x,
+        y: descY,
+        size,
+        font: helvetica,
+        color,
+      });
+      descY -= descLineSpacing;
+    });
+
+    // Price
+    const priceText = item.price ? `${invoice.currency === "LKR" ? "Rs." : invoice.currency} ${item.price}` : "-";
+    drawTextAligned(
+      priceText,
+      1525,
+      rowTop,
+      37,
+      helvetica,
+      "#222222",
+      "center",
+      439
+    );
+
+    // Total
+    drawTextAligned(
+      formatMoney(item.total, currency),
+      1700,
+      rowTop,
+      37,
+      helvetica,
+      "#222222",
+      "right",
+      562
+    );
   });
 
-  return (
-    <div
-      id="invoice-render"
-      style={{
-        position: "relative",
-        width: "794px",
-        height: "1123px",
-        containerType: "inline-size",
-        overflow: "hidden",
-        background: "#fff",
-      }}
-    >
-      {/* Background — fills entire A4 */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/invoice.png"
-        alt=""
-        crossOrigin="anonymous"
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "fill",
-          display: "block",
-        }}
-      />
-
-      {/* Invoice Number */}
-      <div style={pos(440, 1942, 49, { color: "#1a3a4a", fontWeight: "600" })}>
-        {invoice_id}
-      </div>
-
-      {/* Billing Address */}
-      <div style={{
-        ...pos(900, 125, 45, { color: "#1a3a4a", fontWeight: "700", lineHeight: "1.55", whiteSpace: "pre-line" }),
-        width: px(377, 2480),
-      }}>
-        {billing_address}
-      </div>
-
-      {/* Date */}
-      <div style={pos(820, 930, 46, { color: "#222" })}>
-        {formatDate(date)}
-      </div>
-
-      {/* Total Due */}
-      <div style={pos(935, 769, 70, { color: "#1a3a4a", fontWeight: "700" })}>
-        {formatMoney(total_due || total, currency)}
-      </div>
-
-      {/* Line Items */}
-      {items.map((item, i) => {
-        const rowTop = rowTops[i] || (1470 + i * 175);
-        return item.description ? (
-          <div key={i}>
-            {/* Description */}
-            <div style={{
-              ...pos(rowTop, 875, 37, { color: "#222" }),
-              width: px(702, 2480),
-              overflow: "visible",
-              whiteSpace: "nowrap",
-              textOverflow: "ellipsis",
-            }}>
-              {item.description}
-            </div>
-
-            {/* Price */}
-            <div style={{
-              ...pos(rowTop, 1525, 37, { color: "#222", textAlign: "center" }),
-              width: px(439, 2480),
-            }}>
-             {item.price ? `${invoice.currency === "LKR" ? "Rs." : invoice.currency} ${item.price}` : "-"}
-            </div>
-
-            {/* Total */}
-            <div style={{
-              ...pos(rowTop, 1700, 37, { color: "#222", textAlign: "right" }),
-              width: px(562, 2480),
-            }}>
-              {formatMoney(item.total, currency)}
-            </div>
-          </div>
-        ) : null;
-      })}
-
-      {/* Subtotal */}
-      <div style={{
-        ...pos(2200, 1640, 45, { color: "#222", textAlign: "right" }),
-        width: px(649, 2480),
-      }}>
-        {formatMoneySlash(subtotal, currency)}
-      </div>
-
-      {/* Discount */}
-      <div style={{
-        ...pos(2285, 1640, 45, { color: "#222", textAlign: "right" }),
-        width: px(649, 2480),
-      }}>
-        {formatMoneySlash(discount, currency)}
-      </div>
-
-      {/* Advance */}
-      <div style={{
-        ...pos(2368, 1640, 45, { color: "#222", textAlign: "right" }),
-        width: px(649, 2480),
-      }}>
-        {formatMoneySlash(advance, currency)}
-      </div>
-
-      {/* Total */}
-      <div style={{
-        ...pos(2525, 1600, 60, { color: "#1a3a4a", fontWeight: "700", textAlign: "right" }),
-        width: px(649, 2480),
-      }}>
-        {formatMoney(total, currency)}
-      </div>
-    </div>
+  // 6. Subtotal
+  drawTextAligned(
+    formatMoneySlash(subtotal, currency),
+    1640,
+    2225,
+    45,
+    helvetica,
+    "#222222",
+    "right",
+    649
   );
+
+  // 7. Discount
+  drawTextAligned(
+    formatMoneySlash(discount, currency),
+    1640,
+    2300,
+    45,
+    helvetica,
+    "#222222",
+    "right",
+    649
+  );
+
+  // 8. Advance
+  drawTextAligned(
+    formatMoneySlash(advance, currency),
+    1640,
+    2390,
+    45,
+    helvetica,
+    "#222222",
+    "right",
+    649
+  );
+
+  // 9. Total
+  drawTextAligned(
+    formatMoney(total, currency),
+    1600,
+    2560,
+    60,
+    helveticaBold,
+    "#1a3a4a",
+    "right",
+    649
+  );
+
+  return await pdfDoc.save();
+}
+
+export default function InvoiceDocument({ invoice }: { invoice: any }) {
+  return null;
 }

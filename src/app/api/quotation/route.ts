@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
           `;
           if (qItems.length === cartItems.length) {
             const match = cartItems.every((cartItem) => {
-              const expectedDescription = `${cartItem.serviceTitle} – ${cartItem.tier} Package (Delivery: ${cartItem.duration})`;
+              const expectedDescription = `${cartItem.serviceTitle} – ${cartItem.tier})`;
               const matchingDbItem = qItems.find(
                 (dbItem) =>
                   dbItem.description === expectedDescription &&
@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
           total
         ) VALUES (
           ${quotationId},
-          ${`${item.serviceTitle} – ${item.tier} Package (Delivery: ${item.duration})`},
+          ${`${item.serviceTitle} – ${item.tier})`},
           ${item.quantity},
           ${unitPrice},
           ${lineTotal}

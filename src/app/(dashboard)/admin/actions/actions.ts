@@ -601,11 +601,12 @@ export async function getQuotations(range = 'lifetime') {
   };
 }
  
+// ─── REPLACE createQuotation in actions.ts ───────────────────────────────────
 export async function createQuotation(data: any, lineItems: any[] = []) {
   const advance = data.advance || 0;
+  const discount = data.discount || 0;
   const totalDue = data.totalDue ?? (data.amount - advance);
 
-  // Persist billing address back to the client record
   if (data.clientId && data.billingAddress) {
     await sql`
       UPDATE admin_clients
@@ -616,11 +617,11 @@ export async function createQuotation(data: any, lineItems: any[] = []) {
 
   const result = await sql`
     INSERT INTO admin_quotations (
-      date, amount, advance, total_due,
+      date, amount, advance, total_due, discount,
       description, category, payment_method, invoice_id, client_id, receipt_url, status
     )
     VALUES (
-      ${data.date}, ${data.amount}, ${advance}, ${totalDue},
+      ${data.date}, ${data.amount}, ${advance}, ${totalDue}, ${discount},
       ${data.description}, ${data.category}, ${data.paymentMethod},
       ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, 'draft'
     )
@@ -636,6 +637,53 @@ export async function createQuotation(data: any, lineItems: any[] = []) {
         VALUES (${quotationId}, ${item.description}, ${item.quantity}, ${item.rate}, ${item.quantity * item.rate})
       `;
     }
+  }
+}
+
+// ─── REPLACE updateQuotation in actions.ts ───────────────────────────────────
+export async function updateQuotation(id: number, data: any, lineItems: any[] = []) {
+  try {
+    const advance = data.advance || 0;
+    const discount = data.discount || 0;
+    const totalDue = data.totalDue ?? (data.amount - advance);
+
+    if (data.clientId && data.billingAddress) {
+      await sql`
+        UPDATE admin_clients
+        SET address = ${data.billingAddress}
+        WHERE id = ${data.clientId}
+      `;
+    }
+
+    await sql`
+      UPDATE admin_quotations 
+      SET 
+        date          = ${data.date}, 
+        amount        = ${data.amount},
+        advance       = ${advance},
+        total_due     = ${totalDue},
+        discount      = ${discount},
+        description   = ${data.description}, 
+        category      = ${data.category}, 
+        payment_method= ${data.paymentMethod}, 
+        invoice_id    = ${data.invoiceId || null}, 
+        receipt_url   = ${data.receiptUrl || null}
+      WHERE id = ${id} AND status != 'confirmed'
+    `;
+
+    await sql`DELETE FROM quotation_items WHERE quotation_id = ${id}`;
+
+    for (const item of lineItems) {
+      if (item.description) {
+        await sql`
+          INSERT INTO quotation_items (quotation_id, description, quantity, price, total)
+          VALUES (${id}, ${item.description}, ${item.quantity}, ${item.rate}, ${item.quantity * item.rate})
+        `;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to update quotation:", e);
+    throw new Error("Failed to update quotation");
   }
 }
  
@@ -833,51 +881,7 @@ export async function getQuotationById(quotationId: string) {
     throw new Error("Failed to fetch quotation");
   }
 }
- 
-export async function updateQuotation(id: number, data: any, lineItems: any[] = []) {
-  try {
-    const advance = data.advance || 0;
-    const totalDue = data.totalDue ?? (data.amount - advance);
 
-    // Persist billing address back to the client record if changed
-    if (data.clientId && data.billingAddress) {
-      await sql`
-        UPDATE admin_clients
-        SET address = ${data.billingAddress}
-        WHERE id = ${data.clientId}
-      `;
-    }
-
-    await sql`
-      UPDATE admin_quotations 
-      SET 
-        date = ${data.date}, 
-        amount = ${data.amount},
-        advance = ${advance},
-        total_due = ${totalDue},
-        description = ${data.description}, 
-        category = ${data.category}, 
-        payment_method = ${data.paymentMethod}, 
-        invoice_id = ${data.invoiceId || null}, 
-        receipt_url = ${data.receiptUrl || null}
-      WHERE id = ${id} AND status != 'confirmed'
-    `;
-
-    await sql`DELETE FROM quotation_items WHERE quotation_id = ${id}`;
-
-    for (const item of lineItems) {
-      if (item.description) {
-        await sql`
-          INSERT INTO quotation_items (quotation_id, description, quantity, price, total)
-          VALUES (${id}, ${item.description}, ${item.quantity}, ${item.rate}, ${item.quantity * item.rate})
-        `;
-      }
-    }
-  } catch (e) {
-    console.error("Failed to update quotation:", e);
-    throw new Error("Failed to update quotation");
-  }
-}
 
 export async function getProjects() {
   try {

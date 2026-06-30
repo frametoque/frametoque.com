@@ -36,21 +36,24 @@ export async function GET(request, { params }) {
 
     const result = await dbClient.query(
       `SELECT
-        invoice_id,
-        user_email,
-        project_name,
-        date,
-        currency,
-        subtotal,
-        discount,
-        total,
-        advance,
-        total_due,
-        work_status,
-        payment_status,
-        created_at
-      FROM public.invoices
-      WHERE invoice_id = $1 AND LOWER(user_email) = LOWER($2)`,
+        i.invoice_id,
+        i.user_email,
+        i.project_name,
+        i.date,
+        i.currency,
+        i.subtotal,
+        i.discount,
+        i.total,
+        i.advance,
+        i.total_due,
+        i.work_status,
+        i.payment_status,
+        i.created_at,
+        COALESCE(ac.address, u.address) as billing_address
+      FROM public.invoices i
+      LEFT JOIN public.admin_clients ac ON LOWER(i.user_email) = LOWER(ac.email)
+      LEFT JOIN public.users u ON LOWER(i.user_email) = LOWER(u.email)
+      WHERE i.invoice_id = $1 AND LOWER(i.user_email) = LOWER($2)`,
       [invoice_id, userEmail]
     );
 
@@ -74,8 +77,16 @@ export async function GET(request, { params }) {
     }
 
     const invoice = result.rows[0];
-    // Flattened schema - no separate line items table
-    invoice.items = [];
+    
+    // Fetch line items
+    const itemsResult = await dbClient.query(
+      `SELECT description, price, total, quantity 
+       FROM public.invoice_items 
+       WHERE invoice_id = $1
+       ORDER BY id ASC`,
+      [invoice_id]
+    );
+    invoice.items = itemsResult.rows;
 
     return NextResponse.json(invoice);
   } catch (error) {

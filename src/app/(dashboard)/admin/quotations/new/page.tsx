@@ -7,6 +7,15 @@ import { useRouter } from "next/navigation";
 import { createQuotation, getClients, createClient } from "../../actions/actions";
 import CategoryPicker from "../../components/CategoryPicker";
 
+/** Returns today's date as YYYY-MM-DD in local time (avoids UTC off-by-one). */
+function localToday() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function NewQuotationPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,7 +36,7 @@ export default function NewQuotationPage() {
     billingAddress: "",
     projectName: "",
     description: "",
-    date: new Date().toISOString().split("T")[0],
+    date: localToday(),          // ← local date, not UTC
     category: "Web dev",
     paymentMethod: "Bank Transfer",
     referenceDoc: "",
@@ -72,7 +81,6 @@ export default function NewQuotationPage() {
           company: selected.company || "",
           userEmail: selected.email,
           phone: selected.phone || "",
-          // Pull billing address from client record (merged with users.address in getClients)
           billingAddress: selected.address || "",
         }));
       }
@@ -91,7 +99,6 @@ export default function NewQuotationPage() {
       alert("Please enter client name and email");
       return;
     }
-
     try {
       const clientId = await createClient({
         name: newClientData.name,
@@ -100,7 +107,6 @@ export default function NewQuotationPage() {
         phone: newClientData.phone || null,
         address: newClientData.address || null,
       });
-
       const newClient = {
         id: clientId,
         name: newClientData.name,
@@ -109,7 +115,6 @@ export default function NewQuotationPage() {
         phone: newClientData.phone,
         address: newClientData.address,
       };
-
       setClients([...clients, newClient]);
       setFormData(prev => ({
         ...prev,
@@ -129,7 +134,7 @@ export default function NewQuotationPage() {
   };
 
   const handleLineItemChange = (id: number, field: string, value: any) => {
-    setLineItems(prev => prev.map(item => 
+    setLineItems(prev => prev.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     ));
   };
@@ -144,35 +149,28 @@ export default function NewQuotationPage() {
     }
   };
 
-  const subtotal = lineItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+  const subtotal  = lineItems.reduce((sum, item) => sum + item.quantity * item.rate, 0);
   const taxAmount = subtotal * (formData.taxRate / 100);
-  const total = subtotal + taxAmount - formData.discount;
-  const totalDue = total - formData.advance;
+  const discount  = Number(formData.discount) || 0;
+  const total     = subtotal + taxAmount - discount;
+  const totalDue  = total - (Number(formData.advance) || 0);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-LK', {
-      style: 'currency',
-      currency: 'LKR',
-    }).format(amount || 0);
-  };
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" }).format(amount || 0);
 
   const handleSave = async () => {
-    if (!formData.userEmail) {
-      alert("Please enter a user email.");
-      return;
-    }
-
+    if (!formData.userEmail) { alert("Please enter a user email."); return; }
     if (lineItems.every(item => !item.description)) {
       alert("Please add at least one line item with description.");
       return;
     }
-    
     setIsSubmitting(true);
     try {
       await createQuotation({
         date: formData.date,
         amount: total,
-        advance: formData.advance,
+        advance: Number(formData.advance) || 0,
+        discount,                              // ← sent to DB
         totalDue,
         billingAddress: formData.billingAddress,
         clientId: formData.clientId || null,
@@ -180,9 +178,9 @@ export default function NewQuotationPage() {
         category: selectedCategories.join(", "),
         paymentMethod: formData.paymentMethod,
         invoiceId: formData.referenceDoc || null,
-        receiptUrl: null
+        receiptUrl: null,
       }, lineItems);
-      
+
       alert("Quotation created successfully!");
       router.push("/admin/quotations");
     } catch (e) {
@@ -207,11 +205,11 @@ export default function NewQuotationPage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         <div className="space-y-8">
-          
+
           {/* Client Details */}
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
             <h2 className="text-xl font-semibold mb-4">Client Details</h2>
-            
+
             <div className="space-y-1">
               <label className="text-sm text-gray-400">Select Client</label>
               <select name="clientId" value={formData.clientId} onChange={handleFormChange}
@@ -350,23 +348,23 @@ export default function NewQuotationPage() {
         <div className="space-y-8">
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
             <h2 className="text-xl font-semibold mb-4">Services/Line Items</h2>
-            
+
             <div className="space-y-3">
               {lineItems.map((item) => (
                 <div key={item.id} className="flex items-start gap-3">
                   <div className="flex-1 space-y-1">
                     <input type="text" placeholder="Description" value={item.description}
-                      onChange={(e) => handleLineItemChange(item.id, 'description', e.target.value)}
+                      onChange={(e) => handleLineItemChange(item.id, "description", e.target.value)}
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
                   </div>
-                  <div className="w-20 space-y-1">
+                  <div className="w-20">
                     <input type="number" placeholder="Qty" min="1" value={item.quantity}
-                      onChange={(e) => handleLineItemChange(item.id, 'quantity', Number(e.target.value))}
+                      onChange={(e) => handleLineItemChange(item.id, "quantity", Number(e.target.value))}
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
                   </div>
-                  <div className="w-28 space-y-1">
+                  <div className="w-28">
                     <input type="number" placeholder="Rate" min="0" step="0.01" value={item.rate || ""}
-                      onChange={(e) => handleLineItemChange(item.id, 'rate', Number(e.target.value))}
+                      onChange={(e) => handleLineItemChange(item.id, "rate", Number(e.target.value))}
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
                   </div>
                   <div className="w-24 py-2 text-right text-sm font-semibold">
@@ -432,7 +430,7 @@ export default function NewQuotationPage() {
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-400">Advance</span>
-                <span className="text-green-400">− {formatCurrency(formData.advance)}</span>
+                <span className="text-green-400">− {formatCurrency(Number(formData.advance) || 0)}</span>
               </div>
               <div className="flex justify-between items-center text-lg font-semibold border-t border-white/10 pt-3 text-brand-400">
                 <span>Balance Due</span>

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase } from "lucide-react";
 import Link from "next/link";
-import InvoiceDocument from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
+import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
 
 const workStatusStyles = {
   "in progress": "bg-brand-500/20 text-brand-400 border-brand-500/30",
@@ -72,14 +72,13 @@ export default function InvoicePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [downloading, setDownloading] = useState(false);
-  const [addingToWallet, setAddingToWallet] = useState(null);
-  const hiddenRef = useRef(null);
+  const [addingToWallet, setAddingToWallet] = useState<string | null>(null);
 
   useEffect(() => {
     if (!invoice_id) return;
     const fetchInvoice = async () => {
       try {
-        const res = await fetch(`/api/invoice/${invoice_id}`);
+        const res = await fetch(`/api/invoice/${invoice_id}?t=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) throw new Error("Invoice not found");
         const data = await res.json();
         setInvoice(data);
@@ -95,33 +94,14 @@ export default function InvoicePage() {
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const jsPDF = (await import("jspdf")).default;
-      const element = hiddenRef.current?.querySelector("#invoice-render");
-      if (!element) throw new Error("Invoice element not found");
-      const canvas = await html2canvas(element, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#ffffff",
-        logging: false,
-        imageTimeout: 15000,
-        width: 794,
-        height: 1123,
-        windowWidth: 794,
-        windowHeight: 1123,
-      });
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pageHeight);
-      pdf.save(`${invoice_id}.pdf`);
+      const pdfBytes = await generateInvoicePDF(invoice);
+      const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${invoice_id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert("Failed to generate PDF. Please try again.");
@@ -369,25 +349,6 @@ export default function InvoicePage() {
         </div>
       </div>
 
-      {/*
-        ── Hidden full-size render for PDF capture ──
-        Positioned off-screen. Rendered at exactly 794×1123px (A4 @ 96dpi).
-        html2canvas captures this at scale:3 → ~2380×3369px → excellent PDF quality.
-      */}
-      <div
-        ref={hiddenRef}
-        style={{
-          position: "fixed",
-          top: "-9999px",
-          left: "-9999px",
-          width: "794px",
-          height: "1123px",
-          zIndex: -1,
-          pointerEvents: "none",
-        }}
-      >
-        <InvoiceDocument invoice={invoice} />
-      </div>
     </div>
   );
 }

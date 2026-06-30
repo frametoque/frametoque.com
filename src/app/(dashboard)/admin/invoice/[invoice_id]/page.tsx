@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, Eye } from "lucide-react";
+import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase } from "lucide-react";
 import Link from "next/link";
-import InvoiceDocument from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
+import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
 import { getInvoiceByIdAdmin } from "../../actions/actions";
 
 const workStatusStyles = {
@@ -25,6 +25,15 @@ const formatDate = (dateString: string) => {
   });
 };
 
+const formatMoney = (value: any, currency = "LKR") => {
+  if (!value || isNaN(parseFloat(value))) return "N/A";
+  const currencySymbol = currency === "LKR" ? "Rs." : currency;
+  return `${currencySymbol} ${parseFloat(value).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
 export default function AdminInvoicePage() {
   const { invoice_id } = useParams();
   const searchParams = useSearchParams();
@@ -33,7 +42,6 @@ export default function AdminInvoicePage() {
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [autoDownloaded, setAutoDownloaded] = useState(false);
-  const hiddenRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!invoice_id) return;
@@ -51,45 +59,25 @@ export default function AdminInvoicePage() {
     fetchInvoice();
   }, [invoice_id]);
 
+  // Auto-download if ?download=true
   useEffect(() => {
-    if (invoice && searchParams.get('download') === 'true' && !autoDownloaded) {
+    if (invoice && searchParams.get("download") === "true" && !autoDownloaded) {
       setAutoDownloaded(true);
-      setTimeout(() => {
-        handleDownload();
-      }, 500); // Small delay to ensure styles and fonts are fully loaded
+      handleDownload();
     }
   }, [invoice, searchParams, autoDownloaded]);
 
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const jsPDF = (await import("jspdf")).default;
-      const element = hiddenRef.current?.querySelector("#invoice-render");
-      if (!element) throw new Error("Invoice element not found");
-      const canvas = await html2canvas(element as HTMLElement, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#ffffff",
-        logging: false,
-        imageTimeout: 15000,
-        width: 794,
-        height: 1123,
-        windowWidth: 794,
-        windowHeight: 1123,
-      });
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pageHeight);
-      pdf.save(`${invoice_id}.pdf`);
+      const pdfBytes = await generateInvoicePDF(invoice);
+      const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${invoice_id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert("Failed to generate PDF. Please try again.");
@@ -119,6 +107,11 @@ export default function AdminInvoicePage() {
 
   const lineItems = invoice.items || [];
   const currencyLabel = invoice.currency === "LKR" ? "Rs." : invoice.currency;
+  const subtotal = parseFloat(invoice.subtotal || 0);
+  const discount = parseFloat(invoice.discount || 0);
+  const advance = parseFloat(invoice.advance || 0);
+  const total = parseFloat(invoice.total || subtotal - discount);
+  const totalDue = parseFloat(invoice.total_due || total - advance);
 
   return (
     <div className="space-y-6 pb-20">
@@ -133,29 +126,28 @@ export default function AdminInvoicePage() {
           Back to Invoices
         </Link>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleDownload}
-            disabled={downloading}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            {downloading ? "Generating..." : "Download PDF"}
-          </button>
-        </div>
+        <button
+          onClick={handleDownload}
+          disabled={downloading}
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          {downloading ? "Generating PDF..." : "Download PDF"}
+        </button>
       </div>
 
       {/* Main Layout */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
-
-        {/* Right — Invoice Details */}
         <div className="flex-1 space-y-4 w-full">
 
           {/* Project Name */}
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
             <h1 className="text-2xl font-bold text-white mb-1">{invoice.project_name || "Untitled Project"}</h1>
+            <p className="text-gray-400 text-sm">Invoice #{invoice.invoice_id}</p>
             <p className="text-gray-400 text-sm">{invoice.billing_address}</p>
-            <p className="text-gray-400 text-sm mt-1 flex items-center gap-2">Client Email: <span className="text-white">{invoice.user_email}</span></p>
+            <p className="text-gray-400 text-sm mt-1 flex items-center gap-2">
+              Client Email: <span className="text-white">{invoice.user_email}</span>
+            </p>
           </div>
 
           {/* Details Grid */}
@@ -205,7 +197,7 @@ export default function AdminInvoicePage() {
             </div>
           </div>
 
-          {/* Line Items Table */}
+          {/* Line Items */}
           {lineItems.length > 0 && (
             <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden mt-4">
               <div className="grid grid-cols-3 px-5 py-3 border-b border-white/10 text-xs font-semibold text-gray-400 uppercase tracking-wider">
@@ -213,7 +205,6 @@ export default function AdminInvoicePage() {
                 <span className="text-center">Price</span>
                 <span className="text-right">Total</span>
               </div>
-
               {lineItems.map((item: any, i: number) => (
                 <div key={i} className="grid grid-cols-3 px-5 py-4 border-b border-white/5 last:border-0">
                   <span className="text-white text-sm">{item.description}</span>
@@ -228,64 +219,37 @@ export default function AdminInvoicePage() {
                 </div>
               ))}
 
-              {/* Subtotal / Discount / Total */}
-              <div className="px-5 py-4 space-y-2 border-t border-white/10 bg-white/5">
-                {invoice.subtotal && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Subtotal</span>
-                    <span className="text-white">
-                      {currencyLabel} {parseFloat(invoice.subtotal).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                )}
-                {invoice.discount && parseFloat(invoice.discount) > 0 && (
+              {/* Billing Summary */}
+              <div className="px-5 py-4 space-y-3 border-t border-white/10 bg-white/5">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Subtotal</span>
+                  <span className="text-white font-semibold">{formatMoney(subtotal, invoice.currency)}</span>
+                </div>
+                {discount > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Discount</span>
-                    <span className="text-red-400">
-                      − {currencyLabel} {parseFloat(invoice.discount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </span>
+                    <span className="text-red-400">− {formatMoney(discount, invoice.currency)}</span>
                   </div>
                 )}
-                {invoice.advance && parseFloat(invoice.advance) > 0 && (
+                <div className="flex justify-between pt-2 border-t border-white/10">
+                  <span className="text-gray-300">Total</span>
+                  <span className="text-white font-semibold">{formatMoney(total, invoice.currency)}</span>
+                </div>
+                {advance > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Advance Paid</span>
-                    <span className="text-green-400">
-                      − {currencyLabel} {parseFloat(invoice.advance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </span>
+                    <span className="text-green-400">− {formatMoney(advance, invoice.currency)}</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-2 border-t border-white/10">
                   <span className="text-white font-semibold">Total Due</span>
-                  <span className="text-white font-bold text-lg">
-                    {currencyLabel}{" "}
-                    {(
-                      parseFloat(invoice.subtotal || "0") -
-                      parseFloat(invoice.discount || "0") -
-                      parseFloat(invoice.advance || "0")
-                    ).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                  </span>
+                  <span className="text-white font-bold text-lg">{formatMoney(totalDue, invoice.currency)}</span>
                 </div>
               </div>
             </div>
           )}
 
         </div>
-      </div>
-
-      {/* Hidden full-size render for PDF capture */}
-      <div
-        ref={hiddenRef}
-        style={{
-          position: "fixed",
-          top: "-9999px",
-          left: "-9999px",
-          width: "794px",
-          height: "1123px",
-          zIndex: -1,
-          pointerEvents: "none",
-        }}
-      >
-        <InvoiceDocument invoice={invoice} />
       </div>
 
     </div>
