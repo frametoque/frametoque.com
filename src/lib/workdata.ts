@@ -35,7 +35,14 @@ export async function getPhotography(): Promise<PhotographyEvent[]> {
   const rows = await sql`
     SELECT event_name, src, width, height 
     FROM work_photography 
-    ORDER BY id
+    ORDER BY 
+      CASE event_name
+        WHEN 'SAGA ''26' THEN 1
+        WHEN 'Evendor ''25' THEN 2
+        WHEN 'Cambrian Carnival ''23' THEN 3
+        ELSE 999
+      END,
+      id
   `;
 
   const eventMap = new Map<string, PhotographyImage[]>();
