@@ -34,7 +34,7 @@ export async function GET(request, { params }) {
 
     dbClient = await pool.connect();
 
-    const result = await dbClient.query(
+   const result = await dbClient.query(
       `SELECT
         i.invoice_id,
         i.user_email,
@@ -49,6 +49,7 @@ export async function GET(request, { params }) {
         i.work_status,
         i.payment_status,
         i.created_at,
+        COALESCE(u.full_name, ac.name, i.user_email) as client_name,
         COALESCE(ac.address, u.address) as billing_address
       FROM public.invoices i
       LEFT JOIN public.admin_clients ac ON LOWER(i.user_email) = LOWER(ac.email)

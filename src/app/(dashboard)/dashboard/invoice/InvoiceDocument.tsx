@@ -104,6 +104,7 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
 
   const {
     invoice_id,
+    client_name,
     billing_address,
     date,
     currency,
@@ -167,21 +168,22 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
   drawTextAligned(
     invoice_id || "",
     1942,
-    440,
-    49,
+    473,
+    40,
     helveticaBold,
     "#1a3a4a"
   );
 
-  // 2. Billing Address
-  if (billing_address) {
+// Client Name + Billing Address
+  if (client_name || billing_address) {
     const { x, y, size } = convert(940, 130, 45);
     const color = hexToRgb("#1a3a4a");
-    const lines = wrapText(billing_address, helveticaBold, size, 470 * scaleX);
-    let currentY = y - size;
     const lineSpacing = size * 1.35;
-    for (const line of lines) {
-      page.drawText(line, {
+    let currentY = y - size;
+
+    // Client name as the first line, bold/slightly distinct if you like
+    if (client_name) {
+      page.drawText(client_name, {
         x,
         y: currentY,
         size,
@@ -189,6 +191,21 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
         color,
       });
       currentY -= lineSpacing;
+    }
+
+    // Billing address lines follow directly underneath
+    if (billing_address) {
+      const lines = wrapText(billing_address, helveticaBold, size, 470 * scaleX);
+      for (const line of lines) {
+        page.drawText(line, {
+          x,
+          y: currentY,
+          size,
+          font: helveticaBold,
+          color,
+        });
+        currentY -= lineSpacing;
+      }
     }
   }
 

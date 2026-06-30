@@ -250,7 +250,7 @@ export async function deleteInvoice(id: string) {
 }
 
 export async function getInvoiceByIdAdmin(invoiceId: string) {
-  // Join with admin_clients and users to get billing address
+  // Join with admin_clients and users to get client name + billing address
   const result = await sql`
     SELECT
       i.invoice_id,
@@ -265,6 +265,7 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
       i.total_due,
       i.work_status,
       i.payment_status,
+      COALESCE(u.full_name, ac.name, i.user_email) as client_name,
       COALESCE(ac.address, u.address) as billing_address
     FROM invoices i
     LEFT JOIN admin_clients ac ON LOWER(i.user_email) = LOWER(ac.email)
@@ -447,12 +448,14 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
         true
       )
     `;
-  } else if (existingClient.length > 0 && invoiceData.billingAddress) {
-    // Update address on existing client if a billing address was entered
+  } else if (existingClient.length > 0) {
+    // Update name/address on existing client whenever new values were entered
     await sql`
       UPDATE admin_clients
-      SET address = ${invoiceData.billingAddress}
-      WHERE LOWER(email) = LOWER(${invoiceData.userEmail}) AND (address IS NULL OR address = '')
+      SET 
+        name = COALESCE(${invoiceData.clientName || null}, name),
+        address = COALESCE(${invoiceData.billingAddress || null}, address)
+      WHERE LOWER(email) = LOWER(${invoiceData.userEmail})
     `;
   }
 
@@ -463,7 +466,8 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
       subtotal, discount, total, advance, total_due, 
       work_status, payment_status, currency
     ) VALUES (
-      ${invoiceId}, ${invoiceData.userEmail}, ${invoiceData.projectName}, ${invoiceData.date},
+      ${invoiceId}, ${invoiceData.userEmail},
+      ${invoiceData.projectName}, ${invoiceData.date},
       ${invoiceData.subtotal}, ${invoiceData.discount}, ${invoiceData.total}, ${invoiceData.advance}, ${invoiceData.totalDue},
       ${invoiceData.workStatus}, ${invoiceData.paymentStatus}, ${invoiceData.currency}
     )
