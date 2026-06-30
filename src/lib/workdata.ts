@@ -64,12 +64,12 @@ export async function getGraphics(): Promise<string[]> {
 }
 
 export async function getVideography(): Promise<VideoProject[]> {
-  const rows = await sql`SELECT url FROM work_videography ORDER BY id`;
+  const rows = await sql`SELECT url FROM work_videography ORDER BY id DESC`;
   return rows.map((r) => ({ url: r.url as string }));
 }
 
 export async function getVideoEditing(): Promise<VideoProject[]> {
-  const rows = await sql`SELECT url FROM work_videoediting ORDER BY id`;
+  const rows = await sql`SELECT url FROM work_videoediting ORDER BY id DESC`;
   return rows.map((r) => ({ url: r.url as string }));
 }
 

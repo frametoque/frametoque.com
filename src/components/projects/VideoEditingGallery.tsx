@@ -68,15 +68,34 @@ function VideoCard({ project, onClick, index, onExpand, isAnyModalOpen, activeIn
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const hasInitialized = useRef(false);
+  const isReady = useRef(false);
+  const pendingPlay = useRef(false);
   const { thumbUrl, handleError } = useImageFallback(url);
+
+  const safeCall = (method: string, ...args: any[]) => {
+    const p = playerRef.current;
+    if (isReady.current && p && typeof p[method] === "function") {
+      p[method](...args);
+    }
+  };
 
   const initPlayer = async () => {
     if (hasInitialized.current || !iframeRef.current) return;
     hasInitialized.current = true;
+    pendingPlay.current = true;
     await loadYouTubeAPI();
     playerRef.current = new window.YT.Player(iframeRef.current, {
       events: {
-        onReady: (event: any) => { event.target.unMute(); event.target.playVideo(); setIsPlaying(true); onPlayStart(index); },
+        onReady: (event: any) => {
+          isReady.current = true;
+          if (pendingPlay.current) {
+            event.target.unMute();
+            event.target.playVideo();
+            setIsPlaying(true);
+            onPlayStart(index);
+            pendingPlay.current = false;
+          }
+        },
         onStateChange: (event: any) => {
           if (event.data === window.YT.PlayerState.PLAYING) setIsPlaying(true);
           else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.ENDED) setIsPlaying(false);
@@ -92,10 +111,8 @@ function VideoCard({ project, onClick, index, onExpand, isAnyModalOpen, activeIn
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting || isAnyModalOpen) {
-            if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
-              playerRef.current.pauseVideo();
-              setIsPlaying(false);
-            }
+            safeCall("pauseVideo");
+            setIsPlaying(false);
           }
         });
       },
@@ -106,23 +123,33 @@ function VideoCard({ project, onClick, index, onExpand, isAnyModalOpen, activeIn
   }, [isAnyModalOpen]);
 
   useEffect(() => {
-    if (isAnyModalOpen && isPlaying) { playerRef.current?.pauseVideo(); setIsPlaying(false); }
+    if (isAnyModalOpen && isPlaying) { safeCall("pauseVideo"); setIsPlaying(false); }
   }, [isAnyModalOpen, isPlaying]);
 
   useEffect(() => {
-    if (activeInlineIndex !== null && activeInlineIndex !== index && isPlaying) { playerRef.current?.pauseVideo(); setIsPlaying(false); }
+    if (activeInlineIndex !== null && activeInlineIndex !== index && isPlaying) { safeCall("pauseVideo"); setIsPlaying(false); }
   }, [activeInlineIndex, index, isPlaying]);
 
   const handleTogglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!hasInitialized.current) { initPlayer(); return; }
-    if (isPlaying) { playerRef.current?.pauseVideo(); setIsPlaying(false); }
-    else { playerRef.current?.unMute(); playerRef.current?.playVideo(); setIsPlaying(true); onPlayStart(index); }
+    if (!isReady.current) { pendingPlay.current = true; return; }
+    if (isPlaying) {
+      safeCall("pauseVideo");
+      setIsPlaying(false);
+    } else {
+      safeCall("unMute");
+      safeCall("playVideo");
+      setIsPlaying(true);
+      onPlayStart(index);
+    }
   };
 
   const handleExpandClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const currentTime = playerRef.current?.getCurrentTime?.() || 0;
+    const currentTime = isReady.current && typeof playerRef.current?.getCurrentTime === "function"
+      ? playerRef.current.getCurrentTime()
+      : 0;
     onExpand(url, currentTime);
   };
 
