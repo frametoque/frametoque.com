@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2, Eye } from "lucide-react";
+import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2, Eye, FilePlus, Trash } from "lucide-react";
 import Link from "next/link";
-import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient } from "../actions/actions";
+import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice } from "../actions/actions";
 import CategoryPicker from "../components/CategoryPicker";
 
 const ALL_CATEGORIES = ["Web dev", "Graphic design", "Video editing", "Photography", "Videography", "Other"];
@@ -21,6 +21,12 @@ const parseCategories = (raw: string | string[] | undefined): string[] => {
 
 // Helper: array → comma-separated string for storage
 const joinCategories = (cats: string[]): string => cats.join(", ");
+
+interface LineItem {
+  name: string;
+  qty: number;
+  rate: number;
+}
 
 export default function IncomePage() {
   const [activeFilter, setActiveFilter] = useState("All");
@@ -48,6 +54,21 @@ export default function IncomePage() {
     paymentMethod: 'Bank Transfer',
     invoiceId: '',
     receiptUrl: '',
+  });
+
+  // --- Create Invoice from Income ---
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+  const [invoiceSourceRow, setInvoiceSourceRow] = useState<any>(null);
+  const [creatingInvoice, setCreatingInvoice] = useState(false);
+  const [lineItems, setLineItems] = useState<LineItem[]>([{ name: '', qty: 1, rate: 0 }]);
+  const [invoiceFormData, setInvoiceFormData] = useState({
+    clientName: '',
+    userEmail: '',
+    projectName: '',
+    date: new Date().toISOString().split('T')[0],
+    currency: 'LKR',
+    discount: 0,
+    advance: 0,
   });
 
   const loadData = async () => {
@@ -126,6 +147,113 @@ export default function IncomePage() {
   const handleDelete = async (id: number) => {
     if (confirm("Are you sure you want to delete this record?")) {
       try { await deleteIncome(id); await loadData(); } catch (e) { console.error("Failed to delete", e); }
+    }
+  };
+
+  // --- Invoice Modal Helpers ---
+  const openInvoiceModal = (row: any) => {
+    setInvoiceSourceRow(row);
+
+    // Find matching client email
+    const matchedClient = clients.find(c => c.id === row.clientId);
+
+    setInvoiceFormData({
+      clientName: row.client || matchedClient?.name || '',
+      userEmail: matchedClient?.email || '',
+      projectName: row.desc || '',
+      date: new Date().toISOString().split('T')[0],
+      currency: 'LKR',
+      discount: 0,
+      advance: 0,
+    });
+
+    // Pre-populate a single line item from the income row
+    setLineItems([{
+      name: row.desc || 'Service',
+      qty: 1,
+      rate: parseFloat(row.amount) || 0,
+    }]);
+
+    setInvoiceModalOpen(true);
+  };
+
+  const addLineItem = () => {
+    setLineItems(prev => [...prev, { name: '', qty: 1, rate: 0 }]);
+  };
+
+  const removeLineItem = (index: number) => {
+    setLineItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateLineItem = (index: number, field: keyof LineItem, value: string | number) => {
+    setLineItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+  };
+
+  const lineItemsSubtotal = lineItems.reduce((sum, item) => sum + (item.qty * item.rate), 0);
+  const invoiceTotal = lineItemsSubtotal - (invoiceFormData.discount || 0);
+  const invoiceDue = invoiceTotal - (invoiceFormData.advance || 0);
+
+  const handleCreateInvoice = async () => {
+    if (!invoiceFormData.userEmail) {
+      alert('Please enter a client email.');
+      return;
+    }
+    if (lineItems.every(item => !item.name)) {
+      alert('Please add at least one line item.');
+      return;
+    }
+
+    setCreatingInvoice(true);
+    try {
+      const invoiceData = {
+        userEmail: invoiceFormData.userEmail,
+        clientName: invoiceFormData.clientName,
+        projectName: invoiceFormData.projectName,
+        date: invoiceFormData.date,
+        subtotal: lineItemsSubtotal,
+        discount: invoiceFormData.discount || 0,
+        total: invoiceTotal,
+        advance: invoiceFormData.advance || 0,
+        totalDue: invoiceDue,
+        workStatus: 'completed',
+        paymentStatus: 'paid',
+        currency: invoiceFormData.currency,
+        category: invoiceSourceRow?.category || null,
+      };
+
+      const mappedLineItems = lineItems
+        .filter(item => item.name)
+        .map(item => ({
+          description: item.name,
+          quantity: item.qty,
+          rate: item.rate,
+        }));
+
+      const result = await createInvoice(invoiceData, mappedLineItems);
+
+      // Link the created invoice back to the income record
+      if (result?.invoiceId && invoiceSourceRow?.id) {
+        const incomePayload = {
+          date: invoiceSourceRow.date,
+          amount: invoiceSourceRow.amount,
+          clientId: invoiceSourceRow.clientId || '',
+          description: invoiceSourceRow.desc || '',
+          paymentMethod: invoiceSourceRow.paymentMethod || 'Bank Transfer',
+          invoiceId: result.invoiceId,
+          receiptUrl: invoiceSourceRow.receiptUrl || '',
+          category: invoiceSourceRow.category || '',
+        };
+        await updateIncome(invoiceSourceRow.id, incomePayload);
+      }
+
+      setInvoiceModalOpen(false);
+      setInvoiceSourceRow(null);
+      await loadData();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to create invoice');
+    } finally {
+      setCreatingInvoice(false);
     }
   };
 
@@ -222,6 +350,14 @@ export default function IncomePage() {
                   </td>
                   <td className="p-4">
                     <div className="flex items-center justify-end gap-2">
+                      {/* Create Invoice button */}
+                      <button
+                        onClick={() => openInvoiceModal(row)}
+                        title="Create Invoice"
+                        className="p-2 hover:bg-brand-400/10 rounded-xl transition-colors text-gray-400 hover:text-brand-400"
+                      >
+                        <FilePlus className="w-4 h-4" />
+                      </button>
                       {row.receiptUrl && (
                         <button onClick={() => setViewingReceipt(row)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-blue-400 hover:text-blue-300">
                           <Eye className="w-4 h-4" />
@@ -245,7 +381,7 @@ export default function IncomePage() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Record Income Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
@@ -331,6 +467,216 @@ export default function IncomePage() {
               <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-full font-medium transition-colors disabled:opacity-50">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {saving ? "Saving..." : (editingId ? "Update Income" : "Save Income")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Invoice Modal */}
+      {invoiceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-brand-600/20">
+                  <FilePlus className="w-5 h-5 text-brand-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold">Create Invoice</h2>
+                </div>
+              </div>
+              <button onClick={() => setInvoiceModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+              {/* Client Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Client Name</label>
+                  <input
+                    type="text"
+                    placeholder="Client name"
+                    value={invoiceFormData.clientName}
+                    onChange={e => setInvoiceFormData({ ...invoiceFormData, clientName: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Client Email <span className="text-red-400">*</span></label>
+                  <input
+                    type="email"
+                    placeholder="client@email.com"
+                    value={invoiceFormData.userEmail}
+                    onChange={e => setInvoiceFormData({ ...invoiceFormData, userEmail: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Project / Service Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Website Redesign"
+                    value={invoiceFormData.projectName}
+                    onChange={e => setInvoiceFormData({ ...invoiceFormData, projectName: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Date</label>
+                  <input
+                    type="date"
+                    value={invoiceFormData.date}
+                    onChange={e => setInvoiceFormData({ ...invoiceFormData, date: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Line Items */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Line Items</label>
+                  <button
+                    onClick={addLineItem}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-brand-600/20 hover:bg-brand-600/30 text-brand-400 rounded-lg transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Item
+                  </button>
+                </div>
+
+                {/* Column Headers */}
+                <div className="grid grid-cols-[1fr_80px_110px_80px] gap-2 px-1">
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Name / Description</span>
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold text-center">Qty</span>
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold text-right">Rate (LKR)</span>
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold text-right">Total</span>
+                </div>
+
+                <div className="space-y-2">
+                  {lineItems.map((item, index) => (
+                    <div key={index} className="grid grid-cols-[1fr_80px_110px_80px] gap-2 items-center">
+                      <input
+                        type="text"
+                        placeholder="Item name"
+                        value={item.name}
+                        onChange={e => updateLineItem(index, 'name', e.target.value)}
+                        className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 outline-none focus:border-brand-500 transition-colors text-sm"
+                      />
+                      <input
+                        type="number"
+                        min={1}
+                        value={item.qty}
+                        onChange={e => updateLineItem(index, 'qty', parseInt(e.target.value) || 1)}
+                        className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 outline-none focus:border-brand-500 transition-colors text-sm text-center"
+                      />
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        placeholder="0.00"
+                        value={item.rate}
+                        onChange={e => updateLineItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                        className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 outline-none focus:border-brand-500 transition-colors text-sm text-right"
+                      />
+                      <div className="flex items-center justify-end gap-1">
+                        <span className="text-sm font-medium text-green-400 text-right flex-1">
+                          {formatLKR(item.qty * item.rate)}
+                        </span>
+                        {lineItems.length > 1 && (
+                          <button
+                            onClick={() => removeLineItem(index)}
+                            className="p-1 hover:bg-red-400/10 rounded-lg transition-colors text-gray-600 hover:text-red-400"
+                          >
+                            <Trash className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Totals & Adjustments */}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Discount (LKR)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      placeholder="0.00"
+                      value={invoiceFormData.discount}
+                      onChange={e => setInvoiceFormData({ ...invoiceFormData, discount: parseFloat(e.target.value) || 0 })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 outline-none focus:border-brand-500 transition-colors text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Advance Paid (LKR)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      placeholder="0.00"
+                      value={invoiceFormData.advance}
+                      onChange={e => setInvoiceFormData({ ...invoiceFormData, advance: parseFloat(e.target.value) || 0 })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 outline-none focus:border-brand-500 transition-colors text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="border-t border-white/10 pt-3 space-y-1.5 text-sm">
+                  <div className="flex justify-between text-gray-400">
+                    <span>Subtotal</span>
+                    <span>{formatLKR(lineItemsSubtotal)}</span>
+                  </div>
+                  {invoiceFormData.discount > 0 && (
+                    <div className="flex justify-between text-gray-400">
+                      <span>Discount</span>
+                      <span className="text-red-400">- {formatLKR(invoiceFormData.discount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-gray-400">
+                    <span>Total</span>
+                    <span className="text-white font-semibold">{formatLKR(invoiceTotal)}</span>
+                  </div>
+                  {invoiceFormData.advance > 0 && (
+                    <div className="flex justify-between text-gray-400">
+                      <span>Advance Paid</span>
+                      <span className="text-blue-400">- {formatLKR(invoiceFormData.advance)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-base pt-1 border-t border-white/10">
+                    <span>Total Due</span>
+                    <span className="text-green-400">{formatLKR(invoiceDue)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-white/5">
+              <button
+                onClick={() => setInvoiceModalOpen(false)}
+                className="px-6 py-2.5 rounded-full font-medium hover:bg-white/10 transition-colors"
+                disabled={creatingInvoice}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateInvoice}
+                disabled={creatingInvoice}
+                className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-full font-medium transition-colors disabled:opacity-50"
+              >
+                {creatingInvoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <FilePlus className="w-4 h-4" />}
+                {creatingInvoice ? 'Creating...' : 'Create Invoice'}
               </button>
             </div>
           </div>
