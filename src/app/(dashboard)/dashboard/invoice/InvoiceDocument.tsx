@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 
 const formatDate = (dateString: string | Date) => {
   if (!dateString) return "";
@@ -47,11 +47,9 @@ const hexToRgb = (hex: string) => {
 function wrapText(text: string, font: any, size: number, maxWidth: number): string[] {
   const paragraphs = text.split("\n");
   const lines: string[] = [];
-
   for (const para of paragraphs) {
     const words = para.split(/\s+/);
     let currentLine = "";
-
     for (const word of words) {
       if (!word) continue;
       const testLine = currentLine ? `${currentLine} ${word}` : word;
@@ -59,45 +57,33 @@ function wrapText(text: string, font: any, size: number, maxWidth: number): stri
       if (width <= maxWidth) {
         currentLine = testLine;
       } else {
-        if (currentLine) {
-          lines.push(currentLine);
-        }
+        if (currentLine) lines.push(currentLine);
         currentLine = word;
       }
     }
-    if (currentLine) {
-      lines.push(currentLine);
-    }
+    if (currentLine) lines.push(currentLine);
   }
-
   return lines;
 }
 
 export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
   console.log("generateInvoicePDF input:", invoice);
   const pdfDoc = await PDFDocument.create();
-  
+
   // A4 size: 595.276 x 841.89 points
   const page = pdfDoc.addPage([595.276, 841.89]);
-  
+
   // Embed fonts
-  const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const helvetica     = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  // Fetch the background template image
+  // ── Background template ────────────────────────────────────────────────────
   try {
     const bgResponse = await fetch("/invoice.png");
-    if (!bgResponse.ok) {
-      throw new Error(`Failed to fetch /invoice.png: ${bgResponse.statusText}`);
-    }
+    if (!bgResponse.ok) throw new Error(`Failed to fetch /invoice.png: ${bgResponse.statusText}`);
     const bgBytes = await bgResponse.arrayBuffer();
     const bgImage = await pdfDoc.embedPng(bgBytes);
-    page.drawImage(bgImage, {
-      x: 0,
-      y: 0,
-      width: 595.276,
-      height: 841.89,
-    });
+    page.drawImage(bgImage, { x: 0, y: 0, width: 595.276, height: 841.89 });
   } catch (error) {
     console.error("Could not load invoice background image, proceeding without background:", error);
   }
@@ -113,21 +99,26 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
     advance,
     total,
     total_due,
-    items = []
+    payment_status,
+    items = [],
+    bank_acc_name,
+    bank_acc_number,
+    bank_acc_bank,
+    bank_acc_branch,
   } = invoice;
 
-  const width = 595.276;
-  const height = 841.89;
-  const scaleX = width / 2480;
-  const scaleY = height / 3508;
+  const width     = 595.276;
+  const height    = 841.89;
+  const scaleX    = width  / 2480;
+  const scaleY    = height / 3508;
   const scaleFont = scaleX;
 
-  const convert = (topPx: number, leftPx: number, fontPx: number = 37) => {
-    const x = leftPx * scaleX;
-    const y = height - (topPx * scaleY);
-    const size = fontPx * scaleFont;
-    return { x, y, size };
-  };
+  /** Convert pixel coords on the 2480×3508 template to PDF points */
+  const convert = (topPx: number, leftPx: number, fontPx = 37) => ({
+    x:    leftPx * scaleX,
+    y:    height - topPx * scaleY,
+    size: fontPx * scaleFont,
+  });
 
   const drawTextAligned = (
     text: string,
@@ -135,196 +126,152 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
     topPx: number,
     fontPx: number,
     font: any,
-    colorHexStr: string,
+    colorHex: string,
     align: "left" | "center" | "right" = "left",
     widthPx?: number
   ) => {
     if (!text) return;
     const { x, y, size } = convert(topPx, leftPx, fontPx);
-    const yAdjusted = y - size;
-    const color = hexToRgb(colorHexStr);
-
-    let finalX = x;
+    const yAdj  = y - size;
+    const color = hexToRgb(colorHex);
+    let finalX  = x;
     if (align !== "left" && widthPx !== undefined) {
-      const boxWidth = widthPx * scaleX;
-      const textWidth = font.widthOfTextAtSize(text, size);
-      if (align === "right") {
-        finalX = x + boxWidth - textWidth;
-      } else if (align === "center") {
-        finalX = x + (boxWidth - textWidth) / 2;
-      }
+      const boxW  = widthPx * scaleX;
+      const textW = font.widthOfTextAtSize(text, size);
+      finalX = align === "right" ? x + boxW - textW : x + (boxW - textW) / 2;
     }
-
-    page.drawText(text, {
-      x: finalX,
-      y: yAdjusted,
-      size,
-      font,
-      color,
-    });
+    page.drawText(text, { x: finalX, y: yAdj, size, font, color });
   };
 
-  // 1. Invoice Number
-  drawTextAligned(
-    invoice_id || "",
-    1942,
-    473,
-    40,
-    helveticaBold,
-    "#1a3a4a"
-  );
+  // ── 1. Invoice Number ────────────────────────────────────────────────────────
+  drawTextAligned(invoice_id || "", 1942, 473, 40, helveticaBold, "#1a3a4a");
 
-// Client Name + Billing Address
+  // ── 2. Client Name + Billing Address ────────────────────────────────────────
   if (client_name || billing_address) {
     const { x, y, size } = convert(940, 130, 45);
-    const color = hexToRgb("#1a3a4a");
+    const color       = hexToRgb("#1a3a4a");
     const lineSpacing = size * 1.35;
-    let currentY = y - size;
+    let   currentY    = y - size;
 
-    // Client name as the first line, bold/slightly distinct if you like
     if (client_name) {
-      page.drawText(client_name, {
-        x,
-        y: currentY,
-        size,
-        font: helveticaBold,
-        color,
-      });
+      page.drawText(client_name, { x, y: currentY, size, font: helveticaBold, color });
       currentY -= lineSpacing;
     }
-
-    // Billing address lines follow directly underneath
     if (billing_address) {
       const lines = wrapText(billing_address, helveticaBold, size, 470 * scaleX);
       for (const line of lines) {
-        page.drawText(line, {
-          x,
-          y: currentY,
-          size,
-          font: helveticaBold,
-          color,
-        });
+        page.drawText(line, { x, y: currentY, size, font: helveticaBold, color });
         currentY -= lineSpacing;
       }
     }
   }
 
-  // 3. Date
-  drawTextAligned(
-    formatDate(date),
-    930,
-    842,
-    46,
-    helvetica,
-    "#222222"
-  );
+  // ── 3. Date ──────────────────────────────────────────────────────────────────
+  drawTextAligned(formatDate(date), 930, 842, 46, helvetica, "#222222");
 
-  // 4. Total Due
+  // ── 4. Total Due ─────────────────────────────────────────────────────────────
   drawTextAligned(
     formatMoney(total_due || total, currency),
-    769,
-    955,
-    70,
-    helveticaBold,
-    "#1a3a4a"
+    769, 955, 70, helveticaBold, "#1a3a4a"
   );
 
-  // 5. Line Items
+  // ── 5. Line Items ────────────────────────────────────────────────────────────
   const rowTops = [1470, 1645, 1820, 1995];
   items.forEach((item: any, i: number) => {
     if (!item.description) return;
-    const rowTop = rowTops[i] || (1470 + i * 175);
+    const rowTop = rowTops[i] ?? (1470 + i * 175);
 
     // Description
     const { x, y, size } = convert(rowTop, 875, 37);
-    const color = hexToRgb("#222222");
-    const descLines = wrapText(item.description, helvetica, size, (1525 - 875 - 30) * scaleX);
-    let descY = y - size;
+    const color           = hexToRgb("#222222");
+    const descLines       = wrapText(item.description, helvetica, size, (1525 - 875 - 30) * scaleX);
+    let   descY           = y - size;
     const descLineSpacing = size * 1.35;
     descLines.forEach((line) => {
-      page.drawText(line, {
-        x,
-        y: descY,
-        size,
-        font: helvetica,
-        color,
-      });
+      page.drawText(line, { x, y: descY, size, font: helvetica, color });
       descY -= descLineSpacing;
     });
 
     // Price
-    const priceText = item.price ? `${invoice.currency === "LKR" ? "Rs." : invoice.currency} ${item.price}` : "-";
-    drawTextAligned(
-      priceText,
-      1525,
-      rowTop,
-      37,
-      helvetica,
-      "#222222",
-      "center",
-      439
-    );
+    const priceText = item.price
+      ? `${currency === "LKR" ? "Rs." : currency} ${item.price}`
+      : "-";
+    drawTextAligned(priceText, 1525, rowTop, 37, helvetica, "#222222", "center", 439);
 
     // Total
-    drawTextAligned(
-      formatMoney(item.total, currency),
-      1700,
-      rowTop,
-      37,
-      helvetica,
-      "#222222",
-      "right",
-      562
-    );
+    drawTextAligned(formatMoney(item.total, currency), 1700, rowTop, 37, helvetica, "#222222", "right", 562);
   });
 
-  // 6. Subtotal
-  drawTextAligned(
-    formatMoneySlash(subtotal, currency),
-    1640,
-    2225,
-    45,
-    helvetica,
-    "#222222",
-    "right",
-    649
-  );
+  // ── 6. Subtotal ───────────────────────────────────────────────────────────────
+  drawTextAligned(formatMoneySlash(subtotal, currency), 1640, 2225, 45, helvetica, "#222222", "right", 649);
 
-  // 7. Discount
-  drawTextAligned(
-    formatMoneySlash(discount, currency),
-    1640,
-    2300,
-    45,
-    helvetica,
-    "#222222",
-    "right",
-    649
-  );
+  // ── 7. Discount ───────────────────────────────────────────────────────────────
+  drawTextAligned(formatMoneySlash(discount, currency), 1640, 2300, 45, helvetica, "#222222", "right", 649);
 
-  // 8. Advance
-  drawTextAligned(
-    formatMoneySlash(advance, currency),
-    1640,
-    2390,
-    45,
-    helvetica,
-    "#222222",
-    "right",
-    649
-  );
+  // ── 8. Advance ────────────────────────────────────────────────────────────────
+  drawTextAligned(formatMoneySlash(advance, currency), 1640, 2390, 45, helvetica, "#222222", "right", 649);
 
-  // 9. Total
-  drawTextAligned(
-    formatMoney(total, currency),
-    1600,
-    2560,
-    60,
-    helveticaBold,
-    "#1a3a4a",
-    "right",
-    649
-  );
+  // ── 9. Total ──────────────────────────────────────────────────────────────────
+  drawTextAligned(formatMoney(total, currency), 1600, 2560, 60, helveticaBold, "#1a3a4a", "right", 649);
+
+  // ── 10. Bank Account Details ─────────────────────────────────────────────────
+  if (bank_acc_name || bank_acc_bank || bank_acc_number || bank_acc_branch) {
+    const { x, y, size } = convert(1750, 135, 45);
+    const color       = hexToRgb("#1a3a4a");
+    const lineSpacing = size * 1.35;
+    let   currentY    = y - size;
+
+    if (bank_acc_name) {
+      page.drawText(bank_acc_name, { x, y: currentY, size, font: helveticaBold, color });
+      currentY -= lineSpacing;
+    }
+    if (bank_acc_bank) {
+      const lines = wrapText(bank_acc_bank, helveticaBold, size, 640 * scaleX);
+      for (const line of lines) {
+        page.drawText(line, { x, y: currentY, size, font: helveticaBold, color });
+        currentY -= lineSpacing;
+      }
+    }
+    if (bank_acc_number) {
+      const lines = wrapText(bank_acc_number, helveticaBold, size, 640 * scaleX);
+      for (const line of lines) {
+        page.drawText(line, { x, y: currentY, size, font: helveticaBold, color });
+        currentY -= lineSpacing;
+      }
+    }
+    if (bank_acc_branch) {
+      const lines = wrapText(bank_acc_branch, helveticaBold, size, 640 * scaleX);
+      for (const line of lines) {
+        page.drawText(line, { x, y: currentY, size, font: helveticaBold, color });
+        currentY -= lineSpacing;
+      }
+    }
+  }
+
+  // ── 11. PAID Stamp ────────────────────────────────────────────────────────────
+  if (payment_status === "paid") {
+    try {
+      const stampResponse = await fetch("/paid-stamp.png");
+      if (!stampResponse.ok) throw new Error("Stamp not found");
+      const stampBytes = await stampResponse.arrayBuffer();
+      const stampImage = await pdfDoc.embedPng(stampBytes);
+
+      const stampSize = 155; 
+      const stampX    = width - stampSize - 38; 
+      const stampY    = 65;                    
+
+      page.drawImage(stampImage, {
+        x: stampX,
+        y: stampY,
+        width:  stampSize,
+        height: stampSize,
+        rotate:  degrees(-12), 
+        opacity: 0.82,        
+      });
+    } catch (err) {
+      console.error("Could not load paid stamp image:", err);
+    }
+  }
 
   return await pdfDoc.save();
 }

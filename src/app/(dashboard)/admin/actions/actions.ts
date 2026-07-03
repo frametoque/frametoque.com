@@ -250,7 +250,7 @@ export async function deleteInvoice(id: string) {
 }
 
 export async function getInvoiceByIdAdmin(invoiceId: string) {
-  // Join with admin_clients and users to get client name + billing address
+  // Join with admin_clients, users, and bank_accs to get client name + billing address + bank account
   const result = await sql`
     SELECT
       i.invoice_id,
@@ -266,11 +266,17 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
       i.total_due,
       i.work_status,
       i.payment_status,
+      i.bank_account_id,
       COALESCE(u.full_name, ac.name, i.user_email) as client_name,
-      COALESCE(ac.address, u.address) as billing_address
+      COALESCE(ac.address, u.address) as billing_address,
+      ba.name as bank_acc_name,
+      ba.number as bank_acc_number,
+      ba.bank as bank_acc_bank,
+      ba.branch as bank_acc_branch
     FROM invoices i
     LEFT JOIN admin_clients ac ON LOWER(i.user_email) = LOWER(ac.email)
     LEFT JOIN users u ON LOWER(i.user_email) = LOWER(u.email)
+    LEFT JOIN bank_accs ba ON i.bank_account_id = ba.id
     WHERE i.invoice_id = ${invoiceId}
   `;
 
@@ -465,12 +471,13 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
   INSERT INTO invoices (
     invoice_id, user_email, project_name, date, 
     subtotal, discount, total, advance, total_due, 
-    work_status, payment_status, currency, category
+    work_status, payment_status, currency, category, bank_account_id
   ) VALUES (
     ${invoiceId}, ${invoiceData.userEmail},
     ${invoiceData.projectName}, ${invoiceData.date},
     ${invoiceData.subtotal}, ${invoiceData.discount}, ${invoiceData.total}, ${invoiceData.advance}, ${invoiceData.totalDue},
-    ${invoiceData.workStatus}, ${invoiceData.paymentStatus}, ${invoiceData.currency}, ${invoiceData.category || null}
+    ${invoiceData.workStatus}, ${invoiceData.paymentStatus}, ${invoiceData.currency}, ${invoiceData.category || null},
+    ${invoiceData.bankAccountId || null}
   )
 `;
 
@@ -509,7 +516,8 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
     work_status = ${invoiceData.workStatus},
     payment_status = ${invoiceData.paymentStatus},
     currency = ${invoiceData.currency},
-    category = ${invoiceData.category || null}
+    category = ${invoiceData.category || null},
+    bank_account_id = ${invoiceData.bankAccountId || null}
   WHERE invoice_id = ${invoiceId}
 `;
 
@@ -994,4 +1002,20 @@ export async function deleteProject(id: number) {
     console.error("Failed to delete project:", e);
     throw new Error("Failed to delete project");
   }
+}
+
+// -- BANK ACCOUNTS --
+export async function getBankAccounts() {
+  const rows = await sql`
+    SELECT id, name, number, bank, branch
+    FROM bank_accs
+    ORDER BY id ASC
+  `;
+  return rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    number: r.number,
+    bank: r.bank,
+    branch: r.branch,
+  }));
 }

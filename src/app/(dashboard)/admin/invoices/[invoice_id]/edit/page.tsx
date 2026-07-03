@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Trash2, ArrowLeft, Send, Save, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { updateInvoice, getInvoiceByIdAdmin, getClients, createClient } from "../../../actions/actions";
+import { updateInvoice, getInvoiceByIdAdmin, getClients, createClient, getBankAccounts } from "../../../actions/actions";
 import CategoryPicker from "../../../components/CategoryPicker";
 
 const ALL_CATEGORIES = ["Web dev", "Graphic design", "Video editing", "Photography", "Videography", "Other"];
@@ -24,6 +24,7 @@ export default function EditInvoicePage() {
   const [clientsLoading, setClientsLoading] = useState(true);
   const [showNewClientForm, setShowNewClientForm] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["Web dev"]);
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [newClientData, setNewClientData] = useState({
     name: "", email: "", company: "", phone: "", address: ""
   });
@@ -43,7 +44,8 @@ export default function EditInvoicePage() {
     discount: 0,
     advance: 0,
     workStatus: "pending",
-    paymentStatus: "unpaid"
+    paymentStatus: "unpaid",
+    bankAccountId: "",
   });
 
   const [lineItems, setLineItems] = useState([
@@ -54,14 +56,16 @@ export default function EditInvoicePage() {
     if (!invoice_id) return;
     const fetchInvoice = async () => {
       try {
-        const [data, allClients] = await Promise.all([
+        const [data, allClients, allBankAccounts] = await Promise.all([
           getInvoiceByIdAdmin(invoice_id as string),
-          getClients()
+          getClients(),
+          getBankAccounts(),
         ]);
 
         if (!data) throw new Error("Invoice not found");
 
         setClients(allClients);
+        setBankAccounts(allBankAccounts);
         setClientsLoading(false);
 
         let formattedDate = "";
@@ -86,7 +90,8 @@ export default function EditInvoicePage() {
           discount: parseFloat(data.discount) || 0,
           advance: parseFloat(data.advance) || 0,
           workStatus: data.work_status || "pending",
-          paymentStatus: data.payment_status || "unpaid"
+          paymentStatus: data.payment_status || "unpaid",
+          bankAccountId: data.bank_account_id ? String(data.bank_account_id) : "",
         });
 
         // Seed categories from stored value
@@ -355,6 +360,26 @@ export default function EditInvoicePage() {
                   <option value="paid" className="bg-black">Fully Paid</option>
                 </select>
               </div>
+            </div>
+
+            {/* Payment Bank Account — PDF only */}
+            <div className="space-y-1">
+              <label className="text-sm text-gray-400">
+                Payment Bank Account
+              </label>
+              <select
+                name="bankAccountId"
+                value={formData.bankAccountId}
+                onChange={handleFormChange}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none"
+              >
+                <option value="" className="bg-black">— No bank account —</option>
+                {bankAccounts.map(acc => (
+                  <option key={acc.id} value={String(acc.id)} className="bg-black">
+                    {acc.name} · {acc.bank} · {acc.number}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2, Eye, FilePlus, Trash } from "lucide-react";
 import Link from "next/link";
-import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice } from "../actions/actions";
+import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice, getBankAccounts } from "../actions/actions";
 import CategoryPicker from "../components/CategoryPicker";
 
 const ALL_CATEGORIES = ["Web dev", "Graphic design", "Video editing", "Photography", "Videography", "Other"];
@@ -40,6 +40,7 @@ export default function IncomePage() {
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
   const [clients, setClients] = useState<any[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([ALL_CATEGORIES[0]]);
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
 
   const [newClientName, setNewClientName] = useState("");
   const [newClientEmail, setNewClientEmail] = useState("");
@@ -69,14 +70,16 @@ export default function IncomePage() {
     currency: 'LKR',
     discount: 0,
     advance: 0,
+    bankAccountId: '',
   });
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [res, cls] = await Promise.all([getIncomes(dateRange), getClients()]);
+      const [res, cls, accs] = await Promise.all([getIncomes(dateRange), getClients(), getBankAccounts()]);
       setData(res);
       setClients(cls);
+      setBankAccounts(accs);
     } catch (e) {
       console.error("Failed to load incomes", e);
     } finally {
@@ -165,6 +168,7 @@ export default function IncomePage() {
       currency: 'LKR',
       discount: 0,
       advance: 0,
+      bankAccountId: '',
     });
 
     // Pre-populate a single line item from the income row
@@ -219,6 +223,7 @@ export default function IncomePage() {
         paymentStatus: 'paid',
         currency: invoiceFormData.currency,
         category: invoiceSourceRow?.category || null,
+        bankAccountId: invoiceFormData.bankAccountId || null,
       };
 
       const mappedLineItems = lineItems
@@ -659,6 +664,27 @@ export default function IncomePage() {
                   </div>
                 </div>
               </div>
+
+              {/* Payment Bank Account — PDF only */}
+              {bankAccounts.length > 0 && (
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-400 uppercase tracking-wider font-semibold">
+                    Payment Bank Account
+                  </label>
+                  <select
+                    value={invoiceFormData.bankAccountId}
+                    onChange={e => setInvoiceFormData({ ...invoiceFormData, bankAccountId: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none text-sm"
+                  >
+                    <option value="" className="bg-black">— No bank account —</option>
+                    {bankAccounts.map(acc => (
+                      <option key={acc.id} value={String(acc.id)} className="bg-black">
+                        {acc.name} · {acc.bank} · {acc.number}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Footer */}
