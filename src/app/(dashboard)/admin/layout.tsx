@@ -100,12 +100,12 @@ export default function DashboardLayout({ children }) {
       { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
       { name: "Income", href: "/admin/income", icon: Wallet },
       { name: "Expenses", href: "/admin/expenses", icon: Receipt },
-      { name: "Reports", href: "/admin/reports", icon: BarChart3 },
       { name: "Projects", href: "/admin/projects", icon: FolderOpenDot },
       { name: "Invoices", href: "/admin/invoices", icon: FileText },
       { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
       { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
       { name: "Clients", href: "/admin/clients", icon: Users },
+      { name: "Reports", href: "/admin/reports", icon: BarChart3 },
       { name: "Web Analytics", href: "/admin/analytics", icon: ChartLine },
     ];
 

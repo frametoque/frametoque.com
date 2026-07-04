@@ -39,7 +39,6 @@ export async function POST(request) {
         SET
           email      = ${email},
           full_name  = ${fullName || ''},
-          name       = COALESCE(NULLIF(name, ''), ${fullName || ''}),
           phone      = ${phone    || null},
           company    = ${company  || null},
           website    = ${website  || null},
@@ -49,7 +48,7 @@ export async function POST(request) {
         RETURNING
           clerk_id,
           email,
-          COALESCE(full_name, name) as full_name,
+          full_name,
           phone,
           company,
           website,
@@ -69,7 +68,6 @@ export async function POST(request) {
           SET
             clerk_id   = ${clerkId},
             full_name  = COALESCE(NULLIF(full_name, ''), ${fullName || ''}),
-            name       = COALESCE(NULLIF(name, ''), ${fullName || ''}),
             phone      = COALESCE(phone,    ${phone   || null}),
             company    = COALESCE(company,  ${company || null}),
             website    = COALESCE(website,  ${website || null}),
@@ -79,7 +77,7 @@ export async function POST(request) {
           RETURNING
             clerk_id,
             email,
-            COALESCE(full_name, name) as full_name,
+            full_name,
             phone,
             company,
             website,
@@ -90,7 +88,7 @@ export async function POST(request) {
         const clientId = 'C-' + Date.now();
         result = await sql`
           INSERT INTO admin_clients (
-            id, clerk_id, email, name, full_name,
+            id, clerk_id, email, full_name,
             phone, company, website, address,
             active, created_at, updated_at
           ) VALUES (
@@ -98,7 +96,6 @@ export async function POST(request) {
             ${clerkId},
             ${email},
             ${fullName || email},
-            ${fullName || ''},
             ${phone   || null},
             ${company || null},
             ${website || null},
@@ -110,7 +107,7 @@ export async function POST(request) {
           RETURNING
             clerk_id,
             email,
-            COALESCE(full_name, name) as full_name,
+            full_name,
             phone,
             company,
             website,

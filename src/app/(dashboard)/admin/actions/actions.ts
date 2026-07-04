@@ -103,7 +103,7 @@ export async function getIncomes(range = 'lifetime') {
   const statsYtd = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('year', date) = date_trunc('year', current_date)`;
 
   const rows = await sql`
-    SELECT i.id, i.date, i.amount, c.name as client, i.client_id as "clientId", i.description as desc, i.category, i.invoice_id as invoice, i.receipt_url as "receiptUrl"
+    SELECT i.id, i.date, i.amount, c.full_name as client, i.client_id as "clientId", i.description as desc, i.category, i.invoice_id as invoice, i.receipt_url as "receiptUrl"
     FROM admin_incomes i
     LEFT JOIN admin_clients c ON i.client_id = c.id
     WHERE i.date >= ${cutoff}
@@ -132,7 +132,7 @@ export async function createIncome(data: any) {
 export async function createClient(data: { name: string; email: string; company?: string | null; phone?: string | null; address?: string | null }): Promise<string> {
   const clientId = 'C-' + Date.now();
   await sql`
-    INSERT INTO admin_clients (id, name, email, company, phone, address, active)
+    INSERT INTO admin_clients (id, full_name, email, company, phone, address, active)
     VALUES (${clientId}, ${data.name}, ${data.email}, ${data.company || null}, ${data.phone || null}, ${data.address || null}, true)
   `;
   return clientId;
@@ -150,7 +150,7 @@ export async function updateClient(clientId: string, data: { name?: string; emai
   await sql`
     UPDATE admin_clients
     SET 
-      name    = COALESCE(${data.name  || null}, name),
+      full_name = COALESCE(${data.name  || null}, full_name),
       email   = ${newEmail},
       company = ${data.company ?? null},
       phone   = ${data.phone   ?? null},
@@ -286,7 +286,7 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
       i.work_status,
       i.payment_status,
       i.bank_account_id,
-      COALESCE(ac.full_name, ac.name, i.user_email) as client_name,
+      COALESCE(ac.full_name, i.user_email) as client_name,
       ac.address as billing_address,
       ba.name as bank_acc_name,
       ba.number as bank_acc_number,
@@ -316,7 +316,7 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
 export async function getClients() {
   const rows = await sql`
     SELECT c.id,
-           COALESCE(c.full_name, c.name) as name,
+           c.full_name as name,
            c.email,
            c.active,
            c.company,
@@ -331,7 +331,7 @@ export async function getClients() {
     LEFT JOIN admin_incomes inc ON c.id = inc.client_id
     LEFT JOIN invoices i        ON LOWER(c.email) = LOWER(i.user_email)
     LEFT JOIN projects p        ON LOWER(c.email) = LOWER(p.user_email) OR c.id = p.client_id
-    GROUP BY c.id, c.full_name, c.name, c.email, c.active, c.company, c.phone, c.address, c.clerk_id
+    GROUP BY c.id, c.full_name, c.email, c.active, c.company, c.phone, c.address, c.clerk_id
     ORDER BY c.id DESC
   `;
 
@@ -373,7 +373,7 @@ export async function getClientById(clientId: string) {
 
   const rows = await sql`
     SELECT c.id,
-           COALESCE(c.full_name, c.name) as name,
+           c.full_name as name,
            c.email,
            c.active,
            c.company,
@@ -465,7 +465,7 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
   if (existingClient.length === 0 && invoiceData.userEmail) {
     const clientId = 'C-' + Date.now();
     await sql`
-      INSERT INTO admin_clients (id, name, company, email, phone, address, active)
+      INSERT INTO admin_clients (id, full_name, company, email, phone, address, active)
       VALUES (
         ${clientId},
         ${invoiceData.clientName || invoiceData.userEmail.split('@')[0]},
@@ -481,7 +481,7 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
     await sql`
       UPDATE admin_clients
       SET 
-        name = COALESCE(${invoiceData.clientName || null}, name),
+        full_name = COALESCE(${invoiceData.clientName || null}, full_name),
         address = COALESCE(${invoiceData.billingAddress || null}, address)
       WHERE LOWER(email) = LOWER(${invoiceData.userEmail})
     `;
@@ -611,7 +611,7 @@ export async function getQuotations(range = 'lifetime') {
   
   const rows = await sql`
     SELECT q.id, q.date, q.amount, q.advance, q.total_due as "totalDue",
-           c.name as client, q.client_id as "clientId", q.description as desc, q.category,
+           c.full_name as client, q.client_id as "clientId", q.description as desc, q.category,
            q.invoice_id as invoice, q.receipt_url as "receiptUrl", q.status, q.project_confirmed as "projectConfirmed"
     FROM admin_quotations q
     LEFT JOIN admin_clients c ON q.client_id = c.id
@@ -737,7 +737,7 @@ export async function deleteQuotation(id: number) {
  
 export async function confirmQuotation(quotationId: number, quotationData: any, projectName: string) {
   const quotation = await sql`
-    SELECT q.*, c.id as client_id_val, c.email, COALESCE(c.full_name, c.name) as client_name, c.company, c.address as billing_address
+    SELECT q.*, c.id as client_id_val, c.email, c.full_name as client_name, c.company, c.address as billing_address
     FROM admin_quotations q
     LEFT JOIN admin_clients c ON q.client_id = c.id
     WHERE q.id = ${quotationId}
@@ -765,7 +765,7 @@ export async function confirmQuotation(quotationId: number, quotationData: any, 
   if (existingClient.length === 0) {
     const clientId = 'C-' + Date.now();
     await sql`
-      INSERT INTO admin_clients (id, name, company, email, phone, address, active)
+      INSERT INTO admin_clients (id, full_name, company, email, phone, address, active)
       VALUES (
         ${clientId},
         ${q.client_name || userEmail.split('@')[0]},
@@ -861,7 +861,7 @@ export async function getQuotationById(quotationId: string) {
   try {
     const quotation = await sql`
       SELECT q.*,
-             COALESCE(c.full_name, c.name) as client_name, c.email, c.company, c.phone,
+             c.full_name as client_name, c.email, c.company, c.phone,
              c.address as billing_address
       FROM admin_quotations q
       LEFT JOIN admin_clients c ON q.client_id = c.id
@@ -919,7 +919,7 @@ export async function getQuotationById(quotationId: string) {
 export async function getProjects() {
   try {
     const rows = await sql`
-      SELECT p.*, c.name as client_name, c.company as client_company
+      SELECT p.*, c.full_name as client_name, c.company as client_company
       FROM projects p
       LEFT JOIN admin_clients c ON p.client_id = c.id
       ORDER BY p.updated_at DESC, p.id DESC
@@ -934,7 +934,7 @@ export async function getProjects() {
 export async function getProjectById(id: number) {
   try {
     const rows = await sql`
-      SELECT p.*, c.name as client_name, c.company as client_company
+      SELECT p.*, c.full_name as client_name, c.company as client_company
       FROM projects p
       LEFT JOIN admin_clients c ON p.client_id = c.id
       WHERE p.id = ${id}

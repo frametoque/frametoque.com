@@ -362,6 +362,8 @@ export default function CustomLogin() {
               </div>
             )}
 
+            <div id="clerk-captcha" />
+
             {step === "email" && (
               <>
                 <form onSubmit={handleEmailSubmit} className="space-y-3 mb-5">
@@ -386,7 +388,6 @@ export default function CustomLogin() {
                   >
                     {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Checking…</> : "Continue"}
                   </button>
-                  <div id="clerk-captcha" />
                 </form>
 
                 <div className="flex items-center gap-3 my-5">
@@ -465,7 +466,6 @@ export default function CustomLogin() {
                 >
                   {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</> : "Sign in"}
                 </button>
-                <div id="clerk-captcha" />
               </form>
             )}
 
@@ -523,7 +523,6 @@ export default function CustomLogin() {
                 >
                   {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Creating account…</> : "Create account"}
                 </button>
-                <div id="clerk-captcha" />
               </form>
             )}
 

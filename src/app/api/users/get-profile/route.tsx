@@ -20,7 +20,7 @@ export async function GET(request) {
       SELECT
         clerk_id,
         email,
-        COALESCE(full_name, name) as full_name,
+        full_name,
         phone,
         company,
         website,
