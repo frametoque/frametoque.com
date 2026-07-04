@@ -323,15 +323,11 @@ export async function getClients() {
            c.phone,
            c.address,
            c.clerk_id,
-           COUNT(DISTINCT i.invoice_id)  as invoices,
-           COALESCE(SUM(inc.amount), 0)  as revenue,
-           COUNT(DISTINCT inc.id)        as income_count,
-           COUNT(DISTINCT p.id)          as project_count
+           (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email)) as invoices,
+           COALESCE((SELECT SUM(amount) FROM admin_incomes inc WHERE inc.client_id = c.id), 0) as revenue,
+           (SELECT COUNT(*) FROM admin_incomes inc WHERE inc.client_id = c.id) as income_count,
+           (SELECT COUNT(*) FROM projects p WHERE LOWER(p.user_email) = LOWER(c.email) OR p.client_id = c.id) as project_count
     FROM admin_clients c
-    LEFT JOIN admin_incomes inc ON c.id = inc.client_id
-    LEFT JOIN invoices i        ON LOWER(c.email) = LOWER(i.user_email)
-    LEFT JOIN projects p        ON LOWER(c.email) = LOWER(p.user_email) OR c.id = p.client_id
-    GROUP BY c.id, c.full_name, c.email, c.active, c.company, c.phone, c.address, c.clerk_id
     ORDER BY c.id DESC
   `;
 
