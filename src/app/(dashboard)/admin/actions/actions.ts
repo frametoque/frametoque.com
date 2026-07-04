@@ -138,16 +138,35 @@ export async function createClient(data: { name: string; email: string; company?
   return clientId;
 }
 
-export async function updateClient(clientId: string, data: { name?: string; company?: string | null; phone?: string | null; address?: string | null }) {
+export async function updateClient(clientId: string, data: { name?: string; email?: string; company?: string | null; phone?: string | null; address?: string | null }) {
+  // Fetch current email first so we can cascade if it changes
+  const existing = await sql`SELECT email FROM admin_clients WHERE id = ${clientId}`;
+  if (existing.length === 0) throw new Error("Client not found");
+  const oldEmail = existing[0].email as string;
+  const newEmail = data.email?.trim() || oldEmail;
+  const emailChanged = newEmail.toLowerCase() !== oldEmail.toLowerCase();
+
+  // Update admin_clients row
   await sql`
     UPDATE admin_clients
     SET 
-      name = COALESCE(${data.name || null}, name),
-      company = ${data.company || null},
-      phone = ${data.phone || null},
-      address = ${data.address || null}
+      name    = COALESCE(${data.name  || null}, name),
+      email   = ${newEmail},
+      company = ${data.company ?? null},
+      phone   = ${data.phone   ?? null},
+      address = ${data.address ?? null}
     WHERE id = ${clientId}
   `;
+
+  // Cascade email change to every table that stores user_email
+  if (emailChanged) {
+    await sql`UPDATE invoices  SET user_email = ${newEmail} WHERE LOWER(user_email) = LOWER(${oldEmail})`;
+    await sql`UPDATE projects  SET user_email = ${newEmail} WHERE LOWER(user_email) = LOWER(${oldEmail})`;
+  }
+}
+
+export async function deleteClient(clientId: string) {
+  await sql`DELETE FROM admin_clients WHERE id = ${clientId}`;
 }
 
 export async function updateIncome(id: number, data: any) {
@@ -250,7 +269,7 @@ export async function deleteInvoice(id: string) {
 }
 
 export async function getInvoiceByIdAdmin(invoiceId: string) {
-  // Join with admin_clients, users, and bank_accs to get client name + billing address + bank account
+  // Join with admin_clients and bank_accs to get client name + billing address + bank account
   const result = await sql`
     SELECT
       i.invoice_id,
@@ -267,15 +286,14 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
       i.work_status,
       i.payment_status,
       i.bank_account_id,
-      COALESCE(u.full_name, ac.name, i.user_email) as client_name,
-      COALESCE(ac.address, u.address) as billing_address,
+      COALESCE(ac.full_name, ac.name, i.user_email) as client_name,
+      ac.address as billing_address,
       ba.name as bank_acc_name,
       ba.number as bank_acc_number,
       ba.bank as bank_acc_bank,
       ba.branch as bank_acc_branch
     FROM invoices i
     LEFT JOIN admin_clients ac ON LOWER(i.user_email) = LOWER(ac.email)
-    LEFT JOIN users u ON LOWER(i.user_email) = LOWER(u.email)
     LEFT JOIN bank_accs ba ON i.bank_account_id = ba.id
     WHERE i.invoice_id = ${invoiceId}
   `;
@@ -297,23 +315,24 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
 // -- CLIENTS --
 export async function getClients() {
   const rows = await sql`
-    SELECT c.id, 
-           COALESCE(u.full_name, c.name) as name, 
-           c.email, 
+    SELECT c.id,
+           COALESCE(c.full_name, c.name) as name,
+           c.email,
            c.active,
-           COALESCE(u.company, c.company) as company,
-           COALESCE(u.phone, c.phone) as phone,
-           COALESCE(c.address, u.address) as address,
-           u.clerk_id,
-           COUNT(DISTINCT i.invoice_id) as invoices, 
-           COALESCE(SUM(inc.amount), 0) as revenue
+           c.company,
+           c.phone,
+           c.address,
+           c.clerk_id,
+           COUNT(DISTINCT i.invoice_id)  as invoices,
+           COALESCE(SUM(inc.amount), 0)  as revenue,
+           COUNT(DISTINCT inc.id)        as income_count,
+           COUNT(DISTINCT p.id)          as project_count
     FROM admin_clients c
-    LEFT JOIN users u ON c.email = u.email
     LEFT JOIN admin_incomes inc ON c.id = inc.client_id
-    LEFT JOIN invoices i ON c.email = i.user_email
-    GROUP BY c.id, c.name, c.email, c.active, c.company, c.phone, c.address, u.full_name, u.company, u.phone, u.address, u.clerk_id
-    HAVING COALESCE(SUM(inc.amount), 0) >= 0
-    ORDER BY revenue DESC
+    LEFT JOIN invoices i        ON LOWER(c.email) = LOWER(i.user_email)
+    LEFT JOIN projects p        ON LOWER(c.email) = LOWER(p.user_email) OR c.id = p.client_id
+    GROUP BY c.id, c.full_name, c.name, c.email, c.active, c.company, c.phone, c.address, c.clerk_id
+    ORDER BY c.id DESC
   `;
 
   const clerk = await clerkClient();
@@ -339,28 +358,30 @@ export async function getClients() {
       address: r.address,
       imageUrl: imageUrl,
       invoices: parseInt(r.invoices),
-      revenue: parseFloat(r.revenue)
+      revenue: parseFloat(r.revenue),
+      incomeCount: parseInt(r.income_count),
+      projectCount: parseInt(r.project_count),
     };
   }));
 
   return clients;
 }
 
+
 export async function getClientById(clientId: string) {
   const clerk = await clerkClient();
 
   const rows = await sql`
-    SELECT c.id, 
-           COALESCE(u.full_name, c.name) as name, 
-           c.email, 
+    SELECT c.id,
+           COALESCE(c.full_name, c.name) as name,
+           c.email,
            c.active,
-           COALESCE(u.company, c.company) as company,
-           COALESCE(u.phone, c.phone) as phone,
-           COALESCE(c.address, u.address) as address,
-           u.clerk_id,
-           u.website
+           c.company,
+           c.phone,
+           c.address,
+           c.clerk_id,
+           c.website
     FROM admin_clients c
-    LEFT JOIN users u ON c.email = u.email
     WHERE c.id = ${clientId}
   `;
 
@@ -716,10 +737,9 @@ export async function deleteQuotation(id: number) {
  
 export async function confirmQuotation(quotationId: number, quotationData: any, projectName: string) {
   const quotation = await sql`
-    SELECT q.*, c.id as client_id_val, c.email, c.name as client_name, c.company, COALESCE(c.address, u.address) as billing_address
+    SELECT q.*, c.id as client_id_val, c.email, COALESCE(c.full_name, c.name) as client_name, c.company, c.address as billing_address
     FROM admin_quotations q
     LEFT JOIN admin_clients c ON q.client_id = c.id
-    LEFT JOIN users u ON LOWER(c.email) = LOWER(u.email)
     WHERE q.id = ${quotationId}
   `;
 
@@ -840,12 +860,11 @@ export async function confirmQuotation(quotationId: number, quotationData: any, 
 export async function getQuotationById(quotationId: string) {
   try {
     const quotation = await sql`
-      SELECT q.*, 
-             c.name as client_name, c.email, c.company, c.phone,
-             COALESCE(c.address, u.address) as billing_address
+      SELECT q.*,
+             COALESCE(c.full_name, c.name) as client_name, c.email, c.company, c.phone,
+             c.address as billing_address
       FROM admin_quotations q
       LEFT JOIN admin_clients c ON q.client_id = c.id
-      LEFT JOIN users u ON LOWER(c.email) = LOWER(u.email)
       WHERE q.id = ${parseInt(quotationId)}
     `;
  

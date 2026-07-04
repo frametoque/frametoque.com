@@ -15,22 +15,22 @@ export async function GET(request) {
       );
     }
 
-    // Fetch user from database
-    const users = await sql`
-      SELECT 
-        clerk_id, 
-        email, 
-        full_name, 
-        phone, 
-        company, 
-        website, 
+    // Fetch client profile from admin_clients using clerk_id
+    const rows = await sql`
+      SELECT
+        clerk_id,
+        email,
+        COALESCE(full_name, name) as full_name,
+        phone,
+        company,
+        website,
         address
-      FROM users 
+      FROM admin_clients
       WHERE clerk_id = ${clerkId}
       LIMIT 1
     `;
 
-    const user = users?.[0];
+    const user = rows?.[0];
 
     if (!user) {
       return NextResponse.json({
@@ -55,8 +55,8 @@ export async function GET(request) {
   } catch (error) {
     console.error('Get profile error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Failed to fetch profile'
       },
       { status: 500 }

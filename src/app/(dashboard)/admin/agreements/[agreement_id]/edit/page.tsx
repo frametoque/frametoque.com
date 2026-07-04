@@ -329,7 +329,7 @@ export default function EditAgreementPage() {
             
             <div className="space-y-1">
               <label className="text-sm text-gray-400">Project Title / Website Name</label>
-              <input type="text" name="title" value={formData.title} onChange={handleFormChange} placeholder="e.g. Acme Corp E-commerce Site"
+              <input type="text" name="title" value={formData.title} onChange={handleFormChange} placeholder="e.g. E-commerce Site"
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
             </div>
 

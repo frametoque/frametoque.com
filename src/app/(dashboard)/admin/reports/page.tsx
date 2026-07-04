@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown, DollarSign, Percent, Download, FileText, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Percent, Download, FileText, Calendar, Users } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { getReports } from "../actions/actions";
+import { getReports, getClients } from "../actions/actions";
 
 const formatLKR = (amount: number) => {
   return new Intl.NumberFormat('en-LK', {
@@ -14,6 +14,7 @@ const formatLKR = (amount: number) => {
 
 export default function ReportsPage() {
   const [data, setData] = useState<any>(null);
+  const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("lifetime");
 
@@ -21,8 +22,12 @@ export default function ReportsPage() {
     async function load() {
       setLoading(true);
       try {
-        const res = await getReports(dateRange);
+        const [res, cls] = await Promise.all([
+          getReports(dateRange),
+          getClients(),
+        ]);
         setData(res);
+        setClients(cls);
       } catch (e) {
         console.error("Failed to load reports", e);
       } finally {
@@ -43,12 +48,19 @@ export default function ReportsPage() {
     { label: "Profit Margin", value: `${data.profitMargin}%`, icon: Percent, color: "text-blue-400", bg: "bg-blue-400/10" },
   ];
 
+  // Top 5 clients by revenue for the chart
+  const topClientsChart = [...clients]
+    .filter((c) => c.revenue > 0)
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5)
+    .map((c) => ({ name: c.name, revenue: c.revenue }));
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-3xl font-bold">Financial Reports</h1>
-        <select 
-          value={dateRange} 
+        <select
+          value={dateRange}
           onChange={(e) => setDateRange(e.target.value)}
           className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium"
         >
@@ -59,7 +71,7 @@ export default function ReportsPage() {
           <option value="one month" className="bg-black">Last Month</option>
         </select>
       </div>
-      
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
@@ -84,10 +96,10 @@ export default function ReportsPage() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.incomeByService} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-                <XAxis type="number" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `LKR ${value/1000}k`} />
+                <XAxis type="number" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `LKR ${value / 1000}k`} />
                 <YAxis dataKey="name" type="category" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} width={80} />
-                <Tooltip 
-                  cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                <Tooltip
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                   contentStyle={{ backgroundColor: 'rgba(10,10,15,0.9)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px' }}
                   itemStyle={{ color: '#fff' }}
                   formatter={(value: any) => [formatLKR(value), 'Income']}
@@ -105,10 +117,10 @@ export default function ReportsPage() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.expensesBreakdown} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-                <XAxis type="number" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `LKR ${value/1000}k`} />
+                <XAxis type="number" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `LKR ${value / 1000}k`} />
                 <YAxis dataKey="name" type="category" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} width={80} />
-                <Tooltip 
-                  cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                <Tooltip
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                   contentStyle={{ backgroundColor: 'rgba(10,10,15,0.9)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px' }}
                   itemStyle={{ color: '#fff' }}
                   formatter={(value: any) => [formatLKR(value), 'Expense']}
@@ -119,6 +131,49 @@ export default function ReportsPage() {
           </div>
         </div>
       </div>
+
+      {/* Top Clients by Revenue Chart */}
+      {topClientsChart.length > 0 && (
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-brand-400/10 rounded-xl">
+              <Users className="w-5 h-5 text-brand-400" />
+            </div>
+            <h2 className="text-xl font-semibold">Top Clients by Revenue</h2>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={topClientsChart} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+                <XAxis
+                  type="number"
+                  stroke="#9ca3af"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `LKR ${value / 1000}k`}
+                />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  stroke="#9ca3af"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  width={100}
+                />
+                <Tooltip
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                  contentStyle={{ backgroundColor: 'rgba(10,10,15,0.9)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px' }}
+                  itemStyle={{ color: '#fff' }}
+                  formatter={(value: any) => [formatLKR(value), 'Revenue']}
+                />
+                <Bar dataKey="revenue" fill="#29B6F6" radius={[0, 4, 4, 0]} barSize={24} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       {/* Export Row */}
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex flex-wrap items-center justify-between gap-4">

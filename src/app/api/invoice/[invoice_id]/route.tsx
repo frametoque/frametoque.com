@@ -49,11 +49,10 @@ export async function GET(request, { params }) {
         i.work_status,
         i.payment_status,
         i.created_at,
-        COALESCE(u.full_name, ac.name, i.user_email) as client_name,
-        COALESCE(ac.address, u.address) as billing_address
+        COALESCE(ac.full_name, ac.name, i.user_email) as client_name,
+        ac.address as billing_address
       FROM public.invoices i
       LEFT JOIN public.admin_clients ac ON LOWER(i.user_email) = LOWER(ac.email)
-      LEFT JOIN public.users u ON LOWER(i.user_email) = LOWER(u.email)
       WHERE i.invoice_id = $1 AND LOWER(i.user_email) = LOWER($2)`,
       [invoice_id, userEmail]
     );

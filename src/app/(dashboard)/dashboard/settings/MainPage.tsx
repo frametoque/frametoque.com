@@ -25,6 +25,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const [copied, setCopied] = useState(false);
 
@@ -40,6 +41,19 @@ export default function SettingsPage() {
 
   const connectedAccounts = user?.externalAccounts || [];
 
+  // Helper: apply a fetched profile object onto formData
+  const applyProfile = (profile: any) => {
+    setFormData(prev => ({
+      ...prev,
+      name:    profile?.fullName  || user?.fullName || "",
+      email:   profile?.email     || user?.primaryEmailAddress?.emailAddress || "",
+      phone:   profile?.phone     || "",
+      company: profile?.company   || "",
+      website: profile?.website   || "",
+      address: profile?.address   || "",
+    }));
+  };
+
    // Load Clerk user + DB data
   useEffect(() => {
     if (!isLoaded) return;
@@ -52,57 +66,15 @@ export default function SettingsPage() {
           
           if (!res.ok) {
             console.error("Failed to fetch profile:", res.status);
-           
-            setFormData(prev => ({
-              ...prev,
-              name: user.fullName || "",
-              email: user.primaryEmailAddress?.emailAddress || "",
-              phone: "",
-              company: "",
-              website: "",
-              address: "",
-            }));
+            applyProfile(null);
             return;
           }
           
           const data = await res.json();
-          
-          if (data.success) {
-            setFormData(prev => ({
-              ...prev,
-              name: data.profile?.fullName 
-                ? data.profile.fullName 
-                : user.fullName || "",
-              email: data.profile?.email
-                ? data.profile.email
-                : user.primaryEmailAddress?.emailAddress || "",
-              phone: data.profile?.phone || "",
-              company: data.profile?.company || "",
-              website: data.profile?.website || "",
-              address: data.profile?.address || "",
-            }));
-          } else {
-            setFormData(prev => ({
-              ...prev,
-              name: user.fullName || "",
-              email: user.primaryEmailAddress?.emailAddress || "",
-              phone: "",
-              company: "",
-              website: "",
-              address: "",
-            }));
-          }
+          applyProfile(data.success ? data.profile : null);
         } catch (err) {
           console.error("Error fetching profile:", err);
-          setFormData(prev => ({
-            ...prev,
-            name: user.fullName || "",
-            email: user.primaryEmailAddress?.emailAddress || "",
-            phone: "",
-            company: "",
-            website: "",
-            address: "",
-          }));
+          applyProfile(null);
         } finally {
           setLoading(false);
         }
@@ -127,6 +99,7 @@ export default function SettingsPage() {
     }
 
     setSaving(true);
+    setSaveSuccess(false);
 
     try {
       const fullName = formData.name.trim();
@@ -157,8 +130,11 @@ export default function SettingsPage() {
 
       const data = await res.json();
       
-      if (res.ok) {
-        alert("Profile saved successfully!");
+      if (res.ok && data.success) {
+        // Apply the returned profile immediately — no page refresh needed
+        applyProfile(data.profile);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
       } else {
         console.error("API Error:", data);
         alert(`Error: ${data.error || "Failed to save profile"}`);
@@ -487,26 +463,42 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  {/* Save Button with improved positioning */}
+                  {/* Save Button */}
                   <div className="pt-4 border-t border-white/10">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                      <div className="text-sm text-gray-400">
-                        <p className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
-                          Updates are reflected immediately across all systems
-                        </p>
+                      <div className="text-sm">
+                        {saveSuccess ? (
+                          <p className="flex items-center gap-2 text-green-400">
+                            <Check className="w-4 h-4" />
+                            Profile saved successfully!
+                          </p>
+                        ) : (
+                          <p className="flex items-center gap-2 text-gray-400">
+                            <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+                            Updates are reflected immediately across all systems
+                          </p>
+                        )}
                       </div>
                       <button
                         type="submit"
-                        disabled={saving}
-                        className={`flex items-center gap-2 px-6 py-3 bg-white/10 text-white rounded-3xl font-semibold shadow-lg hover:shadow-white-500/25 transition-all duration-300 min-w-[140px] justify-center ${
-                          saving ? "opacity-70 cursor-not-allowed" : "hover:scale-[1.02] hover:shadow-xl"
+                        disabled={saving || saveSuccess}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-3xl font-semibold shadow-lg transition-all duration-300 min-w-[160px] justify-center ${
+                          saveSuccess
+                            ? "bg-green-500/20 border border-green-500/40 text-green-400 cursor-default"
+                            : saving
+                            ? "bg-white/10 text-white opacity-70 cursor-not-allowed"
+                            : "bg-white/10 text-white hover:scale-[1.02] hover:shadow-xl"
                         }`}
                       >
                         {saving ? (
                           <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white" />
                             Saving...
+                          </>
+                        ) : saveSuccess ? (
+                          <>
+                            <Check className="w-5 h-5" />
+                            Saved!
                           </>
                         ) : (
                           <>
@@ -518,6 +510,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </form>
+
 
                 {/* Connected Accounts */}
                 <div className="pt-6 border-t border-white/10">

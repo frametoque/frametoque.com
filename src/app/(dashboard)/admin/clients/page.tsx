@@ -1,157 +1,433 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, ChevronRight, Users } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, X, Loader2, ChevronRight, Users, Crown, Sparkles, Clock } from "lucide-react";
 import Link from "next/link";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { getClients } from "../actions/actions";
+import { getClients, createClient, updateClient, deleteClient } from "../actions/actions";
 
-const formatLKR = (amount: number) => {
-  return new Intl.NumberFormat('en-LK', {
-    style: 'currency',
-    currency: 'LKR',
-  }).format(amount || 0);
-};
+const formatLKR = (amount: number) =>
+  new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount || 0);
+
+const emptyForm = { name: '', email: '', company: '', phone: '', address: '' };
 
 export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await getClients();
-        setData(res);
-      } catch (e) {
-        console.error("Failed to load clients", e);
-      } finally {
-        setLoading(false);
-      }
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState(emptyForm);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const res = await getClients();
+      setData(res);
+    } catch (e) {
+      console.error("Failed to load clients", e);
+    } finally {
+      setLoading(false);
     }
-    load();
-  }, []);
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const openNew = () => {
+    setEditingId(null);
+    setFormData(emptyForm);
+    setIsModalOpen(true);
+  };
+
+  const openEdit = (client: any) => {
+    setEditingId(client.id);
+    setFormData({
+      name: client.name || '',
+      email: client.email || '',
+      company: client.company || '',
+      phone: client.phone || '',
+      address: client.address || '',
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!formData.name.trim()) { alert("Client name is required."); return; }
+    if (!formData.email.trim()) { alert("Client email is required."); return; }
+    setSaving(true);
+    try {
+      if (editingId) {
+        await updateClient(editingId, {
+          name: formData.name,
+          email: formData.email,
+          company: formData.company || null,
+          phone: formData.phone || null,
+          address: formData.address || null,
+        });
+      } else {
+        await createClient({
+          name: formData.name,
+          email: formData.email,
+          company: formData.company || null,
+          phone: formData.phone || null,
+          address: formData.address || null,
+        });
+      }
+      setIsModalOpen(false);
+      await loadData();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to save client.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (client: any) => {
+    if (!confirm(`Delete "${client.name}"? This cannot be undone.`)) return;
+    setDeletingId(client.id);
+    try {
+      await deleteClient(client.id);
+      await loadData();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to delete client.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-400 animate-pulse">Loading clients...</div>;
+    return (
+      <div className="flex items-center justify-center h-64 text-brand-400">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
   }
 
-  // Only show clients with revenue on this page; actions.ts is unchanged
-  const clientsWithRevenue = data.filter((client: any) => client.revenue > 0);
+  // ----- Derived stats -----
+  // Sort by revenue to find top client
+  const byRevenue = [...data].sort((a, b) => b.revenue - a.revenue);
+  const topClient = byRevenue[0] ?? null;
 
-  const filteredClients = clientsWithRevenue.filter((client: any) =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Most recent = first in list (getClients now orders by c.id DESC which encodes Date.now())
+  const recentClient = data[0] ?? null;
+
+  const stats = [
+    {
+      label: "Total Clients",
+      value: data.length.toString(),
+      sub: null,
+      icon: Users,
+      color: "text-brand-400",
+      bg: "bg-brand-400/10",
+    },
+    {
+      label: "Top by Revenue",
+      value: topClient ? topClient.name : "—",
+      sub: topClient ? formatLKR(topClient.revenue) : null,
+      icon: Crown,
+      color: "text-amber-400",
+      bg: "bg-amber-400/10",
+    },
+    {
+      label: "Highest Value",
+      value: topClient ? formatLKR(topClient.revenue) : "—",
+      sub: topClient ? topClient.name : null,
+      icon: Sparkles,
+      color: "text-green-400",
+      bg: "bg-green-400/10",
+    },
+    {
+      label: "Recent Client",
+      value: recentClient ? recentClient.name : "—",
+      sub: recentClient ? recentClient.email : null,
+      icon: Clock,
+      color: "text-blue-400",
+      bg: "bg-blue-400/10",
+    },
+  ];
+
+  const filteredClients = data.filter((client: any) =>
+    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.company || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const chartData = [...clientsWithRevenue]
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 5)
-    .map(c => ({
-      name: c.name,
-      revenue: c.revenue
-    }));
+  // A client is "linked" if it has any invoices, income, or projects
+  const isLinked = (c: any) =>
+    c.invoices > 0 || c.incomeCount > 0 || c.projectCount > 0;
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold">Clients</h1>
-
-        {/* Search */}
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search clients..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-full pl-11 pr-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm text-white"
-          />
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-none sm:w-64">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search clients..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm text-white"
+            />
+          </div>
+          <button
+            onClick={openNew}
+            className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors whitespace-nowrap text-sm"
+          >
+            <Plus className="w-4 h-4" /> Add Client
+          </button>
         </div>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredClients.map((client: any) => (
-          <Link
-            href={`/admin/clients/${client.id}`}
-            key={client.id}
-            className="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 hover:bg-white/10 transition-colors flex items-center justify-between"
-          >
-            <div className="flex items-center gap-4">
-              {client.imageUrl ? (
-                <img src={client.imageUrl} alt={client.name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                  {client.name.charAt(0)}
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, i) => (
+          <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors min-w-0">
+            <div className={`p-4 rounded-2xl flex-shrink-0 ${stat.bg}`}>
+              <stat.icon className={`w-6 h-6 ${stat.color}`} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-gray-400 text-sm">{stat.label}</p>
+              <p className="text-xl font-semibold truncate" title={stat.value}>{stat.value}</p>
+              {stat.sub && (
+                <p className="text-xs text-gray-500 truncate mt-0.5" title={stat.sub}>{stat.sub}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-white/10 text-gray-400 text-sm">
+                <th className="p-4 font-medium">Client</th>
+                <th className="p-4 font-medium hidden md:table-cell">Company</th>
+                <th className="p-4 font-medium hidden sm:table-cell">Phone</th>
+                <th className="p-4 font-medium hidden lg:table-cell">Status</th>
+                <th className="p-4 font-medium hidden sm:table-cell">Invoices</th>
+                <th className="p-4 font-medium">Revenue</th>
+                <th className="p-4 font-medium text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {filteredClients.map((client: any) => {
+                const linked = isLinked(client);
+                const isDeleting = deletingId === client.id;
+                const deleteTitle = linked
+                  ? `Cannot delete — this client has linked invoices, income, or projects`
+                  : `Delete ${client.name}`;
+
+                return (
+                  <tr key={client.id} className="hover:bg-white/5 transition-colors group">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        {client.imageUrl ? (
+                          <img src={client.imageUrl} alt={client.name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                            {client.name.charAt(0)}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-white text-sm">{client.name}</p>
+                          <p className="text-xs text-gray-400">{client.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-sm text-gray-300 hidden md:table-cell">
+                      {client.company
+                        ? <span className="text-brand-400">{client.company}</span>
+                        : <span className="text-gray-600">—</span>}
+                    </td>
+                    <td className="p-4 text-sm text-gray-300 hidden sm:table-cell">
+                      {client.phone || <span className="text-gray-600">—</span>}
+                    </td>
+                    <td className="p-4 hidden lg:table-cell">
+                      {client.active
+                        ? <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Active</span>
+                        : <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-500/20 text-gray-400 border border-gray-500/30">Inactive</span>}
+                    </td>
+                    <td className="p-4 text-sm text-gray-300 hidden sm:table-cell">
+                      {client.invoices}
+                    </td>
+                    <td className="p-4 font-semibold text-brand-400 text-sm">
+                      {formatLKR(client.revenue)}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center justify-end gap-1">
+                        {/* Edit */}
+                        <button
+                          onClick={() => openEdit(client)}
+                          title="Edit client"
+                          className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+
+                        {/* Delete — disabled if linked */}
+                        <button
+                          onClick={() => !linked && !isDeleting && handleDelete(client)}
+                          title={deleteTitle}
+                          disabled={linked || isDeleting}
+                          className={`p-2 rounded-xl transition-colors ${
+                            linked
+                              ? "text-gray-700 cursor-not-allowed"
+                              : isDeleting
+                              ? "text-red-400 opacity-50 cursor-wait"
+                              : "text-gray-400 hover:text-red-400 hover:bg-red-400/10"
+                          }`}
+                        >
+                          {isDeleting
+                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                            : <Trash2 className="w-4 h-4" />}
+                        </button>
+
+                        {/* View profile */}
+                        <Link
+                          href={`/admin/clients/${client.id}`}
+                          title="View client profile & history"
+                          className="p-2 hover:bg-brand-400/10 rounded-xl transition-colors text-gray-400 hover:text-brand-400"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredClients.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="p-10 text-center text-gray-500">
+                    {searchTerm ? 'No clients match your search.' : 'No clients yet. Add your first client!'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Add / Edit Client Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-brand-400/10 rounded-xl">
+                  <Users className="w-5 h-5 text-brand-400" />
+                </div>
+                <h2 className="text-xl font-semibold">
+                  {editingId ? 'Edit Client' : 'Add New Client'}
+                </h2>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4">
+              {/* Email change cascade warning — only shown in edit mode */}
+              {editingId && (
+                <div className="flex items-start gap-3 px-4 py-3 bg-amber-400/10 border border-amber-400/20 rounded-2xl">
+                  <span className="text-amber-400 text-lg leading-none mt-0.5">⚠</span>
+                  <p className="text-xs text-amber-300 leading-relaxed">
+                    Changing the email will automatically update all linked <strong>invoices</strong> and <strong>projects</strong> to use the new address.
+                  </p>
                 </div>
               )}
-              <div>
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  {client.name}
-                  {client.active ? (
-                    <span className="w-2 h-2 rounded-full bg-green-400" title="Active"></span>
-                  ) : (
-                    <span className="w-2 h-2 rounded-full bg-gray-500" title="Inactive"></span>
-                  )}
-                </h3>
-                <p className="text-sm text-gray-400">{client.email}</p>
-                {(client.company || client.phone) && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    {client.company && <span className="text-brand-400 mr-2">{client.company}</span>}
-                    {client.phone}
-                  </p>
-                )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1 col-span-2 sm:col-span-1">
+                  <label className="text-sm text-gray-400">Full Name <span className="text-red-400">*</span></label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
+                  />
+                </div>
+                <div className="space-y-1 col-span-2 sm:col-span-1">
+                  <label className="text-sm text-gray-400">
+                    Email <span className="text-red-400">*</span>
+                    {editingId && <span className="text-amber-400/70 text-xs ml-1">(cascades to all records)</span>}
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm text-gray-400">Company</label>
+                  <input
+                    type="text"
+                    placeholder="(optional)"
+                    value={formData.company}
+                    onChange={e => setFormData({ ...formData, company: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm text-gray-400">Phone</label>
+                  <input
+                    type="tel"
+                    placeholder="(optional)"
+                    value={formData.phone}
+                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm text-gray-400">Address</label>
+                <input
+                  type="text"
+                  placeholder="(optional)"
+                  value={formData.address}
+                  onChange={e => setFormData({ ...formData, address: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
+                />
               </div>
             </div>
 
-            <div className="flex items-center gap-6">
-              <div className="text-right hidden sm:block">
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Invoices</p>
-                <p className="font-medium">{client.invoices}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Revenue</p>
-                <p className="font-semibold text-brand-400">{formatLKR(client.revenue)}</p>
-              </div>
-              <div className="text-gray-500 group-hover:text-white transition-colors">
-                <ChevronRight className="w-5 h-5" />
-              </div>
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-white/5">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-6 py-2.5 rounded-full font-medium hover:bg-white/10 transition-colors text-sm"
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-full font-medium transition-colors disabled:opacity-50 text-sm"
+              >
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? 'Saving...' : (editingId ? 'Update Client' : 'Add Client')}
+              </button>
             </div>
-          </Link>
-        ))}
-        {filteredClients.length === 0 && (
-          <div className="col-span-1 lg:col-span-2 text-center text-gray-500 py-8">
-            No clients found.
           </div>
-        )}
-      </div>
-
-      {/* Chart */}
-      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-brand-400/10 rounded-xl">
-            <Users className="w-5 h-5 text-brand-400" />
-          </div>
-          <h2 className="text-xl font-semibold">Top Clients by Revenue</h2>
         </div>
-
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-              <XAxis type="number" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `LKR ${value/1000}k`} />
-              <YAxis dataKey="name" type="category" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} width={100} />
-              <Tooltip
-                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                contentStyle={{ backgroundColor: 'rgba(10,10,15,0.9)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px' }}
-                itemStyle={{ color: '#fff' }}
-                formatter={(value: any) => [formatLKR(value), 'Revenue']}
-              />
-              <Bar dataKey="revenue" fill="#29B6F6" radius={[0, 4, 4, 0]} barSize={24} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
