@@ -591,13 +591,30 @@ export async function getReports(range = 'lifetime') {
     ORDER BY value DESC
   `;
 
+  const journalEntriesRaw = await sql`
+    SELECT id, 'income' as type, description, date, amount, category FROM admin_incomes WHERE date >= ${cutoff}
+    UNION ALL
+    SELECT id, 'expense' as type, description, date, amount, category FROM admin_expenses WHERE date >= ${cutoff}
+    ORDER BY date DESC
+  `;
+
+  const journalEntries = journalEntriesRaw.map((r: any) => ({
+    id: `${r.type}-${r.id}`,
+    type: r.type,
+    description: r.description || '',
+    date: r.date,
+    amount: parseFloat(r.amount || 0),
+    category: r.category || 'Other'
+  }));
+
   return {
     annualRevenue,
     annualExpenses,
     netProfit,
     profitMargin,
     incomeByService,
-    expensesBreakdown: expensesBreakdown.map(r => ({ name: r.name || 'Other', value: parseFloat(r.value) }))
+    expensesBreakdown: expensesBreakdown.map(r => ({ name: r.name || 'Other', value: parseFloat(r.value) })),
+    journalEntries
   };
 }
 
