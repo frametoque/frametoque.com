@@ -15,6 +15,13 @@ const workStatusStyles = {
 const paymentStatusStyles = {
   paid: "bg-green-500/20 text-green-400 border-green-500/30",
   unpaid: "bg-red-500/20 text-red-400 border-red-500/30",
+  "advance-paid": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+};
+
+const paymentStatusLabels = {
+  paid: "Paid",
+  unpaid: "Unpaid",
+  "advance-paid": "Advance Paid",
 };
 
 const formatDate = (dateString) => {
@@ -262,7 +269,7 @@ export default function InvoicePage() {
                     paymentStatusStyles[invoice?.payment_status] || paymentStatusStyles.unpaid
                   }`}
                 >
-                  {invoice?.payment_status || "unpaid"}
+                  {paymentStatusLabels[invoice?.payment_status] || invoice?.payment_status || "unpaid"}
                 </span>
               </div>
             </div>

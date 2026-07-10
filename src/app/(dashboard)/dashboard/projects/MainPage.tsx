@@ -165,12 +165,16 @@ export default function DashboardProjectsPage() {
 
                 {/* Right - Invoice button */}
                 <div className="shrink-0">
-                  <Link href={`/dashboard/invoice/${request.invoice_number}`}>
-                    <button className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl bg-white/10 border border-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors">
-                      <Eye className="w-4 h-4" />
-                      View Invoice
-                    </button>
-                  </Link>
+                  {request.invoice_number && request.invoice_number !== "null" ? (
+                    <Link href={`/dashboard/invoice/${request.invoice_number}`}>
+                      <button className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl bg-white/10 border border-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors">
+                        <Eye className="w-4 h-4" />
+                        View Invoice
+                      </button>
+                    </Link>
+                  ) : (
+                    <span className="text-xs text-gray-500 italic px-2">No Invoice</span>
+                  )}
                 </div>
               </div>
             </div>

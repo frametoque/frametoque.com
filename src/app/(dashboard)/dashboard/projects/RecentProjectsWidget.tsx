@@ -14,6 +14,13 @@ const workStatusStyles = {
 const paymentStatusStyles = {
   paid: "bg-green-500/20 text-green-400 border-green-500/30",
   unpaid: "bg-red-500/20 text-red-400 border-red-500/30",
+  "advance-paid": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+};
+
+const paymentStatusLabels = {
+  paid: "Paid",
+  unpaid: "Unpaid",
+  "advance-paid": "Advance Paid",
 };
 
 const formatDate = (dateString) => {
@@ -132,15 +139,19 @@ export default function RecentProjectsWidget() {
                     paymentStatusStyles[request.payment_status] || paymentStatusStyles.unpaid
                   }`}
                 >
-                  {request.payment_status || "unpaid"}
+                  {paymentStatusLabels[request.payment_status] || request.payment_status || "Unpaid"}
                 </span>
 
-                <Link href={`/dashboard/invoice/${request.request_id}`}>
-                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-3xl bg-white/10 border border-white/10 text-xs font-medium text-white hover:bg-white/20 transition-colors">
-                  <Eye className="w-3.5 h-3.5" />
-                  View Invoice
-                </button>
-                </Link>
+                {request.invoice_number && request.invoice_number !== "null" ? (
+                  <Link href={`/dashboard/invoice/${request.invoice_number}`}>
+                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-3xl bg-white/10 border border-white/10 text-xs font-medium text-white hover:bg-white/20 transition-colors">
+                      <Eye className="w-3.5 h-3.5" />
+                      View Invoice
+                    </button>
+                  </Link>
+                ) : (
+                  <span className="text-xs text-gray-500 italic px-2">No Invoice</span>
+                )}
               </div>
             </div>
           ))}

@@ -28,22 +28,24 @@ export async function GET(request) {
     
     const result = await client.query(`
       SELECT 
-        id,
-        invoice_number,
-        title,
-        description,
-        type,
-        request_id,
-        submitted_at,
-        status,
-        progress,
-        price,
-        user_email,
-        client_id,
-        created_at
-      FROM public.projects
-      WHERE user_email = $1 
-      ORDER BY created_at DESC
+        p.id,
+        p.invoice_number,
+        p.title,
+        p.description,
+        p.type,
+        p.request_id,
+        p.submitted_at,
+        p.status,
+        p.progress,
+        p.price,
+        p.user_email,
+        p.client_id,
+        p.created_at,
+        i.payment_status
+      FROM public.projects p
+      LEFT JOIN public.invoices i ON p.invoice_number = i.invoice_id
+      WHERE p.user_email = $1 
+      ORDER BY p.created_at DESC
     `, [user_email]);
     
     console.log(`Found ${result.rows.length} projects for user_email: ${user_email}`);
@@ -62,6 +64,7 @@ export async function GET(request) {
       user_email: row.user_email,
       client_id: row.client_id,
       created_at: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
+      payment_status: row.payment_status || 'unpaid',
     }));
     
     return NextResponse.json(formattedRequests);
