@@ -592,19 +592,22 @@ export async function getReports(range = 'lifetime') {
   `;
 
   const journalEntriesRaw = await sql`
-    SELECT id, 'income' as type, description, date, amount, category FROM admin_incomes WHERE date >= ${cutoff}
+    SELECT id, 'income' as type, description, date, amount, category, payment_method, invoice_id FROM admin_incomes WHERE date >= ${cutoff}
     UNION ALL
-    SELECT id, 'expense' as type, description, date, amount, category FROM admin_expenses WHERE date >= ${cutoff}
+    SELECT id, 'expense' as type, description, date, amount, category, payment_method, NULL as invoice_id FROM admin_expenses WHERE date >= ${cutoff}
     ORDER BY date DESC
   `;
 
   const journalEntries = journalEntriesRaw.map((r: any) => ({
     id: `${r.type}-${r.id}`,
+    rawId: r.id,
     type: r.type,
     description: r.description || '',
     date: r.date,
     amount: parseFloat(r.amount || 0),
-    category: r.category || 'Other'
+    category: r.category || 'Other',
+    paymentMethod: r.payment_method || 'Cash',
+    invoiceId: r.invoice_id || null
   }));
 
   return {

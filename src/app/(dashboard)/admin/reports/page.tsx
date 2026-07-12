@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown, DollarSign, Percent, Download, FileText, Calendar, Users } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Percent, Download, FileText, Calendar, Users, BookOpen, Search } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getReports, getClients } from "../actions/actions";
 
@@ -45,8 +45,25 @@ export default function ReportsPage() {
     return <div className="p-8 text-center text-gray-400 animate-pulse">Loading financial reports...</div>;
   }
 
+  // Compute chronological running balance
+  let runningBalance = 0;
+  const journalEntriesWithBalance = [...(data.journalEntries || [])]
+    .reverse() // older transactions first to compute running balance
+    .map((entry: any) => {
+      if (entry.type === "income") {
+        runningBalance += entry.amount;
+      } else {
+        runningBalance -= entry.amount;
+      }
+      return {
+        ...entry,
+        runningBalance
+      };
+    })
+    .reverse(); // back to latest first for display
+
   // Filter journal entries
-  const filteredJournal = (data.journalEntries || [])
+  const filteredJournal = journalEntriesWithBalance
     .filter((entry: any) => {
       const matchesSearch = 
         entry.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -194,22 +211,18 @@ export default function ReportsPage() {
       {/* Account Journal Ledger */}
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h2 className="text-xl font-semibold text-white">Account Journal Ledger</h2>
-            <p className="text-sm text-gray-400">Chronological transaction ledger of sales revenue and expenditures.</p>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-red-500/10 rounded-xl">
+              <BookOpen className="w-5 h-5 text-red-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-white">General Ledger</h2>
+            </div>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            {/* Search Input */}
-            <input
-              type="text"
-              placeholder="Search ledger..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-500 outline-none focus:border-brand-500 transition-colors w-full sm:w-60"
-            />
             {/* Filter Buttons */}
-            <div className="flex bg-white/5 border border-white/10 rounded-xl p-1">
+            <div className="flex bg-white/5 border border-white/10 rounded-xl p-1 h-10 items-center">
               {["all", "income", "expense"].map((filter) => (
                 <button
                   key={filter}
@@ -224,6 +237,17 @@ export default function ReportsPage() {
                 </button>
               ))}
             </div>
+            {/* Search Input */}
+            <div className="relative w-full sm:w-60">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search descriptions..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 h-10 text-sm text-white placeholder-gray-500 outline-none focus:border-brand-500 transition-colors w-full"
+              />
+            </div>
           </div>
         </div>
 
@@ -234,52 +258,51 @@ export default function ReportsPage() {
                 <th className="p-4">Date</th>
                 <th className="p-4">Description</th>
                 <th className="p-4">Category</th>
-                <th className="p-4">Type</th>
-                <th className="p-4 text-right">Amount</th>
+                <th className="p-4 text-right">Debit (+)</th>
+                <th className="p-4 text-right">Credit (-)</th>
+                <th className="p-4 text-right">Running Balance</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-sm">
               {filteredJournal.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500">
+                  <td colSpan={6} className="p-8 text-center text-gray-500">
                     No transactions found in this period.
                   </td>
                 </tr>
               ) : (
                 filteredJournal.map((entry: any) => {
                   const isIncome = entry.type === "income";
+                  const balIsPositive = entry.runningBalance >= 0;
+                  const balText = entry.runningBalance >= 0
+                    ? `LKR ${entry.runningBalance.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : `-LKR ${Math.abs(entry.runningBalance).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
                   return (
                     <tr key={entry.id} className="hover:bg-white/5 transition-colors">
                       <td className="p-4 whitespace-nowrap text-gray-300">
-                        {new Date(entry.date).toLocaleDateString("en-LK", {
+                        {new Date(entry.date).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "short",
                           day: "numeric",
                         })}
                       </td>
-                      <td className="p-4 font-medium text-white">{entry.description}</td>
+                      <td className="p-4 text-gray-300 max-w-xs truncate" title={entry.description}>
+                        {entry.description || "Transaction"}
+                      </td>
                       <td className="p-4 whitespace-nowrap">
                         <span className="px-2.5 py-0.5 rounded-full text-xs bg-white/5 text-gray-400 border border-white/10">
                           {entry.category}
                         </span>
                       </td>
-                      <td className="p-4 whitespace-nowrap">
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            isIncome
-                              ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                              : "bg-red-500/10 text-red-400 border border-red-500/20"
-                          }`}
-                        >
-                          {isIncome ? "Credit (In)" : "Debit (Out)"}
-                        </span>
+                      <td className="p-4 whitespace-nowrap text-right font-bold text-green-400">
+                        {isIncome ? `+LKR ${entry.amount.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}
                       </td>
-                      <td
-                        className={`p-4 whitespace-nowrap text-right font-bold ${
-                          isIncome ? "text-green-400" : "text-red-400"
-                        }`}
-                      >
-                        {isIncome ? "+" : "-"} Rs. {entry.amount.toLocaleString()}
+                      <td className="p-4 whitespace-nowrap text-right font-bold text-red-400">
+                        {!isIncome ? `-LKR ${entry.amount.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}
+                      </td>
+                      <td className={`p-4 whitespace-nowrap text-right font-bold ${balIsPositive ? "text-green-400" : "text-red-400"}`}>
+                        {balText}
                       </td>
                     </tr>
                   );
