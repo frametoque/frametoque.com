@@ -15,7 +15,11 @@ const workStatusStyles = {
 
 const paymentStatusStyles = {
   paid: "bg-green-500/20 text-green-400 border-green-500/30",
+  "fully paid": "bg-green-500/20 text-green-400 border-green-500/30",
   unpaid: "bg-red-500/20 text-red-400 border-red-500/30",
+  pending: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+  "advance-paid": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  "partially paid": "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
 };
 
 const formatDate = (dateString: string) => {
@@ -245,6 +249,35 @@ export default function AdminInvoicePage() {
                   <span className="text-white font-semibold">Total Due</span>
                   <span className="text-white font-bold text-lg">{formatMoney(totalDue, invoice.currency)}</span>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Payment History */}
+          {invoice.payments && invoice.payments.length > 0 && (
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mt-4 space-y-4">
+              <h3 className="text-lg font-semibold text-white">Payment History</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm text-gray-300">
+                  <thead>
+                    <tr className="border-b border-white/10 text-gray-400 text-xs uppercase tracking-wider">
+                      <th className="py-2">Date</th>
+                      <th className="py-2">Amount</th>
+                      <th className="py-2">Method</th>
+                      <th className="py-2 text-right">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {invoice.payments.map((p: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-white/5 transition-colors">
+                        <td className="py-3 font-medium text-white">{p.date}</td>
+                        <td className="py-3 text-green-400 font-semibold">{formatMoney(p.amount, invoice.currency)}</td>
+                        <td className="py-3">{p.method}</td>
+                        <td className="py-3 text-gray-400 text-right">{p.description}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}

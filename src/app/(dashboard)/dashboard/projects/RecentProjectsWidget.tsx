@@ -13,14 +13,18 @@ const workStatusStyles = {
 
 const paymentStatusStyles = {
   paid: "bg-green-500/20 text-green-400 border-green-500/30",
+  "fully paid": "bg-green-500/20 text-green-400 border-green-500/30",
   unpaid: "bg-red-500/20 text-red-400 border-red-500/30",
   "advance-paid": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  "partially paid": "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
 };
 
 const paymentStatusLabels = {
   paid: "Paid",
+  "fully paid": "Fully Paid",
   unpaid: "Unpaid",
   "advance-paid": "Advance Paid",
+  "partially paid": "Partially Paid",
 };
 
 const formatDate = (dateString) => {

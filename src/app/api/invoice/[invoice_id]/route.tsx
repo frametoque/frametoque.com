@@ -88,6 +88,21 @@ export async function GET(request, { params }) {
     );
     invoice.items = itemsResult.rows;
 
+    // Fetch payments history
+    const paymentsResult = await dbClient.query(
+      `SELECT date, amount, payment_method, description 
+       FROM public.admin_incomes 
+       WHERE invoice_id = $1
+       ORDER BY date DESC`,
+      [invoice_id]
+    );
+    invoice.payments = paymentsResult.rows.map(p => ({
+      date: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      amount: parseFloat(p.amount),
+      method: p.payment_method,
+      description: p.description
+    }));
+
     return NextResponse.json(invoice);
   } catch (error) {
     console.error("Invoice fetch error:", error);

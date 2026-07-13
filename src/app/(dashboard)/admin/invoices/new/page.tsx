@@ -289,9 +289,11 @@ export default function NewInvoicePage() {
                 <select name="paymentStatus" value={formData.paymentStatus} onChange={handleFormChange}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
                   <option value="unpaid" className="bg-black">Unpaid</option>
+                  <option value="partially paid" className="bg-black">Partially Paid</option>
                   <option value="advance-paid" className="bg-black">Advance Paid</option>
                   <option value="overdue" className="bg-black">Overdue</option>
-                  <option value="paid" className="bg-black">Fully Paid</option>
+                  <option value="paid" className="bg-black">Paid</option>
+                  <option value="fully paid" className="bg-black">Fully Paid</option>
                 </select>
               </div>
             </div>

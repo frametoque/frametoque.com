@@ -23,7 +23,7 @@ export async function uploadReceipt(formData: FormData, type: 'income' | 'expens
 export async function getDashboardData() {
   const incomes = await sql`SELECT SUM(amount) as total FROM admin_incomes`;
   const expenses = await sql`SELECT SUM(amount) as total FROM admin_expenses`;
-  const unpaid = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status = 'unpaid'`;
+  const unpaid = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status IN ('unpaid', 'pending', 'partially paid')`;
   
   const totalIncome = incomes[0]?.total ? parseFloat(incomes[0].total) : 0;
   const totalExpenses = expenses[0]?.total ? parseFloat(expenses[0].total) : 0;
@@ -178,6 +178,70 @@ export async function updateIncome(id: number, data: any) {
 }
 
 export async function deleteIncome(id: number) {
+  try {
+    // 1. Fetch the income record details before deleting
+    const incomeRows = await sql`
+      SELECT invoice_id, amount, description
+      FROM admin_incomes
+      WHERE id = ${id}
+    `;
+    
+    if (incomeRows.length > 0 && incomeRows[0].invoice_id) {
+      const income = incomeRows[0];
+      const invoiceId = income.invoice_id;
+      const deletedAmount = parseFloat(income.amount);
+      const isAdvance = income.description?.toLowerCase().includes("advance");
+
+      // 2. Fetch the corresponding invoice
+      const invoiceRows = await sql`
+        SELECT total, advance, total_due
+        FROM invoices
+        WHERE invoice_id = ${invoiceId}
+      `;
+
+      if (invoiceRows.length > 0) {
+        const invoice = invoiceRows[0];
+        const totalAmount = parseFloat(invoice.total);
+        const currentAdvance = parseFloat(invoice.advance || '0');
+        const currentTotalDue = parseFloat(invoice.total_due != null ? invoice.total_due : invoice.total);
+
+        let newAdvance = currentAdvance;
+        let newTotalDue = currentTotalDue;
+
+        if (isAdvance) {
+          newAdvance = Math.max(0, currentAdvance - deletedAmount);
+          newTotalDue = Math.max(0, totalAmount - newAdvance);
+        } else {
+          newTotalDue = Math.min(totalAmount, currentTotalDue + deletedAmount);
+        }
+
+        // Determine new status
+        let newStatus = 'unpaid';
+        if (newTotalDue < 0.01) {
+          newStatus = 'fully paid';
+        } else if (newTotalDue < totalAmount) {
+          if (newAdvance > 0) {
+            newStatus = 'advance-paid';
+          } else {
+            newStatus = 'partially paid';
+          }
+        }
+
+        // Update invoice fields
+        await sql`
+          UPDATE invoices
+          SET payment_status = ${newStatus},
+              advance = ${newAdvance},
+              total_due = ${newTotalDue}
+          WHERE invoice_id = ${invoiceId}
+        `;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to update invoice balance upon income deletion:", e);
+  }
+
+  // 3. Delete the income record
   await sql`DELETE FROM admin_incomes WHERE id = ${id}`;
 }
 
@@ -229,12 +293,16 @@ export async function deleteExpense(id: number) {
 // -- INVOICES --
 export async function getInvoices() {
   const totalIssuedCount = await sql`SELECT COUNT(*) as count FROM invoices`;
-  const paidCount = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status = 'paid'`;
-  const pendingCount = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status = 'unpaid'`;
-  const overdueCount = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status = 'overdue'`;
+  const paidCount = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status IN ('paid', 'fully paid')`;
+  const pendingCount = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status IN ('unpaid', 'pending', 'partially paid')`;
+  const totalDueSum = await sql`
+    SELECT SUM(COALESCE(total_due, total)) as total 
+    FROM invoices 
+    WHERE payment_status NOT IN ('paid', 'fully paid')
+  `;
 
   const rows = await sql`
-    SELECT invoice_id as id, user_email as client, project_name as service, total as amount, date as due_date, payment_status as status, work_status
+    SELECT invoice_id as id, user_email as client, project_name as service, total as amount, total_due, date as due_date, payment_status as status, work_status
     FROM invoices
     ORDER BY created_at DESC
   `;
@@ -243,16 +311,17 @@ export async function getInvoices() {
     totalIssued: parseInt(totalIssuedCount[0]?.count || '0'),
     paid: parseInt(paidCount[0]?.count || '0'),
     pending: parseInt(pendingCount[0]?.count || '0'),
-    overdue: parseInt(overdueCount[0]?.count || '0'),
+    totalDue: parseFloat(totalDueSum[0]?.total || '0'),
     items: rows.map(r => ({
       id: r.id,
       client: r.client || 'Unknown',
       service: r.service,
       amount: parseFloat(r.amount),
+      total_due: parseFloat(r.total_due != null ? r.total_due : r.amount),
       due: r.due_date ? new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
       status: r.status,
       work_status: r.work_status,
-      overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && r.status !== 'paid')
+      overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && r.status !== 'paid' && r.status !== 'fully paid')
     }))
   };
 }
@@ -308,7 +377,21 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
     ORDER BY id ASC
   `;
 
+  const payments = await sql`
+    SELECT date, amount, payment_method, description
+    FROM admin_incomes
+    WHERE invoice_id = ${invoiceId}
+    ORDER BY date DESC
+  `;
+
   invoice.items = itemsResult;
+  invoice.payments = payments.map(p => ({
+    date: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    amount: parseFloat(p.amount),
+    method: p.payment_method,
+    description: p.description
+  }));
+
   return invoice;
 }
 
@@ -454,6 +537,17 @@ export async function getClientById(clientId: string) {
   };
 }
 
+async function generateUniqueInvoiceId(): Promise<string> {
+  while (true) {
+    const num = Math.floor(100000 + Math.random() * 900000);
+    const invoiceId = `INV-${num}`;
+    const existing = await sql`SELECT 1 FROM invoices WHERE invoice_id = ${invoiceId}`;
+    if (existing.length === 0) {
+      return invoiceId;
+    }
+  }
+}
+
 export async function createInvoice(invoiceData: any, lineItems: any[]) {
   // Upsert client — also save billing address if provided
   const existingClient = await sql`SELECT id FROM admin_clients WHERE LOWER(email) = LOWER(${invoiceData.userEmail})`;
@@ -483,7 +577,7 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
     `;
   }
 
-  const invoiceId = 'INV-' + Date.now();
+  const invoiceId = await generateUniqueInvoiceId();
   await sql`
   INSERT INTO invoices (
     invoice_id, user_email, project_name, date, 
@@ -797,7 +891,7 @@ export async function confirmQuotation(quotationId: number, quotationData: any, 
     resolvedClientId = existingClient[0].id;
   }
 
-  const invoiceId = 'INV-' + Date.now();
+  const invoiceId = await generateUniqueInvoiceId();
 
   try {
     // Create invoice with work_status = 'in progress'
@@ -1053,4 +1147,79 @@ export async function getBankAccounts() {
     bank: r.bank,
     branch: r.branch,
   }));
+}
+
+export async function recordInvoicePayment(
+  invoiceId: string,
+  paidAmount: number,
+  paymentMethod: string,
+  paymentDate: string,
+  isAdvance: boolean
+) {
+  try {
+    // 1. Fetch invoice info
+    const invoiceRows = await sql`
+      SELECT user_email, project_name, total, currency, category, payment_status, advance, total_due
+      FROM invoices
+      WHERE invoice_id = ${invoiceId}
+    `;
+    if (invoiceRows.length === 0) {
+      throw new Error("Invoice not found");
+    }
+    const invoice = invoiceRows[0];
+    const totalAmount = parseFloat(invoice.total);
+    const currentAdvance = parseFloat(invoice.advance || '0');
+    const currentTotalDue = parseFloat(invoice.total_due != null ? invoice.total_due : invoice.total);
+
+    // 2. Fetch or resolve client
+    let clientId = null;
+    if (invoice.user_email) {
+      const clientRows = await sql`
+        SELECT id FROM admin_clients WHERE LOWER(email) = LOWER(${invoice.user_email})
+      `;
+      if (clientRows.length > 0) {
+        clientId = clientRows[0].id;
+      }
+    }
+
+    // 3. Create description and category for the income entry
+    const description = isAdvance 
+      ? `Advance: ${invoice.project_name || 'Project'}`
+      : invoice.project_name || 'Payment';
+    const category = invoice.category || 'Web dev';
+
+    // 4. Create the income record
+    await sql`
+      INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id)
+      VALUES (${paymentDate}, ${paidAmount}, ${description}, ${category}, ${paymentMethod}, ${invoiceId}, ${clientId})
+    `;
+
+    // 5. Update invoice payment fields
+    let newAdvance = currentAdvance;
+    let newTotalDue = currentTotalDue;
+    let newStatus = invoice.payment_status;
+
+    if (isAdvance) {
+      newAdvance = currentAdvance + paidAmount;
+      newTotalDue = Math.max(0, totalAmount - newAdvance);
+      newStatus = 'advance-paid';
+    } else {
+      newTotalDue = Math.max(0, currentTotalDue - paidAmount);
+      const isFullyPaid = newTotalDue < 0.01;
+      newStatus = isFullyPaid ? 'fully paid' : 'partially paid';
+    }
+
+    await sql`
+      UPDATE invoices
+      SET payment_status = ${newStatus},
+          advance = ${newAdvance},
+          total_due = ${newTotalDue}
+      WHERE invoice_id = ${invoiceId}
+    `;
+
+    return { success: true };
+  } catch (e) {
+    console.error("Failed to record invoice payment:", e);
+    throw new Error(e instanceof Error ? e.message : "Failed to record invoice payment");
+  }
 }
