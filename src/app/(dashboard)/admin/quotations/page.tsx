@@ -9,6 +9,7 @@ import {
   deleteQuotation, 
   confirmQuotation
 } from "../actions/actions";
+import DateRangeSelector from "../components/DateRangeSelector";
 
 const filters = ["All", "Web dev", "Graphic design", "Video editing", "Photography", "Videography"];
 
@@ -28,6 +29,8 @@ export default function QuotationsPage() {
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [confirmingLoading, setConfirmingLoading] = useState(false);
   const [dateRange, setDateRange] = useState("lifetime");
+  const [startDate, setStartDate] = useState("1970-01-01");
+  const [endDate, setEndDate] = useState("2099-12-31");
 
   // Project name modal state
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -37,7 +40,7 @@ export default function QuotationsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await getQuotations(dateRange);
+      const res = await getQuotations(startDate, endDate);
       setData(res);
     } catch (e) {
       console.error("Failed to load quotations", e);
@@ -48,7 +51,7 @@ export default function QuotationsPage() {
 
   useEffect(() => {
     loadData();
-  }, [dateRange]);
+  }, [startDate, endDate]);
 
   // Step 1: open modal to ask for project name
   const handleConfirmProject = (quotationId: number, quotationData: any) => {
@@ -128,17 +131,14 @@ const handleDelete = async (id: number) => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">Quotations</h1>
-          <select 
-            value={dateRange} 
-            onChange={(e) => setDateRange(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium"
-          >
-            <option value="lifetime" className="bg-black">Lifetime</option>
-            <option value="this year" className="bg-black">This Year</option>
-            <option value="6 months" className="bg-black">Last 6 Months</option>
-            <option value="three months" className="bg-black">Last 3 Months</option>
-            <option value="one month" className="bg-black">Last Month</option>
-          </select>
+          <DateRangeSelector
+            dateRange={dateRange}
+            startDate={startDate}
+            endDate={endDate}
+            onRangeChange={setDateRange}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+          />
         </div>
         <Link
           href="/admin/quotations/new"

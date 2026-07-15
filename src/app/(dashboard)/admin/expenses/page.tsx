@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Receipt, Calendar, CreditCard, Plus, Edit2, Trash2, X, UploadCloud, Loader2, Eye } from "lucide-react";
 import { getExpenses, createExpense, deleteExpense, updateExpense, uploadReceipt } from "../actions/actions";
+import DateRangeSelector from "../components/DateRangeSelector";
 
 const filters = ["All", "Software", "Equipment", "Freelancers", "Transport", "Other"];
 
@@ -21,6 +22,8 @@ export default function ExpensesPage() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState("lifetime");
+  const [startDate, setStartDate] = useState("1970-01-01");
+  const [endDate, setEndDate] = useState("2099-12-31");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
 
@@ -36,7 +39,7 @@ export default function ExpensesPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await getExpenses(dateRange);
+      const res = await getExpenses(startDate, endDate);
       setData(res);
     } catch (e) {
       console.error("Failed to load expenses", e);
@@ -47,7 +50,7 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     loadData();
-  }, [dateRange]);
+  }, [startDate, endDate]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -132,17 +135,14 @@ export default function ExpensesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">Expenses</h1>
-          <select 
-            value={dateRange} 
-            onChange={(e) => setDateRange(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium"
-          >
-            <option value="lifetime" className="bg-black">Lifetime</option>
-            <option value="this year" className="bg-black">This Year</option>
-            <option value="6 months" className="bg-black">Last 6 Months</option>
-            <option value="three months" className="bg-black">Last 3 Months</option>
-            <option value="one month" className="bg-black">Last Month</option>
-          </select>
+          <DateRangeSelector
+            dateRange={dateRange}
+            startDate={startDate}
+            endDate={endDate}
+            onRangeChange={setDateRange}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+          />
         </div>
         <button 
           onClick={() => {

@@ -20,19 +20,24 @@ export async function uploadReceipt(formData: FormData, type: 'income' | 'expens
 }
 
 // -- DASHBOARD --
-export async function getDashboardData() {
-  const incomes = await sql`SELECT SUM(amount) as total FROM admin_incomes`;
-  const expenses = await sql`SELECT SUM(amount) as total FROM admin_expenses`;
+export async function getDashboardData(startDate?: string, endDate?: string) {
+  const start = startDate || '1970-01-01';
+  const end = endDate || '2099-12-31';
+
+  const incomes = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`;
+  const expenses = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`;
   const unpaid = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status IN ('unpaid', 'pending', 'partially paid')`;
   
   const totalIncome = incomes[0]?.total ? parseFloat(incomes[0].total) : 0;
   const totalExpenses = expenses[0]?.total ? parseFloat(expenses[0].total) : 0;
   const netProfit = totalIncome - totalExpenses;
 
+  // Let's get monthly chart data within the range
   const chartDataRaw = await sql`
     SELECT 
       TO_CHAR(date, 'Mon') as name,
       EXTRACT(MONTH FROM date) as month_num,
+      EXTRACT(YEAR FROM date) as year_num,
       SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income,
       SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as expenses
     FROM (
@@ -40,25 +45,75 @@ export async function getDashboardData() {
       UNION ALL
       SELECT date, amount, 'expense' as type FROM admin_expenses
     ) as combined
-    WHERE date >= CURRENT_DATE - INTERVAL '6 months'
-    GROUP BY TO_CHAR(date, 'Mon'), EXTRACT(MONTH FROM date)
-    ORDER BY EXTRACT(MONTH FROM date)
+    WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+    GROUP BY TO_CHAR(date, 'Mon'), EXTRACT(MONTH FROM date), EXTRACT(YEAR FROM date)
+    ORDER BY EXTRACT(YEAR FROM date), EXTRACT(MONTH FROM date)
   `;
 
   const recentInvoicesRaw = await sql`
     SELECT invoice_id as id, user_email as client, total as amount, payment_status as status
     FROM invoices
+    WHERE created_at >= ${start}::timestamp AND created_at <= (${end} || ' 23:59:59.999')::timestamp
     ORDER BY created_at DESC
     LIMIT 4
   `;
 
   const recentTransactionsRaw = await sql`
-    SELECT id, 'income' as type, description as name, date, amount FROM admin_incomes
+    SELECT id, 'income' as type, description as name, date, amount FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
     UNION ALL
-    SELECT id, 'expense' as type, description as name, date, amount FROM admin_expenses
+    SELECT id, 'expense' as type, description as name, date, amount FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
     ORDER BY date DESC
     LIMIT 5
   `;
+
+  // Fetch year-wise comparisons
+  const incomeByYear = await sql`
+    SELECT 
+      EXTRACT(YEAR FROM date) as year,
+      SUM(amount) as total
+    FROM admin_incomes
+    WHERE EXTRACT(YEAR FROM date) IN (2025, 2026)
+    GROUP BY EXTRACT(YEAR FROM date)
+  `;
+
+  const expenseByYear = await sql`
+    SELECT 
+      EXTRACT(YEAR FROM date) as year,
+      SUM(amount) as total
+    FROM admin_expenses
+    WHERE EXTRACT(YEAR FROM date) IN (2025, 2026)
+    GROUP BY EXTRACT(YEAR FROM date)
+  `;
+
+  const expenseBreakdownRange = await sql`
+    SELECT 
+      category as name,
+      SUM(amount) as value
+    FROM admin_expenses
+    WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+    GROUP BY category
+    ORDER BY value DESC
+  `;
+
+  const previousIncome = parseFloat(incomeByYear.find(r => Math.round(parseFloat(r.year)) === 2025)?.total || 0);
+  const currentIncome = parseFloat(incomeByYear.find(r => Math.round(parseFloat(r.year)) === 2026)?.total || 0);
+
+  const previousExpense = parseFloat(expenseByYear.find(r => Math.round(parseFloat(r.year)) === 2025)?.total || 0);
+  const currentExpense = parseFloat(expenseByYear.find(r => Math.round(parseFloat(r.year)) === 2026)?.total || 0);
+
+  const previousNet = previousIncome - previousExpense;
+  const currentNet = currentIncome - currentExpense;
+
+  const totalExpenseRange = expenseBreakdownRange.reduce((sum, r) => sum + parseFloat(r.value), 0);
+
+  const expenseBreakdown = expenseBreakdownRange.map(r => {
+    const val = parseFloat(r.value);
+    return {
+      name: r.name || 'Other',
+      value: val,
+      percentage: totalExpenseRange > 0 ? parseFloat(((val / totalExpenseRange) * 100).toFixed(1)) : 0
+    };
+  });
 
   return {
     totalIncome,
@@ -82,7 +137,16 @@ export async function getDashboardData() {
       name: row.name,
       date: new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       amount: parseFloat(row.amount)
-    }))
+    })),
+    netIncomeComparison: {
+      previousIncome,
+      currentIncome,
+      previousExpense,
+      currentExpense,
+      previousNet,
+      currentNet
+    },
+    expenseBreakdown
   };
 }
 
@@ -96,8 +160,9 @@ function getCutoffDate(range: string) {
 }
 
 // -- INCOMES --
-export async function getIncomes(range = 'lifetime') {
-  const cutoff = getCutoffDate(range);
+export async function getIncomes(startDate?: string, endDate?: string) {
+  const start = startDate || '1970-01-01';
+  const end = endDate || '2099-12-31';
   const statsThisMonth = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date)`;
   const statsLastMonth = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`;
   const statsYtd = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('year', date) = date_trunc('year', current_date)`;
@@ -106,7 +171,7 @@ export async function getIncomes(range = 'lifetime') {
     SELECT i.id, i.date, i.amount, c.full_name as client, i.client_id as "clientId", i.description as desc, i.category, i.invoice_id as invoice, i.receipt_url as "receiptUrl"
     FROM admin_incomes i
     LEFT JOIN admin_clients c ON i.client_id = c.id
-    WHERE i.date >= ${cutoff}
+    WHERE i.date >= ${start}::timestamp AND i.date <= (${end} || ' 23:59:59.999')::timestamp
     ORDER BY i.date DESC
   `;
 
@@ -246,8 +311,9 @@ export async function deleteIncome(id: number) {
 }
 
 // -- EXPENSES --
-export async function getExpenses(range = 'lifetime') {
-  const cutoff = getCutoffDate(range);
+export async function getExpenses(startDate?: string, endDate?: string) {
+  const start = startDate || '1970-01-01';
+  const end = endDate || '2099-12-31';
   const statsThisMonth = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date)`;
   const statsLastMonth = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`;
   const statsYtd = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('year', date) = date_trunc('year', current_date)`;
@@ -255,7 +321,7 @@ export async function getExpenses(range = 'lifetime') {
   const rows = await sql`
     SELECT id, date, amount, description as desc, category, payment_method as "paidVia", receipt_url as "receiptUrl"
     FROM admin_expenses
-    WHERE date >= ${cutoff}
+    WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
     ORDER BY date DESC
   `;
 
@@ -647,10 +713,11 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
 }
 
 // -- REPORTS --
-export async function getReports(range = 'lifetime') {
-  const cutoff = getCutoffDate(range);
-  const incomeStats = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${cutoff}`;
-  const expenseStats = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${cutoff}`;
+export async function getReports(startDate?: string, endDate?: string) {
+  const start = startDate || '1970-01-01';
+  const end = endDate || '2099-12-31';
+  const incomeStats = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`;
+  const expenseStats = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`;
   
   const annualRevenue = parseFloat(incomeStats[0]?.total || 0);
   const annualExpenses = parseFloat(expenseStats[0]?.total || 0);
@@ -660,7 +727,7 @@ export async function getReports(range = 'lifetime') {
   const rawIncome = await sql`
     SELECT category, amount
     FROM admin_incomes
-    WHERE date >= ${cutoff}
+    WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
   `;
 
   const serviceMap: Record<string, number> = {};
@@ -680,15 +747,15 @@ export async function getReports(range = 'lifetime') {
   const expensesBreakdown = await sql`
     SELECT category as name, SUM(amount) as value
     FROM admin_expenses
-    WHERE date >= ${cutoff}
+    WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
     GROUP BY category
     ORDER BY value DESC
   `;
 
   const journalEntriesRaw = await sql`
-    SELECT id, 'income' as type, description, date, amount, category, payment_method, invoice_id FROM admin_incomes WHERE date >= ${cutoff}
+    SELECT id, 'income' as type, description, date, amount, category, payment_method, invoice_id FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
     UNION ALL
-    SELECT id, 'expense' as type, description, date, amount, category, payment_method, NULL as invoice_id FROM admin_expenses WHERE date >= ${cutoff}
+    SELECT id, 'expense' as type, description, date, amount, category, payment_method, NULL as invoice_id FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
     ORDER BY date DESC
   `;
 
@@ -716,8 +783,9 @@ export async function getReports(range = 'lifetime') {
 }
 
 // -- QUOTATIONS --
-export async function getQuotations(range = 'lifetime') {
-  const cutoff = getCutoffDate(range);
+export async function getQuotations(startDate?: string, endDate?: string) {
+  const start = startDate || '1970-01-01';
+  const end = endDate || '2099-12-31';
   
   const rows = await sql`
     SELECT q.id, q.date, q.amount, q.advance, q.total_due as "totalDue",
@@ -725,7 +793,7 @@ export async function getQuotations(range = 'lifetime') {
            q.invoice_id as invoice, q.receipt_url as "receiptUrl", q.status, q.project_confirmed as "projectConfirmed"
     FROM admin_quotations q
     LEFT JOIN admin_clients c ON q.client_id = c.id
-    WHERE q.date >= ${cutoff}
+    WHERE q.date >= ${start}::timestamp AND q.date <= (${end} || ' 23:59:59.999')::timestamp
     ORDER BY q.date DESC
   `;
  

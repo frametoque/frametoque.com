@@ -5,6 +5,7 @@ import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2
 import Link from "next/link";
 import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice, getBankAccounts } from "../actions/actions";
 import CategoryPicker from "../components/CategoryPicker";
+import DateRangeSelector from "../components/DateRangeSelector";
 
 const ALL_CATEGORIES = ["Web dev", "Graphic design", "Video editing", "Photography", "Videography", "Other"];
 const filters = ["All", ...ALL_CATEGORIES];
@@ -36,6 +37,8 @@ export default function IncomePage() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState("lifetime");
+  const [startDate, setStartDate] = useState("1970-01-01");
+  const [endDate, setEndDate] = useState("2099-12-31");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
   const [clients, setClients] = useState<any[]>([]);
@@ -76,7 +79,7 @@ export default function IncomePage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [res, cls, accs] = await Promise.all([getIncomes(dateRange), getClients(), getBankAccounts()]);
+      const [res, cls, accs] = await Promise.all([getIncomes(startDate, endDate), getClients(), getBankAccounts()]);
       setData(res);
       setClients(cls);
       setBankAccounts(accs);
@@ -87,7 +90,7 @@ export default function IncomePage() {
     }
   };
 
-  useEffect(() => { loadData(); }, [dateRange]);
+  useEffect(() => { loadData(); }, [startDate, endDate]);
 
   const openNew = () => {
     setEditingId(null);
@@ -281,14 +284,14 @@ export default function IncomePage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">Income</h1>
-          <select value={dateRange} onChange={(e) => setDateRange(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium">
-            <option value="lifetime" className="bg-black">Lifetime</option>
-            <option value="this year" className="bg-black">This Year</option>
-            <option value="6 months" className="bg-black">Last 6 Months</option>
-            <option value="three months" className="bg-black">Last 3 Months</option>
-            <option value="one month" className="bg-black">Last Month</option>
-          </select>
+          <DateRangeSelector
+            dateRange={dateRange}
+            startDate={startDate}
+            endDate={endDate}
+            onRangeChange={setDateRange}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+          />
         </div>
         <button onClick={openNew} className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors">
           <Plus className="w-5 h-5" /> Record Income
