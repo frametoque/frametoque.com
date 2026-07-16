@@ -2,21 +2,18 @@
 
 import sql from "@/lib/db";
 import { clerkClient } from "@clerk/nextjs/server";
-import { promises as fs } from 'fs';
-import path from 'path';
+import { put } from '@vercel/blob';
 
 export async function uploadReceipt(formData: FormData, type: 'income' | 'expenses'): Promise<string> {
   const file = formData.get('file') as File;
   if (!file) throw new Error("No file uploaded");
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const filename = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-  const uploadDir = path.join(process.cwd(), 'public', 'admin', 'receipts', type);
+  const filename = `admin/receipts/${type}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+  const blob = await put(filename, file, {
+    access: 'public',
+  });
   
-  await fs.mkdir(uploadDir, { recursive: true });
-  await fs.writeFile(path.join(uploadDir, filename), buffer);
-  
-  return `/admin/receipts/${type}/${filename}`;
+  return blob.url;
 }
 
 // -- DASHBOARD --

@@ -4,6 +4,7 @@ import sql from "@/lib/db";
 import { promises as fs } from "fs";
 import path from "path";
 import { imageSize } from "image-size";
+import { put } from "@vercel/blob";
 
 // Mapping category slugs to table names
 const TABLE_MAP: Record<string, string> = {
@@ -315,25 +316,20 @@ export async function uploadPortfolioMedia(formData: FormData, categorySlug?: st
     throw new Error("No file uploaded");
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const filename = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
-  
-  let uploadDir = path.join(process.cwd(), "public", "uploads", "portfolio");
-  let publicUrl = `/uploads/portfolio/${filename}`;
+  const cleanFilename = file.name.replace(/\s+/g, "_");
+  const filename = categorySlug === "web-dev" 
+    ? `projects/web/${Date.now()}-${cleanFilename}`
+    : `uploads/portfolio/${Date.now()}-${cleanFilename}`;
 
-  if (categorySlug === "web-dev") {
-    uploadDir = path.join(process.cwd(), "public", "projects", "web");
-    publicUrl = `/projects/web/${filename}`;
-  }
+  const blob = await put(filename, file, {
+    access: "public",
+  });
 
-  await fs.mkdir(uploadDir, { recursive: true });
-  await fs.writeFile(path.join(uploadDir, filename), buffer);
-
-  return publicUrl;
+  return blob.url;
 }
 
 /**
- * Download portfolio media files from an external URL and save them locally
+ * Download portfolio media files from an external URL and save them to Vercel Blob
  */
 export async function uploadPortfolioMediaFromUrl(url: string): Promise<string> {
   if (!url) {
@@ -345,20 +341,18 @@ export async function uploadPortfolioMediaFromUrl(url: string): Promise<string> 
     throw new Error(`Failed to download image: ${response.statusText}`);
   }
 
-  const arrayBuffer = await response.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const filename = `${Date.now()}-screenshot.png`;
-  const uploadDir = path.join(process.cwd(), "public", "projects", "web");
+  const blob = await response.blob();
+  const filename = `projects/web/${Date.now()}-screenshot.png`;
 
-  await fs.mkdir(uploadDir, { recursive: true });
-  await fs.writeFile(path.join(uploadDir, filename), buffer);
+  const uploadedBlob = await put(filename, blob, {
+    access: "public",
+  });
 
-  return `/projects/web/${filename}`;
+  return uploadedBlob.url;
 }
 
 /**
  * Upload portfolio media files and detect their dimensions automatically.
- * If eventName is provided (photography), saves into public/projects/photography/{eventName}/
  */
 export async function uploadPortfolioMediaWithDimensions(
   formData: FormData,
@@ -369,29 +363,25 @@ export async function uploadPortfolioMediaWithDimensions(
     throw new Error("No file uploaded");
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  // Preserve original filename (only replace whitespace)
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
   const safeFilename = file.name.replace(/\s+/g, "_");
 
-  let uploadDir: string;
-  let publicUrl: string;
-
+  let filename: string;
   if (eventName) {
-    // Sanitise event name: strip characters that are unsafe in folder names
     const safeEvent = eventName
       .trim()
       .replace(/[^a-zA-Z0-9 '_\-]/g, "")
       .replace(/\s+/g, " ")
       .trim();
-    uploadDir = path.join(process.cwd(), "public", "projects", "photography", safeEvent);
-    publicUrl = `/projects/photography/${encodeURIComponent(safeEvent)}/${safeFilename}`;
+    filename = `projects/photography/${safeEvent}/${Date.now()}-${safeFilename}`;
   } else {
-    uploadDir = path.join(process.cwd(), "public", "uploads", "portfolio");
-    publicUrl = `/uploads/portfolio/${Date.now()}-${safeFilename}`;
+    filename = `uploads/portfolio/${Date.now()}-${safeFilename}`;
   }
 
-  await fs.mkdir(uploadDir, { recursive: true });
-  await fs.writeFile(path.join(uploadDir, safeFilename), buffer);
+  const blob = await put(filename, buffer, {
+    access: "public",
+  });
 
   let width = 1200;
   let height = 800;
@@ -405,5 +395,5 @@ export async function uploadPortfolioMediaWithDimensions(
     console.error("Failed to parse image dimensions, using defaults:", err);
   }
 
-  return { url: publicUrl, width, height };
+  return { url: blob.url, width, height };
 }

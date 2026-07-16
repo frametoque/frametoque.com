@@ -3,6 +3,7 @@
 import sql from "@/lib/db";
 import { promises as fs } from "fs";
 import path from "path";
+import { put } from "@vercel/blob";
 import { TABLE_MAP } from "@/lib/services";
 
 /**
@@ -145,12 +146,10 @@ export async function uploadServiceCover(formData: FormData): Promise<string> {
     throw new Error("No file uploaded");
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const filename = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "services");
+  const filename = `uploads/services/${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
+  const blob = await put(filename, file, {
+    access: "public",
+  });
 
-  await fs.mkdir(uploadDir, { recursive: true });
-  await fs.writeFile(path.join(uploadDir, filename), buffer);
-
-  return `/uploads/services/${filename}`;
+  return blob.url;
 }
