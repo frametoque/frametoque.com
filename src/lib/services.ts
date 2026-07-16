@@ -67,7 +67,7 @@ export async function getServiceCards(categorySlug: string): Promise<ServiceCard
   if (!table) return [];
 
   const rows = await sql.query(
-    `SELECT service_id, title, overview, packages, hero_image FROM ${table} ORDER BY id ASC`
+    `SELECT service_id, title, overview, packages, hero_image FROM ${table} ORDER BY sort_order ASC, id ASC`
   ) as ServiceRow[];
 
   return rows.map((row) => {

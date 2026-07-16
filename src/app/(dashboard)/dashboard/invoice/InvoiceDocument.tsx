@@ -249,7 +249,7 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
   }
 
   // ── 11. PAID Stamp ────────────────────────────────────────────────────────────
-  if (payment_status === "paid" || payment_status === "fully paid") {
+  if (payment_status === "fully paid") {
     try {
       const stampResponse = await fetch("/paid-stamp.png");
       if (!stampResponse.ok) throw new Error("Stamp not found");

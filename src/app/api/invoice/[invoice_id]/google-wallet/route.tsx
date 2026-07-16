@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleAuth } from "google-auth-library";
 import { createSign } from "crypto";
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { Pool } from "pg";
 
-const ISSUER_ID    = process.env.GOOGLE_WALLET_ISSUER_ID!;
-const CLIENT_EMAIL = process.env.GOOGLE_WALLET_CLIENT_EMAIL!;
-const PRIVATE_KEY  = (process.env.GOOGLE_WALLET_PRIVATE_KEY ?? "").replace(/\\n/g, "\n");
-const APP_URL      = process.env.NEXT_PUBLIC_APP_URL!;
+const pool = new Pool({
+  connectionString: process.env.POSTGRES_URL,
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+});
 
-const CLASS_SUFFIX = "invoice_pass_v2";
+const ISSUER_ID    = (process.env.GOOGLE_WALLET_ISSUER_ID    ?? "").trim();
+const CLIENT_EMAIL = (process.env.GOOGLE_WALLET_CLIENT_EMAIL ?? "").trim();
+const PRIVATE_KEY  = (process.env.GOOGLE_WALLET_PRIVATE_KEY  ?? "").trim().replace(/\\n/g, "\n");
+const APP_URL      = (process.env.NEXT_PUBLIC_APP_URL         ?? "").trim();
+// Public-facing URL for wallet images — must be accessible by Google's servers.
+// In dev, set WALLET_ASSET_BASE_URL=https://ft.online (or your deployed domain).
+const ASSET_URL    = (process.env.WALLET_ASSET_BASE_URL ?? APP_URL).trim();
+
+const CLASS_SUFFIX = "invoice_pass_v3";
 const CLASS_ID     = `${ISSUER_ID}.${CLASS_SUFFIX}`;
 
 /* ── Auth client for Wallet API calls ── */
@@ -62,7 +72,7 @@ async function ensureClass(authClient: GoogleAuth) {
 
           logo: {
             sourceUri: {
-              uri: `${APP_URL}/logos/ft/logo-main.png`,
+              uri: `${ASSET_URL}/logos/ft/logo-main.png`,
             },
             contentDescription: {
               defaultValue: { language: "en-US", value: "Frametoque Logo" },
@@ -157,7 +167,7 @@ function buildPassObject(invoice: Record<string, any>) {
 
     heroImage: {
       sourceUri: {
-        uri: `${APP_URL}/og-image.png`,
+        uri: `${ASSET_URL}/og-image.png`,
       },
       contentDescription: {
         defaultValue: { language: "en-US", value: "Frametoque" },
@@ -204,13 +214,39 @@ export async function POST(
     const { invoice_id } = await params;
     console.log("[google-wallet] Generating pass for invoice:", invoice_id);
 
-    /* 1. Fetch invoice */
-    const invoiceRes = await fetch(`${APP_URL}/api/invoice/${invoice_id}`);
-    if (!invoiceRes.ok) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    /* 1. Authenticate via Clerk (direct — no cookie forwarding needed) */
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const invoice = await invoiceRes.json();
-    console.log("[google-wallet] Invoice fetched:", invoice.invoice_id);
+    const clerk     = await clerkClient();
+    const user      = await clerk.users.getUser(userId);
+    const userEmail = user.emailAddresses[0]?.emailAddress;
+    if (!userEmail) {
+      return NextResponse.json({ error: "User email not found" }, { status: 400 });
+    }
+
+    /* 2. Fetch invoice from DB directly */
+    const dbClient = await pool.connect();
+    let invoice: any;
+    try {
+      const result = await dbClient.query(
+        `SELECT
+          i.invoice_id, i.project_name, i.date, i.currency,
+          i.subtotal, i.discount, i.total, i.advance, i.total_due,
+          i.work_status, i.payment_status
+         FROM public.invoices i
+         WHERE i.invoice_id = $1 AND LOWER(i.user_email) = LOWER($2)`,
+        [invoice_id, userEmail]
+      );
+      if (result.rows.length === 0) {
+        return NextResponse.json({ error: "Invoice not found or access denied" }, { status: 404 });
+      }
+      invoice = result.rows[0];
+    } finally {
+      dbClient.release();
+    }
+    console.log("[google-wallet] Invoice fetched from DB:", invoice.invoice_id);
 
     /* 2. Auth + ensure class */
     const authClient = getAuthClient();

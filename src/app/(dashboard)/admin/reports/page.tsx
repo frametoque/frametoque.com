@@ -5,6 +5,7 @@ import { TrendingUp, TrendingDown, DollarSign, Percent, Download, FileText, Cale
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getReports, getClients } from "../actions/actions";
 import DateRangeSelector from "../components/DateRangeSelector";
+import WheelDatePicker from "../components/WheelDatePicker";
 
 const formatLKR = (amount: number) => {
   return new Intl.NumberFormat('en-LK', {
@@ -19,11 +20,29 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("lifetime");
   const [startDate, setStartDate] = useState("1970-01-01");
-  const [endDate, setEndDate] = useState("2099-12-31");
+  const [endDate, setEndDate] = useState(() => {
+    const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+    return (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
+  });
   const [activeTab, setActiveTab] = useState<"overview" | "profit_loss" | "trial_balance" | "general_ledger">("overview");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [journalFilter, setJournalFilter] = useState("all");
+  const [activePicker, setActivePicker] = useState<"trial_date" | null>(null);
+
+  const formatDateFriendly = (dateStr: string) => {
+    if (!dateStr) return "";
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return dateStr;
+    const year = parts[0];
+    const monthIdx = parseInt(parts[1]) - 1;
+    const day = parseInt(parts[2]);
+    const monthNames = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+    return `${monthNames[monthIdx]} ${day}, ${year}`;
+  };
 
 
   useEffect(() => {
@@ -98,14 +117,41 @@ export default function ReportsPage() {
     <div className="space-y-6 print:p-0 print:m-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 print:hidden">
         <h1 className="text-3xl font-bold">Financial Reports</h1>
-        <DateRangeSelector
-          dateRange={dateRange}
-          startDate={startDate}
-          endDate={endDate}
-          onRangeChange={setDateRange}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
-        />
+        {activeTab === "trial_balance" ? (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setActivePicker(activePicker === "trial_date" ? null : "trial_date")}
+              className="bg-white/5 border border-white/10 hover:border-white/20 active:bg-white/10 rounded-xl px-4 py-2 text-sm text-white flex items-center gap-2 transition-all cursor-pointer shadow-sm select-none"
+            >
+              <Calendar className="w-4 h-4 text-brand-400" />
+              <span className="font-semibold text-gray-400">As of:</span>
+              <span className="font-bold">{formatDateFriendly(endDate)}</span>
+            </button>
+            {activePicker === "trial_date" && (
+              <div className="absolute right-0 top-12 z-50 w-[310px]">
+                <WheelDatePicker
+                  value={endDate}
+                  onChange={(date) => {
+                    setEndDate(date);
+                    setStartDate("1970-01-01");
+                  }}
+                  onClose={() => setActivePicker(null)}
+                  label="As of Date"
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <DateRangeSelector
+            dateRange={dateRange}
+            startDate={startDate}
+            endDate={endDate}
+            onRangeChange={setDateRange}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+          />
+        )}
       </div>
 
       {/* Tabs Row */}
@@ -372,7 +418,9 @@ export default function ReportsPage() {
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400">Accounts</h3>
               <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">
-                {new Date(startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} to {new Date(endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                {dateRange === "lifetime"
+                  ? "Lifetime"
+                  : `${new Date(startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} to ${new Date(endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
               </span>
             </div>
 

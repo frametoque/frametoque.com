@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Package, MessageCircle, Plus, Eye } from "lucide-react";
+import { Package, MessageCircle, Plus, Eye, CreditCard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
+import PayModal from "@/components/PayModal";
 
 const workStatusStyles = {
   "in progress": "bg-brand-500/20 text-brand-400 border-brand-500/30",
@@ -30,6 +31,8 @@ export default function DashboardProjectsPage() {
   const [myRequests, setMyRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   
   const { user, isLoaded: isUserLoaded } = useUser();
 
@@ -164,10 +167,27 @@ export default function DashboardProjectsPage() {
                 </div>
 
                 {/* Right - Invoice button */}
-                <div className="shrink-0">
+                <div className="shrink-0 flex items-center gap-2">
+                  {request.invoice_number && request.invoice_number !== "null" && request.total_due > 0 && request.payment_status !== 'fully paid' && request.payment_status !== 'paid' && (
+                    <button
+                      onClick={() => {
+                        setSelectedInvoice({
+                          invoice_id: request.invoice_number,
+                          project_name: request.title,
+                          total_due: request.total_due,
+                          currency: request.currency,
+                        });
+                        setIsPayModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl bg-gradient-to-r from-blue-600 to-cyan-600 text-sm font-medium text-white hover:opacity-90 transition-opacity cursor-pointer"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      Pay Now
+                    </button>
+                  )}
                   {request.invoice_number && request.invoice_number !== "null" ? (
                     <Link href={`/dashboard/invoice/${request.invoice_number}`}>
-                      <button className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl bg-white/10 border border-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors">
+                      <button className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl bg-white/10 border border-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors cursor-pointer">
                         <Eye className="w-4 h-4" />
                         View Invoice
                       </button>
@@ -196,6 +216,13 @@ export default function DashboardProjectsPage() {
           </Link>
         </div>
       )}
+
+      {/* Pay Modal */}
+      <PayModal
+        isOpen={isPayModalOpen}
+        onClose={() => setIsPayModalOpen(false)}
+        invoice={selectedInvoice}
+      />
     </div>
   );
 }

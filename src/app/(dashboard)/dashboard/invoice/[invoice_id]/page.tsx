@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
-import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase } from "lucide-react";
+import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
+import PayModal from "@/components/PayModal";
 
 const workStatusStyles = {
   "in progress": "bg-brand-500/20 text-brand-400 border-brand-500/30",
@@ -13,7 +14,6 @@ const workStatusStyles = {
 };
 
 const paymentStatusStyles = {
-  paid: "bg-green-500/20 text-green-400 border-green-500/30",
   "fully paid": "bg-green-500/20 text-green-400 border-green-500/30",
   unpaid: "bg-red-500/20 text-red-400 border-red-500/30",
   "advance-paid": "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -21,7 +21,6 @@ const paymentStatusStyles = {
 };
 
 const paymentStatusLabels = {
-  paid: "Paid",
   "fully paid": "Fully Paid",
   unpaid: "Unpaid",
   "advance-paid": "Advance Paid",
@@ -84,6 +83,7 @@ export default function InvoicePage() {
   const [error, setError] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [addingToWallet, setAddingToWallet] = useState<string | null>(null);
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
 
   useEffect(() => {
     if (!invoice_id) return;
@@ -127,7 +127,10 @@ export default function InvoicePage() {
       const res = await fetch(`/api/invoice/${invoice_id}/apple-wallet`, {
         method: "POST",
       });
-      if (!res.ok) throw new Error("Failed to generate pass");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail ?? body.error ?? `Server error ${res.status}`);
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -135,9 +138,9 @@ export default function InvoicePage() {
       a.download = `${invoice_id}.pkpass`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Apple Wallet error:", err);
-      alert("Failed to generate Apple Wallet pass. Please try again.");
+      alert(`Apple Wallet: ${err?.message ?? "Unknown error"}`);
     } finally {
       setAddingToWallet(null);
     }
@@ -149,12 +152,15 @@ export default function InvoicePage() {
       const res = await fetch(`/api/invoice/${invoice_id}/google-wallet`, {
         method: "POST",
       });
-      if (!res.ok) throw new Error("Failed to generate pass");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Server error ${res.status}`);
+      }
       const { saveUrl } = await res.json();
       window.open(saveUrl, "_blank");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Google Wallet error:", err);
-      alert("Failed to generate Google Wallet pass. Please try again.");
+      alert(`Google Wallet: ${err?.message ?? "Unknown error"}`);
     } finally {
       setAddingToWallet(null);
     }
@@ -198,18 +204,29 @@ export default function InvoicePage() {
           Back to Projects
         </Link>
 
-        <button
-          onClick={handleDownload}
-          disabled={downloading}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          {downloading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Download className="w-4 h-4" />
+        <div className="flex items-center gap-3">
+          {totalDue > 0 && invoice?.payment_status !== 'fully paid' && invoice?.payment_status !== 'paid' && (
+            <button
+              onClick={() => setIsPayModalOpen(true)}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+            >
+              <CreditCard className="w-4 h-4" />
+              Pay Now
+            </button>
           )}
-          {downloading ? "Generating PDF..." : "Download PDF"}
-        </button>
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
+          >
+            {downloading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            {downloading ? "Generating PDF..." : "Download PDF"}
+          </button>
+        </div>
       </div>
 
       {/* Main Layout */}
@@ -322,13 +339,13 @@ export default function InvoicePage() {
               </div>
             </div>
           </div>
-
-          {/* ── Wallet Buttons ── */}
+              {/* ── Wallet Buttons ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Apple Wallet */}
             <button
               onClick={handleAppleWallet}
-              disabled
-              className="inline-flex items-center justify-center gap-3 w-full px-5 py-4 rounded-3xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={addingToWallet === "apple"}
+              className="inline-flex items-center justify-center gap-3 w-full px-5 py-4 rounded-3xl border border-white/10 bg-white/5 hover:bg-white/10 active:scale-95 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
               {addingToWallet === "apple" ? (
                 <Loader2 className="w-5 h-5 text-white animate-spin" />
@@ -336,15 +353,18 @@ export default function InvoicePage() {
                 <AppleWalletIcon />
               )}
               <div className="text-left">
-                <p className="text-white/50 text-[10px] leading-none mb-0.5">Add to</p>
+                <p className="text-white/50 text-[10px] leading-none mb-0.5">
+                  {addingToWallet === "apple" ? "Generating…" : "Add to"}
+                </p>
                 <p className="text-white font-semibold text-sm leading-none">Apple Wallet</p>
               </div>
             </button>
 
+            {/* Google Wallet */}
             <button
               onClick={handleGoogleWallet}
-              disabled
-              className="inline-flex items-center justify-center gap-3 w-full px-5 py-4 rounded-3xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={addingToWallet === "google"}
+              className="inline-flex items-center justify-center gap-3 w-full px-5 py-4 rounded-3xl border border-white/10 bg-white/5 hover:bg-white/10 active:scale-95 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
               {addingToWallet === "google" ? (
                 <Loader2 className="w-5 h-5 text-white animate-spin" />
@@ -352,7 +372,9 @@ export default function InvoicePage() {
                 <GoogleWalletIcon />
               )}
               <div className="text-left">
-                <p className="text-white/50 text-[10px] leading-none mb-0.5">Save to</p>
+                <p className="text-white/50 text-[10px] leading-none mb-0.5">
+                  {addingToWallet === "google" ? "Opening…" : "Save to"}
+                </p>
                 <p className="text-white font-semibold text-sm leading-none">Google Wallet</p>
               </div>
             </button>
@@ -389,6 +411,19 @@ export default function InvoicePage() {
         </div>
       </div>
 
+      {/* Pay Modal */}
+      {invoice && (
+        <PayModal
+          isOpen={isPayModalOpen}
+          onClose={() => setIsPayModalOpen(false)}
+          invoice={{
+            invoice_id: invoice.invoice_id,
+            project_name: invoice.project_name,
+            total_due: totalDue,
+            currency: invoice.currency,
+          }}
+        />
+      )}
     </div>
   );
 }

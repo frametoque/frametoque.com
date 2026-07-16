@@ -359,12 +359,12 @@ export async function deleteExpense(id: number) {
 // -- INVOICES --
 export async function getInvoices() {
   const totalIssuedCount = await sql`SELECT COUNT(*) as count FROM invoices`;
-  const paidCount = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status IN ('paid', 'fully paid')`;
+  const paidCount = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status = 'fully paid'`;
   const pendingCount = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status IN ('unpaid', 'pending', 'partially paid')`;
   const totalDueSum = await sql`
     SELECT SUM(COALESCE(total_due, total)) as total 
     FROM invoices 
-    WHERE payment_status NOT IN ('paid', 'fully paid')
+    WHERE payment_status != 'fully paid'
   `;
 
   const rows = await sql`
@@ -568,7 +568,7 @@ export async function getClientById(clientId: string) {
     amount: parseFloat(r.amount),
     date: r.due_date ? new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
     status: r.status,
-    overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && r.status !== 'paid'),
+    overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && r.status !== 'fully paid'),
     rawDate: r.due_date ? new Date(r.due_date) : new Date(0),
   }));
 
@@ -580,7 +580,7 @@ export async function getClientById(clientId: string) {
       service: r.service || r.category || 'Income',
       amount: parseFloat(r.amount),
       date: r.date ? new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
-      status: 'paid', // manual incomes are already received
+      status: 'fully paid', // manual incomes are already received
       overdue: false,
       rawDate: r.date ? new Date(r.date) : new Date(0),
     }));

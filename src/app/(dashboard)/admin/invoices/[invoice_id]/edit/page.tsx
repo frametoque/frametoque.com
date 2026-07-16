@@ -358,7 +358,6 @@ export default function EditInvoicePage() {
                   <option value="partially paid" className="bg-black">Partially Paid</option>
                   <option value="advance-paid" className="bg-black">Advance Paid</option>
                   <option value="overdue" className="bg-black">Overdue</option>
-                  <option value="paid" className="bg-black">Paid</option>
                   <option value="fully paid" className="bg-black">Fully Paid</option>
                 </select>
               </div>

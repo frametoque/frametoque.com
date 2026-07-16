@@ -203,7 +203,7 @@ export default function InvoicesPage() {
                 const workStatus = row.work_status?.toLowerCase() || '';
 
                 let paymentColor = "text-gray-400 bg-gray-400/10 border-gray-400/20";
-                if (paymentStatus === 'paid' || paymentStatus === 'fully paid') paymentColor = "text-green-400 bg-green-400/10 border-green-400/20";
+                if (paymentStatus === 'fully paid') paymentColor = "text-green-400 bg-green-400/10 border-green-400/20";
                 else if (paymentStatus === 'advance-paid') paymentColor = "text-blue-400 bg-blue-400/10 border-blue-400/20";
                 else if (paymentStatus === 'unpaid' || paymentStatus === 'pending') paymentColor = "text-amber-400 bg-amber-400/10 border-amber-400/20";
                 else if (paymentStatus === 'overdue') paymentColor = "text-red-400 bg-red-400/10 border-red-400/20";
@@ -225,7 +225,7 @@ export default function InvoicesPage() {
                     <td className="p-4 text-sm text-gray-300">{row.service}</td>
                     <td className="p-4">
                       <div className="font-semibold text-white">{formatLKR(row.amount)}</div>
-                      {paymentStatus !== 'fully paid' && paymentStatus !== 'paid' && (
+                      {paymentStatus !== 'fully paid' && (
                         <div className={`text-xs mt-0.5 font-medium ${
                           paymentStatus === 'unpaid' || paymentStatus === 'pending' || paymentStatus === 'overdue'
                             ? 'text-gray-400'

@@ -71,7 +71,8 @@ export default function DateRangeSelector({
       onEndDateChange(`${fyEndYear}-03-31`);
     } else if (range === "lifetime") {
       onStartDateChange("1970-01-01");
-      onEndDateChange("2099-12-31");
+      const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+      onEndDateChange((new Date(Date.now() - tzoffset)).toISOString().split('T')[0]);
     }
   };
 
@@ -132,7 +133,7 @@ export default function DateRangeSelector({
               <span>{formatDateFriendly(tempEndDate)}</span>
             </button>
             {activePicker === "end" && (
-              <div className="absolute left-0 z-50">
+              <div className="absolute right-0 z-50 w-[310px]">
                 <WheelDatePicker
                   value={tempEndDate}
                   onChange={(date) => setTempEndDate(date)}

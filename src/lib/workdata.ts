@@ -33,16 +33,10 @@ export interface SiteDetails {
 
 export async function getPhotography(): Promise<PhotographyEvent[]> {
   const rows = await sql`
-    SELECT event_name, src, width, height 
-    FROM work_photography 
-    ORDER BY 
-      CASE event_name
-        WHEN 'SAGA ''26' THEN 1
-        WHEN 'Evendor ''25' THEN 2
-        WHEN 'Cambrian Carnival ''23' THEN 3
-        ELSE 999
-      END,
-      id
+    SELECT e.event_name, p.src, p.width, p.height
+    FROM work_photography_events e
+    JOIN work_photography_photos p ON p.event_id = e.id
+    ORDER BY e.sort_order ASC, p.sort_order ASC, p.id ASC
   `;
 
   const eventMap = new Map<string, PhotographyImage[]>();
@@ -59,17 +53,17 @@ export async function getPhotography(): Promise<PhotographyEvent[]> {
 }
 
 export async function getGraphics(): Promise<string[]> {
-  const rows = await sql`SELECT image_path FROM work_graphics ORDER BY id`;
+  const rows = await sql`SELECT image_path FROM work_graphics ORDER BY sort_order ASC, id ASC`;
   return rows.map((r) => r.image_path as string);
 }
 
 export async function getVideography(): Promise<VideoProject[]> {
-  const rows = await sql`SELECT url FROM work_videography ORDER BY id DESC`;
+  const rows = await sql`SELECT url FROM work_videography ORDER BY sort_order ASC, id ASC`;
   return rows.map((r) => ({ url: r.url as string }));
 }
 
 export async function getVideoEditing(): Promise<VideoProject[]> {
-  const rows = await sql`SELECT url FROM work_videoediting ORDER BY id DESC`;
+  const rows = await sql`SELECT url FROM work_videoediting ORDER BY sort_order ASC, id ASC`;
   return rows.map((r) => ({ url: r.url as string }));
 }
 
@@ -77,7 +71,7 @@ export async function getWebProjects(): Promise<{
   projects: WebDevImage[];
   detailsMap: Record<string, SiteDetails>;
 }> {
-  const rows = await sql`SELECT * FROM work_web ORDER BY id`;
+  const rows = await sql`SELECT * FROM work_web ORDER BY sort_order ASC, id ASC`;
 
   const projects: WebDevImage[] = rows.map((r) => ({
     image: r.image_path as string,

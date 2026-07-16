@@ -104,7 +104,6 @@ export default function ProjectsAdminMain() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Projects</h1>
-          <p className="text-gray-400 text-sm mt-1">Manage project details, clients, and timelines.</p>
         </div>
         <Link
           href="/admin/projects/new"

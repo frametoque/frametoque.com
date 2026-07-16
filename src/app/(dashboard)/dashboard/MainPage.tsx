@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ShoppingCart, MessageCircle, Sparkles, UserCheck, FilePenLine } from "lucide-react";
+import { ShoppingCart, MessageCircle, Sparkles, UserCheck, FilePenLine, CreditCard } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
+import PayModal from "@/components/PayModal";
 
 import RecentProjectsWidget from "./projects/RecentProjectsWidget";
 import RecentQuotationsWidget from "./quotations/RecentQuotationsWidget";
@@ -28,6 +29,11 @@ export default function DashboardHome() {
 
   const [unsignedAgreements, setUnsignedAgreements] = useState<AgreementData[]>([]);
   const [loadingAgreements, setLoadingAgreements] = useState(true);
+
+  const [unpaidInvoices, setUnpaidInvoices] = useState<any[]>([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(true);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -99,6 +105,35 @@ export default function DashboardHome() {
         }
       };
       fetchClientAgreements();
+    }
+  }, [isLoaded, user]);
+
+  useEffect(() => {
+    if (isLoaded && user?.primaryEmailAddress?.emailAddress) {
+      const email = user.primaryEmailAddress.emailAddress;
+      const fetchUnpaidInvoices = async () => {
+        try {
+          setLoadingInvoices(true);
+          const response = await fetch(`/api/requests?user_email=${encodeURIComponent(email)}`);
+          if (response.ok) {
+            const data = await response.json();
+            const unpaid = data.filter(
+              (r: any) => 
+                r.invoice_number && 
+                r.invoice_number !== "null" && 
+                r.total_due > 0 &&
+                r.payment_status !== "fully paid" &&
+                r.payment_status !== "paid"
+            );
+            setUnpaidInvoices(unpaid);
+          }
+        } catch (err) {
+          console.error("Failed to load unpaid invoices:", err);
+        } finally {
+          setLoadingInvoices(false);
+        }
+      };
+      fetchUnpaidInvoices();
     }
   }, [isLoaded, user]);
 
@@ -240,11 +275,66 @@ export default function DashboardHome() {
         </div>
       )}
 
+      {/* Unpaid Invoices Alert Widget */}
+      {!loadingInvoices && unpaidInvoices.length > 0 && (
+        <div className="bg-gradient-to-r from-blue-500/10 to-brand-500/10 border border-blue-500/20 backdrop-blur-xl rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-blue-500/20 text-blue-400 rounded-2xl shrink-0">
+              <CreditCard className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1">
+                {unpaidInvoices.length === 1 
+                  ? "Outstanding Invoice Pending Payment" 
+                  : `${unpaidInvoices.length} Outstanding Invoices Pending Payment`}
+              </h3>
+              <p className="text-sm text-gray-300 max-w-xl">
+                {unpaidInvoices.length === 1
+                  ? `You have a pending invoice for "${unpaidInvoices[0].title}" of Rs. ${unpaidInvoices[0].total_due.toLocaleString("en-US", { minimumFractionDigits: 2 })}.`
+                  : `You have ${unpaidInvoices.length} pending invoices to pay. Please review them to settle your project due balances.`}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+            {unpaidInvoices.length === 1 ? (
+              <button
+                onClick={() => {
+                  setSelectedInvoice({
+                    invoice_id: unpaidInvoices[0].invoice_number,
+                    project_name: unpaidInvoices[0].title,
+                    total_due: unpaidInvoices[0].total_due,
+                    currency: unpaidInvoices[0].currency,
+                  });
+                  setIsPayModalOpen(true);
+                }}
+                className="flex-1 sm:flex-initial text-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold rounded-3xl text-sm transition-all shadow-lg shadow-blue-500/10 cursor-pointer"
+              >
+                Pay Now
+              </button>
+            ) : (
+              <Link
+                href="/dashboard/projects"
+                className="flex-1 sm:flex-initial text-center px-5 py-2.5 bg-zinc-900 border border-white/10 hover:bg-white/5 text-white font-bold rounded-3xl text-sm transition-all"
+              >
+                View & Pay Invoices
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Side-by-side Projects and Quotations */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <RecentProjectsWidget />
         <RecentQuotationsWidget />
       </div>
+
+      {/* Pay Modal */}
+      <PayModal
+        isOpen={isPayModalOpen}
+        onClose={() => setIsPayModalOpen(false)}
+        invoice={selectedInvoice}
+      />
     </div>
   );
 }

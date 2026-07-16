@@ -41,7 +41,10 @@ export async function GET(request) {
         p.user_email,
         p.client_id,
         p.created_at,
-        i.payment_status
+        i.payment_status,
+        i.total_due,
+        i.total,
+        i.currency
       FROM public.projects p
       LEFT JOIN public.invoices i ON p.invoice_number = i.invoice_id
       WHERE p.user_email = $1 
@@ -65,6 +68,9 @@ export async function GET(request) {
       client_id: row.client_id,
       created_at: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
       payment_status: row.payment_status || 'unpaid',
+      total_due: row.total_due ? parseFloat(row.total_due) : 0,
+      total: row.total ? parseFloat(row.total) : 0,
+      currency: row.currency || 'LKR',
     }));
     
     return NextResponse.json(formattedRequests);
