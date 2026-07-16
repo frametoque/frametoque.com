@@ -65,11 +65,11 @@ function NotificationBell() {
       const processed = sortByRecency(
         liveData
           .map((n: NotificationItem) => {
-            const pref = currentPrefs[n.id] || {};
+            const pref = currentPrefs[n.id];
             return {
               ...n,
-              read: pref.read !== undefined ? pref.read : n.read,
-              deleted: pref.deleted || false
+              read: pref?.read !== undefined ? pref.read : n.read,
+              deleted: pref?.deleted || false
             };
           })
           .filter((n: NotificationItem & { deleted?: boolean }) => !n.deleted)
