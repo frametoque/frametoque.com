@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { TrendingUp, TrendingDown, DollarSign, Percent, Download, FileText, Calendar, Users, BookOpen, Search } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getReports, getClients } from "../actions/actions";
-import DateRangeSelector from "../components/DateRangeSelector";
+import { useAdminDateRange } from "../context/AdminDateRangeContext";
 import WheelDatePicker from "../components/WheelDatePicker";
 
 const formatLKR = (amount: number) => {
@@ -18,12 +18,7 @@ export default function ReportsPage() {
   const [data, setData] = useState<any>(null);
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState("lifetime");
-  const [startDate, setStartDate] = useState("1970-01-01");
-  const [endDate, setEndDate] = useState(() => {
-    const tzoffset = (new Date()).getTimezoneOffset() * 60000;
-    return (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
-  });
+  const { dateRange, startDate, endDate, setStartDate, setEndDate, setDateRange } = useAdminDateRange();
   const [activeTab, setActiveTab] = useState<"overview" | "profit_loss" | "trial_balance" | "general_ledger">("overview");
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -117,7 +112,7 @@ export default function ReportsPage() {
     <div className="space-y-6 print:p-0 print:m-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 print:hidden">
         <h1 className="text-3xl font-bold">Financial Reports</h1>
-        {activeTab === "trial_balance" ? (
+        {activeTab === "trial_balance" && (
           <div className="relative">
             <button
               type="button"
@@ -142,15 +137,6 @@ export default function ReportsPage() {
               </div>
             )}
           </div>
-        ) : (
-          <DateRangeSelector
-            dateRange={dateRange}
-            startDate={startDate}
-            endDate={endDate}
-            onRangeChange={setDateRange}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-          />
         )}
       </div>
 

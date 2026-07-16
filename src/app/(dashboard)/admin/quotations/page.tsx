@@ -9,7 +9,7 @@ import {
   deleteQuotation, 
   confirmQuotation
 } from "../actions/actions";
-import DateRangeSelector from "../components/DateRangeSelector";
+import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
 const filters = ["All", "Web dev", "Graphic design", "Video editing", "Photography", "Videography"];
 
@@ -28,9 +28,7 @@ export default function QuotationsPage() {
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [confirmingLoading, setConfirmingLoading] = useState(false);
-  const [dateRange, setDateRange] = useState("lifetime");
-  const [startDate, setStartDate] = useState("1970-01-01");
-  const [endDate, setEndDate] = useState("2099-12-31");
+  const { startDate, endDate } = useAdminDateRange();
 
   // Project name modal state
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -131,14 +129,6 @@ const handleDelete = async (id: number) => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">Quotations</h1>
-          <DateRangeSelector
-            dateRange={dateRange}
-            startDate={startDate}
-            endDate={endDate}
-            onRangeChange={setDateRange}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-          />
         </div>
         <Link
           href="/admin/quotations/new"

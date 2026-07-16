@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Receipt, Calendar, CreditCard, Plus, Edit2, Trash2, X, UploadCloud, Loader2, Eye } from "lucide-react";
 import { getExpenses, createExpense, deleteExpense, updateExpense, uploadReceipt } from "../actions/actions";
-import DateRangeSelector from "../components/DateRangeSelector";
+import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
 const filters = ["All", "Software", "Equipment", "Freelancers", "Transport", "Other"];
 
@@ -67,9 +67,7 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [dateRange, setDateRange] = useState("lifetime");
-  const [startDate, setStartDate] = useState("1970-01-01");
-  const [endDate, setEndDate] = useState("2099-12-31");
+  const { startDate, endDate } = useAdminDateRange();
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [convertingPdf, setConvertingPdf] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
@@ -182,14 +180,6 @@ export default function ExpensesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">Expenses</h1>
-          <DateRangeSelector
-            dateRange={dateRange}
-            startDate={startDate}
-            endDate={endDate}
-            onRangeChange={setDateRange}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-          />
         </div>
         <button 
           onClick={() => {

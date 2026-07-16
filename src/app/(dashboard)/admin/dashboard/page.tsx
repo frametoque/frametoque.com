@@ -5,7 +5,7 @@ import { Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight,
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { getDashboardData } from "../actions/actions";
 import { getAnalyticsData } from "../actions/analytics";
-import DateRangeSelector from "../components/DateRangeSelector";
+import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
 const formatLKR = (amount: number) => {
   return new Intl.NumberFormat('en-LK', {
@@ -18,9 +18,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState("lifetime");
-  const [startDate, setStartDate] = useState("1970-01-01");
-  const [endDate, setEndDate] = useState("2099-12-31");
+  const { startDate, endDate } = useAdminDateRange();
 
   useEffect(() => {
     async function load() {
@@ -63,14 +61,6 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <DateRangeSelector
-          dateRange={dateRange}
-          startDate={startDate}
-          endDate={endDate}
-          onRangeChange={setDateRange}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
-        />
       </div>
       
       {/* Stats Cards */}

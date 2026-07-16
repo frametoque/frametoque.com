@@ -3,6 +3,8 @@ import { PKPass } from "passkit-generator";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Pool } from "pg";
 import * as forge from "node-forge";
+import fs from "fs";
+import path from "path";
 
 /* ─── DB pool ─── */
 const pool = new Pool({
@@ -159,25 +161,23 @@ export async function POST(
     const { certPem, keyPem } = extractFromP12(p12Buffer, CERT_PASS);
     console.log("[apple-wallet] P12 parsed successfully");
 
-    /* 5. Fetch logo images + Apple WWDR cert */
-    const [logoRes, iconRes, wwdrRes] = await Promise.all([
-      fetch(`${APP_URL}/logos/ft/logo-main.png`),
-      fetch(`${APP_URL}/logos/ft/logo.png`),
-      fetch("https://www.apple.com/certificateauthority/AppleWWDRCAG4.cer"),
-    ]);
+    /* 5. Load logo images + Apple WWDR cert from local filesystem */
+    const logoPath = path.join(process.cwd(), "public/logos/ft/logo-main.png");
+    const iconPath = path.join(process.cwd(), "public/logos/ft/logo.png");
+    const wwdrPath = path.join(process.cwd(), "public/certs/AppleWWDRCAG4.cer");
 
-    if (!logoRes.ok || !iconRes.ok)
-      throw new Error("Failed to fetch Frametoque logo assets");
-    if (!wwdrRes.ok)
-      throw new Error("Failed to fetch Apple WWDR certificate");
+    if (!fs.existsSync(logoPath) || !fs.existsSync(iconPath)) {
+      throw new Error("Failed to find Frametoque logo assets on local filesystem");
+    }
+    if (!fs.existsSync(wwdrPath)) {
+      throw new Error("Failed to find Apple WWDR certificate on local filesystem");
+    }
 
-    const [logoBuffer, iconBuffer, wwdrDer] = await Promise.all([
-      logoRes.arrayBuffer(),
-      iconRes.arrayBuffer(),
-      wwdrRes.arrayBuffer(),
-    ]);
+    const logoBuffer = fs.readFileSync(logoPath);
+    const iconBuffer = fs.readFileSync(iconPath);
+    const wwdrDer   = fs.readFileSync(wwdrPath);
 
-    const wwdrPem = derToPem(Buffer.from(wwdrDer));
+    const wwdrPem = derToPem(wwdrDer);
 
     /* 6. Build PKPass */
     const pass = new PKPass(

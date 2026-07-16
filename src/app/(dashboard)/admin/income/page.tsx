@@ -5,7 +5,7 @@ import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2
 import Link from "next/link";
 import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice, getBankAccounts } from "../actions/actions";
 import CategoryPicker from "../components/CategoryPicker";
-import DateRangeSelector from "../components/DateRangeSelector";
+import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
 const ALL_CATEGORIES = ["Web dev", "Graphic design", "Video editing", "Photography", "Videography", "Other"];
 const filters = ["All", ...ALL_CATEGORIES];
@@ -82,9 +82,7 @@ export default function IncomePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [dateRange, setDateRange] = useState("lifetime");
-  const [startDate, setStartDate] = useState("1970-01-01");
-  const [endDate, setEndDate] = useState("2099-12-31");
+  const { startDate, endDate } = useAdminDateRange();
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [convertingPdf, setConvertingPdf] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
@@ -331,14 +329,6 @@ export default function IncomePage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">Income</h1>
-          <DateRangeSelector
-            dateRange={dateRange}
-            startDate={startDate}
-            endDate={endDate}
-            onRangeChange={setDateRange}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-          />
         </div>
         <button onClick={openNew} className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors">
           <Plus className="w-5 h-5" /> Record Income

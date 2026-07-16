@@ -12,6 +12,8 @@ import {
   type Variants,
 } from "framer-motion";
 import NotificationBell from "./components/NotificationBell";
+import DateRangeSelector from "./components/DateRangeSelector";
+import { AdminDateRangeProvider, useAdminDateRange } from "./context/AdminDateRangeContext";
 
 import {
   Bell,
@@ -334,80 +336,179 @@ export default function DashboardLayout({ children }) {
     );
   };
 
-  // ------------------ Header ------------------
-  const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
-    return (
-      <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/10 h-20 flex-shrink-0 flex items-center">
-        <div className="w-full flex items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2 hover:bg-white/10 rounded-3xl"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-
-            <div className="hidden sm:flex items-center gap-2 bg-white/5 border border-white/10 rounded-3xl px-4 py-2 w-64 lg:w-96">
-              <Search className="w-5 h-5 text-gray-400" />
-              <input
-                placeholder="Search..."
-                className="bg-transparent outline-none text-white w-full"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button className="sm:hidden p-2 hover:bg-white/10 rounded-3xl">
-              <Search className="w-5 h-5" />
-            </button>
-
-            <NotificationBell />
-
-            {isLoaded && user?.imageUrl && (
-              <Link href="/admin/settings">
-                <div className="lg:hidden w-8 h-8 rounded-full overflow-hidden">
-                  <img
-                    src={user.imageUrl}
-                    alt={user.fullName || "User"}
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                </div>
-              </Link>
-            )}
-          </div>
-        </div>
-      </header>
-    );
-  };
-
   const { user, isLoaded } = useUser();
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Sidebar
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-        collapsed={collapsed}
-        toggleCollapsed={toggleCollapsed}
-        sidebarHovered={sidebarHovered}
-        setSidebarHovered={setSidebarHovered}
-      />
+    <AdminDateRangeProvider>
+      <div className="min-h-screen bg-black text-white">
+        <Sidebar
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+          collapsed={collapsed}
+          toggleCollapsed={toggleCollapsed}
+          sidebarHovered={sidebarHovered}
+          setSidebarHovered={setSidebarHovered}
+        />
 
-      {/* Content padding is driven by the *persistent* collapsed state, not hover, so layout doesn't shift on hover */}
-      <motion.div
-        animate={{ paddingLeft: collapsed ? 80 : 220 }}
-        transition={sidebarSpring}
-        className="min-h-screen lg:block hidden"
-      >
-        <Header user={user} isLoaded={isLoaded} setMobileMenuOpen={setMobileMenuOpen} />
-        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
-      </motion.div>
+        {/* Content padding is driven by the *persistent* collapsed state, not hover, so layout doesn't shift on hover */}
+        <motion.div
+          animate={{ paddingLeft: collapsed ? 80 : 220 }}
+          transition={sidebarSpring}
+          className="min-h-screen lg:block hidden"
+        >
+          <Header user={user} isLoaded={isLoaded} setMobileMenuOpen={setMobileMenuOpen} />
+          <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+        </motion.div>
 
-      {/* Mobile: no left padding */}
-      <div className="lg:hidden">
-        <Header user={user} isLoaded={isLoaded} setMobileMenuOpen={setMobileMenuOpen} />
-        <main className="p-4 sm:p-6">{children}</main>
+        {/* Mobile: no left padding */}
+        <div className="lg:hidden">
+          <Header user={user} isLoaded={isLoaded} setMobileMenuOpen={setMobileMenuOpen} />
+          <main className="p-4 sm:p-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </AdminDateRangeProvider>
   );
 }
+
+// ------------------ Header ------------------
+const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
+  const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
+  const [dateTime, setDateTime] = useState("");
+  const [dbStatus, setDbStatus] = useState("checking");
+  const [blobStatus, setBlobStatus] = useState("checking");
+  const [activeVisitors, setActiveVisitors] = useState(0);
+
+  useEffect(() => {
+    const updateDateTime = () => {
+      const now = new Date();
+      const formatted = now.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }) + " | " + now.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+      });
+      setDateTime(formatted);
+    };
+    updateDateTime();
+    const clockInterval = setInterval(updateDateTime, 1000);
+
+    const checkSystemHealth = async () => {
+      try {
+        const res = await fetch("/api/admin/health");
+        if (res.ok) {
+          const status = await res.json();
+          setDbStatus(status.db);
+          setBlobStatus(status.blob);
+          if (status.activeVisitors !== undefined) {
+            setActiveVisitors(status.activeVisitors);
+          }
+        } else {
+          setDbStatus("offline");
+          setBlobStatus("offline");
+        }
+      } catch (e) {
+        setDbStatus("offline");
+        setBlobStatus("offline");
+      }
+    };
+    checkSystemHealth();
+
+    return () => {
+      clearInterval(clockInterval);
+    };
+  }, []);
+
+  return (
+    <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/10 h-20 flex-shrink-0 flex items-center">
+      <div className="w-full flex items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="lg:hidden p-2 hover:bg-white/10 rounded-3xl"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+
+          {/* System Status Indicators */}
+          <div className="hidden xl:flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-gray-300">
+            {/* Date & Time */}
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-white/90">{dateTime || "Loading..."}</span>
+            </div>
+
+            <div className="h-4 w-[1px] bg-white/10" />
+
+            {/* Neon DB Status */}
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 font-medium">Database:</span>
+              <span className="relative flex h-2 w-2">
+                {dbStatus === "online" && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                )}
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                  dbStatus === "online" ? "bg-emerald-500" : dbStatus === "checking" ? "bg-amber-500 animate-pulse" : "bg-rose-500"
+                }`}></span>
+              </span>
+              <span className="font-semibold text-white/90 uppercase text-[10px] flex items-center gap-1">
+                {dbStatus}
+                <span className="text-gray-500 lowercase font-normal text-[9px]">(neon db)</span>
+              </span>
+            </div>
+
+            <div className="h-4 w-[1px] bg-white/10" />
+
+            {/* Vercel Blob Status */}
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 font-medium">CDN:</span>
+              <span className="relative flex h-2 w-2">
+                {blobStatus === "online" && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                )}
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                  blobStatus === "online" ? "bg-emerald-500" : blobStatus === "checking" ? "bg-amber-500 animate-pulse" : "bg-rose-500"
+                }`}></span>
+              </span>
+              <span className="font-semibold text-white/90 uppercase text-[10px] flex items-center gap-1">
+                {blobStatus}
+                <span className="text-gray-500 lowercase font-normal text-[9px]">(vercel blob)</span>
+              </span>
+            </div>
+
+            <div className="h-4 w-[1px] bg-white/10" />
+            {/* Live Visitors Status */}
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 font-medium">Live:</span>
+              <span className="relative flex h-2 w-2">
+                {activeVisitors > 0 && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                )}
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                  activeVisitors > 0 ? "bg-emerald-500" : "bg-gray-500"
+                }`}></span>
+              </span>
+              <span className="font-semibold text-white/90 text-[10px] flex items-center gap-1">
+                {activeVisitors} {activeVisitors === 1 ? "visitor" : "visitors"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <DateRangeSelector
+            dateRange={dateRange}
+            startDate={startDate}
+            endDate={endDate}
+            onRangeChange={setDateRange}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+          />
+
+          <NotificationBell />
+        </div>
+      </div>
+    </header>
+  );
+};
