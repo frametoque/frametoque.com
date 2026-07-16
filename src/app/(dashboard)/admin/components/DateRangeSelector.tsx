@@ -1,5 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { Calendar } from "lucide-react";
+import WheelDatePicker from "./WheelDatePicker";
+
 interface DateRangeSelectorProps {
   dateRange: string;
   startDate: string;
@@ -17,9 +21,22 @@ export default function DateRangeSelector({
   onStartDateChange,
   onEndDateChange
 }: DateRangeSelectorProps) {
+  const [tempStartDate, setTempStartDate] = useState(startDate);
+  const [tempEndDate, setTempEndDate] = useState(endDate);
+  const [activePicker, setActivePicker] = useState<"start" | "end" | null>(null);
+
+  // Sync internal temp dates with parent when props change
+  useEffect(() => {
+    setTempStartDate(startDate);
+  }, [startDate]);
+
+  useEffect(() => {
+    setTempEndDate(endDate);
+  }, [endDate]);
   
   const handleRangeChange = (range: string) => {
     onRangeChange(range);
+    setActivePicker(null);
     const today = new Date();
     const todayStr = today.toISOString().split("T")[0];
 
@@ -79,24 +96,98 @@ export default function DateRangeSelector({
       </div>
 
       {dateRange === "custom" && (
-        <div className="flex items-center gap-2 animate-in slide-in-from-left duration-200">
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => onStartDateChange(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 outline-none focus:border-brand-500 transition-colors text-sm text-white"
-          />
-          <span className="text-gray-400 text-xs uppercase font-semibold">to</span>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => onEndDateChange(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 outline-none focus:border-brand-500 transition-colors text-sm text-white"
-          />
+        <div className="flex flex-wrap items-center gap-2.5 animate-in slide-in-from-left duration-200">
+          {/* Start Date Button */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setActivePicker(activePicker === "start" ? null : "start")}
+              className="bg-white/5 border border-white/10 hover:border-white/20 active:bg-white/10 rounded-xl px-4 py-2 text-sm text-white flex items-center gap-2 transition-all cursor-pointer shadow-sm select-none"
+            >
+              <Calendar className="w-4 h-4 text-brand-400" />
+              <span>{formatDateFriendly(tempStartDate)}</span>
+            </button>
+            {activePicker === "start" && (
+              <div className="absolute left-0 z-50">
+                <WheelDatePicker
+                  value={tempStartDate}
+                  onChange={(date) => setTempStartDate(date)}
+                  onClose={() => setActivePicker(null)}
+                  label="Start Date"
+                />
+              </div>
+            )}
+          </div>
+
+          <span className="text-gray-400 text-xs uppercase font-semibold select-none">to</span>
+
+          {/* End Date Button */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setActivePicker(activePicker === "end" ? null : "end")}
+              className="bg-white/5 border border-white/10 hover:border-white/20 active:bg-white/10 rounded-xl px-4 py-2 text-sm text-white flex items-center gap-2 transition-all cursor-pointer shadow-sm select-none"
+            >
+              <Calendar className="w-4 h-4 text-brand-400" />
+              <span>{formatDateFriendly(tempEndDate)}</span>
+            </button>
+            {activePicker === "end" && (
+              <div className="absolute left-0 z-50">
+                <WheelDatePicker
+                  value={tempEndDate}
+                  onChange={(date) => setTempEndDate(date)}
+                  onClose={() => setActivePicker(null)}
+                  label="End Date"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Apply/Cancel Actions */}
+          {(tempStartDate !== startDate || tempEndDate !== endDate) && (
+            <div className="flex items-center gap-2 ml-1 animate-in slide-in-from-left duration-200">
+              <button
+                type="button"
+                onClick={() => {
+                  onStartDateChange(tempStartDate);
+                  onEndDateChange(tempEndDate);
+                  setActivePicker(null);
+                }}
+                className="bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white rounded-xl px-4 py-2 text-sm font-semibold transition-all cursor-pointer shadow-md shadow-brand-500/20"
+              >
+                Apply
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTempStartDate(startDate);
+                  setTempEndDate(endDate);
+                  setActivePicker(null);
+                }}
+                className="bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl px-3 py-2 text-sm transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
+}
+
+function formatDateFriendly(dateStr: string) {
+  if (!dateStr) return "";
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return dateStr;
+  const year = parts[0];
+  const monthIdx = parseInt(parts[1]) - 1;
+  const day = parseInt(parts[2]);
+  const monthNames = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+  return `${monthNames[monthIdx]} ${day}, ${year}`;
 }
 
 function ChevronIcon() {
