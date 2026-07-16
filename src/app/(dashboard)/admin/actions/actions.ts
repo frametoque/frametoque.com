@@ -165,9 +165,13 @@ export async function getIncomes(startDate?: string, endDate?: string) {
   const statsYtd = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('year', date) = date_trunc('year', current_date)`;
 
   const rows = await sql`
-    SELECT i.id, i.date, i.amount, c.full_name as client, i.client_id as "clientId", i.description as desc, i.category, i.invoice_id as invoice, i.receipt_url as "receiptUrl"
+    SELECT 
+      i.id, i.date, i.amount, c.full_name as client, i.client_id as "clientId", 
+      i.description as desc, i.category, i.invoice_id as invoice, i.receipt_url as "receiptUrl",
+      CASE WHEN inv.invoice_id IS NOT NULL THEN true ELSE false END as "hasValidInvoice"
     FROM admin_incomes i
     LEFT JOIN admin_clients c ON i.client_id = c.id
+    LEFT JOIN invoices inv ON i.invoice_id = inv.invoice_id
     WHERE i.date >= ${start}::timestamp AND i.date <= (${end} || ' 23:59:59.999')::timestamp
     ORDER BY i.date DESC
   `;

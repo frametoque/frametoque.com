@@ -14,6 +14,52 @@ const formatLKR = (amount: number) => {
   }).format(amount || 0);
 };
 
+const convertPdfToImage = async (file: File): Promise<File> => {
+  if (file.type !== "application/pdf") return file;
+
+  if (!(window as any).pdfjsLib) {
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js";
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Failed to load PDF.js"));
+      document.head.appendChild(script);
+    });
+  }
+
+  const pdfjsLib = (window as any).pdfjsLib;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+
+  const arrayBuffer = await file.arrayBuffer();
+  const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+  const pdf = await loadingTask.promise;
+  const page = await pdf.getPage(1);
+
+  const scale = 2.0;
+  const viewport = page.getViewport({ scale });
+
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Could not create canvas context");
+
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+
+  await page.render({ canvasContext: context, viewport }).promise;
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Failed to convert PDF canvas to blob"));
+        return;
+      }
+      const newFilename = file.name.replace(/\.[^/.]+$/, "") + ".png";
+      const convertedFile = new File([blob], newFilename, { type: "image/png" });
+      resolve(convertedFile);
+    }, "image/png");
+  });
+};
+
 export default function ExpensesPage() {
   const [activeFilter, setActiveFilter] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,6 +71,7 @@ export default function ExpensesPage() {
   const [startDate, setStartDate] = useState("1970-01-01");
   const [endDate, setEndDate] = useState("2099-12-31");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [convertingPdf, setConvertingPdf] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
 
   const [formData, setFormData] = useState({
@@ -291,16 +338,58 @@ export default function ExpensesPage() {
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-sm text-gray-400">Receipt Image</label>
-                <input type="file" accept="image/*" onChange={e => setReceiptFile(e.target.files?.[0] || null)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
-                {formData.receiptUrl && !receiptFile && <a href={formData.receiptUrl} target="_blank" className="text-xs text-blue-400 underline mt-1 block px-2">View current receipt</a>}
+                <label className="text-sm text-gray-400">
+                  {convertingPdf ? "Processing PDF..." : "Receipt Image / PDF"}
+                </label>
+                <input 
+                  type="file" 
+                  accept="image/*,application/pdf" 
+                  disabled={convertingPdf}
+                  onChange={async (e) => {
+                    const selected = e.target.files?.[0];
+                    if (!selected) {
+                      setReceiptFile(null);
+                      return;
+                    }
+                    if (selected.type === "application/pdf") {
+                      setConvertingPdf(true);
+                      try {
+                        const imgFile = await convertPdfToImage(selected);
+                        setReceiptFile(imgFile);
+                      } catch (err) {
+                        console.error(err);
+                        alert("Failed to convert PDF to image. Please upload a normal image.");
+                      } finally {
+                        setConvertingPdf(false);
+                      }
+                    } else {
+                      setReceiptFile(selected);
+                    }
+                  }}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm disabled:opacity-50" 
+                />
+                {convertingPdf && (
+                  <p className="text-xs text-brand-400 animate-pulse px-2">Converting PDF to Image...</p>
+                )}
+                {formData.receiptUrl && !receiptFile && (
+                  <div className="flex items-center gap-3 mt-1 px-2">
+                    <a href={formData.receiptUrl} target="_blank" className="text-xs text-blue-400 underline">View current receipt</a>
+                    <button 
+                      type="button"
+                      onClick={() => setFormData({ ...formData, receiptUrl: '' })}
+                      className="text-xs text-red-400 hover:text-red-300 font-semibold cursor-pointer"
+                    >
+                      Delete current image
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-white/5">
-              <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-full font-medium hover:bg-white/10 transition-colors" disabled={saving}>
+              <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-full font-medium hover:bg-white/10 transition-colors" disabled={saving || convertingPdf}>
                 Cancel
               </button>
-              <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-full font-medium transition-colors disabled:opacity-50">
+              <button onClick={handleSave} disabled={saving || convertingPdf} className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-full font-medium transition-colors disabled:opacity-50">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {saving ? "Saving..." : (editingId ? "Update Expense" : "Save Expense")}
               </button>
