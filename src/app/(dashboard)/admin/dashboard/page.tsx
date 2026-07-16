@@ -234,6 +234,7 @@ export default function DashboardPage() {
                         outerRadius={80}
                         paddingAngle={2}
                         dataKey="value"
+                        stroke="none"
                       >
                         {data.expenseBreakdown.map((entry: any, index: number) => {
                           const categoryColors: Record<string, string> = {
