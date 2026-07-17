@@ -23,7 +23,7 @@ export type BookingData = {
   booking_date: string; // YYYY-MM-DD
   start_time?: string | null; // HH:MM
   end_time?: string | null; // HH:MM
-  status: 'confirmed' | 'pending' | 'cancelled';
+  status: 'confirmed' | 'pending' | 'cancelled' | 'completed' | 'todo' | 'in_progress';
   price: number;
   location?: string | null;
   event_type?: 'booking' | 'task_reminder';

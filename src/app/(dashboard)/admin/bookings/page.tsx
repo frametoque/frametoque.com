@@ -3,19 +3,20 @@
 import { useEffect, useState, useRef } from "react";
 import { 
   Calendar as CalendarIcon, Plus, Trash2, Edit2, ChevronLeft, ChevronRight,
-  Clock, FileText, Folder, ChevronDown, CalendarPlus, X, Apple
+  Clock, FileText, Folder, CalendarPlus, X, Apple
 } from "lucide-react";
 import { 
   getBookings, createBooking, updateBooking, deleteBooking, getCalendarEvents,
   getSriLankaHolidays, BookingData, CalendarEvent 
 } from "../actions/bookings";
-import { getClients } from "../actions/actions";
 
 const statusStyles: Record<string, string> = {
   "confirmed": "bg-green-500/20 text-green-400 border-green-500/30",
   "pending": "bg-amber-500/20 text-amber-400 border-amber-500/30",
   "cancelled": "bg-rose-500/20 text-rose-400 border-rose-500/30",
   "completed": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  "todo": "bg-slate-500/20 text-slate-400 border-slate-500/30",
+  "in_progress": "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
 };
 
 const formatLKR = (amount: number) => {
@@ -31,7 +32,6 @@ export default function BookingsAdminPage() {
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [sriLankaHolidays, setSriLankaHolidays] = useState<Record<string, string>>({});
-  const [clients, setClients] = useState<{ id: string; name: string; email?: string | null; phone?: string | null; company?: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Modals state
@@ -50,16 +50,12 @@ export default function BookingsAdminPage() {
   }, []);
 
   // Form state
-  const [formClientId, setFormClientId] = useState<string>("");
   const [formTitle, setFormTitle] = useState("");
   const [formDescription, setFormDescription] = useState("");
-  const [formCustomerName, setFormCustomerName] = useState("");
-  const [formCustomerEmail, setFormCustomerEmail] = useState("");
-  const [formCustomerPhone, setFormCustomerPhone] = useState("");
   const [formBookingDate, setFormBookingDate] = useState("");
   const [formStartTime, setFormStartTime] = useState("");
   const [formEndTime, setFormEndTime] = useState("");
-  const [formStatus, setFormStatus] = useState<'confirmed' | 'pending' | 'cancelled'>("confirmed");
+  const [formStatus, setFormStatus] = useState<'confirmed' | 'pending' | 'cancelled' | 'completed' | 'todo' | 'in_progress'>("confirmed");
   const [formPrice, setFormPrice] = useState<number>(0);
   const [formLocation, setFormLocation] = useState("");
   const [formEventType, setFormEventType] = useState<'booking' | 'task_reminder'>("booking");
@@ -110,16 +106,14 @@ export default function BookingsAdminPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [bList, eList, hList, cList] = await Promise.all([
+      const [bList, eList, hList] = await Promise.all([
         getBookings(),
         getCalendarEvents(),
-        getSriLankaHolidays().catch(() => ({})),
-        getClients().catch(() => [])
+        getSriLankaHolidays().catch(() => ({}))
       ]);
       setBookings(bList);
       setCalendarEvents(eList);
       setSriLankaHolidays(hList);
-      setClients(cList);
     } catch (e) {
       console.error("Failed to load bookings data:", e);
     } finally {
@@ -133,12 +127,8 @@ export default function BookingsAdminPage() {
 
   const openNewModal = (dateStr?: string) => {
     setEditingBooking(null);
-    setFormClientId("");
     setFormTitle("");
     setFormDescription("");
-    setFormCustomerName("");
-    setFormCustomerEmail("");
-    setFormCustomerPhone("");
     setFormBookingDate(dateStr || new Date().toISOString().split('T')[0]);
     setFormStartTime("");
     setFormEndTime("");
@@ -151,12 +141,8 @@ export default function BookingsAdminPage() {
 
   const openEditModal = (booking: BookingData) => {
     setEditingBooking(booking);
-    setFormClientId(booking.client_id || "");
     setFormTitle(booking.title);
     setFormDescription(booking.description || "");
-    setFormCustomerName(booking.customer_name);
-    setFormCustomerEmail(booking.customer_email || "");
-    setFormCustomerPhone(booking.customer_phone || "");
     setFormBookingDate(booking.booking_date);
     setFormStartTime(booking.start_time || "");
     setFormEndTime(booking.end_time || "");
@@ -167,35 +153,21 @@ export default function BookingsAdminPage() {
     setIsModalOpen(true);
   };
 
-  const handleClientChange = (clientIdVal: string) => {
-    if (clientIdVal === "") {
-      setFormClientId("");
-      return;
-    }
-    setFormClientId(clientIdVal);
-    const selected = clients.find(c => c.id === clientIdVal);
-    if (selected) {
-      setFormCustomerName(selected.name);
-      setFormCustomerEmail(selected.email || "");
-      setFormCustomerPhone(selected.phone || "");
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const isTask = formEventType === 'task_reminder';
-    if (!formTitle || (!isTask && !formCustomerName) || !formBookingDate) {
+    if (!formTitle || !formBookingDate) {
       alert("Please fill in all required fields.");
       return;
     }
 
     const payload: BookingData = {
-      client_id: isTask ? null : (formClientId === "" ? null : formClientId),
+      client_id: null,
       title: formTitle,
       description: formDescription,
-      customer_name: isTask ? 'Task' : formCustomerName,
-      customer_email: isTask ? null : (formCustomerEmail || null),
-      customer_phone: isTask ? null : (formCustomerPhone || null),
+      customer_name: formTitle || 'Event',
+      customer_email: null,
+      customer_phone: null,
       booking_date: formBookingDate,
       start_time: formStartTime || null,
       end_time: formEndTime || null,
@@ -446,25 +418,11 @@ export default function BookingsAdminPage() {
                   </div>
 
                   <div className="border-t border-white/5 pt-3 flex flex-col gap-1.5 text-xs text-gray-300">
-                    {b.event_type !== 'task_reminder' && (
-                      <>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Client:</span>
-                          <span className="font-medium text-white">{b.customer_name}</span>
-                        </div>
-                        {b.location && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Location:</span>
-                            <span className="font-medium text-brand-300">{b.location}</span>
-                          </div>
-                        )}
-                        {b.customer_phone && (
-                          <div className="flex justify-between text-[11px] text-gray-400">
-                            <span>Contact:</span>
-                            <span>{b.customer_phone}</span>
-                          </div>
-                        )}
-                      </>
+                    {b.event_type !== 'task_reminder' && b.location && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Location:</span>
+                        <span className="font-medium text-brand-300">{b.location}</span>
+                      </div>
                     )}
                     <div className="flex justify-between">
                       <span className="text-gray-400">Date/Time:</span>
@@ -500,7 +458,7 @@ export default function BookingsAdminPage() {
       {/* Modal - New / Edit Booking */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden backdrop-blur-xl flex flex-col max-h-[90vh]">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden backdrop-blur-xl flex flex-col h-[850px] max-h-[95vh]">
             <div className="border-b border-white/10 p-6 flex justify-between items-center flex-shrink-0">
               <h3 className="text-lg font-bold text-white">
                 {editingBooking ? "Edit Event Details" : "Create New Event"}
@@ -520,7 +478,7 @@ export default function BookingsAdminPage() {
                     onClick={() => setFormEventType("booking")}
                     className={`py-2 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
                       formEventType === "booking"
-                        ? "bg-brand-600 text-white shadow-lg"
+                        ? "bg-white text-black shadow-lg"
                         : "text-gray-400 hover:text-white"
                     }`}
                   >
@@ -531,7 +489,7 @@ export default function BookingsAdminPage() {
                     onClick={() => setFormEventType("task_reminder")}
                     className={`py-2 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
                       formEventType === "task_reminder"
-                        ? "bg-blue-600 text-white shadow-lg"
+                        ? "bg-white text-black shadow-lg"
                         : "text-gray-400 hover:text-white"
                     }`}
                   >
@@ -564,52 +522,6 @@ export default function BookingsAdminPage() {
 
               {formEventType === 'booking' && (
                 <>
-                  <div className="space-y-1">
-                    <label className="text-xs text-gray-400 font-semibold uppercase">Link to Client (Optional)</label>
-                    <div className="relative">
-                      <select
-                        value={formClientId}
-                        onChange={(e) => handleClientChange(e.target.value)}
-                        className="w-full bg-black border border-white/10 rounded-2xl px-4 py-3 text-sm text-white outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer"
-                      >
-                        <option value="">-- Select Client --</option>
-                        {clients.map(c => (
-                          <option key={c.id} value={c.id}>
-                            {c.name} {c.company ? `(${c.company})` : ""}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
-                        <ChevronDown className="w-4 h-4" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs text-gray-400 font-semibold uppercase">Client Name *</label>
-                      <input
-                        type="text"
-                        required={formEventType === 'booking'}
-                        placeholder="Name"
-                        value={formCustomerName}
-                        onChange={(e) => setFormCustomerName(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder-gray-500 outline-none focus:border-brand-500 transition-colors"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs text-gray-400 font-semibold uppercase">Client Phone</label>
-                      <input
-                        type="text"
-                        placeholder="+94 77 123 4567"
-                        value={formCustomerPhone}
-                        onChange={(e) => setFormCustomerPhone(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder-gray-500 outline-none focus:border-brand-500 transition-colors"
-                      />
-                    </div>
-                  </div>
-
                   <div className="space-y-1 relative" ref={dropdownRef}>
                     <label className="text-xs text-gray-400 font-semibold uppercase">Event Location</label>
                     <div className="relative">
@@ -698,8 +610,10 @@ export default function BookingsAdminPage() {
                 >
                   {formEventType === 'task_reminder' ? (
                     <>
-                      <option value="pending">Pending</option>
+                      <option value="todo">To Do</option>
+                      <option value="in_progress">In Progress</option>
                       <option value="completed">Completed</option>
+                      <option value="pending">Pending</option>
                       <option value="cancelled">Cancelled</option>
                     </>
                   ) : (
