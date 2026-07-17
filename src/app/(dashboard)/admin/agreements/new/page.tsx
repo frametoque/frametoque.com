@@ -178,22 +178,22 @@ export default function NewAgreementPage() {
               <div className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-3">
                 <h3 className="text-sm font-semibold text-brand-400">New Client Details</h3>
                 <input type="text" name="name" placeholder="Client Name" value={newClientData.name} onChange={handleNewClientChange}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
                 <input type="email" name="email" placeholder="Email" value={newClientData.email} onChange={handleNewClientChange}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
                 <input type="text" name="company" placeholder="Company (Optional)" value={newClientData.company} onChange={handleNewClientChange}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
                 <input type="text" name="phone" placeholder="Phone (Optional)" value={newClientData.phone} onChange={handleNewClientChange}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
                 <textarea name="address" placeholder="Billing Address (Optional)" value={newClientData.address} onChange={handleNewClientChange}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm resize-none" rows={2} />
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm resize-none" rows={2} />
                 <div className="flex gap-2 pt-2">
                   <button onClick={handleCreateNewClient}
-                    className="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-sm font-medium transition-colors">
+                    className="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-medium transition-colors">
                     Create Client
                   </button>
                   <button onClick={() => { setShowNewClientForm(false); setFormData(prev => ({ ...prev, clientId: "" })); }}
-                    className="flex-1 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded-lg text-sm font-medium transition-colors">
+                    className="flex-1 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-sm font-medium transition-colors">
                     Cancel
                   </button>
                 </div>

@@ -95,7 +95,7 @@ export default function ServicesSub({ categorySlug }: Props) {
   // Fetch cards from API route
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/services/cards?category=${categorySlug}`)
+    fetch(`/api/services/cards?category=${categorySlug}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data: ServiceCard[]) => {
         setPrices(data);
@@ -117,7 +117,7 @@ export default function ServicesSub({ categorySlug }: Props) {
   useEffect(() => {
     const handler = (e: CustomEvent<{ currency: string }>) => {
       if (e.detail.currency === "USD") {
-        fetch(`/api/services/cards?category=${categorySlug}`)
+        fetch(`/api/services/cards?category=${categorySlug}`, { cache: "no-store" })
           .then((r) => r.json())
           .then((data: ServiceCard[]) =>
             convertPricesToUSD(data).then((converted) => {
@@ -126,7 +126,7 @@ export default function ServicesSub({ categorySlug }: Props) {
             })
           );
       } else {
-        fetch(`/api/services/cards?category=${categorySlug}`)
+        fetch(`/api/services/cards?category=${categorySlug}`, { cache: "no-store" })
           .then((r) => r.json())
           .then((data: ServiceCard[]) => {
             setPrices(data);

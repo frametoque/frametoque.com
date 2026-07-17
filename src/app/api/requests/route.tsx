@@ -1,17 +1,10 @@
 import { NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import sql from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
 
-const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
-
 export async function GET(request) {
   console.log('API Route: /api/requests called');
-  
-  let client;
   
   try {
     const { searchParams } = new URL(request.url);
@@ -26,9 +19,7 @@ export async function GET(request) {
       );
     }
 
-    client = await pool.connect();
-    
-    const result = await client.query(`
+    const rows = await sql`
       SELECT 
         invoice_id,
         user_email,
@@ -44,45 +35,44 @@ export async function GET(request) {
         category,
         created_at
       FROM public.invoices
-      WHERE LOWER(user_email) = LOWER($1) 
+      WHERE LOWER(user_email) = LOWER(${user_email}) 
       ORDER BY created_at DESC
-    `, [user_email]);
+    `;
     
-    console.log(`Found ${result.rows.length} invoices for user_email: ${user_email}`);
+    console.log(`Found ${rows.length} invoices for user_email: ${user_email}`);
     
-    const formattedRequests = result.rows.map(row => {
-      const subtotal = parseFloat(row.subtotal || 0);
-      const discount = parseFloat(row.discount || 0);
+    const formattedRequests = rows.map(row => {
+      const subtotal = parseFloat((row as any).subtotal || 0);
+      const discount = parseFloat((row as any).discount || 0);
       const finalTotal = subtotal - discount;
 
       return {
-        id: row.invoice_id,
-        title: row.project_name || 'Untitled Project',
-        request_id: row.invoice_id,
-        invoice_number: row.invoice_id,
-        submitted_at: row.date ? new Date(row.date).toISOString() : (row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString()),
-        status: row.work_status || 'pending',
-        progress: row.work_status === 'completed' ? 100 : row.work_status === 'in progress' ? 50 : 10,
+        id: (row as any).invoice_id,
+        title: (row as any).project_name || 'Untitled Project',
+        request_id: (row as any).invoice_id,
+        invoice_number: (row as any).invoice_id,
+        submitted_at: (row as any).date ? new Date((row as any).date).toISOString() : ((row as any).created_at ? new Date((row as any).created_at).toISOString() : new Date().toISOString()),
+        status: (row as any).work_status || 'pending',
+        progress: (row as any).work_status === 'completed' ? 100 : (row as any).work_status === 'in progress' ? 50 : 10,
         price: finalTotal,
-        type: row.category,
+        type: (row as any).category,
         description: null,
-        user_email: row.user_email,
+        user_email: (row as any).user_email,
         client_id: null,
-        created_at: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
-        payment_status: row.payment_status || 'unpaid',
-        total_due: row.total_due ? parseFloat(row.total_due) : 0,
+        created_at: (row as any).created_at ? new Date((row as any).created_at).toISOString() : new Date().toISOString(),
+        payment_status: (row as any).payment_status || 'unpaid',
+        total_due: (row as any).total_due ? parseFloat((row as any).total_due) : 0,
         total: finalTotal,
-        currency: row.currency || 'LKR',
+        currency: (row as any).currency || 'LKR',
       };
     });
     
     return NextResponse.json(formattedRequests);
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Database error:', error);
     
     if (error.message.includes('relation "public.projects" does not exist')) {
-      console.log('Projects table does not exist, returning empty array');
       return NextResponse.json([]);
     }
     
@@ -101,10 +91,5 @@ export async function GET(request) {
       },
       { status: 500 }
     );
-    
-  } finally {
-    if (client) {
-      client.release();
-    }
   }
 }

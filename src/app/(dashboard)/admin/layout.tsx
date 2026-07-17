@@ -108,239 +108,6 @@ export default function DashboardLayout({ children }) {
   // OR if the user is hovering over it while it is collapsed.
   const desktopExpanded = !collapsed || (sidebarHovered && !ignoreHover);
 
-  // ------------------ Sidebar ------------------
-  const Sidebar = ({ mobileMenuOpen, setMobileMenuOpen, collapsed, toggleCollapsed, sidebarHovered, setSidebarHovered }) => {
-    const pathname = usePathname();
-    const { user, isLoaded } = useUser();
-
-    const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
-      { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-      { name: "Income", href: "/admin/income", icon: Wallet },
-      { name: "Expenses", href: "/admin/expenses", icon: Receipt },
-      { name: "Bookings", href: "/admin/bookings", icon: Calendar },
-      { name: "Invoices", href: "/admin/invoices", icon: FileText },
-      { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
-      { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
-      { name: "Clients", href: "/admin/clients", icon: Users },
-      { name: "Reports", href: "/admin/reports", icon: BarChart3 },
-      { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
-      { name: "Services", href: "/admin/services", icon: Briefcase },
-      { name: "Portfolio", href: "/admin/portfolio", icon: Layers },
-    ];
-
-    const isActive = (href: string) => {
-      if (href === "/admin/dashboard") return pathname === href;
-      if (href === "/admin/invoices") {
-        return pathname.startsWith("/admin/invoices") || pathname.startsWith("/admin/invoice");
-      }
-      return pathname.startsWith(href);
-    };
-
-    return (
-      <>
-        {/* Mobile backdrop */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              key="backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-              onClick={() => setMobileMenuOpen(false)}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Sidebar */}
-        <motion.aside
-          onMouseEnter={() => {
-            if (collapsed && !ignoreHover) {
-              setSidebarHovered(true);
-            }
-          }}
-          onMouseLeave={() => {
-            if (collapsed) {
-              setSidebarHovered(false);
-              setIgnoreHover(false);
-            }
-          }}
-          animate={{
-            width: desktopExpanded ? 200 : 80,
-            x: mobileMenuOpen ? 0 : undefined,
-          }}
-          transition={sidebarSpring}
-          className={`fixed top-0 left-0 h-full bg-black backdrop-blur-xl border-r border-white/10 z-50
-            w-64
-            ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
-          style={{ overflow: "hidden" }}
-        >
-          <div className="flex flex-col h-full">
-
-            {/* Logo + Collapse toggle */}
-            <div className="flex items-center justify-between border-b border-white/10 h-20 flex-shrink-0 overflow-hidden px-4">
-
-              {desktopExpanded ? (
-                <>
-                  <div className="flex-1 flex justify-start overflow-hidden">
-                    <Link href="/" className="lg:block">
-                      <Image
-                        src="/logos/ft/name-logo.png"
-                        alt="Frametoque"
-                        width={145}
-                        height={29}
-                        className="h-[29px] w-[145px] flex-shrink-0 animate-fade-in"
-                      />
-                    </Link>
-                  </div>
-                  
-                  {/* Desktop: collapse toggle button */}
-                  <button
-                    onClick={toggleCollapsed}
-                    className="hidden lg:flex items-center justify-center p-2 hover:bg-white/10 rounded-3xl ml-auto text-gray-400 hover:text-white transition-colors cursor-pointer"
-                    title="Collapse Sidebar"
-                  >
-                    <PanelLeftClose className="w-5 h-5" />
-                  </button>
-                </>
-              ) : (
-                <div className="flex-1 flex items-center justify-center relative group w-full h-full">
-                  {/* Default collapsed: Logo */}
-                  <div className="group-hover:opacity-0 transition-opacity duration-150 flex items-center justify-center">
-                    <Image
-                      src="/logos/ft/logo.png"
-                      alt="Logo"
-                      width={32}
-                      height={32}
-                      className="w-8 h-8 flex-shrink-0 object-contain"
-                    />
-                  </div>
-                  {/* Hover collapsed: lock toggle button */}
-                  <button
-                    onClick={toggleCollapsed}
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center p-2 hover:bg-white/10 rounded-3xl text-gray-300 hover:text-white transition-all duration-150 cursor-pointer"
-                    title="Expand Sidebar"
-                  >
-                    <PanelLeftOpen className="w-5 h-5" />
-                  </button>
-                </div>
-              )}
-
-              {/* Mobile: close button */}
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="lg:hidden p-2 hover:bg-white/10 rounded-3xl ml-auto"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Nav links */}
-            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-              {links.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.href);
-                return (
-                  <div key={item.href}>
-                    {item.name === "Services" && (
-                      <div className="my-4 border-t border-white/10" />
-                    )}
-                    <Link
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      target={item.newtab ? "_blank" : "_self"}
-                      className={`flex items-center gap-3 pl-[14px] pr-3 py-3 rounded-3xl transition-colors duration-150 overflow-hidden w-full justify-start
-                        ${active
-                          ? "bg-white text-black font-semibold"
-                          : "text-gray-300 hover:bg-white/5"
-                        }`}
-                    >
-                      <span className="flex-shrink-0">
-                        <Icon className="w-5 h-5" />
-                      </span>
-
-                      {desktopExpanded && (
-                        <span className="overflow-hidden whitespace-nowrap text-sm">
-                          {item.name}
-                        </span>
-                      )}
-                      {/* Always visible on mobile */}
-                      <span className="lg:hidden">{item.name}</span>
-                    </Link>
-                  </div>
-                );
-              })}
-            </nav>
-
-            {/* User section */}
-            <div className="p-4 border-t border-white/10">
-              <Link href="/admin/settings">
-                <motion.div
-                  whileHover={{ backgroundColor: "rgba(255,255,255,0.07)" }}
-                  transition={{ duration: 0.15 }}
-                  className="flex items-center gap-3 pl-[4px] pr-3 py-3 bg-transparent rounded-3xl mb-3 overflow-hidden w-full justify-start"
-                >
-                  <div className="flex-shrink-0 w-10 h-10">
-                    {isLoaded && user?.imageUrl ? (
-                      <img
-                        src={user.imageUrl}
-                        alt={user.fullName || "User"}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-brand-600 to-brand-700 flex items-center justify-center text-white font-semibold">
-                        {user?.firstName?.charAt(0) || "U"}
-                      </div>
-                    )}
-                  </div>
- 
-                  {desktopExpanded && user && (
-                    <div className="overflow-hidden">
-                      <p className="text-sm font-semibold whitespace-nowrap">{user.fullName}</p>
-                      <p className="text-xs text-gray-400 whitespace-nowrap">
-                        {user.emailAddresses[0]?.emailAddress?.length > 20
-                          ? `${user.emailAddresses[0].emailAddress.substring(0, 20)}...`
-                          : user.emailAddresses[0]?.emailAddress}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Always visible on mobile */}
-                  {user && (
-                    <div className="lg:hidden">
-                      <p className="text-sm font-semibold">{user.fullName}</p>
-                      <p className="text-xs text-gray-400">
-                        {user.emailAddresses[0]?.emailAddress?.length > 20
-                          ? `${user.emailAddresses[0].emailAddress.substring(0, 20)}...`
-                          : user.emailAddresses[0]?.emailAddress}
-                      </p>
-                    </div>
-                  )}
-                </motion.div>
-              </Link>
- 
-              <SignOutButton redirectUrl="/login">
-                <button
-                  className="flex items-center gap-3 pl-[14px] pr-3 py-3 w-full text-gray-300 hover:text-red-400 rounded-3xl overflow-hidden justify-start transition-colors hover:bg-red-500/10"
-                >
-                  <LogOut className="w-5 h-5 flex-shrink-0" />
-
-                  {desktopExpanded && (
-                    <span className="overflow-hidden whitespace-nowrap text-sm">
-                      Logout
-                    </span>
-                  )}
-                  <span className="lg:hidden">Logout</span>
-                </button>
-              </SignOutButton>
-            </div>
-          </div>
-        </motion.aside>
-      </>
-    );
-  };
-
   const { user, isLoaded } = useUser();
 
   return (
@@ -354,6 +121,9 @@ export default function DashboardLayout({ children }) {
           toggleCollapsed={toggleCollapsed}
           sidebarHovered={sidebarHovered}
           setSidebarHovered={setSidebarHovered}
+          ignoreHover={ignoreHover}
+          setIgnoreHover={setIgnoreHover}
+          desktopExpanded={desktopExpanded}
         />
 
         {/* Content padding is driven by the *persistent* collapsed state, not hover, so layout doesn't shift on hover */}
@@ -498,7 +268,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
           </button>
 
           {/* Page Title */}
-          <h1 className="text-xl font-bold text-white tracking-tight hidden sm:block">
+          <h1 className="text-xl font-bold text-white tracking-tight">
             {getPageTitle(pathname)}
           </h1>
 
@@ -550,26 +320,27 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
               <div className="flex gap-2">
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("bookings:open-subscribe"))}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
                 >
                   <CalendarPlus className="w-4 h-4 text-brand-500" />
-                  Add to Your Calendar
+                  <span className="hidden sm:inline">Add to Your Calendar</span>
                 </button>
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("bookings:open-new-event"))}
-                  className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors active:scale-95 duration-200 cursor-pointer text-sm"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors active:scale-95 duration-200 cursor-pointer text-sm"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Event
+                  <span className="hidden sm:inline">Add Event</span>
+                  <span className="sm:hidden">Add</span>
                 </button>
               </div>
                 ) : isClients ? (
                   <div className="flex items-center gap-3">
-                    <div className="relative w-full sm:w-64">
+                    <div className="relative w-32 sm:w-64">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
                         type="text"
-                        placeholder="Search clients..."
+                        placeholder="Search..."
                         value={headerSearchTerm}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -730,5 +501,265 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
 
       </div>
     </header>
+  );
+};
+
+// ------------------ Sidebar Component (Module Level) ------------------
+const Sidebar = ({
+  mobileMenuOpen,
+  setMobileMenuOpen,
+  collapsed,
+  toggleCollapsed,
+  sidebarHovered,
+  setSidebarHovered,
+  ignoreHover,
+  setIgnoreHover,
+  desktopExpanded,
+}: {
+  mobileMenuOpen: boolean;
+  setMobileMenuOpen: (open: boolean) => void;
+  collapsed: boolean;
+  toggleCollapsed: () => void;
+  sidebarHovered: boolean;
+  setSidebarHovered: (hovered: boolean) => void;
+  ignoreHover: boolean;
+  setIgnoreHover: (ignore: boolean) => void;
+  desktopExpanded: boolean;
+}) => {
+  const pathname = usePathname();
+  const { user, isLoaded } = useUser();
+
+  const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
+    { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { name: "Income", href: "/admin/income", icon: Wallet },
+    { name: "Expenses", href: "/admin/expenses", icon: Receipt },
+    { name: "Bookings", href: "/admin/bookings", icon: Calendar },
+    { name: "Invoices", href: "/admin/invoices", icon: FileText },
+    { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
+    { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
+    { name: "Clients", href: "/admin/clients", icon: Users },
+    { name: "Reports", href: "/admin/reports", icon: BarChart3 },
+    { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
+    { name: "Services", href: "/admin/services", icon: Briefcase },
+    { name: "Portfolio", href: "/admin/portfolio", icon: Layers },
+  ];
+
+  const isActive = (href: string) => {
+    if (href === "/admin/dashboard") return pathname === href;
+    if (href === "/admin/invoices") {
+      return pathname.startsWith("/admin/invoices") || pathname.startsWith("/admin/invoice");
+    }
+    return pathname.startsWith(href);
+  };
+
+  const sidebarSpring = {
+    type: "spring",
+    stiffness: 280,
+    damping: 28,
+    mass: 0.8,
+  } as const;
+
+  return (
+    <>
+      {/* Mobile backdrop */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
+      <motion.aside
+        onMouseEnter={() => {
+          if (collapsed && !ignoreHover) {
+            setSidebarHovered(true);
+          }
+        }}
+        onMouseLeave={() => {
+          if (collapsed) {
+            setSidebarHovered(false);
+            setIgnoreHover(false);
+          }
+        }}
+        animate={{
+          width: desktopExpanded ? 200 : 80,
+          x: mobileMenuOpen ? 0 : undefined,
+        }}
+        transition={sidebarSpring}
+        className={`fixed top-0 left-0 h-full bg-black backdrop-blur-xl border-r border-white/10 z-50
+          w-64
+          ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+        style={{ overflow: "hidden" }}
+      >
+        <div className="flex flex-col h-full">
+
+          {/* Logo + Collapse toggle */}
+          <div className="flex items-center justify-between border-b border-white/10 h-20 flex-shrink-0 overflow-hidden px-4">
+
+            {desktopExpanded ? (
+              <>
+                <div className="flex-1 flex justify-start overflow-hidden">
+                  <Link href="/" className="lg:block">
+                    <Image
+                      src="/logos/ft/name-logo.png"
+                      alt="Frametoque"
+                      width={125}
+                      height={25}
+                      className="h-[25px] w-[125px] flex-shrink-0 animate-fade-in"
+                    />
+                  </Link>
+                </div>
+                
+                {/* Desktop: collapse toggle button */}
+                <button
+                  onClick={toggleCollapsed}
+                  className="hidden lg:flex items-center justify-center p-2 hover:bg-white/10 rounded-3xl ml-auto text-gray-400 hover:text-white transition-colors cursor-pointer"
+                  title="Collapse Sidebar"
+                >
+                  <PanelLeftClose className="w-5 h-5" />
+                </button>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center relative group w-full h-full">
+                {/* Default collapsed: Logo */}
+                <div className="group-hover:opacity-0 transition-opacity duration-150 flex items-center justify-center">
+                  <Image
+                    src="/logos/ft/logo.png"
+                    alt="Logo"
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 flex-shrink-0 object-contain"
+                  />
+                </div>
+                {/* Hover collapsed: lock toggle button */}
+                <button
+                  onClick={toggleCollapsed}
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center p-2 hover:bg-white/10 rounded-3xl text-gray-300 hover:text-white transition-all duration-150 cursor-pointer"
+                  title="Expand Sidebar"
+                >
+                  <PanelLeftOpen className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+
+            {/* Mobile: close button */}
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="lg:hidden p-2 hover:bg-white/10 rounded-3xl ml-auto"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Nav links */}
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+            {links.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <div key={item.href}>
+                  {item.name === "Services" && (
+                    <div className="my-4 border-t border-white/10" />
+                  )}
+                  <Link
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    target={item.newtab ? "_blank" : "_self"}
+                    className={`flex items-center gap-3 pl-[14px] pr-3 py-3 rounded-3xl transition-colors duration-150 overflow-hidden w-full justify-start
+                      ${active
+                        ? "bg-white text-black font-semibold"
+                        : "text-gray-300 hover:bg-white/5"
+                      }`}
+                  >
+                    <span className="flex-shrink-0">
+                      <Icon className="w-5 h-5" />
+                    </span>
+
+                    {desktopExpanded && (
+                      <span className="hidden lg:block overflow-hidden whitespace-nowrap text-sm">
+                        {item.name}
+                      </span>
+                    )}
+                    {/* Always visible on mobile */}
+                    <span className="lg:hidden">{item.name}</span>
+                  </Link>
+                </div>
+              );
+            })}
+          </nav>
+
+          {/* User section */}
+          <div className="p-4 border-t border-white/10">
+            <Link href="/admin/settings">
+              <motion.div
+                whileHover={{ backgroundColor: "rgba(255,255,255,0.07)" }}
+                transition={{ duration: 0.15 }}
+                className="flex items-center gap-3 pl-[4px] pr-3 py-3 bg-transparent rounded-3xl mb-3 overflow-hidden w-full justify-start"
+              >
+                <div className="flex-shrink-0 w-10 h-10">
+                  {isLoaded && user?.imageUrl ? (
+                    <img
+                      src={user.imageUrl}
+                      alt={user.fullName || "User"}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-brand-600 to-brand-700 flex items-center justify-center text-white font-semibold">
+                      {user?.firstName?.charAt(0) || "U"}
+                    </div>
+                  )}
+                </div>
+
+                {desktopExpanded && user && (
+                  <div className="hidden lg:block overflow-hidden">
+                    <p className="text-sm font-semibold whitespace-nowrap">{user.fullName}</p>
+                    <p className="text-xs text-gray-400 whitespace-nowrap">
+                      {user.emailAddresses[0]?.emailAddress?.length > 20
+                        ? `${user.emailAddresses[0].emailAddress.substring(0, 20)}...`
+                        : user.emailAddresses[0]?.emailAddress}
+                    </p>
+                  </div>
+                )}
+
+                {/* Always visible on mobile */}
+                {user && (
+                  <div className="lg:hidden">
+                    <p className="text-sm font-semibold">{user.fullName}</p>
+                    <p className="text-xs text-gray-400">
+                      {user.emailAddresses[0]?.emailAddress?.length > 20
+                        ? `${user.emailAddresses[0].emailAddress.substring(0, 20)}...`
+                        : user.emailAddresses[0]?.emailAddress}
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            </Link>
+
+            <SignOutButton redirectUrl="/login">
+              <button
+                className="flex items-center gap-3 pl-[14px] pr-3 py-3 w-full text-gray-300 hover:text-red-400 rounded-3xl overflow-hidden justify-start transition-colors hover:bg-red-500/10"
+              >
+                <LogOut className="w-5 h-5 flex-shrink-0" />
+
+                {desktopExpanded && (
+                  <span className="hidden lg:block overflow-hidden whitespace-nowrap text-sm">
+                    Logout
+                  </span>
+                )}
+                <span className="lg:hidden">Logout</span>
+              </button>
+            </SignOutButton>
+          </div>
+        </div>
+      </motion.aside>
+    </>
   );
 };

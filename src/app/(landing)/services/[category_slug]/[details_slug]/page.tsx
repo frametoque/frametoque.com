@@ -3,6 +3,8 @@ import { Metadata } from "next";
 import ServiceDataPage from "@/components/services/ServiceDetails";
 import { getServiceBySlugAndCategory, getServiceMeta, TABLE_MAP } from "@/lib/services";
 
+export const dynamic = "force-dynamic";
+
 // All valid category slugs
 const VALID_CATEGORIES = Object.keys(TABLE_MAP);
 

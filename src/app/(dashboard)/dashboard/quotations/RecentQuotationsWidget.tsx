@@ -43,7 +43,7 @@ export default function RecentQuotationsWidget() {
         try {
           setLoading(true);
           const email = user.primaryEmailAddress.emailAddress;
-          const res = await fetch(`/api/quotation?user_email=${encodeURIComponent(email)}`);
+          const res = await fetch(`/api/quotation?user_email=${encodeURIComponent(email)}`, { cache: "no-store" });
           if (!res.ok) throw new Error("Failed to fetch quotations");
           const data = await res.json();
           setQuotations(data.slice(0, 3));

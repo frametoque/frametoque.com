@@ -42,7 +42,7 @@ export default function DashboardProjectsPage() {
         try {
           setLoading(true);
           const userEmail = user.primaryEmailAddress.emailAddress;
-          const response = await fetch(`/api/requests?user_email=${encodeURIComponent(userEmail)}`);
+          const response = await fetch(`/api/requests?user_email=${encodeURIComponent(userEmail)}`, { cache: "no-store" });
           if (!response.ok) throw new Error('Failed to fetch requests');
           const data = await response.json();
           setMyRequests(data);
@@ -81,8 +81,17 @@ export default function DashboardProjectsPage() {
   if (!isUserLoaded || loading) {
     return (
       <PageShell>
-        <div className="flex justify-center items-center h-64">
-          <div className="text-gray-400">{!isUserLoaded ? "Loading..." : "Loading your invoices..."}</div>
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-4">
+          <div className="h-6 bg-white/10 rounded-full w-48 mb-6" />
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex justify-between items-center py-4 border-b border-white/5 last:border-0">
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/10 rounded-full w-1/3" />
+                <div className="h-3 bg-white/5 rounded-full w-1/4" />
+              </div>
+              <div className="h-6 bg-white/10 rounded-full w-20" />
+            </div>
+          ))}
         </div>
       </PageShell>
     );

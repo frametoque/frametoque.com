@@ -46,7 +46,7 @@ export default function DashboardHome() {
 
     const loadProfile = async () => {
       try {
-        const res = await fetch(`/api/users/get-profile?userId=${user.id}`);
+        const res = await fetch(`/api/users/get-profile?userId=${user.id}`, { cache: "no-store" });
         const json = await res.json();
 
         if (json.success) {
@@ -114,7 +114,7 @@ export default function DashboardHome() {
       const fetchUnpaidInvoices = async () => {
         try {
           setLoadingInvoices(true);
-          const response = await fetch(`/api/requests?user_email=${encodeURIComponent(email)}`);
+          const response = await fetch(`/api/requests?user_email=${encodeURIComponent(email)}`, { cache: "no-store" });
           if (response.ok) {
             const data = await response.json();
             const unpaid = data.filter(

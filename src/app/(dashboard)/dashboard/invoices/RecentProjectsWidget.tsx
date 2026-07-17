@@ -48,7 +48,8 @@ export default function RecentProjectsWidget() {
           setLoading(true);
           const userEmail = user.primaryEmailAddress.emailAddress;
           const response = await fetch(
-            `/api/requests?user_email=${encodeURIComponent(userEmail)}`
+            `/api/requests?user_email=${encodeURIComponent(userEmail)}`,
+            { cache: "no-store" }
           );
 
           if (!response.ok) throw new Error("Failed to fetch requests");

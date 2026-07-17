@@ -58,9 +58,7 @@ const VALID_SLUGS = [
   "web-dev",
 ];
 
-export function generateStaticParams() {
-  return VALID_SLUGS.map((slug) => ({ slug }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function ProjectSlugPage({
   params,

@@ -2,12 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleAuth } from "google-auth-library";
 import { createSign } from "crypto";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { Pool } from "pg";
-
-const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
-});
+import sql from "@/lib/db";
 
 const ISSUER_ID    = (process.env.GOOGLE_WALLET_ISSUER_ID    ?? "").trim();
 const CLIENT_EMAIL = (process.env.GOOGLE_WALLET_CLIENT_EMAIL ?? "").trim();
@@ -227,25 +222,18 @@ export async function POST(
     }
 
     /* 2. Fetch invoice from DB directly */
-    const dbClient = await pool.connect();
-    let invoice: any;
-    try {
-      const result = await dbClient.query(
-        `SELECT
-          i.invoice_id, i.project_name, i.date, i.currency,
-          i.subtotal, i.discount, i.total, i.advance, i.total_due,
-          i.work_status, i.payment_status
-         FROM public.invoices i
-         WHERE i.invoice_id = $1 AND LOWER(i.user_email) = LOWER($2)`,
-        [invoice_id, userEmail]
-      );
-      if (result.rows.length === 0) {
-        return NextResponse.json({ error: "Invoice not found or access denied" }, { status: 404 });
-      }
-      invoice = result.rows[0];
-    } finally {
-      dbClient.release();
+    const result = await sql`
+      SELECT
+        i.invoice_id, i.project_name, i.date, i.currency,
+        i.subtotal, i.discount, i.total, i.advance, i.total_due,
+        i.work_status, i.payment_status
+       FROM public.invoices i
+       WHERE i.invoice_id = ${invoice_id} AND LOWER(i.user_email) = LOWER(${userEmail})
+    `;
+    if (result.length === 0) {
+      return NextResponse.json({ error: "Invoice not found or access denied" }, { status: 404 });
     }
+    const invoice = result[0] as any;
     console.log("[google-wallet] Invoice fetched from DB:", invoice.invoice_id);
 
     /* 2. Auth + ensure class */

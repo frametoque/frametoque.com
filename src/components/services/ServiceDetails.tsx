@@ -87,7 +87,7 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
   // Fetch service data from API
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/services/detail?category=${categorySlug}&service=${serviceType}`)
+    fetch(`/api/services/detail?category=${categorySlug}&service=${serviceType}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((row: ServiceRow) => {
         setData(row);

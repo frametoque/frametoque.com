@@ -168,8 +168,23 @@ export default function InvoicePage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
+      <div className="space-y-6 animate-pulse">
+        <div className="flex justify-between items-center">
+          <div className="h-8 bg-white/10 rounded-full w-48" />
+          <div className="h-10 bg-white/5 rounded-3xl w-32" />
+        </div>
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-8 space-y-6">
+          <div className="space-y-3">
+            <div className="h-6 bg-white/10 rounded-full w-1/3" />
+            <div className="h-4 bg-white/5 rounded-full w-1/4" />
+          </div>
+          <hr className="border-white/5" />
+          <div className="space-y-4">
+            <div className="h-4 bg-white/5 rounded-full w-full" />
+            <div className="h-4 bg-white/5 rounded-full w-5/6" />
+            <div className="h-4 bg-white/5 rounded-full w-2/3" />
+          </div>
+        </div>
       </div>
     );
   }

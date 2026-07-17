@@ -67,7 +67,7 @@ export default function ClientQuotationsPage() {
         try {
           setLoading(true);
           const email = user.primaryEmailAddress.emailAddress;
-          const res = await fetch(`/api/quotation?user_email=${encodeURIComponent(email)}`);
+          const res = await fetch(`/api/quotation?user_email=${encodeURIComponent(email)}`, { cache: "no-store" });
           if (!res.ok) throw new Error("Failed to fetch quotations");
           const data = await res.json();
           setQuotations(data);
@@ -224,8 +224,17 @@ export default function ClientQuotationsPage() {
   if (!isUserLoaded || loading) {
     return (
       <PageShell>
-        <div className="flex justify-center items-center h-64">
-          <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-4">
+          <div className="h-6 bg-white/10 rounded-full w-48 mb-6" />
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex justify-between items-center py-4 border-b border-white/5 last:border-0">
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/10 rounded-full w-1/3" />
+                <div className="h-3 bg-white/5 rounded-full w-1/4" />
+              </div>
+              <div className="h-6 bg-white/10 rounded-full w-20" />
+            </div>
+          ))}
         </div>
       </PageShell>
     );

@@ -24,6 +24,14 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
   const incomes = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`;
   const expenses = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`;
   const unpaid = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status IN ('unpaid', 'pending', 'partially paid')`;
+  const invoiceAging = await sql`
+    SELECT 
+      payment_status as status,
+      SUM(total) as amount_sum,
+      COUNT(*) as count
+    FROM invoices
+    GROUP BY payment_status
+  `;
   
   const totalIncome = incomes[0]?.total ? parseFloat(incomes[0].total) : 0;
   const totalExpenses = expenses[0]?.total ? parseFloat(expenses[0].total) : 0;
@@ -48,10 +56,24 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
   `;
 
   const recentInvoicesRaw = await sql`
-    SELECT invoice_id as id, user_email as client, total as amount, payment_status as status
-    FROM invoices
-    WHERE created_at >= ${start}::timestamp AND created_at <= (${end} || ' 23:59:59.999')::timestamp
-    ORDER BY created_at DESC
+    SELECT 
+      i.invoice_id as id, 
+      i.user_email as client, 
+      COALESCE((SELECT description FROM invoice_items WHERE invoice_id = i.invoice_id LIMIT 1), 'Service') as service,
+      i.total as amount, 
+      i.payment_status as status
+    FROM invoices i
+    WHERE i.created_at >= ${start}::timestamp AND i.created_at <= (${end} || ' 23:59:59.999')::timestamp
+    ORDER BY i.created_at DESC
+    LIMIT 4
+  `;
+
+  const recentQuotationsRaw = await sql`
+    SELECT q.id, COALESCE(q.description, 'Untitled') as project, COALESCE(c.email, 'Unknown') as client, q.amount as amount, q.status
+    FROM admin_quotations q
+    LEFT JOIN admin_clients c ON q.client_id = c.id
+    WHERE q.created_at >= ${start}::timestamp AND q.created_at <= (${end} || ' 23:59:59.999')::timestamp
+    ORDER BY q.created_at DESC
     LIMIT 4
   `;
 
@@ -92,6 +114,16 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     ORDER BY value DESC
   `;
 
+  const incomeBreakdownRange = await sql`
+    SELECT 
+      category as name,
+      SUM(amount) as value
+    FROM admin_incomes
+    WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+    GROUP BY category
+    ORDER BY value DESC
+  `;
+
   const previousIncome = parseFloat(incomeByYear.find(r => Math.round(parseFloat(r.year)) === 2025)?.total || 0);
   const currentIncome = parseFloat(incomeByYear.find(r => Math.round(parseFloat(r.year)) === 2026)?.total || 0);
 
@@ -102,6 +134,7 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
   const currentNet = currentIncome - currentExpense;
 
   const totalExpenseRange = expenseBreakdownRange.reduce((sum, r) => sum + parseFloat(r.value), 0);
+  const totalIncomeRange = incomeBreakdownRange.reduce((sum, r) => sum + parseFloat(r.value), 0);
 
   const expenseBreakdown = expenseBreakdownRange.map(r => {
     const val = parseFloat(r.value);
@@ -112,11 +145,26 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     };
   });
 
+  const incomeBreakdown = incomeBreakdownRange.map(r => {
+    const val = parseFloat(r.value);
+    return {
+      name: r.name || 'Other',
+      value: val,
+      percentage: totalIncomeRange > 0 ? parseFloat(((val / totalIncomeRange) * 100).toFixed(1)) : 0
+    };
+  });
+
   return {
     totalIncome,
     totalExpenses,
     netProfit,
+    incomeBreakdown,
     unpaidCount: unpaid[0]?.count || 0,
+    invoiceAging: invoiceAging.map(row => ({
+      status: row.status,
+      amount: parseFloat(row.amount_sum || 0),
+      count: parseInt(row.count || 0)
+    })),
     chartData: chartDataRaw.map(row => ({
       name: row.name,
       income: parseFloat(row.income),
@@ -124,6 +172,14 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     })),
     recentInvoices: recentInvoicesRaw.map(row => ({
       id: row.id,
+      service: row.service,
+      client: row.client,
+      amount: parseFloat(row.amount),
+      status: row.status,
+    })),
+    recentQuotations: recentQuotationsRaw.map(row => ({
+      id: row.id,
+      project: row.project,
       client: row.client,
       amount: parseFloat(row.amount),
       status: row.status,

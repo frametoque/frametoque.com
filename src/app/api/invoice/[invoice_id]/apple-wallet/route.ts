@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PKPass } from "passkit-generator";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { Pool } from "pg";
+import sql from "@/lib/db";
 import * as forge from "node-forge";
 import fs from "fs";
 import path from "path";
-
-/* ─── DB pool ─── */
-const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
-});
 
 /* ─── Env vars ─── */
 const PASS_TYPE_ID = (process.env.APPLE_PASS_TYPE_ID          ?? "").trim();
@@ -119,14 +113,12 @@ export async function POST(
     return NextResponse.json({ error: "User email not found" }, { status: 400 });
   }
 
-  let dbClient: any;
   try {
     const { invoice_id } = await params;
 
     /* 2. Fetch invoice from DB (owns-check included) */
-    dbClient = await pool.connect();
-    const result = await dbClient.query(
-      `SELECT
+     const result = await sql`
+      SELECT
         i.invoice_id,
         i.project_name,
         i.date,
@@ -139,14 +131,13 @@ export async function POST(
         i.work_status,
         i.payment_status
        FROM public.invoices i
-       WHERE i.invoice_id = $1 AND LOWER(i.user_email) = LOWER($2)`,
-      [invoice_id, userEmail]
-    );
+       WHERE i.invoice_id = ${invoice_id} AND LOWER(i.user_email) = LOWER(${userEmail})
+    `;
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return NextResponse.json({ error: "Invoice not found or access denied" }, { status: 404 });
     }
-    const invoice = result.rows[0];
+    const invoice = result[0] as any;
 
     /* 3. Financial calculations */
     const subtotal = parseFloat(invoice.subtotal ?? 0);
@@ -296,7 +287,5 @@ export async function POST(
       { error: "Failed to generate Apple Wallet pass", detail: err?.message },
       { status: 500 }
     );
-  } finally {
-    if (dbClient) dbClient.release();
   }
 }

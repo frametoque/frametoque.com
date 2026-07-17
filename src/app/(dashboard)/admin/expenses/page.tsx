@@ -19,6 +19,11 @@ const formatLKR = (amount: number) => {
   }).format(amount || 0);
 };
 
+const parseCategories = (catStr: string | null | undefined): string[] => {
+  if (!catStr) return [];
+  return catStr.split(',').map(s => s.trim()).filter(Boolean);
+};
+
 const convertPdfToImage = async (file: File): Promise<File> => {
   if (file.type !== "application/pdf") return file;
 
@@ -203,7 +208,34 @@ export default function ExpensesPage() {
   };
 
   if (loading || !data) {
-    return <div className="p-8 text-center text-gray-400 animate-pulse">Loading expenses data...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4 animate-pulse">
+              <div className="p-4 rounded-2xl bg-white/5 w-14 h-14" />
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/5 rounded-full w-24" />
+                <div className="h-6 bg-white/10 rounded-full w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-4">
+          <div className="h-6 bg-white/10 rounded-full w-48 mb-6" />
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex justify-between items-center py-4 border-b border-white/5 last:border-0">
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/10 rounded-full w-1/3" />
+                <div className="h-3 bg-white/5 rounded-full w-1/4" />
+              </div>
+              <div className="h-6 bg-white/10 rounded-full w-20" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   const stats = [
@@ -326,9 +358,13 @@ export default function ExpensesPage() {
                   <td className="p-4 font-semibold text-red-400">{formatLKR(row.amount)}</td>
                   <td className="p-4 text-sm text-gray-300">{row.desc}</td>
                   <td className="p-4 w-36">
-                    <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-white/10 border border-white/10 whitespace-nowrap block max-w-[120px] truncate text-center">
-                      {row.category}
-                    </span>
+                    <div className="flex flex-wrap gap-1 max-w-[144px]">
+                      {parseCategories(row.category).map((cat) => (
+                        <span key={cat} className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-white/10 border border-white/10 whitespace-nowrap">
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
                   </td>
                   <td className="p-4 text-sm">{row.paidVia}</td>
                   <td className="p-4 flex items-center justify-end gap-2">
@@ -533,10 +569,12 @@ export default function ExpensesPage() {
                   </div>
                 )}
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Category</p>
-                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-white/10 border border-white/10 inline-block">
-                    {viewingReceipt.category}
-                  </span>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2">Categories</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {parseCategories(viewingReceipt.category).map((cat) => (
+                      <span key={cat} className="px-2.5 py-1 text-xs font-medium rounded-full bg-white/10 border border-white/10">{cat}</span>
+                    ))}
+                  </div>
                 </div>
                 {viewingReceipt.desc && (
                   <div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, FileText, Users, Eye, Calendar, Folder, MapPin, CheckSquare } from "lucide-react";
+import { Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, FileText, Users, Eye, Calendar, Folder, MapPin, CheckSquare, Droplets } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { getDashboardData } from "../actions/actions";
 import { getAnalyticsData } from "../actions/analytics";
@@ -15,10 +15,13 @@ const formatLKR = (amount: number) => {
   }).format(amount || 0);
 };
 
+const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   const [analytics, setAnalytics] = useState<any>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [bookingForecasts, setBookingForecasts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { startDate, endDate } = useAdminDateRange();
 
@@ -26,13 +29,17 @@ export default function DashboardPage() {
     async function load() {
       setLoading(true);
       try {
-        const [res, analyticsRes, eventsRes] = await Promise.all([
+        const [res, analyticsRes, eventsRes, weatherRes] = await Promise.all([
           getDashboardData(startDate, endDate),
           getAnalyticsData("all time").catch(() => null),
           getCalendarEvents().catch(() => []),
+          fetch("/api/admin/weather").then(r => r.ok ? r.json() : null).catch(() => null),
         ]);
         setData(res);
         setAnalytics(analyticsRes);
+        if (weatherRes && weatherRes.bookingForecasts) {
+          setBookingForecasts(weatherRes.bookingForecasts);
+        }
 
         const todayStr = new Date().toISOString().split('T')[0];
         const upcoming = eventsRes
@@ -50,7 +57,53 @@ export default function DashboardPage() {
   }, [startDate, endDate]);
 
   if (loading || !data) {
-    return <div className="p-8 text-center text-gray-400 animate-pulse">Loading dashboard...</div>;
+    return (
+      <div className="space-y-6">
+        {/* Skeleton Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4 animate-pulse">
+              <div className="p-4 rounded-2xl bg-white/5 w-14 h-14" />
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/5 rounded-full w-24" />
+                <div className="h-6 bg-white/10 rounded-full w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Skeleton Analytics Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4 animate-pulse">
+              <div className="p-4 rounded-2xl bg-white/5 w-14 h-14" />
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/5 rounded-full w-24" />
+                <div className="h-6 bg-white/10 rounded-full w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Skeleton Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Skeleton Chart */}
+          <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-6">
+            <div className="h-6 bg-white/10 rounded-full w-40" />
+            <div className="h-[280px] bg-white/5 rounded-2xl" />
+          </div>
+          {/* Skeleton Events */}
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-6">
+            <div className="h-6 bg-white/10 rounded-full w-40" />
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-16 bg-white/5 rounded-2xl border border-white/5" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const stats = [
@@ -145,9 +198,14 @@ export default function DashboardPage() {
                 Icon = FileText;
               }
 
+              // Find matching weather forecast
+              const matchForecast = bookingForecasts.find(
+                (bf: any) => bf.title === ev.title && bf.location === ev.location
+              );
+
               return (
                 <div key={ev.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 pr-4">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-semibold text-white truncate max-w-[120px] sm:max-w-xs">{ev.title}</p>
                         {(() => {
@@ -183,6 +241,11 @@ export default function DashboardPage() {
                       </div>
                       
                       <div className="flex flex-col gap-1 mt-1.5 text-[11px] text-gray-300">
+                        {ev.location && (
+                          <div className="flex items-start gap-1.5">
+                            <span className="font-medium text-brand-400 break-words flex-1 leading-normal">{ev.location}</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-1.5">
                           <span className="text-gray-500">Date:</span>
                           <span className="font-medium text-white">{ev.date}</span>
@@ -193,16 +256,30 @@ export default function DashboardPage() {
                             <span className="font-medium text-white">{ev.time}</span>
                           </div>
                         )}
-                        {ev.location && (
-                          <div className="flex items-start gap-1.5">
-                            <span className="text-gray-500 shrink-0">Location:</span>
-                            <span className="font-medium text-white break-words flex-1 leading-normal">{ev.location}</span>
-                          </div>
-                        )}
+                        
                       </div>
-                    </div>
                   </div>
-                );
+
+                  {/* Weather forecast info inside event card */}
+                  {matchForecast && matchForecast.weather && (
+                    <div className="flex items-center gap-2 shrink-0 border-l border-white/5 pl-4 ml-2">
+                      <div className="text-right">
+                        <div className="flex items-center gap-0.5 justify-end text-sm font-bold text-blue-400 mb-0.5">
+                          <Droplets className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                          <span>{matchForecast.weather.precipitation}</span>
+                        </div>
+                        <p className="text-[9px] font-semibold text-gray-400">{matchForecast.weather.tempMax}</p>
+                      </div>
+                      <img 
+                        src={matchForecast.weather.iconUrl} 
+                        alt={matchForecast.weather.condition} 
+                        className="w-8 h-8 object-contain shrink-0" 
+                        title={matchForecast.weather.condition}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
             })}
             {upcomingEvents.length === 0 && <p className="text-gray-500 text-sm">No upcoming events scheduled.</p>}
           </div>
@@ -211,85 +288,138 @@ export default function DashboardPage() {
 
       {/* Net Income & Recent Invoices Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Net Income comparison table */}
-        <div className="lg:col-span-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
-          <h2 className="text-xl font-semibold mb-6">Net Income</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/10 text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                  <th className="py-3 px-4">Fiscal Year</th>
-                  <th className="py-3 px-4 text-right">Previous (2025)</th>
-                  <th className="py-3 px-4 text-right">Current (2026)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 text-sm">
-                <tr className="hover:bg-white/5 transition-colors">
-                  <td className="py-4 px-4 text-gray-300 font-medium">Income</td>
-                  <td className="py-4 px-4 text-right font-semibold text-green-400">
-                    {formatLKR(data.netIncomeComparison.previousIncome)}
-                  </td>
-                  <td className="py-4 px-4 text-right font-semibold text-green-400">
-                    {formatLKR(data.netIncomeComparison.currentIncome)}
-                  </td>
-                </tr>
-                <tr className="hover:bg-white/5 transition-colors">
-                  <td className="py-4 px-4 text-gray-300 font-medium">Expense</td>
-                  <td className="py-4 px-4 text-right font-semibold text-red-400">
-                    {formatLKR(data.netIncomeComparison.previousExpense)}
-                  </td>
-                  <td className="py-4 px-4 text-right font-semibold text-red-400">
-                    {formatLKR(data.netIncomeComparison.currentExpense)}
-                  </td>
-                </tr>
-                <tr className="hover:bg-white/5 transition-colors bg-white/5 font-semibold">
-                  <td className="py-4 px-4 text-white font-bold">Net Income</td>
-                  <td className={`py-4 px-4 text-right font-bold ${data.netIncomeComparison.previousNet >= 0 ? "text-green-400" : "text-red-400"}`}>
-                    {data.netIncomeComparison.previousNet < 0 ? "-" : ""}{formatLKR(Math.abs(data.netIncomeComparison.previousNet))}
-                  </td>
-                  <td className={`py-4 px-4 text-right font-bold ${data.netIncomeComparison.currentNet >= 0 ? "text-green-400" : "text-red-400"}`}>
-                    {data.netIncomeComparison.currentNet < 0 ? "-" : ""}{formatLKR(Math.abs(data.netIncomeComparison.currentNet))}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        {/* Recent Invoices */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold">Recent Invoices</h2>
+            </div>
+            <div className="space-y-4">
+              {data.recentInvoices.map((invoice: any, i: number) => {
+                let statusColor = "text-gray-400 bg-gray-400/10 border-gray-400/20";
+                const statusStr = invoice.status?.toLowerCase() || '';
+                if (statusStr === 'paid' || statusStr === 'fully paid') {
+                  statusColor = "text-green-400 bg-green-400/10 border-green-400/20";
+                } else if (statusStr === 'unpaid' || statusStr === 'pending') {
+                  statusColor = "text-amber-400 bg-amber-400/10 border-amber-400/20";
+                } else if (statusStr === 'overdue') {
+                  statusColor = "text-red-400 bg-red-400/10 border-red-400/20";
+                } else if (statusStr.includes('advance')) {
+                  statusColor = "text-blue-400 bg-blue-400/10 border-blue-400/20";
+                }
+
+                return (
+                  <div key={i} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <p className="font-semibold text-sm">{invoice.service || 'Service'}</p>
+                        <p className="text-xs text-gray-400">{invoice.client || 'Unknown'}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-sm">{formatLKR(invoice.amount)}</p>
+                      <span className={`inline-block mt-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${statusColor}`}>
+                        {invoice.status}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+              {data.recentInvoices.length === 0 && <p className="text-gray-500 text-sm">No recent invoices.</p>}
+            </div>
           </div>
         </div>
 
-        {/* Recent Invoices */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Recent Invoices</h2>
-          </div>
-          <div className="space-y-4">
-            {data.recentInvoices.map((invoice: any, i: number) => {
-              let statusColor = "text-gray-400 bg-gray-400/10 border-gray-400/20";
-              const statusStr = invoice.status?.toLowerCase() || '';
-              if (statusStr === 'paid') statusColor = "text-green-400 bg-green-400/10 border-green-400/20";
-              else if (statusStr === 'unpaid' || statusStr === 'pending') statusColor = "text-amber-400 bg-amber-400/10 border-amber-400/20";
-              else if (statusStr === 'overdue') statusColor = "text-red-400 bg-red-400/10 border-red-400/20";
+        {/* Recent Quotations */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold">Recent Quotations</h2>
+            </div>
+            <div className="space-y-4">
+              {data.recentQuotations && data.recentQuotations.map((quotation: any, i: number) => {
+                let statusColor = "text-gray-400 bg-gray-400/10 border-gray-400/20";
+                const statusStr = quotation.status?.toLowerCase() || '';
+                if (statusStr === 'accepted' || statusStr === 'approved') {
+                  statusColor = "text-green-400 bg-green-400/10 border-green-400/20";
+                } else if (statusStr === 'pending' || statusStr === 'sent') {
+                  statusColor = "text-amber-400 bg-amber-400/10 border-amber-400/20";
+                } else if (statusStr === 'rejected' || statusStr === 'declined') {
+                  statusColor = "text-red-400 bg-red-400/10 border-red-400/20";
+                } else if (statusStr === 'expired') {
+                  statusColor = "text-gray-400 bg-gray-400/10 border-gray-400/20";
+                }
 
-              return (
-                <div key={i} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">
+                return (
+                  <div key={i} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white/5 rounded-xl">
-                      <FileText className="w-5 h-5 text-gray-300" />
+                      <div>
+                        <p className="font-semibold text-sm">
+                          {quotation.project && quotation.project.length > 26 
+                            ? quotation.project.substring(0, 26) + '...' 
+                            : quotation.project || 'Untitled'}
+                        </p>
+                        <p className="text-xs text-gray-400">{quotation.client || 'Unknown'}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-sm">{invoice.id}</p>
-                      <p className="text-xs text-gray-400 truncate w-24">{invoice.client || 'Unknown'}</p>
+                    <div className="text-right">
+                      <p className="font-semibold text-sm">{formatLKR(quotation.amount)}</p>
+                      <span className={`inline-block mt-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${statusColor}`}>
+                        {quotation.status}
+                      </span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-sm">{formatLKR(invoice.amount)}</p>
-                    <span className={`inline-block mt-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${statusColor}`}>
-                      {invoice.status}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-            {data.recentInvoices.length === 0 && <p className="text-gray-500 text-sm">No recent invoices.</p>}
+                );
+              })}
+              {!data.recentQuotations || data.recentQuotations.length === 0 && <p className="text-gray-500 text-sm">No recent quotations.</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Net Income comparison table */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex flex-col justify-between">
+          <div>
+            <h2 className="text-xl font-semibold mb-6">Net Income</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                    <th className="py-3 px-4">Fiscal Year</th>
+                    <th className="py-3 px-4 text-right">Previous (2025)</th>
+                    <th className="py-3 px-4 text-right">Current (2026)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 text-sm">
+                  <tr className="hover:bg-white/5 transition-colors">
+                    <td className="py-4 px-4 text-gray-300 font-medium">Income</td>
+                    <td className="py-4 px-4 text-right font-semibold text-green-400">
+                      {formatLKR(data.netIncomeComparison.previousIncome)}
+                    </td>
+                    <td className="py-4 px-4 text-right font-semibold text-green-400">
+                      {formatLKR(data.netIncomeComparison.currentIncome)}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-white/5 transition-colors">
+                    <td className="py-4 px-4 text-gray-300 font-medium">Expense</td>
+                    <td className="py-4 px-4 text-right font-semibold text-red-400">
+                      {formatLKR(data.netIncomeComparison.previousExpense)}
+                    </td>
+                    <td className="py-4 px-4 text-right font-semibold text-red-400">
+                      {formatLKR(data.netIncomeComparison.currentExpense)}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-white/5 transition-colors bg-white/5 font-semibold">
+                    <td className="py-4 px-4 text-white font-bold">Net Income</td>
+                    <td className={`py-4 px-4 text-right font-bold ${data.netIncomeComparison.previousNet >= 0 ? "text-green-400" : "text-red-400"}`}>
+                      {data.netIncomeComparison.previousNet < 0 ? "-" : ""}{formatLKR(Math.abs(data.netIncomeComparison.previousNet))}
+                    </td>
+                    <td className={`py-4 px-4 text-right font-bold ${data.netIncomeComparison.currentNet >= 0 ? "text-green-400" : "text-red-400"}`}>
+                      {data.netIncomeComparison.currentNet < 0 ? "-" : ""}{formatLKR(Math.abs(data.netIncomeComparison.currentNet))}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

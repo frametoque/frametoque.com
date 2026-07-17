@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
-import { Pool } from "pg";
+import sql from "@/lib/db";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-
-const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
-});
 
 export async function GET(request, { params }) {
   const { invoice_id } = await params;
-  let dbClient;
 
   try {
     const { userId } = await auth();
@@ -32,10 +26,8 @@ export async function GET(request, { params }) {
       );
     }
 
-    dbClient = await pool.connect();
-
-   const result = await dbClient.query(
-      `SELECT
+    const result = await sql`
+      SELECT
         i.invoice_id,
         i.user_email,
         i.project_name,
@@ -53,17 +45,15 @@ export async function GET(request, { params }) {
         ac.address as billing_address
       FROM public.invoices i
       LEFT JOIN public.admin_clients ac ON LOWER(i.user_email) = LOWER(ac.email)
-      WHERE i.invoice_id = $1 AND LOWER(i.user_email) = LOWER($2)`,
-      [invoice_id, userEmail]
-    );
+      WHERE i.invoice_id = ${invoice_id} AND LOWER(i.user_email) = LOWER(${userEmail})
+    `;
 
-    if (result.rows.length === 0) {
-      const invoiceExists = await dbClient.query(
-        "SELECT user_email FROM public.invoices WHERE invoice_id = $1",
-        [invoice_id]
-      );
+    if (result.length === 0) {
+      const invoiceExists = await sql`
+        SELECT user_email FROM public.invoices WHERE invoice_id = ${invoice_id}
+      `;
       
-      if (invoiceExists.rows.length > 0) {
+      if (invoiceExists.length > 0) {
         return NextResponse.json(
           { error: "Unauthorized - This invoice does not belong to you" },
           { status: 403 }
@@ -76,27 +66,25 @@ export async function GET(request, { params }) {
       }
     }
 
-    const invoice = result.rows[0];
+    const invoice = result[0] as any;
     
     // Fetch line items
-    const itemsResult = await dbClient.query(
-      `SELECT description, price, total, quantity 
-       FROM public.invoice_items 
-       WHERE invoice_id = $1
-       ORDER BY id ASC`,
-      [invoice_id]
-    );
-    invoice.items = itemsResult.rows;
+    const itemsResult = await sql`
+      SELECT description, price, total, quantity 
+      FROM public.invoice_items 
+      WHERE invoice_id = ${invoice_id}
+      ORDER BY id ASC
+    `;
+    invoice.items = itemsResult;
 
     // Fetch payments history
-    const paymentsResult = await dbClient.query(
-      `SELECT date, amount, payment_method, description 
-       FROM public.admin_incomes 
-       WHERE invoice_id = $1
-       ORDER BY date DESC`,
-      [invoice_id]
-    );
-    invoice.payments = paymentsResult.rows.map(p => ({
+    const paymentsResult = await sql`
+      SELECT date, amount, payment_method, description 
+      FROM public.admin_incomes 
+      WHERE invoice_id = ${invoice_id}
+      ORDER BY date DESC
+    `;
+    invoice.payments = paymentsResult.map((p: any) => ({
       date: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       amount: parseFloat(p.amount),
       method: p.payment_method,
@@ -110,7 +98,5 @@ export async function GET(request, { params }) {
       { error: "Failed to fetch invoice" },
       { status: 500 }
     );
-  } finally {
-    if (dbClient) dbClient.release();
   }
 }

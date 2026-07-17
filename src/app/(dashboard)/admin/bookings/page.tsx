@@ -236,7 +236,42 @@ export default function BookingsAdminPage() {
   ];
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-400 animate-pulse">Loading bookings data...</div>;
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-pulse">
+        {/* Calendar Side */}
+        <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
+          <div className="flex justify-between items-center">
+            <div className="h-6 bg-white/10 rounded-full w-40" />
+            <div className="h-8 bg-white/5 rounded-2xl w-32" />
+          </div>
+          <div className="grid grid-cols-7 gap-2">
+            {[...Array(7)].map((_, i) => (
+              <div key={i} className="h-4 bg-white/5 rounded-full w-12 mx-auto" />
+            ))}
+            {[...Array(35)].map((_, i) => (
+              <div key={i} className="bg-white/5 border border-white/5 rounded-2xl h-20" />
+            ))}
+          </div>
+        </div>
+        
+        {/* Upcoming Events Side */}
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
+          <div className="h-6 bg-white/10 rounded-full w-44" />
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-28 bg-white/5 border border-white/5 rounded-2xl p-4 space-y-3">
+                <div className="flex justify-between">
+                  <div className="h-5 bg-white/10 rounded-full w-32" />
+                  <div className="h-5 bg-white/5 rounded-full w-16" />
+                </div>
+                <div className="h-4 bg-white/5 rounded-full w-48" />
+                <div className="h-4 bg-white/5 rounded-full w-24" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Week starts Monday: Monday=0 ... Sunday=6
@@ -633,13 +668,13 @@ export default function BookingsAdminPage() {
                         setIsModalOpen(false);
                       }
                     }}
-                    className="flex-1 bg-red-950/40 border border-red-500/30 hover:bg-red-900/40 text-red-400 font-semibold py-3.5 rounded-2xl active:scale-[0.98] transition-all duration-150 cursor-pointer"
+                    className="flex-1 bg-red-950/40 border border-red-500/30 hover:bg-red-900/40 text-red-400 font-semibold py-3.5 rounded-full active:scale-[0.98] transition-all duration-150 cursor-pointer"
                   >
                     Delete Booking
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-semibold py-3.5 rounded-2xl active:scale-[0.98] transition-transform duration-150 cursor-pointer"
+                    className="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-semibold py-3.5 rounded-full active:scale-[0.98] transition-transform duration-150 cursor-pointer"
                   >
                     Update Booking
                   </button>
@@ -647,7 +682,7 @@ export default function BookingsAdminPage() {
               ) : (
                 <button
                   type="submit"
-                  className="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-3.5 rounded-2xl active:scale-[0.98] transition-transform duration-150 cursor-pointer"
+                  className="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-3.5 rounded-full active:scale-[0.98] transition-transform duration-150 cursor-pointer"
                 >
                   Create Booking
                 </button>
@@ -753,7 +788,7 @@ export default function BookingsAdminPage() {
                     setIsSummaryModalOpen(false);
                     openNewModal(selectedDate);
                   }}
-                  className="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 rounded-2xl text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-1.5"
+                  className="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 rounded-full text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
                   Add Booking
@@ -783,7 +818,7 @@ export default function BookingsAdminPage() {
             
             <div className="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">    
               {/* Public Holiday Toggle Switch Option */}
-              <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
+              <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
                 <div>
                   <p className="text-sm font-semibold text-white">Include Public Holidays</p>
                   <p className="text-xs text-gray-400">Sync Sri Lankan national holidays</p>
@@ -807,7 +842,7 @@ export default function BookingsAdminPage() {
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <a
                   href={`${calendarUrl ? calendarUrl.replace(/^https?:/, "webcal:") : ""}?noHolidays=${!includeHolidays}`}
-                  className="flex items-center justify-center gap-2 w-full py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-2xl font-bold text-xs transition-colors text-center cursor-pointer"
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-bold text-xs transition-colors text-center cursor-pointer"
                 >
                   <svg className="w-4 h-4 mr-1" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="4" y="4" width="40" height="40" rx="8" fill="white" />
@@ -821,7 +856,7 @@ export default function BookingsAdminPage() {
                   href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(`${calendarUrl}?noHolidays=${!includeHolidays}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-2xl font-bold text-xs transition-colors text-center cursor-pointer"
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-bold text-xs transition-colors text-center cursor-pointer"
                 >
                   <svg className="w-4 h-4 mr-1" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="4" y="4" width="40" height="40" rx="8" fill="#4285F4" />

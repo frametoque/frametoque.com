@@ -205,7 +205,64 @@ export default function AnalyticsPage() {
 
   if (loading || !data) {
     return (
-      <div className="p-8 text-center text-gray-400 animate-pulse">Loading analytics...</div>
+      <div className="space-y-6 animate-pulse">
+        {/* Four Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4">
+              <div className="p-4 rounded-2xl bg-white/5 w-14 h-14" />
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/5 rounded-full w-24" />
+                <div className="h-6 bg-white/10 rounded-full w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Traffic Overview Line Chart */}
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
+          <div className="flex justify-between items-center">
+            <div className="h-6 bg-white/10 rounded-full w-40" />
+            <div className="flex gap-2">
+              <div className="h-8 bg-white/5 rounded-2xl w-16" />
+              <div className="h-8 bg-white/5 rounded-2xl w-16" />
+            </div>
+          </div>
+          <div className="h-[300px] bg-white/5 rounded-2xl" />
+        </div>
+
+        {/* Bottom Pages & Traffic Sources */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
+            <div className="h-6 bg-white/10 rounded-full w-32" />
+            <div className="space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex justify-between">
+                    <div className="h-4 bg-white/10 rounded-full w-1/3" />
+                    <div className="h-4 bg-white/5 rounded-full w-10" />
+                  </div>
+                  <div className="h-2 bg-white/5 rounded-full w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
+            <div className="h-6 bg-white/10 rounded-full w-32" />
+            <div className="space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex justify-between">
+                    <div className="h-4 bg-white/10 rounded-full w-1/3" />
+                    <div className="h-4 bg-white/5 rounded-full w-10" />
+                  </div>
+                  <div className="h-2 bg-white/5 rounded-full w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 

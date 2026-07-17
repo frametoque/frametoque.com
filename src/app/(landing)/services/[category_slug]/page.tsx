@@ -49,9 +49,7 @@ export async function generateMetadata({
   };
 }
 
-export function generateStaticParams() {
-  return VALID_SLUGS.map((slug) => ({ category_slug: slug }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function ServiceCategoryPage({
   params,

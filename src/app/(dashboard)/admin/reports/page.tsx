@@ -61,7 +61,13 @@ export default function ReportsPage() {
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("reports:tab-change", { detail: activeTab }));
-  }, [activeTab]);
+    if (activeTab === "trial_balance" && endDate === "2099-12-31") {
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
+      setEndDate(todayStr);
+      setStartDate("1970-01-01");
+    }
+  }, [activeTab, endDate, setEndDate, setStartDate]);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("reports:formatted-date", { detail: formatDateFriendly(endDate) }));
@@ -80,7 +86,68 @@ export default function ReportsPage() {
 
 
   if (loading || !data) {
-    return <div className="p-8 text-center text-gray-400 animate-pulse">Loading financial reports...</div>;
+    return (
+      <div className="space-y-6">
+        {/* Four Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4">
+              <div className="p-4 rounded-2xl bg-white/5 w-14 h-14" />
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/5 rounded-full w-24" />
+                <div className="h-6 bg-white/10 rounded-full w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tab Buttons */}
+        <div className="flex flex-wrap gap-2 animate-pulse">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-10 bg-white/5 border border-white/10 rounded-full w-32" />
+          ))}
+        </div>
+        
+        {/* Two side-by-side charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-pulse">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
+            <div className="h-6 bg-white/10 rounded-full w-40" />
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <div className="h-4 bg-white/5 rounded-full w-20" />
+                  <div className="h-8 bg-white/10 rounded-2xl flex-1" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
+            <div className="h-6 bg-white/10 rounded-full w-40" />
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <div className="h-4 bg-white/5 rounded-full w-20" />
+                  <div className="h-8 bg-white/10 rounded-2xl flex-1" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Client Revenue Chart */}
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-6">
+          <div className="h-6 bg-white/10 rounded-full w-48" />
+          <div className="space-y-3">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <div className="h-4 bg-white/5 rounded-full w-20" />
+                <div className="h-8 bg-white/10 rounded-2xl flex-1" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Compute chronological running balance
@@ -281,9 +348,6 @@ export default function ReportsPage() {
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-500/10 rounded-xl">
-                <BookOpen className="w-5 h-5 text-red-400" />
-              </div>
               <div>
                 <h2 className="text-xl font-semibold text-white">General Ledger</h2>
               </div>
@@ -297,7 +361,7 @@ export default function ReportsPage() {
                     onClick={() => setJournalFilter(filter)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
                       journalFilter === filter
-                        ? "bg-brand-600 text-white"
+                        ? "bg-white text-black"
                         : "text-gray-400 hover:text-white"
                     }`}
                   >
