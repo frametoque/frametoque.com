@@ -58,18 +58,19 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
   const recentInvoicesRaw = await sql`
     SELECT 
       i.invoice_id as id, 
-      i.user_email as client, 
+      COALESCE(c.full_name, i.user_email) as client, 
       COALESCE((SELECT description FROM invoice_items WHERE invoice_id = i.invoice_id LIMIT 1), 'Service') as service,
       i.total as amount, 
       i.payment_status as status
     FROM invoices i
+    LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
     WHERE i.created_at >= ${start}::timestamp AND i.created_at <= (${end} || ' 23:59:59.999')::timestamp
     ORDER BY i.created_at DESC
     LIMIT 4
   `;
 
   const recentQuotationsRaw = await sql`
-    SELECT q.id, COALESCE(q.description, 'Untitled') as project, COALESCE(c.email, 'Unknown') as client, q.amount as amount, q.status
+    SELECT q.id, COALESCE(q.description, 'Untitled') as project, COALESCE(c.full_name, 'Unknown') as client, q.amount as amount, q.status
     FROM admin_quotations q
     LEFT JOIN admin_clients c ON q.client_id = c.id
     WHERE q.created_at >= ${start}::timestamp AND q.created_at <= (${end} || ' 23:59:59.999')::timestamp
