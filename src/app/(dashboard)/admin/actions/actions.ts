@@ -227,7 +227,6 @@ export async function updateClient(clientId: string, data: { name?: string; emai
   // Cascade email change to every table that stores user_email
   if (emailChanged) {
     await sql`UPDATE invoices  SET user_email = ${newEmail} WHERE LOWER(user_email) = LOWER(${oldEmail})`;
-    await sql`UPDATE projects  SET user_email = ${newEmail} WHERE LOWER(user_email) = LOWER(${oldEmail})`;
   }
 }
 
@@ -313,6 +312,7 @@ export async function deleteIncome(id: number) {
 
 // -- EXPENSES --
 export async function getExpenses(startDate?: string, endDate?: string) {
+  await processRecurringExpenses();
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
   const statsThisMonth = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date)`;
@@ -343,6 +343,21 @@ export async function createExpense(data: any) {
     INSERT INTO admin_expenses (date, amount, description, category, payment_method, receipt_url)
     VALUES (${data.date}, ${data.amount}, ${data.description}, ${data.category}, ${data.paymentMethod}, ${data.receiptUrl || null})
   `;
+
+  if (data.isScheduled) {
+    let nextDate = new Date(data.date);
+    if (data.frequency === 'weekly') {
+      nextDate.setDate(nextDate.getDate() + 7);
+    } else if (data.frequency === 'monthly') {
+      nextDate.setMonth(nextDate.getMonth() + 1);
+    } else if (data.frequency === 'yearly') {
+      nextDate.setFullYear(nextDate.getFullYear() + 1);
+    }
+    await sql`
+      INSERT INTO admin_scheduled_expenses (title, amount, category, frequency, next_due_date, payment_method, status)
+      VALUES (${data.description}, ${data.amount}, ${data.category}, ${data.frequency}, ${nextDate.toISOString().split('T')[0]}, ${data.paymentMethod}, 'active')
+    `;
+  }
 }
 
 export async function updateExpense(id: number, data: any) {
@@ -357,6 +372,151 @@ export async function deleteExpense(id: number) {
   await sql`DELETE FROM admin_expenses WHERE id = ${id}`;
 }
 
+async function ensureScheduledExpensesTable() {
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS admin_scheduled_expenses (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        amount NUMERIC(12, 2) NOT NULL,
+        category VARCHAR(255) NOT NULL,
+        frequency VARCHAR(50) DEFAULT 'monthly',
+        next_due_date DATE NOT NULL,
+        payment_method VARCHAR(255) NOT NULL,
+        status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+  } catch (err) {
+    console.error("Migration: failed to create admin_scheduled_expenses table", err);
+  }
+}
+
+export async function processRecurringExpenses() {
+  await ensureScheduledExpensesTable();
+  try {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    const rows = await sql`
+      SELECT id, title, amount, category, frequency, next_due_date, payment_method
+      FROM admin_scheduled_expenses
+      WHERE status = 'active' AND next_due_date <= ${todayStr}
+    `;
+
+    for (const item of rows) {
+      let nextDate = new Date(item.next_due_date);
+      while (nextDate.toISOString().split('T')[0] <= todayStr) {
+        const occurrenceDate = nextDate.toISOString().split('T')[0];
+
+        // 1. Insert into actual expenses
+        await sql`
+          INSERT INTO admin_expenses (date, amount, description, category, payment_method)
+          VALUES (${occurrenceDate}, ${item.amount}, ${item.title + ' (Recurring)'}, ${item.category}, ${item.payment_method})
+        `;
+
+        // 2. Roll date forward
+        if (item.frequency === 'weekly') {
+          nextDate.setDate(nextDate.getDate() + 7);
+        } else if (item.frequency === 'monthly') {
+          nextDate.setMonth(nextDate.getMonth() + 1);
+        } else if (item.frequency === 'yearly') {
+          nextDate.setFullYear(nextDate.getFullYear() + 1);
+        } else {
+          break;
+        }
+      }
+
+      // 3. Update next due date in db
+      await sql`
+        UPDATE admin_scheduled_expenses
+        SET next_due_date = ${nextDate.toISOString().split('T')[0]}
+        WHERE id = ${item.id}
+      `;
+    }
+  } catch (e) {
+    console.error("Failed to process recurring expenses:", e);
+  }
+}
+
+export async function getScheduledExpenses() {
+  await ensureScheduledExpensesTable();
+  try {
+    const rows = await sql`
+      SELECT id, title, amount, category, frequency, next_due_date, payment_method as "paymentMethod", status
+      FROM admin_scheduled_expenses
+      ORDER BY next_due_date ASC
+    `;
+    return rows.map((r: any) => ({
+      ...r,
+      amount: parseFloat(r.amount),
+      next_due_date: r.next_due_date ? new Date(r.next_due_date).toISOString().split('T')[0] : ''
+    }));
+  } catch (error) {
+    console.error("Failed to get scheduled expenses:", error);
+    throw new Error("Failed to retrieve scheduled expenses.");
+  }
+}
+
+export async function createScheduledExpense(data: any) {
+  await ensureScheduledExpensesTable();
+  await sql`
+    INSERT INTO admin_scheduled_expenses (title, amount, category, frequency, next_due_date, payment_method, status)
+    VALUES (${data.title}, ${data.amount}, ${data.category}, ${data.frequency}, ${data.next_due_date}, ${data.paymentMethod}, 'active')
+  `;
+}
+
+export async function updateScheduledExpense(id: number, data: any) {
+  await ensureScheduledExpensesTable();
+  await sql`
+    UPDATE admin_scheduled_expenses
+    SET title = ${data.title}, amount = ${data.amount}, category = ${data.category}, frequency = ${data.frequency}, next_due_date = ${data.next_due_date}, payment_method = ${data.paymentMethod}, status = ${data.status}
+    WHERE id = ${id}
+  `;
+}
+
+export async function deleteScheduledExpense(id: number) {
+  await ensureScheduledExpensesTable();
+  await sql`DELETE FROM admin_scheduled_expenses WHERE id = ${id}`;
+}
+
+export async function payScheduledExpense(id: number) {
+  await ensureScheduledExpensesTable();
+  const rows = await sql`
+    SELECT * FROM admin_scheduled_expenses WHERE id = ${id}
+  `;
+  if (rows.length === 0) return;
+  const item = rows[0];
+
+  // 1. Insert into actual expenses
+  await sql`
+    INSERT INTO admin_expenses (date, amount, description, category, payment_method)
+    VALUES (CURRENT_DATE, ${item.amount}, ${item.title + ' (Scheduled Payment)'}, ${item.category}, ${item.payment_method})
+  `;
+
+  // 2. Roll date forward
+  let nextDate = new Date(item.next_due_date);
+  if (item.frequency === 'monthly') {
+    nextDate.setMonth(nextDate.getMonth() + 1);
+    await sql`
+      UPDATE admin_scheduled_expenses
+      SET next_due_date = ${nextDate.toISOString().split('T')[0]}
+      WHERE id = ${id}
+    `;
+  } else if (item.frequency === 'yearly') {
+    nextDate.setFullYear(nextDate.getFullYear() + 1);
+    await sql`
+      UPDATE admin_scheduled_expenses
+      SET next_due_date = ${nextDate.toISOString().split('T')[0]}
+      WHERE id = ${id}
+    `;
+  } else {
+    await sql`
+      DELETE FROM admin_scheduled_expenses WHERE id = ${id}
+    `;
+  }
+}
+
 // -- INVOICES --
 export async function getInvoices() {
   const totalIssuedCount = await sql`SELECT COUNT(*) as count FROM invoices`;
@@ -369,7 +529,7 @@ export async function getInvoices() {
   `;
 
   const rows = await sql`
-    SELECT invoice_id as id, user_email as client, project_name as service, total as amount, total_due, date as due_date, payment_status as status, work_status
+    SELECT invoice_id as id, user_email as client, project_name as service, subtotal, total, discount, total_due, date as due_date, payment_status as status, work_status
     FROM invoices
     ORDER BY created_at DESC
   `;
@@ -379,17 +539,23 @@ export async function getInvoices() {
     paid: parseInt(paidCount[0]?.count || '0'),
     pending: parseInt(pendingCount[0]?.count || '0'),
     totalDue: parseFloat(totalDueSum[0]?.total || '0'),
-    items: rows.map(r => ({
-      id: r.id,
-      client: r.client || 'Unknown',
-      service: r.service,
-      amount: parseFloat(r.amount),
-      total_due: parseFloat(r.total_due != null ? r.total_due : r.amount),
-      due: r.due_date ? new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
-      status: r.status,
-      work_status: r.work_status,
-      overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && r.status !== 'paid' && r.status !== 'fully paid')
-    }))
+    items: rows.map(r => {
+      const subtotal = parseFloat(r.subtotal || 0);
+      const discount = parseFloat(r.discount || 0);
+      const finalAmount = subtotal - discount;
+
+      return {
+        id: r.id,
+        client: r.client || 'Unknown',
+        service: r.service,
+        amount: finalAmount,
+        total_due: parseFloat(r.total_due != null ? r.total_due : finalAmount),
+        due: r.due_date ? new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
+        status: r.status,
+        work_status: r.work_status,
+        overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && r.status !== 'paid' && r.status !== 'fully paid')
+      };
+    })
   };
 }
 
@@ -476,7 +642,7 @@ export async function getClients() {
            (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email)) as invoices,
            COALESCE((SELECT SUM(amount) FROM admin_incomes inc WHERE inc.client_id = c.id), 0) as revenue,
            (SELECT COUNT(*) FROM admin_incomes inc WHERE inc.client_id = c.id) as income_count,
-           (SELECT COUNT(*) FROM projects p WHERE LOWER(p.user_email) = LOWER(c.email) OR p.client_id = c.id) as project_count
+           (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email) AND i.work_status IS NOT NULL) as project_count
     FROM admin_clients c
     ORDER BY c.id DESC
   `;
@@ -914,7 +1080,7 @@ export async function deleteQuotation(id: number) {
   await sql`DELETE FROM admin_quotations WHERE id = ${id}`;
 }
  
-export async function confirmQuotation(quotationId: number, quotationData: any, projectName: string) {
+export async function confirmQuotation(quotationId: number, quotationData: any, projectName: string, bankAccountId: number | null = null, discountInput?: number) {
   const quotation = await sql`
     SELECT q.*, c.id as client_id_val, c.email, c.full_name as client_name, c.company, c.address as billing_address
     FROM admin_quotations q
@@ -934,8 +1100,10 @@ export async function confirmQuotation(quotationId: number, quotationData: any, 
   if (!userEmail) throw new Error("Quotation has no linked client email — please assign a client before confirming");
 
   const amount   = parseFloat(q.amount   || 0);
-  const advance  = parseFloat(q.advance  || 0);
-  const totalDue = parseFloat(q.total_due != null ? q.total_due : amount - advance);
+  const discountVal = discountInput !== undefined ? parseFloat(discountInput as any || 0) : parseFloat(q.discount || 0);
+  const invoiceTotal = amount - discountVal;
+  const advanceVal = parseFloat(q.advance || 0);
+  const totalDueVal = invoiceTotal - advanceVal;
   const description = q.description || 'Project';
 
   // Resolve or create client
@@ -968,20 +1136,21 @@ export async function confirmQuotation(quotationId: number, quotationData: any, 
       INSERT INTO invoices (
         invoice_id, user_email, project_name, date,
         subtotal, discount, total, advance, total_due,
-        work_status, payment_status, currency
+        work_status, payment_status, currency, bank_account_id
       ) VALUES (
         ${invoiceId},
         ${userEmail},
         ${projectName},
         ${q.date},
         ${amount},
-        ${q.discount || 0},
-        ${amount},
-        ${advance},
-        ${totalDue},
+        ${discountVal},
+        ${invoiceTotal},
+        ${advanceVal},
+        ${totalDueVal},
         'in progress',
         'unpaid',
-        'LKR'
+        'LKR',
+        ${bankAccountId}
       )
     `;
 
@@ -1007,25 +1176,6 @@ export async function confirmQuotation(quotationId: number, quotationData: any, 
       UPDATE admin_quotations
       SET status = 'confirmed', project_confirmed = true, linked_invoice_id = ${invoiceId}
       WHERE id = ${quotationId}
-    `;
-
-    // Auto-create project with status='in progress' and progress=0
-    await sql`
-      INSERT INTO projects (
-        title, description, type, status, progress, price, invoice_number, user_email, client_id, submitted_at, updated_at
-      ) VALUES (
-        ${projectName},
-        ${description},
-        ${q.category || null},
-        'in progress',
-        0,
-        ${amount},
-        ${invoiceId},
-        ${userEmail},
-        ${resolvedClientId},
-        now(),
-        now()
-      )
     `;
 
     return { success: true, invoiceId };
@@ -1094,113 +1244,6 @@ export async function getQuotationById(quotationId: string) {
   }
 }
 
-
-export async function getProjects() {
-  try {
-    const rows = await sql`
-      SELECT p.*, c.full_name as client_name, c.company as client_company
-      FROM projects p
-      LEFT JOIN admin_clients c ON p.client_id = c.id
-      ORDER BY p.updated_at DESC, p.id DESC
-    `;
-    return rows;
-  } catch (e) {
-    console.error("Failed to fetch projects:", e);
-    throw new Error("Failed to fetch projects");
-  }
-}
-
-export async function getProjectById(id: number) {
-  try {
-    const rows = await sql`
-      SELECT p.*, c.full_name as client_name, c.company as client_company
-      FROM projects p
-      LEFT JOIN admin_clients c ON p.client_id = c.id
-      WHERE p.id = ${id}
-    `;
-    return rows[0] || null;
-  } catch (e) {
-    console.error("Failed to fetch project by ID:", e);
-    throw new Error("Failed to fetch project");
-  }
-}
-
-export async function createProject(data: any) {
-  try {
-    if (data.clientId && data.billingAddress) {
-      await sql`
-        UPDATE admin_clients
-        SET address = ${data.billingAddress}
-        WHERE id = ${data.clientId}
-      `;
-    }
-    const invoiceNum = data.invoiceNumber || 'PRJ-' + Date.now();
-    const result = await sql`
-      INSERT INTO projects (
-        title, description, type, request_id, status, progress, price, invoice_number, user_email, client_id, submitted_at, updated_at
-      ) VALUES (
-        ${data.title},
-        ${data.description || null},
-        ${data.type || null},
-        ${data.requestId || null},
-        ${data.status || 'pending'},
-        ${data.progress || 0},
-        ${data.price || 0},
-        ${invoiceNum},
-        ${data.userEmail},
-        ${data.clientId || null},
-        now(),
-        now()
-      )
-      RETURNING id
-    `;
-    return result[0].id;
-  } catch (e) {
-    console.error("Failed to create project:", e);
-    throw new Error("Failed to create project");
-  }
-}
-
-export async function updateProject(id: number, data: any) {
-  try {
-    if (data.clientId && data.billingAddress) {
-      await sql`
-        UPDATE admin_clients
-        SET address = ${data.billingAddress}
-        WHERE id = ${data.clientId}
-      `;
-    }
-    const invoiceNum = data.invoiceNumber || 'PRJ-' + Date.now();
-    await sql`
-      UPDATE projects
-      SET 
-        title = ${data.title},
-        description = ${data.description || null},
-        type = ${data.type || null},
-        request_id = ${data.requestId || null},
-        status = ${data.status || 'pending'},
-        progress = ${data.progress || 0},
-        price = ${data.price || 0},
-        invoice_number = ${invoiceNum},
-        user_email = ${data.userEmail},
-        client_id = ${data.clientId || null},
-        updated_at = now()
-      WHERE id = ${id}
-    `;
-  } catch (e) {
-    console.error("Failed to update project:", e);
-    throw new Error("Failed to update project");
-  }
-}
-
-export async function deleteProject(id: number) {
-  try {
-    await sql`DELETE FROM projects WHERE id = ${id}`;
-  } catch (e) {
-    console.error("Failed to delete project:", e);
-    throw new Error("Failed to delete project");
-  }
-}
 
 // -- BANK ACCOUNTS --
 export async function getBankAccounts() {

@@ -67,10 +67,10 @@ export default function DashboardProjectsPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">
             <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">My</span>
-            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Projects</span>
+            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Invoices</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl">
-            Track the status of every service request you have made with Frametoque.
+            Track the status of every invoice and service request you have with Frametoque.
           </p>
         </div>
       </div>
@@ -82,7 +82,7 @@ export default function DashboardProjectsPage() {
     return (
       <PageShell>
         <div className="flex justify-center items-center h-64">
-          <div className="text-gray-400">{!isUserLoaded ? "Loading..." : "Loading your projects..."}</div>
+          <div className="text-gray-400">{!isUserLoaded ? "Loading..." : "Loading your invoices..."}</div>
         </div>
       </PageShell>
     );
@@ -105,10 +105,10 @@ export default function DashboardProjectsPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">
             <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">My</span>
-            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Projects</span>
+            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Invoices</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl">
-            Track the status of every service request you have made with Frametoque.
+            Track the status of every invoice and service request you have with Frametoque.
           </p>
         </div>
 
@@ -118,7 +118,7 @@ export default function DashboardProjectsPage() {
             className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-white/10 border border-white/10 text-white font-semibold hover:opacity-90 transition-opacity"
           >
             <Plus className="w-5 h-5" />
-            New Project
+            New Request
           </Link>
           <Link
             href="/contact"
@@ -148,12 +148,12 @@ export default function DashboardProjectsPage() {
                     </span>
                   </div>
                   <p className="text-gray-400 text-sm mb-3">
-                    Invoice: {request.invoice_number || request.id} • Type: {request.type || "N/A"} • Submitted: {formatDate(request.submitted_at)}
+                    Invoice ID: {request.invoice_number || request.id} • Type: {request.type || "N/A"} • Submitted: {formatDate(request.submitted_at)}
                   </p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-gray-400 text-sm">Total: </span>
+                    <span className="text-gray-400 text-sm">Total Due: </span>
                     <span className="text-lg font-semibold text-white">
-                      {formatPrice(request.price)}
+                      {formatPrice(request.total_due)}
                     </span>
                   </div>
                   {request.progress > 0 && (
@@ -203,7 +203,7 @@ export default function DashboardProjectsPage() {
       ) : (
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-12 text-center">
           <Package className="w-16 h-16 text-gray-600 mx-auto mb-6" />
-          <h3 className="text-2xl font-semibold text-white mb-2">No Projects Yet</h3>
+          <h3 className="text-2xl font-semibold text-white mb-2">No Invoices Yet</h3>
           <p className="text-gray-400 mb-6">
             Submit your first service request to get started with Frametoque.
           </p>

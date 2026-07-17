@@ -25,7 +25,8 @@ export async function fetchLiveNotifications(): Promise<NotificationItem[]> {
       pendingQuotationsResult,
       paidInvoicesResult,
       overdueInvoicesResult,
-      upcomingAgreementsResult
+      upcomingAgreementsResult,
+      upcomingBookingsResult
     ] = await Promise.allSettled([
       getActiveVisitors(),
       getAnalyticsData("this year"),
@@ -64,6 +65,15 @@ export async function fetchLiveNotifications(): Promise<NotificationItem[]> {
         FROM admin_agreements
         WHERE status = 'pending' AND deadline >= NOW() AND deadline <= NOW() + INTERVAL '7 days'
         ORDER BY deadline ASC LIMIT 1
+      `),
+      sql.query(`
+        SELECT id, title, customer_name, booking_date, start_time, event_type,
+               EXTRACT(EPOCH FROM ((booking_date::text || ' ' || COALESCE(start_time::text, '00:00:00'))::timestamp - NOW())) * 1000 AS ms_until
+        FROM admin_bookings
+        WHERE status != 'cancelled' 
+          AND (booking_date::text || ' ' || COALESCE(start_time::text, '00:00:00'))::timestamp >= NOW() 
+          AND (booking_date::text || ' ' || COALESCE(start_time::text, '00:00:00'))::timestamp <= NOW() + INTERVAL '3 days'
+        ORDER BY booking_date ASC, start_time ASC LIMIT 2
       `)
     ]);
 
@@ -77,6 +87,7 @@ export async function fetchLiveNotifications(): Promise<NotificationItem[]> {
     const paidInvoices = getVal(paidInvoicesResult, []);
     const overdueInvoices = getVal(overdueInvoicesResult, []);
     const upcomingAgreements = getVal(upcomingAgreementsResult, []);
+    const upcomingBookings = getVal(upcomingBookingsResult, []);
 
     // Build an ISO timestamp from a DB-computed ms offset, anchored to *this* request's `now`.
     // This avoids ever asking the Node pg driver to parse a naive TIMESTAMP column back into
@@ -213,6 +224,28 @@ export async function fetchLiveNotifications(): Promise<NotificationItem[]> {
         timestamp: new Date(now + msUntil).toISOString(), // future timestamp -> renders as "in X days"
         link: "/admin/agreements/" + ag.id,
         read: true
+      });
+    }
+
+    for (const b of upcomingBookings) {
+      const msUntil = Number(b.ms_until ?? 0);
+      const dateStr = new Date(now + msUntil).toLocaleDateString("en-US", { 
+        month: "short", 
+        day: "numeric",
+        hour: b.start_time ? "2-digit" : undefined,
+        minute: b.start_time ? "2-digit" : undefined
+      });
+      const isTask = b.event_type === 'task_reminder';
+      notifications.push({
+        id: `booking-upcoming-${b.id}`,
+        type: isTask ? "system" : "project",
+        title: isTask ? "Upcoming Task" : "Upcoming Booking",
+        message: isTask
+          ? `Task '${b.title}' is scheduled on ${dateStr}.`
+          : `Booking '${b.title}' for client ${b.customer_name} is scheduled on ${dateStr}.`,
+        timestamp: new Date(now + msUntil).toISOString(),
+        link: "/admin/bookings",
+        read: false
       });
     }
 

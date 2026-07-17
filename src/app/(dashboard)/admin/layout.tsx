@@ -14,6 +14,7 @@ import {
 import NotificationBell from "./components/NotificationBell";
 import DateRangeSelector from "./components/DateRangeSelector";
 import { AdminDateRangeProvider, useAdminDateRange } from "./context/AdminDateRangeContext";
+import { AnalyticsDateRangeProvider, useAnalyticsDateRange } from "./context/AnalyticsDateRangeContext";
 
 import {
   Bell,
@@ -36,7 +37,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   FilePenLine,
-  ChartLine
+  ChartLine,
+  Calendar
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -112,7 +114,7 @@ export default function DashboardLayout({ children }) {
       { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
       { name: "Income", href: "/admin/income", icon: Wallet },
       { name: "Expenses", href: "/admin/expenses", icon: Receipt },
-      { name: "Projects", href: "/admin/projects", icon: FolderOpenDot },
+      { name: "Bookings", href: "/admin/bookings", icon: Calendar },
       { name: "Invoices", href: "/admin/invoices", icon: FileText },
       { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
       { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
@@ -339,6 +341,7 @@ export default function DashboardLayout({ children }) {
   const { user, isLoaded } = useUser();
 
   return (
+    <AnalyticsDateRangeProvider>
     <AdminDateRangeProvider>
       <div className="min-h-screen bg-black text-white">
         <Sidebar
@@ -367,16 +370,20 @@ export default function DashboardLayout({ children }) {
         </div>
       </div>
     </AdminDateRangeProvider>
+    </AnalyticsDateRangeProvider>
   );
 }
 
 // ------------------ Header ------------------
 const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
+  const pathname = usePathname();
+  const isAnalytics = pathname === "/admin/analytics";
+  const isBookings = pathname === "/admin/bookings";
+  const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [dateTime, setDateTime] = useState("");
-  const [dbStatus, setDbStatus] = useState("checking");
-  const [blobStatus, setBlobStatus] = useState("checking");
   const [activeVisitors, setActiveVisitors] = useState(0);
+  const [weather, setWeather] = useState<{ city: string; temp: string; condition: string; iconUrl: string } | null>(null);
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -388,6 +395,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
       }) + " | " + now.toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "2-digit",
+        second: "2-digit",
         hour12: true
       });
       setDateTime(formatted);
@@ -395,26 +403,23 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     updateDateTime();
     const clockInterval = setInterval(updateDateTime, 1000);
 
-    const checkSystemHealth = async () => {
+    const fetchWeatherData = async () => {
       try {
-        const res = await fetch("/api/admin/health");
+        const res = await fetch("/api/admin/weather");
         if (res.ok) {
-          const status = await res.json();
-          setDbStatus(status.db);
-          setBlobStatus(status.blob);
-          if (status.activeVisitors !== undefined) {
-            setActiveVisitors(status.activeVisitors);
+          const data = await res.json();
+          if (data.activeVisitors !== undefined) {
+            setActiveVisitors(data.activeVisitors);
           }
-        } else {
-          setDbStatus("offline");
-          setBlobStatus("offline");
+          if (data.weather) {
+            setWeather(data.weather);
+          }
         }
       } catch (e) {
-        setDbStatus("offline");
-        setBlobStatus("offline");
+        console.error("Failed to fetch weather status:", e);
       }
     };
-    checkSystemHealth();
+    fetchWeatherData();
 
     return () => {
       clearInterval(clockInterval);
@@ -431,53 +436,34 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
           >
             <Menu className="w-6 h-6" />
           </button>
-
+ 
           {/* System Status Indicators */}
-          <div className="hidden xl:flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-gray-300">
+          <div className="hidden xl:flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-gray-300">
             {/* Date & Time */}
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-white/90">{dateTime || "Loading..."}</span>
+              <span className="font-semibold text-white/90 tabular-nums">{dateTime || "Loading..."}</span>
             </div>
+
+            {weather && (
+              <>
+                <div className="h-4 w-[1px] bg-white/10" />
+                <div className="flex items-center gap-1">
+                  <span className="text-gray-400 font-medium">{weather.city}:</span>
+                  <span className="font-semibold text-white/90">{weather.temp}</span>
+                  {weather.iconUrl && (
+                    <img 
+                      src={weather.iconUrl} 
+                      alt={weather.condition} 
+                      className="w-8 h-8 object-contain -my-2 flex-shrink-0"
+                      title={weather.condition}
+                    />
+                  )}
+                </div>
+              </>
+            )}
 
             <div className="h-4 w-[1px] bg-white/10" />
 
-            {/* Neon DB Status */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 font-medium">Database:</span>
-              <span className="relative flex h-2 w-2">
-                {dbStatus === "online" && (
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                )}
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${
-                  dbStatus === "online" ? "bg-emerald-500" : dbStatus === "checking" ? "bg-amber-500 animate-pulse" : "bg-rose-500"
-                }`}></span>
-              </span>
-              <span className="font-semibold text-white/90 uppercase text-[10px] flex items-center gap-1">
-                {dbStatus}
-                <span className="text-gray-500 lowercase font-normal text-[9px]">(neon db)</span>
-              </span>
-            </div>
-
-            <div className="h-4 w-[1px] bg-white/10" />
-
-            {/* Vercel Blob Status */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 font-medium">CDN:</span>
-              <span className="relative flex h-2 w-2">
-                {blobStatus === "online" && (
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                )}
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${
-                  blobStatus === "online" ? "bg-emerald-500" : blobStatus === "checking" ? "bg-amber-500 animate-pulse" : "bg-rose-500"
-                }`}></span>
-              </span>
-              <span className="font-semibold text-white/90 uppercase text-[10px] flex items-center gap-1">
-                {blobStatus}
-                <span className="text-gray-500 lowercase font-normal text-[9px]">(vercel blob)</span>
-              </span>
-            </div>
-
-            <div className="h-4 w-[1px] bg-white/10" />
             {/* Live Visitors Status */}
             <div className="flex items-center gap-2">
               <span className="text-gray-400 font-medium">Live:</span>
@@ -489,7 +475,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                   activeVisitors > 0 ? "bg-emerald-500" : "bg-gray-500"
                 }`}></span>
               </span>
-              <span className="font-semibold text-white/90 text-[10px] flex items-center gap-1">
+              <span className="font-semibold text-white/90 text-sm flex items-center gap-1">
                 {activeVisitors} {activeVisitors === 1 ? "visitor" : "visitors"}
               </span>
             </div>
@@ -497,14 +483,30 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
         </div>
 
         <div className="flex items-center gap-3">
-          <DateRangeSelector
-            dateRange={dateRange}
-            startDate={startDate}
-            endDate={endDate}
-            onRangeChange={setDateRange}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-          />
+          {isAnalytics ? (
+            <select
+              value={analyticsDateRange}
+              onChange={(e) => setAnalyticsDateRange(e.target.value as any)}
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium text-white"
+            >
+              <option value="today"        className="bg-black">Today</option>
+              <option value="24 hours"     className="bg-black">Last 24 Hours</option>
+              <option value="one month"    className="bg-black">Last Month</option>
+              <option value="three months" className="bg-black">Last 3 Months</option>
+              <option value="6 months"     className="bg-black">Last 6 Months</option>
+              <option value="this year"    className="bg-black">This Year</option>
+              <option value="all time"     className="bg-black">All Time</option>
+            </select>
+          ) : isBookings ? null : (
+            <DateRangeSelector
+              dateRange={dateRange}
+              startDate={startDate}
+              endDate={endDate}
+              onRangeChange={setDateRange}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+            />
+          )}
 
           <NotificationBell />
         </div>

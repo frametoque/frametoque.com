@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, FileText, Users, Eye } from "lucide-react";
+import { Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, FileText, Users, Eye, Calendar, Folder, MapPin, CheckSquare } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { getDashboardData } from "../actions/actions";
 import { getAnalyticsData } from "../actions/analytics";
+import { getCalendarEvents } from "../actions/bookings";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
 const formatLKR = (amount: number) => {
@@ -17,6 +18,7 @@ const formatLKR = (amount: number) => {
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   const [analytics, setAnalytics] = useState<any>(null);
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { startDate, endDate } = useAdminDateRange();
 
@@ -24,12 +26,20 @@ export default function DashboardPage() {
     async function load() {
       setLoading(true);
       try {
-        const [res, analyticsRes] = await Promise.all([
+        const [res, analyticsRes, eventsRes] = await Promise.all([
           getDashboardData(startDate, endDate),
           getAnalyticsData("all time").catch(() => null),
+          getCalendarEvents().catch(() => []),
         ]);
         setData(res);
         setAnalytics(analyticsRes);
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const upcoming = eventsRes
+          .filter((e: any) => e.type === 'booking' && e.date >= todayStr && e.status !== 'cancelled')
+          .sort((a: any, b: any) => a.date.localeCompare(b.date))
+          .slice(0, 5);
+        setUpcomingEvents(upcoming);
       } catch (e) {
         console.error("Failed to load dashboard data", e);
       } finally {
@@ -119,45 +129,56 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Recent Invoices */}
+        {/* Upcoming Events */}
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Recent Invoices</h2>
-          </div>
-          <div className="space-y-4">
-            {data.recentInvoices.map((invoice: any, i: number) => {
-              let statusColor = "text-gray-400 bg-gray-400/10 border-gray-400/20";
-              const statusStr = invoice.status?.toLowerCase() || '';
-              if (statusStr === 'paid') statusColor = "text-green-400 bg-green-400/10 border-green-400/20";
-              else if (statusStr === 'unpaid' || statusStr === 'pending') statusColor = "text-amber-400 bg-amber-400/10 border-amber-400/20";
-              else if (statusStr === 'overdue') statusColor = "text-red-400 bg-red-400/10 border-red-400/20";
+          <h2 className="text-xl font-semibold mb-6">Upcoming Events</h2>
+          <div className="space-y-3">
+            {upcomingEvents.map((ev: any) => {
+              const isTask = ev.event_type === 'task_reminder';
+              let iconColor = isTask ? "text-blue-400 bg-blue-400/10" : "text-brand-400 bg-brand-400/10";
+              let Icon = isTask ? CheckSquare : Calendar;
+              if (ev.type === 'project') {
+                iconColor = "text-blue-400 bg-blue-400/10";
+                Icon = Folder;
+              } else if (ev.type === 'agreement') {
+                iconColor = "text-emerald-400 bg-emerald-400/10";
+                Icon = FileText;
+              } else if (ev.type === 'invoice') {
+                iconColor = "text-amber-400 bg-amber-400/10";
+                Icon = FileText;
+              }
 
               return (
-                <div key={i} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white/5 rounded-xl">
-                      <FileText className="w-5 h-5 text-gray-300" />
+                <div key={ev.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-2xl ${iconColor}`}>
+                      <Icon className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-sm">{invoice.id}</p>
-                      <p className="text-xs text-gray-400 truncate w-24">{invoice.client || 'Unknown'}</p>
+                      <p className="font-semibold text-white truncate max-w-[120px] sm:max-w-xs">{ev.title}</p>
+                      <p className="text-xs text-gray-400">
+                        {ev.date} {ev.time ? `at ${ev.time}` : ""}
+                      </p>
+                      {ev.location && (
+                        <p className="text-[11px] text-brand-300 font-medium mt-0.5 flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span>{ev.location}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-sm">{formatLKR(invoice.amount)}</p>
-                    <span className={`inline-block mt-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${statusColor}`}>
-                      {invoice.status}
-                    </span>
-                  </div>
+                  <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-gray-300">
+                    {isTask ? 'reminder' : ev.type}
+                  </span>
                 </div>
               );
             })}
-            {data.recentInvoices.length === 0 && <p className="text-gray-500 text-sm">No recent invoices.</p>}
+            {upcomingEvents.length === 0 && <p className="text-gray-500 text-sm">No upcoming events scheduled.</p>}
           </div>
         </div>
       </div>
 
-      {/* Net Income & Expense Breakdown Grid */}
+      {/* Net Income & Recent Invoices Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Net Income comparison table */}
         <div className="lg:col-span-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
@@ -204,6 +225,74 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Recent Invoices */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold">Recent Invoices</h2>
+          </div>
+          <div className="space-y-4">
+            {data.recentInvoices.map((invoice: any, i: number) => {
+              let statusColor = "text-gray-400 bg-gray-400/10 border-gray-400/20";
+              const statusStr = invoice.status?.toLowerCase() || '';
+              if (statusStr === 'paid') statusColor = "text-green-400 bg-green-400/10 border-green-400/20";
+              else if (statusStr === 'unpaid' || statusStr === 'pending') statusColor = "text-amber-400 bg-amber-400/10 border-amber-400/20";
+              else if (statusStr === 'overdue') statusColor = "text-red-400 bg-red-400/10 border-red-400/20";
+
+              return (
+                <div key={i} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/5 rounded-xl">
+                      <FileText className="w-5 h-5 text-gray-300" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">{invoice.id}</p>
+                      <p className="text-xs text-gray-400 truncate w-24">{invoice.client || 'Unknown'}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-sm">{formatLKR(invoice.amount)}</p>
+                    <span className={`inline-block mt-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${statusColor}`}>
+                      {invoice.status}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+            {data.recentInvoices.length === 0 && <p className="text-gray-500 text-sm">No recent invoices.</p>}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Grid: Recent Transactions & Expense Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Transactions */}
+        <div className="lg:col-span-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
+          <h2 className="text-xl font-semibold mb-6">Recent Transactions</h2>
+          <div className="space-y-3">
+            {data.recentTransactions.map((tx: any) => (
+              <div key={tx.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-2xl ${tx.type === 'income' ? 'bg-green-400/10' : 'bg-red-400/10'}`}>
+                    {tx.type === 'income' ? (
+                      <ArrowUpRight className={`w-5 h-5 text-green-400`} />
+                    ) : (
+                      <ArrowDownRight className={`w-5 h-5 text-red-400`} />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white">{tx.name}</p>
+                    <p className="text-sm text-gray-400">{tx.date}</p>
+                  </div>
+                </div>
+                <p className={`font-semibold ${tx.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                  {tx.type === 'income' ? '+' : '-'}{formatLKR(tx.amount)}
+                </p>
+              </div>
+            ))}
+            {data.recentTransactions.length === 0 && <p className="text-gray-500 text-sm">No recent transactions.</p>}
+          </div>
+        </div>
+
         {/* Expense Breakdown donut chart */}
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex flex-col justify-between">
           <div>
@@ -228,13 +317,13 @@ export default function DashboardPage() {
                       >
                         {data.expenseBreakdown.map((entry: any, index: number) => {
                           const categoryColors: Record<string, string> = {
-                            "Stock Purchase": "#1d4ed8", // Cobalt
-                            "Marketing": "#0ea5e9",      // Sky
-                            "Equipment": "#3b82f6",      // Bright Blue
-                            "Software": "#2563eb",       // Royal Blue
-                            "Freelancers": "#60a5fa",    // Light Blue
-                            "Transport": "#1e40af",      // Dark Blue
-                            "Other": "#1e3a8a",          // Navy
+                            "Stock Purchase": "#1d4ed8",
+                            "Marketing": "#0ea5e9",
+                            "Equipment": "#3b82f6",
+                            "Software": "#2563eb",
+                            "Freelancers": "#60a5fa",
+                            "Transport": "#1e40af",
+                            "Other": "#1e3a8a",
                           };
                           const defaultColors = ["#2563eb", "#0ea5e9", "#3b82f6", "#1d4ed8", "#60a5fa", "#1e3a8a"];
                           const color = categoryColors[entry.name] || defaultColors[index % defaultColors.length];
@@ -286,34 +375,6 @@ export default function DashboardPage() {
               </>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Recent Transactions */}
-      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
-        <h2 className="text-xl font-semibold mb-6">Recent Transactions</h2>
-        <div className="space-y-3">
-          {data.recentTransactions.map((tx: any) => (
-            <div key={tx.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-2xl ${tx.type === 'income' ? 'bg-green-400/10' : 'bg-red-400/10'}`}>
-                  {tx.type === 'income' ? (
-                    <ArrowUpRight className={`w-5 h-5 text-green-400`} />
-                  ) : (
-                    <ArrowDownRight className={`w-5 h-5 text-red-400`} />
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold text-white">{tx.name}</p>
-                  <p className="text-sm text-gray-400">{tx.date}</p>
-                </div>
-              </div>
-              <p className={`font-semibold ${tx.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                {tx.type === 'income' ? '+' : '-'}{formatLKR(tx.amount)}
-              </p>
-            </div>
-          ))}
-          {data.recentTransactions.length === 0 && <p className="text-gray-500 text-sm">No recent transactions.</p>}
         </div>
       </div>
     </div>

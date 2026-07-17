@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
 
+export const dynamic = 'force-dynamic';
+
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
@@ -28,50 +30,51 @@ export async function GET(request) {
     
     const result = await client.query(`
       SELECT 
-        p.id,
-        p.invoice_number,
-        p.title,
-        p.description,
-        p.type,
-        p.request_id,
-        p.submitted_at,
-        p.status,
-        p.progress,
-        p.price,
-        p.user_email,
-        p.client_id,
-        p.created_at,
-        i.payment_status,
-        i.total_due,
-        i.total,
-        i.currency
-      FROM public.projects p
-      LEFT JOIN public.invoices i ON p.invoice_number = i.invoice_id
-      WHERE p.user_email = $1 
-      ORDER BY p.created_at DESC
+        invoice_id,
+        user_email,
+        project_name,
+        date,
+        subtotal,
+        discount,
+        total,
+        total_due,
+        work_status,
+        payment_status,
+        currency,
+        category,
+        created_at
+      FROM public.invoices
+      WHERE LOWER(user_email) = LOWER($1) 
+      ORDER BY created_at DESC
     `, [user_email]);
     
-    console.log(`Found ${result.rows.length} projects for user_email: ${user_email}`);
+    console.log(`Found ${result.rows.length} invoices for user_email: ${user_email}`);
     
-    const formattedRequests = result.rows.map(row => ({
-      id: row.id,
-      title: row.title || 'Untitled Project',
-      request_id: row.request_id,
-      invoice_number: row.invoice_number,
-      submitted_at: row.submitted_at ? new Date(row.submitted_at).toISOString() : new Date().toISOString(),
-      status: row.status || 'pending',
-      progress: row.progress || 0,
-      price: row.price,
-      type: row.type,
-      description: row.description,
-      user_email: row.user_email,
-      client_id: row.client_id,
-      created_at: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
-      payment_status: row.payment_status || 'unpaid',
-      total_due: row.total_due ? parseFloat(row.total_due) : 0,
-      total: row.total ? parseFloat(row.total) : 0,
-      currency: row.currency || 'LKR',
-    }));
+    const formattedRequests = result.rows.map(row => {
+      const subtotal = parseFloat(row.subtotal || 0);
+      const discount = parseFloat(row.discount || 0);
+      const finalTotal = subtotal - discount;
+
+      return {
+        id: row.invoice_id,
+        title: row.project_name || 'Untitled Project',
+        request_id: row.invoice_id,
+        invoice_number: row.invoice_id,
+        submitted_at: row.date ? new Date(row.date).toISOString() : (row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString()),
+        status: row.work_status || 'pending',
+        progress: row.work_status === 'completed' ? 100 : row.work_status === 'in progress' ? 50 : 10,
+        price: finalTotal,
+        type: row.category,
+        description: null,
+        user_email: row.user_email,
+        client_id: null,
+        created_at: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
+        payment_status: row.payment_status || 'unpaid',
+        total_due: row.total_due ? parseFloat(row.total_due) : 0,
+        total: finalTotal,
+        currency: row.currency || 'LKR',
+      };
+    });
     
     return NextResponse.json(formattedRequests);
     

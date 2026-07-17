@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Receipt, Calendar, CreditCard, Plus, Edit2, Trash2, X, UploadCloud, Loader2, Eye } from "lucide-react";
-import { getExpenses, createExpense, deleteExpense, updateExpense, uploadReceipt } from "../actions/actions";
+import { Receipt, Calendar, CreditCard, Plus, Edit2, Trash2, X, UploadCloud, Loader2, Eye, RefreshCw } from "lucide-react";
+import { 
+  getExpenses, createExpense, deleteExpense, updateExpense, uploadReceipt,
+  getScheduledExpenses, deleteScheduledExpense
+} from "../actions/actions";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
 const filters = ["All", "Software", "Equipment", "Freelancers", "Transport", "Other"];
@@ -11,6 +14,8 @@ const formatLKR = (amount: number) => {
   return new Intl.NumberFormat('en-LK', {
     style: 'currency',
     currency: 'LKR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   }).format(amount || 0);
 };
 
@@ -63,31 +68,47 @@ const convertPdfToImage = async (file: File): Promise<File> => {
 export default function ExpensesPage() {
   const [activeFilter, setActiveFilter] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Data loading state
   const [data, setData] = useState<any>(null);
+  const [scheduledExpenses, setScheduledExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  
+  // Edit state
   const [editingId, setEditingId] = useState<number | null>(null);
+  
+  // Date context
   const { startDate, endDate } = useAdminDateRange();
+  
+  // Receipt processing state
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [convertingPdf, setConvertingPdf] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
 
+  // Form states
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     amount: '',
     description: '',
     category: filters[1],
     paymentMethod: 'Corporate Card',
-    receiptUrl: ''
+    receiptUrl: '',
+    isScheduled: false,
+    frequency: 'monthly'
   });
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await getExpenses(startDate, endDate);
+      const [res, schedRes] = await Promise.all([
+        getExpenses(startDate, endDate),
+        getScheduledExpenses().catch(() => [])
+      ]);
       setData(res);
+      setScheduledExpenses(schedRes);
     } catch (e) {
-      console.error("Failed to load expenses", e);
+      console.error("Failed to load expenses data:", e);
     } finally {
       setLoading(false);
     }
@@ -97,6 +118,7 @@ export default function ExpensesPage() {
     loadData();
   }, [startDate, endDate]);
 
+  // Handle actual expense save
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -107,7 +129,11 @@ export default function ExpensesPage() {
         uploadedUrl = await uploadReceipt(fileData, 'expenses');
       }
 
-      const payload = { ...formData, amount: parseFloat(formData.amount) || 0, receiptUrl: uploadedUrl };
+      const payload = { 
+        ...formData, 
+        amount: parseFloat(formData.amount) || 0, 
+        receiptUrl: uploadedUrl 
+      };
       if (editingId) {
         await updateExpense(editingId, payload);
       } else {
@@ -122,7 +148,9 @@ export default function ExpensesPage() {
         description: '',
         category: filters[1],
         paymentMethod: 'Corporate Card',
-        receiptUrl: ''
+        receiptUrl: '',
+        isScheduled: false,
+        frequency: 'monthly'
       });
       await loadData();
     } catch (e) {
@@ -144,7 +172,9 @@ export default function ExpensesPage() {
       description: row.desc || '',
       category: row.category || filters[1],
       paymentMethod: row.paidVia || 'Corporate Card',
-      receiptUrl: row.receiptUrl || ''
+      receiptUrl: row.receiptUrl || '',
+      isScheduled: false,
+      frequency: 'monthly'
     });
     setReceiptFile(null);
     setIsModalOpen(true);
@@ -157,6 +187,17 @@ export default function ExpensesPage() {
         await loadData();
       } catch (e) {
         console.error("Failed to delete", e);
+      }
+    }
+  };
+
+  const handleDeleteScheduled = async (id: number) => {
+    if (confirm("Stop and delete this recurring expense schedule? Future auto-transactions for this schedule will be disabled.")) {
+      try {
+        await deleteScheduledExpense(id);
+        await loadData();
+      } catch (e) {
+        console.error("Failed to delete scheduled expense", e);
       }
     }
   };
@@ -177,10 +218,12 @@ export default function ExpensesPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">Expenses</h1>
         </div>
+        
         <button 
           onClick={() => {
             setEditingId(null);
@@ -190,12 +233,14 @@ export default function ExpensesPage() {
               description: '',
               category: filters[1],
               paymentMethod: 'Corporate Card',
-              receiptUrl: ''
+              receiptUrl: '',
+              isScheduled: false,
+              frequency: 'monthly'
             });
             setReceiptFile(null);
             setIsModalOpen(true);
           }}
-          className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors"
+          className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors cursor-pointer"
         >
           <Plus className="w-5 h-5" />
           Record Expense
@@ -217,13 +262,43 @@ export default function ExpensesPage() {
         ))}
       </div>
 
+      {/* Active Recurring Schedules Panel */}
+      {scheduledExpenses.length > 0 && (
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
+          <div className="flex items-center gap-2 text-indigo-400">
+            <RefreshCw className="w-5 h-5 animate-[spin_10s_linear_infinite]" />
+            <h2 className="text-lg font-semibold text-white">Active Recurring Schedules</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {scheduledExpenses.map((item) => (
+              <div key={item.id} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-4">
+                <div className="space-y-1 min-w-0">
+                  <p className="font-semibold text-sm text-white truncate">{item.title}</p>
+                  <p className="text-xs text-gray-400">
+                    {formatLKR(item.amount)} • <span className="capitalize">{item.frequency}</span>
+                  </p>
+                  <p className="text-[10px] text-indigo-300">Next Auto-Pay: {item.next_due_date}</p>
+                </div>
+                <button
+                  onClick={() => handleDeleteScheduled(item.id)}
+                  className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-xl transition-all cursor-pointer flex-shrink-0"
+                  title="Remove Schedule"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
         {filters.map((f) => (
           <button
             key={f}
             onClick={() => setActiveFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
               activeFilter === f 
                 ? "bg-white text-black" 
                 : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
@@ -234,7 +309,7 @@ export default function ExpensesPage() {
         ))}
       </div>
 
-      {/* Table */}
+      {/* Expenses History Table */}
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -262,14 +337,14 @@ export default function ExpensesPage() {
                   <td className="p-4 text-sm">{row.paidVia}</td>
                   <td className="p-4 flex items-center justify-end gap-2">
                     {row.receiptUrl && (
-                      <button onClick={() => setViewingReceipt(row)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-blue-400 hover:text-blue-300">
+                      <button onClick={() => setViewingReceipt(row)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-blue-400 hover:text-blue-300 cursor-pointer">
                         <Eye className="w-4 h-4" />
                       </button>
                     )}
-                    <button onClick={() => handleEdit(row)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white">
+                    <button onClick={() => handleEdit(row)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white cursor-pointer">
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDelete(row.id)} className="p-2 hover:bg-red-400/10 rounded-xl transition-colors text-gray-400 hover:text-red-400">
+                    <button onClick={() => handleDelete(row.id)} className="p-2 hover:bg-red-400/10 rounded-xl transition-colors text-gray-400 hover:text-red-400 cursor-pointer">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </td>
@@ -285,17 +360,60 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      {/* Modal Form */}
+      {/* Record Expense Modal Form */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <h2 className="text-xl font-semibold">{editingId ? 'Edit Expense' : 'Record Expense'}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+             <div className="p-6 space-y-4">
+              {/* Recurring / Scheduled Switch Toggle - ONLY show on creating new expense */}
+              {!editingId && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
+                    <div>
+                      <p className="text-sm font-semibold text-white">Mark as Scheduled Recurring Expense</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({...formData, isScheduled: !formData.isScheduled})}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        formData.isScheduled ? "bg-brand-500" : "bg-white/10"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          formData.isScheduled ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  {formData.isScheduled && (
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl animate-fade-in">
+                      <div className="space-y-1">
+                        <label className="text-xs text-gray-400 font-semibold uppercase">Repeat Interval</label>
+                        <select 
+                          value={formData.frequency} 
+                          onChange={e => setFormData({...formData, frequency: e.target.value})}
+                          className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer"
+                        >
+                          <option value="weekly" className="bg-black">Every Week</option>
+                          <option value="monthly" className="bg-black">Every Month</option>
+                          <option value="yearly" className="bg-black">Every Year</option>
+                        </select>
+                      </div>
+                      <div className="flex items-end text-xs text-gray-400 pb-2">
+                        Next transaction date will calculate from the selected expense date.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-sm text-gray-400">Date</label>
@@ -327,6 +445,7 @@ export default function ExpensesPage() {
                   </select>
                 </div>
               </div>
+
               <div className="space-y-1">
                 <label className="text-sm text-gray-400">
                   {convertingPdf ? "Processing PDF..." : "Receipt Image / PDF"}
@@ -376,10 +495,10 @@ export default function ExpensesPage() {
               </div>
             </div>
             <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-white/5">
-              <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-full font-medium hover:bg-white/10 transition-colors" disabled={saving || convertingPdf}>
+              <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-full font-medium hover:bg-white/10 transition-colors cursor-pointer" disabled={saving || convertingPdf}>
                 Cancel
               </button>
-              <button onClick={handleSave} disabled={saving || convertingPdf} className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-full font-medium transition-colors disabled:opacity-50">
+              <button onClick={handleSave} disabled={saving || convertingPdf} className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-full font-medium transition-colors disabled:opacity-50 cursor-pointer">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {saving ? "Saving..." : (editingId ? "Update Expense" : "Save Expense")}
               </button>
@@ -388,10 +507,11 @@ export default function ExpensesPage() {
         </div>
       )}
 
+      {/* Viewing Receipt Image Modal */}
       {viewingReceipt && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={() => setViewingReceipt(null)}>
           <div className="relative flex flex-col md:flex-row bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden max-w-5xl w-full max-h-[90vh] shadow-2xl" onClick={e => e.stopPropagation()}>
-            <button className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md" onClick={() => setViewingReceipt(null)}>
+            <button className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md cursor-pointer" onClick={() => setViewingReceipt(null)}>
               <X className="w-5 h-5" />
             </button>
             

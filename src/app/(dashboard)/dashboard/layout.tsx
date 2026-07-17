@@ -87,7 +87,7 @@ export default function DashboardLayout({ children }) {
 
     const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
       { name: "Dashboard",   href: "/dashboard",             icon: LayoutDashboard },
-      { name: "My Projects", href: "/dashboard/projects",    icon: ClipboardList },
+      { name: "My Invoices", href: "/dashboard/invoices",    icon: ClipboardList },
       { name: "Quotations",  href: "/dashboard/quotations",  icon: NotepadTextDashed },
       { name: "Agreements",  href: "/dashboard/agreements",  icon: FilePenLine },
       { name: "Settings",    href: "/dashboard/settings",    icon: Settings },
@@ -95,7 +95,7 @@ export default function DashboardLayout({ children }) {
 
     const isActive = (href: string) => {
       if (href === "/dashboard") return pathname === href;
-      if (href === "/dashboard/projects" && pathname.startsWith("/dashboard/invoice")) return true;
+      if (href === "/dashboard/invoices" && pathname.startsWith("/dashboard/invoice")) return true;
       return pathname.startsWith(href);
     };
 

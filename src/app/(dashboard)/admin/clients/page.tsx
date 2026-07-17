@@ -157,7 +157,7 @@ export default function ClientsPage() {
     (client.company || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // A client is "linked" if it has any invoices, income, or projects
+  // A client is "linked" if it has any invoices, income, or active work
   const isLinked = (c: any) =>
     c.invoices > 0 || c.incomeCount > 0 || c.projectCount > 0;
 
@@ -224,7 +224,7 @@ export default function ClientsPage() {
                 const linked = isLinked(client);
                 const isDeleting = deletingId === client.id;
                 const deleteTitle = linked
-                  ? `Cannot delete — this client has linked invoices, income, or projects`
+                  ? `Cannot delete — this client has linked invoices, income, or active work`
                   : `Delete ${client.name}`;
 
                 return (
@@ -343,7 +343,7 @@ export default function ClientsPage() {
                 <div className="flex items-start gap-3 px-4 py-3 bg-amber-400/10 border border-amber-400/20 rounded-2xl">
                   <span className="text-amber-400 text-lg leading-none mt-0.5">⚠</span>
                   <p className="text-xs text-amber-300 leading-relaxed">
-                    Changing the email will automatically update all linked <strong>invoices</strong> and <strong>projects</strong> to use the new address.
+                    Changing the email will automatically update all linked <strong>invoices</strong> to use the new address.
                   </p>
                 </div>
               )}

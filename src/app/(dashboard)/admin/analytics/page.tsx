@@ -17,6 +17,7 @@ import {
   decodeRegion, regionToCountry,
   getBrowserLogo, getOsLogo, decodeCountry
 } from "@/app/(dashboard)/admin/actions/analyticsUtils";
+import { useAnalyticsDateRange } from "../context/AnalyticsDateRangeContext";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -144,7 +145,7 @@ function LogoIcon({ src, fallback }: { src: string | null; fallback: React.React
 export default function AnalyticsPage() {
   const [data, setData]           = useState<any>(null);
   const [loading, setLoading]     = useState(true);
-  const [dateRange, setDateRange] = useState("all time");
+  const { dateRange }             = useAnalyticsDateRange();
   const [activeVisitors, setActiveVisitors] = useState<number>(0);
 
   const [pageTab,   setPageTab]   = useState("path");
@@ -242,29 +243,13 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold">Web Analytics</h1>
-          <span className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-green-400/10 border border-green-400/20 text-green-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
-            <AnimatedNumber value={activeVisitors} /> live now
-          </span>
-        </div>
-        <select
-          value={dateRange}
-          onChange={(e) => setDateRange(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium"
-        >
-          <option value="today"        className="bg-black">Today</option>
-          <option value="24 hours"     className="bg-black">Last 24 Hours</option>
-          <option value="one month"    className="bg-black">Last Month</option>
-          <option value="three months" className="bg-black">Last 3 Months</option>
-          <option value="6 months"     className="bg-black">Last 6 Months</option>
-          <option value="this year"    className="bg-black">This Year</option>
-          <option value="all time"     className="bg-black">All Time</option>
-        </select>
+      {/* Page Title */}
+      <div className="flex items-center gap-3 mb-6">
+        <h1 className="text-3xl font-bold">Web Analytics</h1>
+        <span className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-green-400/10 border border-green-400/20 text-green-400">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
+          <AnimatedNumber value={activeVisitors} /> live now
+        </span>
       </div>
 
       {/* Stat Cards */}

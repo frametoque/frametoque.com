@@ -7,7 +7,7 @@ import { ShoppingCart, MessageCircle, Sparkles, UserCheck, FilePenLine, CreditCa
 import { useUser } from "@clerk/nextjs";
 import PayModal from "@/components/PayModal";
 
-import RecentProjectsWidget from "./projects/RecentProjectsWidget";
+import RecentProjectsWidget from "./invoices/RecentProjectsWidget";
 import RecentQuotationsWidget from "./quotations/RecentQuotationsWidget";
 import { getAgreementsByClient, AgreementData } from "../admin/actions/agreements";
 
@@ -313,7 +313,7 @@ export default function DashboardHome() {
               </button>
             ) : (
               <Link
-                href="/dashboard/projects"
+                href="/dashboard/invoices"
                 className="flex-1 sm:flex-initial text-center px-5 py-2.5 bg-zinc-900 border border-white/10 hover:bg-white/5 text-white font-bold rounded-3xl text-sm transition-all"
               >
                 View & Pay Invoices

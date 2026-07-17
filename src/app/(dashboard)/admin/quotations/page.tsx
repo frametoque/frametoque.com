@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation";
 import { 
   getQuotations, 
   deleteQuotation, 
-  confirmQuotation
+  confirmQuotation,
+  getBankAccounts
 } from "../actions/actions";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
@@ -34,6 +35,9 @@ export default function QuotationsPage() {
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [pendingConfirmRow, setPendingConfirmRow] = useState<any | null>(null);
   const [projectNameInput, setProjectNameInput] = useState("");
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [selectedBankAccountId, setSelectedBankAccountId] = useState<string>("");
+  const [discountInput, setDiscountInput] = useState<string>("");
 
   const loadData = async () => {
     setLoading(true);
@@ -51,10 +55,26 @@ export default function QuotationsPage() {
     loadData();
   }, [startDate, endDate]);
 
+  useEffect(() => {
+    async function loadBanks() {
+      try {
+        const banks = await getBankAccounts();
+        setBankAccounts(banks);
+        if (banks.length > 0) {
+          setSelectedBankAccountId(banks[0].id.toString());
+        }
+      } catch (e) {
+        console.error("Failed to load bank accounts", e);
+      }
+    }
+    loadBanks();
+  }, []);
+
   // Step 1: open modal to ask for project name
   const handleConfirmProject = (quotationId: number, quotationData: any) => {
     setPendingConfirmRow({ id: quotationId, ...quotationData });
     setProjectNameInput(quotationData.desc || "");
+    setDiscountInput(quotationData.discount ? quotationData.discount.toString() : "0");
     setShowProjectModal(true);
   };
 
@@ -69,9 +89,11 @@ export default function QuotationsPage() {
     setConfirmingLoading(true);
     setShowProjectModal(false);
     try {
-      await confirmQuotation(pendingConfirmRow.id, pendingConfirmRow, projectNameInput.trim());
+      const bankId = selectedBankAccountId ? parseInt(selectedBankAccountId) : null;
+      const discountVal = parseFloat(discountInput) || 0;
+      await confirmQuotation(pendingConfirmRow.id, pendingConfirmRow, projectNameInput.trim(), bankId, discountVal);
       await loadData();
-      alert("Quotation confirmed! Invoice and project have been created.");
+      alert("Quotation confirmed! Invoice has been created.");
     } catch (e) {
       console.error("Failed to confirm quotation", e);
       alert("Failed to confirm quotation");
@@ -80,6 +102,7 @@ export default function QuotationsPage() {
       setConfirmingId(null);
       setPendingConfirmRow(null);
       setProjectNameInput("");
+      setDiscountInput("");
     }
   };
 
@@ -364,7 +387,7 @@ const handleDelete = async (id: number) => {
             </div>
 
             {/* Project name input */}
-            <div className="mb-6">
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Project Name <span className="text-red-400">*</span>
               </label>
@@ -372,11 +395,43 @@ const handleDelete = async (id: number) => {
                 type="text"
                 value={projectNameInput}
                 onChange={(e) => setProjectNameInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleConfirmSubmit()}
                 placeholder="e.g. Company Website Redesign"
                 autoFocus
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none focus:border-brand-500 focus:bg-white/8 transition-colors text-sm"
               />
+            </div>
+
+            {/* Discount input */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Discount (LKR)
+              </label>
+              <input
+                type="number"
+                value={discountInput}
+                onChange={(e) => setDiscountInput(e.target.value)}
+                placeholder="0"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none focus:border-brand-500 focus:bg-white/8 transition-colors text-sm"
+              />
+            </div>
+
+            {/* Bank account select */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Bank Account
+              </label>
+              <select
+                value={selectedBankAccountId}
+                onChange={(e) => setSelectedBankAccountId(e.target.value)}
+                className="w-full bg-[#0d0d0d] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-brand-500 transition-colors text-sm"
+              >
+                <option value="" className="bg-[#0d0d0d] text-gray-400">Select Bank Account</option>
+                {bankAccounts.map((acc) => (
+                  <option key={acc.id} value={acc.id} className="bg-[#0d0d0d] text-white">
+                    {acc.name} - {acc.number} ({acc.bank})
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Actions */}

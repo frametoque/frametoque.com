@@ -1,10 +1,10 @@
 export const metadata = {
-  title: "Projects",
-  description: "View, track, and manage all your projects in one place & Get real-time updates.",
+  title: "Invoices",
+  description: "View, track, and manage all your invoices in one place & Get real-time updates.",
   openGraph: {
-    title: "Projects | FrameToque Digital Media",
-    description: "View, track, and manage all your projects in one place & Get real-time updates.",
-    url: "https://frametoque.online/dashboard/projects", 
+    title: "Invoices | FrameToque Digital Media",
+    description: "View, track, and manage all your invoices in one place & Get real-time updates.",
+    url: "https://frametoque.online/dashboard/invoices", 
     siteName: "FrameToque",
     images: [
       {

@@ -178,8 +178,8 @@ export default function InvoicePage() {
     return (
       <div className="bg-red-500/10 border border-red-500/30 rounded-3xl p-6 text-center">
         <p className="text-red-400">{error}</p>
-        <Link href="/dashboard/projects" className="text-brand-400 text-sm mt-3 inline-block">
-          ← Back to Projects
+        <Link href="/dashboard/invoices" className="text-brand-400 text-sm mt-3 inline-block">
+          ← Back to Invoices
         </Link>
       </div>
     );
@@ -197,11 +197,11 @@ export default function InvoicePage() {
       {/* Top Bar */}
       <div className="flex items-center justify-between">
         <Link
-          href="/dashboard/projects"
+          href="/dashboard/invoices"
           className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Projects
+          Back to Invoices
         </Link>
 
         <div className="flex items-center gap-3">

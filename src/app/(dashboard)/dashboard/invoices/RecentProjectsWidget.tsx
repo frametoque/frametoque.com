@@ -71,9 +71,9 @@ export default function RecentProjectsWidget() {
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-white">Recent Projects</h2>
+        <h2 className="text-xl font-semibold text-white">Recent Invoices</h2>
         <Link
-          href="/dashboard/projects"
+          href="/dashboard/invoices"
           className="inline-flex items-center gap-1.5 text-sm text-brand-400 hover:text-brand-300 transition-colors font-medium"
         >
           View All
@@ -99,7 +99,7 @@ export default function RecentProjectsWidget() {
       {!loading && !error && requests.length === 0 && (
         <div className="text-center py-8">
           <Package className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-400 text-sm">No projects yet.</p>
+          <p className="text-gray-400 text-sm">No invoices yet.</p>
           <Link
             href="/dashboard/services"
             className="inline-block mt-3 text-sm text-brand-400 hover:text-brand-300 transition-colors"
