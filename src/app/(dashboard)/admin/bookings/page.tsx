@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { 
   Calendar as CalendarIcon, Plus, Trash2, Edit2, ChevronLeft, ChevronRight,
   Clock, FileText, Folder, ChevronDown, CalendarPlus, X, Apple
@@ -63,6 +63,46 @@ export default function BookingsAdminPage() {
   const [formPrice, setFormPrice] = useState<number>(0);
   const [formLocation, setFormLocation] = useState("");
   const [formEventType, setFormEventType] = useState<'booking' | 'task_reminder'>("booking");
+
+  // Location suggestions state
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!formLocation.trim() || !showSuggestions) {
+      setSuggestions([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setLoadingSuggestions(true);
+      try {
+        const response = await fetch(`/api/location/suggest?q=${encodeURIComponent(formLocation)}`);
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          setSuggestions(data);
+        }
+      } catch (err) {
+        console.error("Error fetching location suggestions:", err);
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    }, 450);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [formLocation, showSuggestions]);
 
   // Calendar month/year navigation state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -237,7 +277,7 @@ export default function BookingsAdminPage() {
             className="flex items-center gap-2 px-5 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-3xl font-semibold transition-colors cursor-pointer text-sm"
           >
             <CalendarPlus className="w-4 h-4 text-brand-500" />
-            Sync Calendar
+             Add to Your Calendar
           </button>
           <button
             onClick={() => openNewModal()}
@@ -570,15 +610,46 @@ export default function BookingsAdminPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-1 relative" ref={dropdownRef}>
                     <label className="text-xs text-gray-400 font-semibold uppercase">Event Location</label>
-                    <input
-                      type="text"
-                      placeholder="Location Name / Address"
-                      value={formLocation}
-                      onChange={(e) => setFormLocation(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder-gray-500 outline-none focus:border-brand-500 transition-colors"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Location Name / Address"
+                        value={formLocation}
+                        onChange={(e) => {
+                          setFormLocation(e.target.value);
+                          setShowSuggestions(true);
+                        }}
+                        onFocus={() => setShowSuggestions(true)}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder-gray-500 outline-none focus:border-brand-500 transition-colors"
+                      />
+                      {loadingSuggestions && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-brand-500 border-t-transparent"></div>
+                        </div>
+                      )}
+                    </div>
+                    {showSuggestions && suggestions.length > 0 && (
+                      <div className="absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-2xl border border-white/10 bg-[#161618] p-1 shadow-2xl backdrop-blur-xl">
+                        {suggestions.map((item, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => {
+                              setFormLocation(item.name || item.display_name);
+                              setShowSuggestions(false);
+                            }}
+                            className="w-full rounded-xl px-4 py-2.5 text-left text-sm text-gray-200 hover:bg-white/5 transition-colors focus:outline-none focus:bg-white/5 flex flex-col gap-0.5"
+                          >
+                            <span className="font-semibold text-white">{item.name || "Location"}</span>
+                            {item.display_name && item.display_name !== item.name && (
+                              <span className="text-xs text-gray-400 truncate w-full">{item.display_name}</span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -789,7 +860,7 @@ export default function BookingsAdminPage() {
             <div className="border-b border-white/10 p-6 flex justify-between items-center flex-shrink-0">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <CalendarPlus className="w-5 h-5 text-brand-500" />
-                Sync Calendar
+                Add to Your Calendar
               </h3>
               <button 
                 onClick={() => setIsSubscribeModalOpen(false)} 
