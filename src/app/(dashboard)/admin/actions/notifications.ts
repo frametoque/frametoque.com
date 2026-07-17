@@ -14,6 +14,7 @@ export interface NotificationItem {
 }
 
 export async function fetchLiveNotifications(): Promise<NotificationItem[]> {
+  return [];
   const notifications: NotificationItem[] = [];
   const now = Date.now();
 

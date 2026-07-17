@@ -11,7 +11,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { getAnalyticsData, getActiveVisitors, getChartData } from "../actions/analytics";
+import { getAnalyticsData, getActiveVisitors, getActiveVisitors30m, getChartData } from "../actions/analytics";
 import { formatDuration } from "../actions/utils";
 import {
   decodeRegion, regionToCountry,
@@ -230,9 +230,9 @@ export default function AnalyticsPage() {
   }));
 
   const statCards = [
+    { label: "Live Now",              value: activeVisitors,      raw: true,  icon: Activity,          color: "text-emerald-400", bg: "bg-emerald-400/10" },
     { label: "Total Visitors",        value: data.totalVisitors,  raw: true,  icon: Users,             color: "text-brand-400", bg: "bg-brand-400/10" },
     { label: "Total Pageviews",       value: data.totalPageviews, raw: true,  icon: Eye,               color: "text-green-400", bg: "bg-green-400/10" },
-    { label: "Avg. Session Duration", value: data.avgSessionTime, raw: false, icon: Clock,             color: "text-blue-400",  bg: "bg-blue-400/10"  },
     { label: "Bounce Rate",           value: data.bounceRate,     raw: false, icon: MousePointerClick, color: "text-amber-400", bg: "bg-amber-400/10" },
   ];
 
@@ -243,14 +243,6 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Title */}
-      <div className="flex items-center gap-3 mb-6">
-        <h1 className="text-3xl font-bold">Web Analytics</h1>
-        <span className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-green-400/10 border border-green-400/20 text-green-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
-          <AnimatedNumber value={activeVisitors} /> live now
-        </span>
-      </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

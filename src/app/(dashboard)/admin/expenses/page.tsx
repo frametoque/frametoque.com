@@ -218,34 +218,6 @@ export default function ExpensesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold">Expenses</h1>
-        </div>
-        
-        <button 
-          onClick={() => {
-            setEditingId(null);
-            setFormData({
-              date: new Date().toISOString().split('T')[0],
-              amount: '',
-              description: '',
-              category: filters[1],
-              paymentMethod: 'Corporate Card',
-              receiptUrl: '',
-              isScheduled: false,
-              frequency: 'monthly'
-            });
-            setReceiptFile(null);
-            setIsModalOpen(true);
-          }}
-          className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors cursor-pointer"
-        >
-          <Plus className="w-5 h-5" />
-          Record Expense
-        </button>
-      </div>
       
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -292,21 +264,45 @@ export default function ExpensesPage() {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        {filters.map((f) => (
-          <button
-            key={f}
-            onClick={() => setActiveFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-              activeFilter === f 
-                ? "bg-white text-black" 
-                : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
-            }`}
-          >
-            {f}
-          </button>
-        ))}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2">
+          {filters.map((f) => (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
+                activeFilter === f 
+                  ? "bg-white text-black" 
+                  : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        <button 
+          onClick={() => {
+            setEditingId(null);
+            setFormData({
+              date: new Date().toISOString().split('T')[0],
+              amount: '',
+              description: '',
+              category: filters[1],
+              paymentMethod: 'Corporate Card',
+              receiptUrl: '',
+              isScheduled: false,
+              frequency: 'monthly'
+            });
+            setReceiptFile(null);
+            setIsModalOpen(true);
+          }}
+          className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors cursor-pointer w-full sm:w-auto"
+        >
+          <Plus className="w-5 h-5" />
+          Record Expense
+        </button>
       </div>
 
       {/* Expenses History Table */}
@@ -318,7 +314,7 @@ export default function ExpensesPage() {
                 <th className="p-4 font-medium">Date</th>
                 <th className="p-4 font-medium">Amount</th>
                 <th className="p-4 font-medium">Description</th>
-                <th className="p-4 font-medium">Category</th>
+                <th className="p-4 font-medium w-36">Category</th>
                 <th className="p-4 font-medium">Paid via</th>
                 <th className="p-4 font-medium text-right">Actions</th>
               </tr>
@@ -329,8 +325,8 @@ export default function ExpensesPage() {
                   <td className="p-4 text-sm">{row.date}</td>
                   <td className="p-4 font-semibold text-red-400">{formatLKR(row.amount)}</td>
                   <td className="p-4 text-sm text-gray-300">{row.desc}</td>
-                  <td className="p-4">
-                    <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-white/10 border border-white/10">
+                  <td className="p-4 w-36">
+                    <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-white/10 border border-white/10 whitespace-nowrap block max-w-[120px] truncate text-center">
                       {row.category}
                     </span>
                   </td>

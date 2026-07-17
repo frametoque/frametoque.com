@@ -11,7 +11,6 @@ import {
   type Transition,
   type Variants,
 } from "framer-motion";
-import NotificationBell from "./components/NotificationBell";
 import DateRangeSelector from "./components/DateRangeSelector";
 import { AdminDateRangeProvider, useAdminDateRange } from "./context/AdminDateRangeContext";
 import { AnalyticsDateRangeProvider, useAnalyticsDateRange } from "./context/AnalyticsDateRangeContext";
@@ -38,7 +37,11 @@ import {
   PanelLeftOpen,
   FilePenLine,
   ChartLine,
-  Calendar
+  Calendar,
+  CalendarPlus,
+  Plus,
+  ExternalLink,
+  Clock
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -120,7 +123,7 @@ export default function DashboardLayout({ children }) {
       { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
       { name: "Clients", href: "/admin/clients", icon: Users },
       { name: "Reports", href: "/admin/reports", icon: BarChart3 },
-      { name: "Web Analytics", href: "/admin/analytics", icon: ChartLine },
+      { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
       { name: "Services", href: "/admin/services", icon: Briefcase },
       { name: "Portfolio", href: "/admin/portfolio", icon: Layers },
     ];
@@ -164,7 +167,7 @@ export default function DashboardLayout({ children }) {
             }
           }}
           animate={{
-            width: desktopExpanded ? 220 : 80,
+            width: desktopExpanded ? 200 : 80,
             x: mobileMenuOpen ? 0 : undefined,
           }}
           transition={sidebarSpring}
@@ -355,7 +358,7 @@ export default function DashboardLayout({ children }) {
 
         {/* Content padding is driven by the *persistent* collapsed state, not hover, so layout doesn't shift on hover */}
         <motion.div
-          animate={{ paddingLeft: collapsed ? 80 : 220 }}
+          animate={{ paddingLeft: collapsed ? 80 : 200 }}
           transition={sidebarSpring}
           className="min-h-screen lg:block hidden"
         >
@@ -379,26 +382,76 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const pathname = usePathname();
   const isAnalytics = pathname === "/admin/analytics";
   const isBookings = pathname === "/admin/bookings";
+  const isClients = pathname === "/admin/clients";
+  const isServices = pathname === "/admin/services";
+  const isPortfolio = pathname === "/admin/portfolio";
+  const hideSelector = isServices || isPortfolio;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
-  const [dateTime, setDateTime] = useState("");
+  const [currentTime, setCurrentTime] = useState("");
+  const [currentDate, setCurrentDate] = useState("");
   const [activeVisitors, setActiveVisitors] = useState(0);
   const [weather, setWeather] = useState<{ city: string; temp: string; condition: string; iconUrl: string } | null>(null);
+  const [bookingForecasts, setBookingForecasts] = useState<any[]>([]);
+  const [headerSearchTerm, setHeaderSearchTerm] = useState("");
+  const isReports = pathname === "/admin/reports";
+  const [reportsActiveTab, setReportsActiveTab] = useState("overview");
+  const [reportsFormattedDate, setReportsFormattedDate] = useState("");
+
+  useEffect(() => {
+    const handleTabChange = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      setReportsActiveTab(customEvent.detail);
+    };
+    const handleDateChange = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      setReportsFormattedDate(customEvent.detail);
+    };
+    window.addEventListener("reports:tab-change", handleTabChange);
+    window.addEventListener("reports:formatted-date", handleDateChange);
+    return () => {
+      window.removeEventListener("reports:tab-change", handleTabChange);
+      window.removeEventListener("reports:formatted-date", handleDateChange);
+    };
+  }, []);
+
+  const getPageTitle = (path: string): string => {
+    if (path === "/admin" || path === "/admin/dashboard") return "Dashboard";
+    if (path.startsWith("/admin/analytics")) return "Analytics";
+    if (path.startsWith("/admin/bookings")) return "Bookings";
+    if (path.startsWith("/admin/clients")) return "Clients";
+    if (path.startsWith("/admin/invoices")) return "Invoices";
+    if (path.startsWith("/admin/quotations")) return "Quotations";
+    if (path.startsWith("/admin/income")) return "Income";
+    if (path.startsWith("/admin/expenses")) return "Expenses";
+    if (path.startsWith("/admin/reports")) return "Reports";
+    if (path.startsWith("/admin/portfolio")) return "Portfolio";
+    if (path.startsWith("/admin/services")) return "Services";
+    if (path.startsWith("/admin/settings")) return "Settings";
+    if (path.startsWith("/admin/agreements")) return "Agreements";
+    return "Admin";
+  };
 
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
-      const formatted = now.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }) + " | " + now.toLocaleTimeString("en-US", {
+      
+      const timeStr = now.toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "2-digit",
         second: "2-digit",
         hour12: true
       });
-      setDateTime(formatted);
+      
+      const dateStr = now.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+
+      setCurrentTime(timeStr);
+      setCurrentDate(dateStr);
     };
     updateDateTime();
     const clockInterval = setInterval(updateDateTime, 1000);
@@ -414,102 +467,267 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
           if (data.weather) {
             setWeather(data.weather);
           }
+          if (data.bookingForecasts) {
+            setBookingForecasts(data.bookingForecasts);
+          }
         }
       } catch (e) {
         console.error("Failed to fetch weather status:", e);
       }
     };
     fetchWeatherData();
+    const weatherInterval = setInterval(fetchWeatherData, 5 * 60 * 1000);
 
     return () => {
       clearInterval(clockInterval);
+      clearInterval(weatherInterval);
     };
   }, []);
 
   return (
     <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/10 h-20 flex-shrink-0 flex items-center">
       <div className="w-full flex items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4">
+        
+        {/* Left Side: Title & Date Selector */}
+        <div className="flex items-center gap-6">
           <button
             onClick={() => setMobileMenuOpen(true)}
             className="lg:hidden p-2 hover:bg-white/10 rounded-3xl"
           >
             <Menu className="w-6 h-6" />
           </button>
- 
-          {/* System Status Indicators */}
-          <div className="hidden xl:flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-gray-300">
-            {/* Date & Time */}
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-white/90 tabular-nums">{dateTime || "Loading..."}</span>
-            </div>
 
-            {weather && (
-              <>
-                <div className="h-4 w-[1px] bg-white/10" />
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-400 font-medium">{weather.city}:</span>
-                  <span className="font-semibold text-white/90">{weather.temp}</span>
-                  {weather.iconUrl && (
-                    <img 
-                      src={weather.iconUrl} 
-                      alt={weather.condition} 
-                      className="w-8 h-8 object-contain -my-2 flex-shrink-0"
-                      title={weather.condition}
-                    />
-                  )}
-                </div>
-              </>
-            )}
+          {/* Page Title */}
+          <h1 className="text-xl font-bold text-white tracking-tight hidden sm:block">
+            {getPageTitle(pathname)}
+          </h1>
 
-            <div className="h-4 w-[1px] bg-white/10" />
-
-            {/* Live Visitors Status */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 font-medium">Live:</span>
-              <span className="relative flex h-2 w-2">
-                {activeVisitors > 0 && (
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                )}
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${
-                  activeVisitors > 0 ? "bg-emerald-500" : "bg-gray-500"
-                }`}></span>
-              </span>
-              <span className="font-semibold text-white/90 text-sm flex items-center gap-1">
-                {activeVisitors} {activeVisitors === 1 ? "visitor" : "visitors"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {isAnalytics ? (
-            <select
-              value={analyticsDateRange}
-              onChange={(e) => setAnalyticsDateRange(e.target.value as any)}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium text-white"
-            >
-              <option value="today"        className="bg-black">Today</option>
-              <option value="24 hours"     className="bg-black">Last 24 Hours</option>
-              <option value="one month"    className="bg-black">Last Month</option>
-              <option value="three months" className="bg-black">Last 3 Months</option>
-              <option value="6 months"     className="bg-black">Last 6 Months</option>
-              <option value="this year"    className="bg-black">This Year</option>
-              <option value="all time"     className="bg-black">All Time</option>
-            </select>
-          ) : isBookings ? null : (
-            <DateRangeSelector
-              dateRange={dateRange}
-              startDate={startDate}
-              endDate={endDate}
-              onRangeChange={setDateRange}
-              onStartDateChange={setStartDate}
-              onEndDateChange={setEndDate}
-            />
+          {/* View Page button for Services & Portfolio */}
+          {hideSelector && (
+            <>
+              <span className="hidden sm:block w-[1px] h-5 bg-white/15" />
+              <a
+                href={isServices ? "/services" : "/work"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors text-sm"
+              >
+                <ExternalLink className="w-4 h-4 text-brand-400" />
+                View Page
+              </a>
+            </>
           )}
 
-          <NotificationBell />
+          {!hideSelector && (
+            <>
+              {/* Divider */}
+              <span className="hidden sm:block w-[1px] h-5 bg-white/15" />
+
+              {/* Range Selector */}
+              <div className="flex items-center">
+                {isAnalytics ? (
+                  <div className="relative flex items-center">
+                    <select
+                      value={analyticsDateRange}
+                      onChange={(e) => setAnalyticsDateRange(e.target.value as any)}
+                      className="bg-white/5 border border-white/10 rounded-xl pl-4 pr-10 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium text-white"
+                    >
+                      <option value="today"        className="bg-black">Today</option>
+                      <option value="24 hours"     className="bg-black">Last 24 Hours</option>
+                      <option value="one month"    className="bg-black">Last Month</option>
+                      <option value="three months" className="bg-black">Last 3 Months</option>
+                      <option value="6 months"     className="bg-black">Last 6 Months</option>
+                      <option value="this year"    className="bg-black">This Year</option>
+                      <option value="all time"     className="bg-black">All Time</option>
+                    </select>
+                    <span className="absolute right-4 pointer-events-none text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                        <path d="m6 9 6 6 6-6"/>
+                      </svg>
+                    </span>
+                  </div>
+                ) : isBookings ? (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("bookings:open-subscribe"))}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
+                >
+                  <CalendarPlus className="w-4 h-4 text-brand-500" />
+                  Add to Your Calendar
+                </button>
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("bookings:open-new-event"))}
+                  className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors active:scale-95 duration-200 cursor-pointer text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Event
+                </button>
+              </div>
+                ) : isClients ? (
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-full sm:w-64">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search clients..."
+                        value={headerSearchTerm}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setHeaderSearchTerm(val);
+                          window.dispatchEvent(new CustomEvent("clients:search", { detail: val }));
+                        }}
+                        className="w-full bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm text-white"
+                      />
+                    </div>
+                    <button
+                      onClick={() => window.dispatchEvent(new CustomEvent("clients:open-new"))}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors active:scale-95 duration-200 cursor-pointer text-xs whitespace-nowrap"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Client
+                    </button>
+                  </div>
+                ) : isReports && reportsActiveTab === "trial_balance" ? (
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new CustomEvent("reports:toggle-datepicker"))}
+                    className="bg-white/5 border border-white/10 hover:border-white/20 active:bg-white/10 rounded-xl px-4 py-2 text-xs text-white flex items-center gap-2 transition-all cursor-pointer shadow-sm select-none"
+                  >
+                    <Calendar className="w-4 h-4 text-brand-400" />
+                    <span className="font-semibold text-gray-400">As of:</span>
+                    <span className="font-bold">{reportsFormattedDate || "Select Date"}</span>
+                  </button>
+                ) : (
+                  <DateRangeSelector
+                    dateRange={dateRange}
+                    startDate={startDate}
+                    endDate={endDate}
+                    onRangeChange={setDateRange}
+                    onStartDateChange={setStartDate}
+                    onEndDateChange={setEndDate}
+                  />
+                )}
+              </div>
+            </>
+          )}
         </div>
+
+        {/* Right Side: System Stats */}
+        <div className="hidden xl:flex items-center gap-5 text-sm text-gray-400">
+          {/* Live Visitors Status - Show only if > 0 */}
+          {activeVisitors > 0 && (
+            <>
+              <div className="flex items-center gap-2 text-gray-300">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400/70 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="font-medium flex items-center gap-1">
+                  <span className="text-gray-400">Live:</span>
+                  <span className="font-semibold text-white/90">{activeVisitors} {activeVisitors === 1 ? "visitor" : "visitors"}</span>
+                </span>
+              </div>
+              <span className="w-1 h-1 rounded-full bg-white/20" />
+            </>
+          )}
+
+          {/* Current Time */}
+          <div className="flex items-center gap-1.5 text-gray-300">
+            <Clock className="w-3.5 h-3.5 text-gray-500" />
+            <span className="font-medium tabular-nums">{currentTime || "Loading..."}</span>
+          </div>
+
+          <span className="w-1 h-1 rounded-full bg-white/20" />
+
+          {/* Current Date (showing Day Name e.g. Fri, Sat, Sun) */}
+          <div className="flex items-center gap-1.5 text-gray-300">
+            <Calendar className="w-3.5 h-3.5 text-gray-500" />
+            <span className="font-medium">{currentDate || "Loading..."}</span>
+          </div>
+
+          {weather && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-white/20" />
+              <div className="relative group flex items-center gap-1.5 text-gray-300 py-1">
+                <span className="text-gray-400">{weather.city}:</span>
+                <span className="font-semibold text-white/90">{weather.temp}</span>
+                {weather.iconUrl && (
+                  <img 
+                    src={weather.iconUrl} 
+                    alt={weather.condition} 
+                    className="w-5 h-5 object-contain flex-shrink-0"
+                    title={weather.condition}
+                  />
+                )}
+
+                {/* Custom Dialog Box on Hover */}
+                {bookingForecasts && bookingForecasts.length > 0 && (
+                  <div className="absolute right-0 top-full mt-3 w-96 bg-[#0c0c0e] border border-white/10 rounded-3xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 invisible scale-95 group-hover:opacity-100 group-hover:visible group-hover:scale-100 transition-all duration-300 z-50 pointer-events-none group-hover:pointer-events-auto before:absolute before:-top-3 before:left-0 before:right-0 before:h-3">
+                    {/* Header */}
+                    <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                      <div>
+                        <h4 className="text-sm font-bold text-white">Upcoming Bookings Weather</h4>
+                        <p className="text-[10px] text-gray-400 mt-0.5">Predicted weather at the venues</p>
+                      </div>
+                      <span className="px-2.5 py-0.5 text-[9px] font-semibold bg-brand-500/10 border border-brand-500/20 text-brand-400 rounded-full">
+                        3 Days Forecast
+                      </span>
+                    </div>
+
+                    {/* Booking list */}
+                    <div className="space-y-4">
+                      {bookingForecasts.map((bf, idx) => (
+                        <div key={idx} className="bg-white/5 border border-white/5 rounded-2xl p-3.5 hover:bg-white/10 transition-colors">
+                          <div className="flex justify-between items-start gap-3">
+                            <div className="min-w-0 flex-1">
+                              <h5 className="text-xs font-bold text-white truncate">{bf.title}</h5>
+                              <p className="text-[10px] text-gray-400 truncate mt-0.5">{bf.location}</p>
+                              <div className="flex items-center gap-1.5 mt-2">
+                                <span className="px-2 py-0.5 rounded bg-white/5 text-[9px] font-medium text-gray-300">
+                                  {bf.date}
+                                </span>
+                                {bf.startTime && (
+                                  <span className="px-2 py-0.5 rounded bg-white/5 text-[9px] font-medium text-gray-300">
+                                    {bf.startTime}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {bf.weather ? (
+                              <div className="flex flex-col items-end shrink-0">
+                                <div className="flex items-center gap-1">
+                                  <img src={bf.weather.iconUrl} alt={bf.weather.condition} className="w-8 h-8 object-contain" />
+                                  <span className="text-sm font-bold text-white">{bf.weather.tempMax}</span>
+                                </div>
+                                <div className="text-right mt-1">
+                                  <div className="flex items-center gap-1 justify-end">
+                                    <span className="text-[9px] text-gray-400">Precipitation:</span>
+                                    <span className="text-[9px] font-semibold text-blue-400">{bf.weather.precipitation}</span>
+                                  </div>
+                                  {/* Precipitation progress bar */}
+                                  <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden mt-1 ml-auto">
+                                    <div 
+                                      className="h-full bg-blue-400 rounded-full" 
+                                      style={{ width: bf.weather.precipitation }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-gray-500 self-center shrink-0">No forecast data</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
       </div>
     </header>
   );

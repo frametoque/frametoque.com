@@ -10,6 +10,10 @@ export async function getActiveVisitors() {
   return shared.getActiveVisitors();
 }
 
+export async function getActiveVisitors30m() {
+  return shared.getActiveVisitors30m();
+}
+
 export async function getChartData(zoomLevel: string) {
   return shared.getChartData(zoomLevel);
 }

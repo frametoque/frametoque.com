@@ -59,6 +59,24 @@ export default function ReportsPage() {
     load();
   }, [startDate, endDate]);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("reports:tab-change", { detail: activeTab }));
+  }, [activeTab]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("reports:formatted-date", { detail: formatDateFriendly(endDate) }));
+  }, [endDate]);
+
+  useEffect(() => {
+    const handleToggle = () => {
+      setActivePicker(prev => prev === "trial_date" ? null : "trial_date");
+    };
+    window.addEventListener("reports:toggle-datepicker", handleToggle);
+    return () => {
+      window.removeEventListener("reports:toggle-datepicker", handleToggle);
+    };
+  }, []);
+
 
 
   if (loading || !data) {
@@ -110,39 +128,24 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6 print:p-0 print:m-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 print:hidden">
-        <h1 className="text-3xl font-bold">Financial Reports</h1>
-        {activeTab === "trial_balance" && (
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setActivePicker(activePicker === "trial_date" ? null : "trial_date")}
-              className="bg-white/5 border border-white/10 hover:border-white/20 active:bg-white/10 rounded-xl px-4 py-2 text-sm text-white flex items-center gap-2 transition-all cursor-pointer shadow-sm select-none"
-            >
-              <Calendar className="w-4 h-4 text-brand-400" />
-              <span className="font-semibold text-gray-400">As of:</span>
-              <span className="font-bold">{formatDateFriendly(endDate)}</span>
-            </button>
-            {activePicker === "trial_date" && (
-              <div className="absolute right-0 top-12 z-50 w-[310px]">
-                <WheelDatePicker
-                  value={endDate}
-                  onChange={(date) => {
-                    setEndDate(date);
-                    setStartDate("1970-01-01");
-                  }}
-                  onClose={() => setActivePicker(null)}
-                  label="As of Date"
-                />
-              </div>
-            )}
+      {/* Stats Cards - Displayed on all tabs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, i) => (
+          <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors">
+            <div className={`p-4 rounded-2xl ${stat.bg}`}>
+              <stat.icon className={`w-6 h-6 ${stat.color}`} />
+            </div>
+            <div>
+              <p className="text-gray-400 text-sm">{stat.label}</p>
+              <p className="text-2xl font-semibold">{stat.value}</p>
+            </div>
           </div>
-        )}
+        ))}
       </div>
 
-      {/* Tabs Row */}
+      {/* Tabs Row - Pill styled like expenses page categories */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 print:hidden">
-        <div className="flex bg-white/5 border border-white/10 rounded-2xl p-1 items-center w-full md:w-auto">
+        <div className="flex flex-wrap gap-2">
           {[
             { id: "overview", label: "Overview Dashboard" },
             { id: "general_ledger", label: "General Ledger" },
@@ -152,10 +155,10 @@ export default function ReportsPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 md:flex-none px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer text-center ${
+              className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
                 activeTab === tab.id
-                  ? "bg-white text-black font-bold shadow-md"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-white text-black border-white shadow-md font-bold"
+                  : "bg-white/5 text-gray-400 border-white/10 hover:text-white hover:bg-white/10"
               }`}
             >
               {tab.label}
@@ -163,25 +166,26 @@ export default function ReportsPage() {
           ))}
         </div>
 
-
+        {/* Datepicker dropdown for trial balance (anchored here) */}
+        {activePicker === "trial_date" && (
+          <div className="relative">
+            <div className="absolute right-0 top-2 z-50 w-[310px]">
+              <WheelDatePicker
+                value={endDate}
+                onChange={(date) => {
+                  setEndDate(date);
+                  setStartDate("1970-01-01");
+                }}
+                onClose={() => setActivePicker(null)}
+                label="As of Date"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {activeTab === "overview" && (
         <>
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {stats.map((stat, i) => (
-              <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors">
-                <div className={`p-4 rounded-2xl ${stat.bg}`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm">{stat.label}</p>
-                  <p className="text-2xl font-semibold">{stat.value}</p>
-                </div>
-              </div>
-            ))}
-          </div>
 
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

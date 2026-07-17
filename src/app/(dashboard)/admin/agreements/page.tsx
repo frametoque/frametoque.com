@@ -111,18 +111,6 @@ export default function AgreementsPage() {
   return (
     <div className="space-y-6">
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h1 className="text-3xl font-bold">Agreements</h1>
-        <Link
-          href="/admin/agreements/new"
-          className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          New Agreement
-        </Link>
-      </div>
-
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
@@ -138,32 +126,42 @@ export default function AgreementsPage() {
         ))}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
-        {/* Status pills */}
-        <div className="flex flex-wrap gap-2">
-          {statusFilters.map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors capitalize ${
-                statusFilter === s
-                  ? "bg-white text-black"
-                  : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
-              }`}
-            >
-              {s === "All" ? "All Statuses" : (statusConfig[s]?.label ?? s)}
-            </button>
-          ))}
+      {/* Filters & Actions */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-3 items-center">
+          {/* Status pills */}
+          <div className="flex flex-wrap gap-2">
+            {statusFilters.map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors capitalize ${
+                  statusFilter === s
+                    ? "bg-white text-black"
+                    : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
+                }`}
+              >
+                {s === "All" ? "All Statuses" : (statusConfig[s]?.label ?? s)}
+              </button>
+            ))}
+          </div>
+          {/* Type dropdown */}
+          <select
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value)}
+            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium"
+          >
+            {agreementTypes.map(t => <option key={t} value={t} className="bg-black">{t}</option>)}
+          </select>
         </div>
-        {/* Type dropdown */}
-        <select
-          value={typeFilter}
-          onChange={e => setTypeFilter(e.target.value)}
-          className="ml-auto bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium"
+
+        <Link
+          href="/admin/agreements/new"
+          className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors w-full sm:w-auto self-end lg:self-auto"
         >
-          {agreementTypes.map(t => <option key={t} value={t} className="bg-black">{t}</option>)}
-        </select>
+          <Plus className="w-5 h-5" />
+          New Agreement
+        </Link>
       </div>
 
       {/* Table */}

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { 
   Calendar as CalendarIcon, Plus, Trash2, Edit2, ChevronLeft, ChevronRight,
-  Clock, FileText, Folder, CalendarPlus, X, Apple
+  Clock, FileText, Folder, CalendarPlus, X, Apple, MapPin
 } from "lucide-react";
 import { 
   getBookings, createBooking, updateBooking, deleteBooking, getCalendarEvents,
@@ -139,6 +139,19 @@ export default function BookingsAdminPage() {
     setIsModalOpen(true);
   };
 
+  useEffect(() => {
+    const handleOpenSubscribe = () => setIsSubscribeModalOpen(true);
+    const handleOpenNewEvent = () => openNewModal();
+
+    window.addEventListener("bookings:open-subscribe", handleOpenSubscribe);
+    window.addEventListener("bookings:open-new-event", handleOpenNewEvent);
+
+    return () => {
+      window.removeEventListener("bookings:open-subscribe", handleOpenSubscribe);
+      window.removeEventListener("bookings:open-new-event", handleOpenNewEvent);
+    };
+  }, []);
+
   const openEditModal = (booking: BookingData) => {
     setEditingBooking(booking);
     setFormTitle(booking.title);
@@ -238,28 +251,6 @@ export default function BookingsAdminPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Bookings</h1>
-        </div>
-        <div className="flex gap-2.5">
-          <button
-            onClick={() => setIsSubscribeModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-3xl font-semibold transition-colors cursor-pointer text-sm"
-          >
-            <CalendarPlus className="w-4 h-4 text-brand-500" />
-             Add to Your Calendar
-          </button>
-          <button
-            onClick={() => openNewModal()}
-            className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors active:scale-95 duration-200 cursor-pointer text-sm"
-          >
-            <Plus className="w-5 h-5" />
-            Add Event
-          </button>
-        </div>
-      </div>
 
       {/* Grid container for side-by-side calendar and bookings list */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
@@ -419,17 +410,23 @@ export default function BookingsAdminPage() {
 
                   <div className="border-t border-white/5 pt-3 flex flex-col gap-1.5 text-xs text-gray-300">
                     {b.event_type !== 'task_reminder' && b.location && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Location:</span>
-                        <span className="font-medium text-brand-300">{b.location}</span>
+                      <div className="flex items-start gap-1.5 text-brand-300 mt-1">
+                        <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-brand-400" />
+                        <span className="font-medium text-left leading-normal break-words flex-1">{b.location}</span>
                       </div>
                     )}
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Date/Time:</span>
-                      <span className="font-medium text-white">
-                        {b.booking_date} {b.start_time ? `(${b.start_time}${b.end_time ? ` - ${b.end_time}` : ""})` : ""}
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400">Date:</span>
+                      <span className="font-medium text-white">{b.booking_date}</span>
                     </div>
+                    {b.start_time && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400">Time:</span>
+                        <span className="font-medium text-white">
+                          {b.start_time}{b.end_time ? ` - ${b.end_time}` : ""}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-end items-center gap-2 border-t border-white/5 pt-2 mt-1">

@@ -428,12 +428,28 @@ export default function ServicesAdminPage() {
 
   return (
     <div className="space-y-6 text-white bg-black min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Services</h1>
+
+      {/* Category Tabs & Actions */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        {/* Category Tabs */}
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.slug}
+              onClick={() => setActiveCategory(cat.slug)}
+              className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
+                activeCategory === cat.slug
+                  ? "bg-white text-black border-white shadow-md font-bold"
+                  : "bg-white/5 text-gray-400 border-white/10 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
         </div>
-        <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+
+        {/* Actions */}
+        <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap self-end lg:self-auto">
           {isReorderMode ? (
             <>
               <button
@@ -468,26 +484,6 @@ export default function ServicesAdminPage() {
               </button>
             </>
           )}
-        </div>
-      </div>
-
-      {/* Category Tabs */}
-      <div className="flex">
-        <div className="inline-flex bg-white/5 border border-white/10 rounded-2xl p-1.5 gap-1">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.slug}
-              onClick={() => setActiveCategory(cat.slug)}
-              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer
-                ${
-                  activeCategory === cat.slug
-                    ? "bg-white text-black shadow-lg"
-                    : "text-gray-400 hover:text-white"
-                }`}
-            >
-              {cat.name}
-            </button>
-          ))}
         </div>
       </div>
 

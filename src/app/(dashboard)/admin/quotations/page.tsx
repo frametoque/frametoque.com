@@ -149,18 +149,6 @@ const handleDelete = async (id: number) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold">Quotations</h1>
-        </div>
-        <Link
-          href="/admin/quotations/new"
-          className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          New Quotation
-        </Link>
-      </div>
       
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -177,21 +165,31 @@ const handleDelete = async (id: number) => {
         ))}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        {filters.map((f) => (
-          <button
-            key={f}
-            onClick={() => setActiveFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              activeFilter === f 
-                ? "bg-white text-black" 
-                : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
-            }`}
-          >
-            {f}
-          </button>
-        ))}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2">
+          {filters.map((f) => (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                activeFilter === f 
+                  ? "bg-white text-black" 
+                  : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        <Link
+          href="/admin/quotations/new"
+          className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors w-full sm:w-auto"
+        >
+          <Plus className="w-5 h-5" />
+          New Quotation
+        </Link>
       </div>
 
       {/* Table */}

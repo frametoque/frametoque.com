@@ -69,9 +69,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-      </div>
       
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -150,28 +147,62 @@ export default function DashboardPage() {
 
               return (
                 <div key={ev.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-2xl ${iconColor}`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-white truncate max-w-[120px] sm:max-w-xs">{ev.title}</p>
-                      <p className="text-xs text-gray-400">
-                        {ev.date} {ev.time ? `at ${ev.time}` : ""}
-                      </p>
-                      {ev.location && (
-                        <p className="text-[11px] text-brand-300 font-medium mt-0.5 flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5" />
-                          <span>{ev.location}</span>
-                        </p>
-                      )}
+                  <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-white truncate max-w-[120px] sm:max-w-xs">{ev.title}</p>
+                        {(() => {
+                          const today = new Date();
+                          today.setHours(0,0,0,0);
+                          const eventDate = new Date(ev.date);
+                          eventDate.setHours(0,0,0,0);
+                          const diffTime = eventDate.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          let pillStyle = "bg-brand-500/10 text-brand-400 border-brand-500/20";
+                          let label = `${diffDays} days left`;
+                          if (diffDays === 0) {
+                            pillStyle = "bg-green-500/10 text-green-400 border-green-500/20";
+                            label = "Today";
+                          } else if (diffDays === 1) {
+                            pillStyle = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                            label = "Tomorrow";
+                          } else if (diffDays < 0) {
+                            pillStyle = "bg-gray-500/10 text-gray-400 border-gray-500/20";
+                            label = "Past";
+                          }
+                          return (
+                            <>
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border tracking-wide uppercase shrink-0 ${pillStyle}`}>
+                                {label}
+                              </span>
+                              <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-gray-400 shrink-0">
+                                {isTask ? 'reminder' : ev.type}
+                              </span>
+                            </>
+                          );
+                        })()}
+                      </div>
+                      
+                      <div className="flex flex-col gap-1 mt-1.5 text-[11px] text-gray-300">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-gray-500">Date:</span>
+                          <span className="font-medium text-white">{ev.date}</span>
+                        </div>
+                        {ev.time && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-gray-500">Time:</span>
+                            <span className="font-medium text-white">{ev.time}</span>
+                          </div>
+                        )}
+                        {ev.location && (
+                          <div className="flex items-start gap-1.5">
+                            <span className="text-gray-500 shrink-0">Location:</span>
+                            <span className="font-medium text-white break-words flex-1 leading-normal">{ev.location}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-gray-300">
-                    {isTask ? 'reminder' : ev.type}
-                  </span>
-                </div>
-              );
+                );
             })}
             {upcomingEvents.length === 0 && <p className="text-gray-500 text-sm">No upcoming events scheduled.</p>}
           </div>

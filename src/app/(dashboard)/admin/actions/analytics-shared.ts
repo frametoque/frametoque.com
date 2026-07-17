@@ -209,6 +209,24 @@ export async function getActiveVisitors(): Promise<number> {
   }
 }
 
+export async function getActiveVisitors30m(): Promise<number> {
+  try {
+    const headers = await getHeaders();
+    const endAt = Date.now();
+    const startAt = endAt - 30 * 60 * 1000;
+    const base = `${UMAMI_URL}/api/websites/${WEBSITE_ID}`;
+    const res = await fetch(
+      `${base}/stats?startAt=${startAt}&endAt=${endAt}`,
+      { headers, cache: "no-store" }
+    );
+    if (!res.ok) return 0;
+    const data = await res.json();
+    return data.visitors ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
 const CHART_ZOOM_CONFIG: Record<string, { unit: string; spanMs: number }> = {
   year:  { unit: "year",  spanMs: 5 * 365 * 86400000 },
   month: { unit: "month", spanMs: 2 * 365 * 86400000 },

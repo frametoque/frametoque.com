@@ -326,14 +326,6 @@ export default function IncomePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold">Income</h1>
-        </div>
-        <button onClick={openNew} className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors">
-          <Plus className="w-5 h-5" /> Record Income
-        </button>
-      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -345,14 +337,20 @@ export default function IncomePage() {
         ))}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        {filters.map((f) => (
-          <button key={f} onClick={() => setActiveFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeFilter === f ? "bg-white text-black" : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"}`}>
-            {f}
-          </button>
-        ))}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2">
+          {filters.map((f) => (
+            <button key={f} onClick={() => setActiveFilter(f)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeFilter === f ? "bg-white text-black" : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"}`}>
+              {f}
+            </button>
+          ))}
+        </div>
+
+        <button onClick={openNew} className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors w-full sm:w-auto justify-center">
+          <Plus className="w-5 h-5" /> Record Income
+        </button>
       </div>
 
       {/* Table */}
@@ -365,7 +363,7 @@ export default function IncomePage() {
                 <th className="p-4 font-medium">Amount</th>
                 <th className="p-4 font-medium">Client</th>
                 <th className="p-4 font-medium">Description</th>
-                <th className="p-4 font-medium">Categories</th>
+                <th className="p-4 font-medium w-36">Categories</th>
                 <th className="p-4 font-medium">Invoice</th>
                 <th className="p-4 font-medium text-right">Actions</th>
               </tr>
@@ -377,8 +375,8 @@ export default function IncomePage() {
                   <td className="p-4 font-semibold text-green-400">{formatLKR(row.amount)}</td>
                   <td className="p-4 text-sm">{row.client || '-'}</td>
                   <td className="p-4 text-sm text-gray-300">{row.desc}</td>
-                  <td className="p-4">
-                    <div className="flex flex-wrap gap-1">
+                  <td className="p-4 w-36">
+                    <div className="flex flex-wrap gap-1 max-w-[144px]">
                       {parseCategories(row.category).map((cat) => (
                         <span key={cat} className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-white/10 border border-white/10 whitespace-nowrap">
                           {cat}

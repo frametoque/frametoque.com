@@ -203,14 +203,6 @@ export default function SettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl sm:text-4xl font-bold mb-2">
-          <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-            Account{" "}
-          </span>
-          <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">
-            Settings
-          </span>
-        </h1>
         <p className="text-gray-400 text-lg">Manage your profile and preferences</p>
       </div>
 

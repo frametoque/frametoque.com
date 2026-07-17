@@ -36,6 +36,24 @@ export default function ClientsPage() {
 
   useEffect(() => { loadData(); }, []);
 
+  useEffect(() => {
+    const handleSearch = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      setSearchTerm(customEvent.detail || "");
+    };
+    const handleOpenNew = () => {
+      setEditingId(null);
+      setFormData(emptyForm);
+      setIsModalOpen(true);
+    };
+    window.addEventListener("clients:search", handleSearch);
+    window.addEventListener("clients:open-new", handleOpenNew);
+    return () => {
+      window.removeEventListener("clients:search", handleSearch);
+      window.removeEventListener("clients:open-new", handleOpenNew);
+    };
+  }, []);
+
   const openNew = () => {
     setEditingId(null);
     setFormData(emptyForm);
@@ -163,28 +181,6 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-bold">Clients</h1>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-none sm:w-64">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search clients..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm text-white"
-            />
-          </div>
-          <button
-            onClick={openNew}
-            className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors whitespace-nowrap text-sm"
-          >
-            <Plus className="w-4 h-4" /> Add Client
-          </button>
-        </div>
-      </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
