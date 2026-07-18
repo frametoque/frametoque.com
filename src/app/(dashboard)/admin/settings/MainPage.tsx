@@ -237,7 +237,7 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-3xl transition-all ${
                     activeTab === tab.id
-                      ? "bg-gradient-to-r from-white to-white text-black font-semibold"
+                      ? "bg-white text-black font-semibold"
                       : "text-gray-400 hover:bg-white/5 hover:text-white"
                   }`}
                 >
@@ -674,7 +674,13 @@ function SystemLogsView() {
               {logs.map((log) => (
                 <tr key={log.id} className="hover:bg-white/5 transition-colors">
                   <td className="py-3.5 px-4 text-gray-300 whitespace-nowrap">
-                    {new Date(log.timestamp).toLocaleString()}
+                    {(() => {
+                      let dateStr = log.timestamp;
+                      if (typeof dateStr === "string" && !dateStr.endsWith("Z") && !dateStr.includes("+")) {
+                        dateStr = dateStr.includes("T") ? `${dateStr}Z` : `${dateStr.replace(" ", "T")}Z`;
+                      }
+                      return new Date(dateStr).toLocaleString();
+                    })()}
                   </td>
                   <td className="py-3.5 px-4 whitespace-nowrap">
                     <p className="text-white font-medium">{log.user_email}</p>

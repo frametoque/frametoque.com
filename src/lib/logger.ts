@@ -2,19 +2,23 @@ import sql from "@/lib/db";
 import { headers } from "next/headers";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
+let isTableEnsured = false;
+
 export async function ensureSystemLogsTable() {
+  if (isTableEnsured) return;
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS admin_system_logs (
         id SERIAL PRIMARY KEY,
         task VARCHAR(255) NOT NULL,
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         device_ip VARCHAR(100),
         device_os VARCHAR(100),
         device_type VARCHAR(100),
         user_email VARCHAR(255)
       )
     `;
+    isTableEnsured = true;
   } catch (err) {
     console.error("Migration error for system logs table:", err);
   }
@@ -22,7 +26,7 @@ export async function ensureSystemLogsTable() {
 
 export async function logSystemAction(task: string) {
   try {
-    // Ensure table exists
+    // Ensure table exists (cached)
     await ensureSystemLogsTable();
 
     // Get headers info
@@ -61,14 +65,19 @@ export async function logSystemAction(task: string) {
       else if (ua.includes("curl")) type = "Curl";
     }
 
-    // Get user details
+    // Get user details (optimized to use session claims first to avoid Clerk API call overhead)
     let userEmail = "System / Anonymous";
     try {
-      const { userId } = await auth();
+      const { userId, sessionClaims } = await auth();
       if (userId) {
-        const clerk = await clerkClient();
-        const user = await clerk.users.getUser(userId);
-        userEmail = user?.emailAddresses[0]?.emailAddress || userEmail;
+        const emailClaim = (sessionClaims as any)?.email || (sessionClaims as any)?.primary_email;
+        if (emailClaim) {
+          userEmail = emailClaim;
+        } else {
+          const clerk = await clerkClient();
+          const user = await clerk.users.getUser(userId);
+          userEmail = user?.emailAddresses[0]?.emailAddress || userEmail;
+        }
       }
     } catch (e) {
       console.warn("Could not retrieve Clerk user details for logger:", e);
