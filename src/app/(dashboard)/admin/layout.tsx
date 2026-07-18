@@ -701,13 +701,11 @@ const Sidebar = ({
           {/* User section */}
           <div className="p-4 border-t border-white/10">
             <Link href="/admin/settings">
-              <motion.div
-                whileHover={!isSettingsActive ? { backgroundColor: "rgba(255,255,255,0.07)" } : undefined}
-                transition={{ duration: 0.15 }}
+              <div
                 className={`flex items-center gap-3 pl-[14px] pr-3 py-3 rounded-3xl mb-3 overflow-hidden w-full justify-start transition-colors duration-150
                   ${isSettingsActive
                     ? "bg-white text-black font-semibold"
-                    : "bg-transparent text-gray-300"
+                    : "text-gray-300 hover:bg-white/5"
                   }`}
               >
                 <span className="flex-shrink-0">
@@ -721,7 +719,7 @@ const Sidebar = ({
                 )}
                 {/* Always visible on mobile */}
                 <span className="lg:hidden text-sm">Settings</span>
-              </motion.div>
+              </div>
             </Link>
 
             <SignOutButton redirectUrl="/login">
