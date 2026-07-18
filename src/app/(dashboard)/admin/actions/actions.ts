@@ -3,17 +3,27 @@
 import sql from "@/lib/db";
 import { clerkClient } from "@clerk/nextjs/server";
 import { put } from '@vercel/blob';
+import { logSystemAction } from "@/lib/logger";
 
 export async function uploadReceipt(formData: FormData, type: 'income' | 'expenses'): Promise<string> {
   const file = formData.get('file') as File;
-  if (!file) throw new Error("No file uploaded");
+  if (!file) {
+    await logSystemAction(`Upload Error: No file provided for ${type} receipt`);
+    throw new Error("No file uploaded");
+  }
 
-  const filename = `admin/receipts/${type}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-  const blob = await put(filename, file, {
-    access: 'public',
-  });
-  
-  return blob.url;
+  try {
+    const filename = `admin/receipts/${type}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+    const blob = await put(filename, file, {
+      access: 'public',
+    });
+    
+    await logSystemAction(`Uploaded ${type} receipt: "${file.name}"`);
+    return blob.url;
+  } catch (err: any) {
+    await logSystemAction(`Upload Error: Failed to upload ${type} receipt: "${file.name}" - ${err.message || String(err)}`);
+    throw err;
+  }
 }
 
 // -- DASHBOARD --
@@ -250,6 +260,7 @@ export async function createIncome(data: any) {
     INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id, receipt_url)
     VALUES (${data.date}, ${data.amount}, ${data.description}, ${data.category}, ${data.paymentMethod}, ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null})
   `;
+  await logSystemAction(`Created income: Recorded $${data.amount} for "${data.description}"`);
 }
 
 export async function createClient(data: { name: string; email: string; company?: string | null; phone?: string | null; address?: string | null }): Promise<string> {
@@ -258,14 +269,16 @@ export async function createClient(data: { name: string; email: string; company?
     INSERT INTO admin_clients (id, full_name, email, company, phone, address, active)
     VALUES (${clientId}, ${data.name}, ${data.email}, ${data.company || null}, ${data.phone || null}, ${data.address || null}, true)
   `;
+  await logSystemAction(`Created client: "${data.name}" (${data.email})`);
   return clientId;
 }
 
 export async function updateClient(clientId: string, data: { name?: string; email?: string; company?: string | null; phone?: string | null; address?: string | null }) {
   // Fetch current email first so we can cascade if it changes
-  const existing = await sql`SELECT email FROM admin_clients WHERE id = ${clientId}`;
+  const existing = await sql`SELECT email, full_name FROM admin_clients WHERE id = ${clientId}`;
   if (existing.length === 0) throw new Error("Client not found");
   const oldEmail = existing[0].email as string;
+  const clientName = existing[0].full_name || clientId;
   const newEmail = data.email?.trim() || oldEmail;
   const emailChanged = newEmail.toLowerCase() !== oldEmail.toLowerCase();
 
@@ -285,10 +298,14 @@ export async function updateClient(clientId: string, data: { name?: string; emai
   if (emailChanged) {
     await sql`UPDATE invoices  SET user_email = ${newEmail} WHERE LOWER(user_email) = LOWER(${oldEmail})`;
   }
+  await logSystemAction(`Updated client details for "${clientName}" (${clientId})`);
 }
 
 export async function deleteClient(clientId: string) {
+  const existing = await sql`SELECT full_name FROM admin_clients WHERE id = ${clientId}`;
+  const clientName = existing[0]?.full_name || clientId;
   await sql`DELETE FROM admin_clients WHERE id = ${clientId}`;
+  await logSystemAction(`Deleted client: "${clientName}" (${clientId})`);
 }
 
 export async function updateIncome(id: number, data: any) {
@@ -297,9 +314,12 @@ export async function updateIncome(id: number, data: any) {
     SET date = ${data.date}, amount = ${data.amount}, description = ${data.description}, category = ${data.category}, payment_method = ${data.paymentMethod}, invoice_id = ${data.invoiceId || null}, client_id = ${data.clientId || null}, receipt_url = ${data.receiptUrl || null}
     WHERE id = ${id}
   `;
+  await logSystemAction(`Updated income ID ${id}: recorded $${data.amount} for "${data.description}"`);
 }
 
 export async function deleteIncome(id: number) {
+  let incomeDesc = "";
+  let incomeAmount = 0;
   try {
     // 1. Fetch the income record details before deleting
     const incomeRows = await sql`
@@ -308,6 +328,11 @@ export async function deleteIncome(id: number) {
       WHERE id = ${id}
     `;
     
+    if (incomeRows.length > 0) {
+      incomeDesc = incomeRows[0].description || "";
+      incomeAmount = parseFloat(incomeRows[0].amount || "0");
+    }
+
     if (incomeRows.length > 0 && incomeRows[0].invoice_id) {
       const income = incomeRows[0];
       const invoiceId = income.invoice_id;
@@ -365,6 +390,7 @@ export async function deleteIncome(id: number) {
 
   // 3. Delete the income record
   await sql`DELETE FROM admin_incomes WHERE id = ${id}`;
+  await logSystemAction(`Deleted income record: "$${incomeAmount}" for "${incomeDesc}" (ID: ${id})`);
 }
 
 // -- EXPENSES --
@@ -415,6 +441,7 @@ export async function createExpense(data: any) {
       VALUES (${data.description}, ${data.amount}, ${data.category}, ${data.frequency}, ${nextDate.toISOString().split('T')[0]}, ${data.paymentMethod}, 'active')
     `;
   }
+  await logSystemAction(`Created expense: Recorded $${data.amount} for "${data.description}"`);
 }
 
 export async function updateExpense(id: number, data: any) {
@@ -423,10 +450,22 @@ export async function updateExpense(id: number, data: any) {
     SET date = ${data.date}, amount = ${data.amount}, description = ${data.description}, category = ${data.category}, payment_method = ${data.paymentMethod}, receipt_url = ${data.receiptUrl || null}
     WHERE id = ${id}
   `;
+  await logSystemAction(`Updated expense ID ${id}: recorded $${data.amount} for "${data.description}"`);
 }
 
 export async function deleteExpense(id: number) {
+  let expDesc = "";
+  let expAmount = 0;
+  try {
+    const existing = await sql`SELECT description, amount FROM admin_expenses WHERE id = ${id}`;
+    if (existing.length > 0) {
+      expDesc = existing[0].description || "";
+      expAmount = parseFloat(existing[0].amount || "0");
+    }
+  } catch (e) {}
+
   await sql`DELETE FROM admin_expenses WHERE id = ${id}`;
+  await logSystemAction(`Deleted expense record: "$${expAmount}" for "${expDesc}" (ID: ${id})`);
 }
 
 async function ensureScheduledExpensesTable() {
@@ -617,6 +656,14 @@ export async function getInvoices() {
 }
 
 export async function deleteInvoice(id: string) {
+  let projectName = "";
+  try {
+    const existing = await sql`SELECT project_name FROM invoices WHERE invoice_id = ${id}`;
+    if (existing.length > 0) {
+      projectName = existing[0].project_name || "";
+    }
+  } catch (e) {}
+
   await sql`
     UPDATE admin_quotations
     SET linked_invoice_id = NULL,
@@ -625,6 +672,7 @@ export async function deleteInvoice(id: string) {
     WHERE linked_invoice_id = ${id}
   `;
   await sql`DELETE FROM invoices WHERE invoice_id = ${id}`;
+  await logSystemAction(`Deleted invoice: "${projectName}" (${id})`);
 }
 
 export async function getInvoiceByIdAdmin(invoiceId: string) {
@@ -891,6 +939,7 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
     }
   }
 
+  await logSystemAction(`Created invoice: "${invoiceData.projectName}" (${invoiceId}) for $${invoiceData.total}`);
   return { success: true, invoiceId };
 }
 
@@ -933,6 +982,7 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
     }
   }
 
+  await logSystemAction(`Updated invoice: "${invoiceData.projectName}" (${invoiceId})`);
   return { success: true };
 }
 
@@ -1075,6 +1125,7 @@ export async function createQuotation(data: any, lineItems: any[] = []) {
       `;
     }
   }
+  await logSystemAction(`Created quotation for "${data.description || 'Quotation'}" (ID: ${quotationId}) for $${data.amount}`);
 }
 
 // ─── REPLACE updateQuotation in actions.ts ───────────────────────────────────
@@ -1118,6 +1169,7 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
         `;
       }
     }
+    await logSystemAction(`Updated quotation ID ${id} ("${data.description || 'Quotation'}")`);
   } catch (e) {
     console.error("Failed to update quotation:", e);
     throw new Error("Failed to update quotation");
@@ -1125,6 +1177,14 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
 }
  
 export async function deleteQuotation(id: number) {
+  let quoteDesc = "";
+  try {
+    const existing = await sql`SELECT description FROM admin_quotations WHERE id = ${id}`;
+    if (existing.length > 0) {
+      quoteDesc = existing[0].description || "";
+    }
+  } catch (e) {}
+
   const q = await sql`SELECT linked_invoice_id FROM admin_quotations WHERE id = ${id}`;
   const linkedInvoiceId = q[0]?.linked_invoice_id;
 
@@ -1135,6 +1195,7 @@ export async function deleteQuotation(id: number) {
   }
 
   await sql`DELETE FROM admin_quotations WHERE id = ${id}`;
+  await logSystemAction(`Deleted quotation ID ${id} ("${quoteDesc}")`);
 }
  
 export async function confirmQuotation(quotationId: number, quotationData: any, projectName: string, bankAccountId: number | null = null, discountInput?: number) {
@@ -1234,6 +1295,8 @@ export async function confirmQuotation(quotationId: number, quotationData: any, 
       SET status = 'confirmed', project_confirmed = true, linked_invoice_id = ${invoiceId}
       WHERE id = ${quotationId}
     `;
+
+    await logSystemAction(`Confirmed quotation ID ${quotationId} for "${projectName}" (Linked Invoice: ${invoiceId})`);
 
     return { success: true, invoiceId };
 
@@ -1385,6 +1448,8 @@ export async function recordInvoicePayment(
           total_due = ${newTotalDue}
       WHERE invoice_id = ${invoiceId}
     `;
+
+    await logSystemAction(`Recorded payment of $${paidAmount} via ${paymentMethod} for invoice ${invoiceId}`);
 
     return { success: true };
   } catch (e) {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
+import { logSystemAction } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -117,6 +118,8 @@ export async function POST(request) {
     }
 
     const savedUser = result[0];
+
+    await logSystemAction(`Updated profile settings: "${savedUser.full_name}"`);
 
     return NextResponse.json({
       success: true,

@@ -41,7 +41,8 @@ import {
   CalendarPlus,
   Plus,
   ExternalLink,
-  Clock
+  Clock,
+  Settings
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -528,6 +529,7 @@ const Sidebar = ({
 }) => {
   const pathname = usePathname();
   const { user, isLoaded } = useUser();
+  const isSettingsActive = pathname.startsWith("/admin/settings");
 
   const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -700,46 +702,25 @@ const Sidebar = ({
           <div className="p-4 border-t border-white/10">
             <Link href="/admin/settings">
               <motion.div
-                whileHover={{ backgroundColor: "rgba(255,255,255,0.07)" }}
+                whileHover={!isSettingsActive ? { backgroundColor: "rgba(255,255,255,0.07)" } : undefined}
                 transition={{ duration: 0.15 }}
-                className="flex items-center gap-3 pl-[4px] pr-3 py-3 bg-transparent rounded-3xl mb-3 overflow-hidden w-full justify-start"
+                className={`flex items-center gap-3 pl-[14px] pr-3 py-3 rounded-3xl mb-3 overflow-hidden w-full justify-start transition-colors duration-150
+                  ${isSettingsActive
+                    ? "bg-white text-black font-semibold"
+                    : "bg-transparent text-gray-300"
+                  }`}
               >
-                <div className="flex-shrink-0 w-10 h-10">
-                  {isLoaded && user?.imageUrl ? (
-                    <img
-                      src={user.imageUrl}
-                      alt={user.fullName || "User"}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-brand-600 to-brand-700 flex items-center justify-center text-white font-semibold">
-                      {user?.firstName?.charAt(0) || "U"}
-                    </div>
-                  )}
-                </div>
+                <span className="flex-shrink-0">
+                  <Settings className="w-5 h-5" />
+                </span>
 
-                {desktopExpanded && user && (
-                  <div className="hidden lg:block overflow-hidden">
-                    <p className="text-sm font-semibold whitespace-nowrap">{user.fullName}</p>
-                    <p className="text-xs text-gray-400 whitespace-nowrap">
-                      {user.emailAddresses[0]?.emailAddress?.length > 20
-                        ? `${user.emailAddresses[0].emailAddress.substring(0, 20)}...`
-                        : user.emailAddresses[0]?.emailAddress}
-                    </p>
-                  </div>
+                {desktopExpanded && (
+                  <span className="hidden lg:block overflow-hidden whitespace-nowrap text-sm">
+                    Settings
+                  </span>
                 )}
-
                 {/* Always visible on mobile */}
-                {user && (
-                  <div className="lg:hidden">
-                    <p className="text-sm font-semibold">{user.fullName}</p>
-                    <p className="text-xs text-gray-400">
-                      {user.emailAddresses[0]?.emailAddress?.length > 20
-                        ? `${user.emailAddresses[0].emailAddress.substring(0, 20)}...`
-                        : user.emailAddresses[0]?.emailAddress}
-                    </p>
-                  </div>
-                )}
+                <span className="lg:hidden text-sm">Settings</span>
               </motion.div>
             </Link>
 

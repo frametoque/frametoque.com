@@ -11,18 +11,19 @@ import {
   Save,
   Phone,
   Building,
-  MessageCircle,
   Upload,
-  CreditCard,
   Download,
   Copy,
-  Check
+  Check,
+  Terminal,
+  Sliders,
+  Activity
 } from "lucide-react";
 import Link from "next/link";
 
 export default function SettingsPage() {
   const { user, isLoaded } = useUser();
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState("logs");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -154,27 +155,49 @@ export default function SettingsPage() {
     const validTypes = ["image/jpeg", "image/png", "image/gif"];
     if (!validTypes.includes(file.type)) {
       alert("Please upload a JPG, PNG, or GIF image.");
+      await fetch("/api/admin/system-logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: `Upload Error: Invalid file type "${file.type}" for avatar` }),
+      }).catch(() => {});
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
       alert("File size must be less than 2MB.");
+      await fetch("/api/admin/system-logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: `Upload Error: Avatar file size (${(file.size / 1024 / 1024).toFixed(2)}MB) exceeds limit` }),
+      }).catch(() => {});
       return;
     }
 
     try {
       await user.setProfileImage({ file });
       alert("Photo updated successfully!");
-    } catch (err) {
+      await fetch("/api/admin/system-logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: `Updated admin profile photo: "${file.name}"` }),
+      }).catch(() => {});
+    } catch (err: any) {
       console.error("Upload error:", err);
       alert("Upload failed. Please try again.");
+      await fetch("/api/admin/system-logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: `Upload Error: Profile photo upload failed: ${err.message || String(err)}` }),
+      }).catch(() => {});
     }
   };
 
 
   const tabs = [
+    { id: "logs", name: "System Logs", icon: Terminal },
+    { id: "prefs", name: "Admin Preferences", icon: Sliders },
+    { id: "system", name: "System Status", icon: Activity },
     { id: "profile", name: "Profile", icon: User },
-    { id: "payment", name: "Payment", icon: CreditCard },
   ];
 
   if (!isLoaded || loading) {
@@ -202,10 +225,6 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <p className="text-gray-400 text-lg">Manage your profile and preferences</p>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1">
@@ -227,16 +246,6 @@ export default function SettingsPage() {
                 </button>
               );
             })}
-
-            <div className="pt-4 mt-4 border-t border-white/10">
-              <Link
-                href="/contact"
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-3xl text-gray-400 hover:bg-white/5 hover:text-white transition-all"
-              >
-                <MessageCircle className="w-5 h-5" />
-                <span className="font-medium">Contact Support</span>
-              </Link>
-            </div>
           </div>
         </div>
 
@@ -576,101 +585,333 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {activeTab === "payment" && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-white mb-6">Payment & Billing</h2>
-
-                {/* Payment Methods */}
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-4">Payment Methods</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-3xl border border-white/10">
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-10 bg-gradient-to-r from-orange-600 to-orange-700 rounded flex items-center justify-center text-white text-sm font-bold">
-                          TFR
-                        </div>
-                        <div>
-                          <p className="text-white font-medium">BANK TRANSFER</p>
-                          <p className="text-sm text-gray-400">Upload your bank slip after payment</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <button className="mt-4 px-6 py-3 bg-white/10 border border-white/10 rounded-3xl hover:bg-white/20 transition-colors font-medium">
-                    More Payment Methods Available Soon
-                  </button>
-                </div>
-
-                {/* Billing Address */}
-                <div className="pt-6 border-t border-white/10">
-                  <h3 className="text-lg font-semibold text-white mb-4">Billing Address</h3>
-                  <div className="bg-white/5 rounded-3xl p-4 border border-white/10">
-                    <p className="text-white font-medium mb-1">{formData.name}</p>
-                    <p className="text-gray-400 text-sm">{formData.address}</p>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab("profile")}
-                    className="mt-4 px-6 py-3 bg-white/10 border border-white/10 rounded-3xl hover:bg-white/20 transition-colors font-medium text-white"
-                  >
-                    Update Address
-                  </button>
-                </div>
-
-                {/* Billing History */}
-                {/* <div className="pt-6 border-t border-white/10">
-                  <h3 className="text-lg font-semibold text-white mb-4">Billing History</h3>
-                  <div className="space-y-2">
-                    {[
-                      { date: "Jan 15, 2025", service: "Web Development - Standard", amount: "$999.00", status: "Paid", invoice: "INV-001" },
-                      { date: "Jan 10, 2025", service: "Graphic Design - Basic", amount: "$99.00", status: "Paid", invoice: "INV-002" },
-                      { date: "Dec 28, 2024", service: "Video Editing - Premium", amount: "$999.00", status: "Paid", invoice: "INV-003" },
-                      { date: "Dec 15, 2024", service: "Web Development - Basic", amount: "$499.00", status: "Paid", invoice: "INV-004" },
-                    ].map((invoice, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-4 bg-white/5 rounded-3xl hover:bg-white/10 transition-colors"
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-1">
-                            <p className="text-white font-medium">{invoice.service}</p>
-                            <span className="px-2 py-1 bg-brand-500/20 text-brand-400 border border-brand-500/30 rounded-full text-xs font-medium">
-                              {invoice.status}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-400">
-                            {invoice.date} • {invoice.invoice}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <p className="text-white font-semibold">{invoice.amount}</p>
-                          <button className="flex items-center gap-2 text-brand-400 hover:text-brand-300 transition-colors text-sm font-medium">
-                            <Download className="w-4 h-4" />
-                            Invoice
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div> */}
-
-                {/* Total Spent */}
-                {/* <div className="pt-6 border-t border-white/10">
-                  <div className="bg-gradient-to-r from-brand-600/20 to-brand-700/20 border border-brand-500/30 rounded-xl p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-gray-400 text-sm mb-1">Total Spent</p>
-                        <p className="text-3xl font-bold text-white">$2,596.00</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-gray-400 text-sm mb-1">Projects Completed</p>
-                        <p className="text-2xl font-bold text-brand-400">4</p>
-                      </div>
-                    </div>
-                  </div>
-                </div> */}
-              </div>
+            {activeTab === "prefs" && (
+              <AdminPreferencesView />
             )}
+
+            {activeTab === "system" && (
+              <SystemStatusView />
+            )}
+
+            {activeTab === "logs" && (
+              <SystemLogsView />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SystemLogsView() {
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchLogs = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await fetch("/api/admin/system-logs");
+      if (!res.ok) {
+        throw new Error(`Failed to fetch logs: ${res.statusText}`);
+      }
+      const data = await res.json();
+      if (data.success) {
+        setLogs(data.logs || []);
+      } else {
+        throw new Error(data.error || "Failed to load logs");
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLogs();
+  }, []);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-white">System Activity Logs</h2>
+        <button
+          type="button"
+          onClick={fetchLogs}
+          disabled={loading}
+          className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 text-white rounded-3xl transition-colors cursor-pointer font-medium"
+        >
+          {loading ? "Refreshing..." : "Refresh"}
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
+        </div>
+      ) : error ? (
+        <div className="p-4 bg-red-500/10 border border-red-500/35 text-red-400 rounded-3xl text-sm">
+          {error}
+        </div>
+      ) : logs.length === 0 ? (
+        <div className="p-8 text-center text-gray-400 bg-white/5 rounded-3xl">
+          No system logs available yet.
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr className="border-b border-white/10 text-gray-400 font-semibold">
+                <th className="py-3 px-4">Timestamp</th>
+                <th className="py-3 px-4">User</th>
+                <th className="py-3 px-4">Task / Action</th>
+                <th className="py-3 px-4">OS & Client</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {logs.map((log) => (
+                <tr key={log.id} className="hover:bg-white/5 transition-colors">
+                  <td className="py-3.5 px-4 text-gray-300 whitespace-nowrap">
+                    {new Date(log.timestamp).toLocaleString()}
+                  </td>
+                  <td className="py-3.5 px-4 whitespace-nowrap">
+                    <p className="text-white font-medium">{log.user_email}</p>
+                    <p className="text-xs text-gray-400 font-mono mt-0.5">{log.device_ip}</p>
+                  </td>
+                  <td className="py-3.5 px-4 text-gray-200 min-w-[200px]">
+                    {log.task}
+                  </td>
+                  <td className="py-3.5 px-4 text-gray-400 text-xs whitespace-nowrap">
+                    <span className="px-2 py-1 bg-white/5 rounded border border-white/10 mr-1.5 text-[10px]">
+                      {log.device_os}
+                    </span>
+                    <span className="px-2 py-1 bg-white/5 rounded border border-white/10 text-[10px]">
+                      {log.device_type}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminPreferencesView() {
+  const [prefs, setPrefs] = useState({
+    currency: "USD",
+    invoicePrefix: "INV",
+    autoRefresh: "30",
+    maxUploadSize: "5",
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    const fetchPrefs = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/admin/preferences");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.prefs) {
+            setPrefs(data.prefs);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load preferences", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPrefs();
+  }, []);
+
+  const handleSave = async (e: any) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(prefs),
+      });
+      if (res.ok) {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
+      } else {
+        alert("Failed to save preferences to database");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("An error occurred while saving preferences");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-500"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white mb-6">Admin Preferences</h2>
+      <form onSubmit={handleSave} className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Default Currency</label>
+            <select
+              value={prefs.currency}
+              onChange={(e) => setPrefs({ ...prefs, currency: e.target.value })}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-3xl text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+            >
+              <option value="USD">USD ($)</option>
+              <option value="LKR">LKR (Rs.)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Invoice Number Prefix</label>
+            <input
+              type="text"
+              value={prefs.invoicePrefix}
+              onChange={(e) => setPrefs({ ...prefs, invoicePrefix: e.target.value })}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-3xl text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+              placeholder="INV"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Analytics Auto-Refresh (sec)</label>
+            <select
+              value={prefs.autoRefresh}
+              onChange={(e) => setPrefs({ ...prefs, autoRefresh: e.target.value })}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-3xl text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+            >
+              <option value="15">15 seconds</option>
+              <option value="30">30 seconds</option>
+              <option value="60">60 seconds</option>
+              <option value="300">5 minutes</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Max Receipt Upload Size (MB)</label>
+            <input
+              type="number"
+              value={prefs.maxUploadSize}
+              onChange={(e) => setPrefs({ ...prefs, maxUploadSize: e.target.value })}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-3xl text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+              min="1"
+              max="50"
+            />
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-6 py-3 bg-white text-black font-semibold rounded-3xl hover:opacity-95 transition-opacity"
+          >
+            {saving ? "Saving..." : success ? "Preferences Saved!" : "Save Preferences"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function SystemStatusView() {
+  const [status, setStatus] = useState({
+    dbStatus: "Checking...",
+    blobStatus: "Checking...",
+    env: "production",
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const res = await fetch("/api/admin/system-status");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            setStatus({
+              dbStatus: data.dbStatus,
+              blobStatus: data.blobStatus,
+              env: data.env,
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Failed to check status", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStatus();
+  }, []);
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white mb-6">System Status & Diagnostics</h2>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Database */}
+        <div className="p-5 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-400 mb-1">Database Connectivity</p>
+            <p className={`text-lg font-bold flex items-center gap-1.5 ${status.dbStatus === "Connected" ? "text-green-400" : "text-red-400"}`}>
+              <span className={`w-2.5 h-2.5 rounded-full ${status.dbStatus === "Connected" ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+              {status.dbStatus}
+            </p>
+          </div>
+          <Activity className="w-8 h-8 text-white/10" />
+        </div>
+
+        {/* Vercel Blob */}
+        <div className="p-5 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-400 mb-1">Vercel Blob CDN Status</p>
+            <p className={`text-lg font-bold flex items-center gap-1.5 ${status.blobStatus === "Connected" ? "text-green-400" : "text-yellow-400"}`}>
+              <span className={`w-2.5 h-2.5 rounded-full ${status.blobStatus === "Connected" ? "bg-green-500 animate-pulse" : "bg-yellow-500"}`} />
+              {status.blobStatus}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6 bg-white/5 border border-white/10 rounded-3xl space-y-4">
+        <h3 className="text-lg font-semibold text-white">Diagnostics Information</h3>
+        <div className="space-y-2 text-sm text-gray-300">
+          <div className="flex justify-between py-2 border-b border-white/5">
+            <span>Next.js Framework</span>
+            <span className="font-mono text-gray-400">16.2.9</span>
+          </div>
+          <div className="flex justify-between py-2 border-b border-white/5">
+            <span>Clerk Authentication</span>
+            <span className="font-mono text-gray-400">v6 (Active)</span>
+          </div>
+          <div className="flex justify-between py-2 border-b border-white/5">
+            <span>Primary Database Provider</span>
+            <span className="font-mono text-gray-400">Neon PostgreSQL (Serverless)</span>
+          </div>
+          <div className="flex justify-between py-2">
+            <span>Environment Mode</span>
+            <span className="font-mono text-gray-400 capitalize">{status.env}</span>
           </div>
         </div>
       </div>
