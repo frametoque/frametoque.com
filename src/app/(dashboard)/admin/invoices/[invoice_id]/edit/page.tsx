@@ -86,7 +86,7 @@ export default function EditInvoicePage() {
           date: formattedDate || new Date().toISOString().split("T")[0],
           currency: data.currency || "LKR",
           notes: "",
-          taxRate: 0,
+          taxRate: parseFloat(data.tax_rate) || 0,
           discount: parseFloat(data.discount) || 0,
           advance: parseFloat(data.advance) || 0,
           workStatus: data.work_status || "pending",

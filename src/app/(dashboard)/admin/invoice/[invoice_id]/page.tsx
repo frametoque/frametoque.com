@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase } from "lucide-react";
 import Link from "next/link";
@@ -46,6 +46,7 @@ export default function AdminInvoicePage() {
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [autoDownloaded, setAutoDownloaded] = useState(false);
+  const downloadTriggeredRef = useRef(false);
 
   useEffect(() => {
     if (!invoice_id) return;
@@ -65,11 +66,12 @@ export default function AdminInvoicePage() {
 
   // Auto-download if ?download=true
   useEffect(() => {
-    if (invoice && searchParams.get("download") === "true" && !autoDownloaded) {
+    if (invoice && searchParams.get("download") === "true" && !downloadTriggeredRef.current) {
+      downloadTriggeredRef.current = true;
       setAutoDownloaded(true);
       handleDownload();
     }
-  }, [invoice, searchParams, autoDownloaded]);
+  }, [invoice, searchParams]);
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -114,7 +116,9 @@ export default function AdminInvoicePage() {
   const subtotal = parseFloat(invoice.subtotal || 0);
   const discount = parseFloat(invoice.discount || 0);
   const advance = parseFloat(invoice.advance || 0);
-  const total = parseFloat(invoice.total || subtotal - discount);
+  const taxRate = parseFloat(invoice.tax_rate || 0);
+  const taxAmount = subtotal * (taxRate / 100);
+  const total = parseFloat(invoice.total || subtotal + taxAmount - discount);
   const totalDue = parseFloat(invoice.total_due || total - advance);
 
   return (
@@ -233,6 +237,12 @@ export default function AdminInvoicePage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Discount</span>
                     <span className="text-red-400">− {formatMoney(discount, invoice.currency)}</span>
+                  </div>
+                )}
+                {taxRate > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Tax ({taxRate}%)</span>
+                    <span className="text-white font-semibold">+ {formatMoney(taxAmount, invoice.currency)}</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-2 border-t border-white/10">

@@ -204,7 +204,9 @@ export default function InvoicePage() {
   const subtotal = parseFloat(invoice?.subtotal || 0);
   const discount = parseFloat(invoice?.discount || 0);
   const advance = parseFloat(invoice?.advance || 0);
-  const total = parseFloat(invoice?.total || subtotal - discount);
+  const taxRate = parseFloat(invoice?.tax_rate || 0);
+  const taxAmount = subtotal * (taxRate / 100);
+  const total = parseFloat(invoice?.total || subtotal + taxAmount - discount);
   const totalDue = parseFloat(invoice?.total_due || total - advance);
 
   return (
@@ -326,6 +328,15 @@ export default function InvoicePage() {
                   <span className="text-gray-400">Discount</span>
                   <span className="text-red-400">
                     − {formatMoney(discount, invoice?.currency)}
+                  </span>
+                </div>
+              )}
+
+              {taxRate > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Tax ({taxRate}%)</span>
+                  <span className="text-white">
+                    + {formatMoney(taxAmount, invoice?.currency)}
                   </span>
                 </div>
               )}

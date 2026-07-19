@@ -607,6 +607,7 @@ function SystemLogsView() {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [clearing, setClearing] = useState(false);
 
   const fetchLogs = async () => {
     try {
@@ -629,6 +630,33 @@ function SystemLogsView() {
     }
   };
 
+  const handleClearLogs = async () => {
+    if (!confirm("Are you sure you want to clear all system logs? This action cannot be undone.")) {
+      return;
+    }
+    try {
+      setClearing(true);
+      setError("");
+      const res = await fetch("/api/admin/system-logs", {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        throw new Error(`Failed to clear logs: ${res.statusText}`);
+      }
+      const data = await res.json();
+      if (data.success) {
+        alert("System logs cleared successfully!");
+        fetchLogs();
+      } else {
+        throw new Error(data.error || "Failed to clear logs");
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
+    } finally {
+      setClearing(false);
+    }
+  };
+
   useEffect(() => {
     fetchLogs();
   }, []);
@@ -637,14 +665,24 @@ function SystemLogsView() {
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-white">System Activity Logs</h2>
-        <button
-          type="button"
-          onClick={fetchLogs}
-          disabled={loading}
-          className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 text-white rounded-3xl transition-colors cursor-pointer font-medium"
-        >
-          {loading ? "Refreshing..." : "Refresh"}
-        </button>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleClearLogs}
+            disabled={loading || clearing}
+            className="px-4 py-2 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-3xl transition-colors cursor-pointer font-medium disabled:opacity-50"
+          >
+            {clearing ? "Clearing..." : "Clear Logs"}
+          </button>
+          <button
+            type="button"
+            onClick={fetchLogs}
+            disabled={loading || clearing}
+            className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 text-white rounded-3xl transition-colors cursor-pointer font-medium disabled:opacity-50"
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
       </div>
 
       {loading ? (

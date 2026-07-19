@@ -41,6 +41,7 @@ export async function GET(request, { params }) {
         i.work_status,
         i.payment_status,
         i.created_at,
+        i.tax_rate,
         COALESCE(ac.full_name, i.user_email) as client_name,
         ac.address as billing_address
       FROM public.invoices i

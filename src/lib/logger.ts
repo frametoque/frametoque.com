@@ -95,6 +95,16 @@ export async function logSystemAction(task: string) {
 export async function getSystemLogs() {
   await ensureSystemLogsTable();
   try {
+    // Auto-delete logs older than 3 months
+    await sql`
+      DELETE FROM admin_system_logs 
+      WHERE timestamp < NOW() - INTERVAL '3 months'
+    `;
+  } catch (err) {
+    console.error("Auto-delete old logs failed:", err);
+  }
+
+  try {
     const logs = await sql`
       SELECT id, task, timestamp, device_ip, device_os, device_type, user_email
       FROM admin_system_logs
@@ -105,5 +115,17 @@ export async function getSystemLogs() {
   } catch (error) {
     console.error("Failed to fetch system logs:", error);
     return [];
+  }
+}
+
+export async function clearSystemLogs() {
+  await ensureSystemLogsTable();
+  try {
+    await sql`DELETE FROM admin_system_logs`;
+    await logSystemAction("Cleared all system logs");
+    return true;
+  } catch (error) {
+    console.error("Failed to clear system logs:", error);
+    return false;
   }
 }

@@ -100,6 +100,7 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
     total,
     total_due,
     payment_status,
+    tax_rate,
     items = [],
     bank_acc_name,
     bank_acc_number,
@@ -210,6 +211,14 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
 
   // ── 8. Advance ────────────────────────────────────────────────────────────────
   drawTextAligned(formatMoneySlash(advance, currency), 1640, 2390, 45, helvetica, "#222222", "right", 649);
+
+  // ── 8.5. Tax ──────────────────────────────────────────────────────────────────
+  const taxRateVal = parseFloat(tax_rate || 0);
+  if (taxRateVal > 0) {
+    const taxAmount = parseFloat(subtotal || 0) * (taxRateVal / 100);
+    drawTextAligned(`Tax (${taxRateVal}%)`, 1450, 2475, 45, helvetica, "#222222", "center", 440);
+    drawTextAligned(formatMoneySlash(taxAmount, currency), 1640, 2475, 45, helvetica, "#222222", "right", 649);
+  }
 
   // ── 9. Total ──────────────────────────────────────────────────────────────────
   drawTextAligned(formatMoney(total, currency), 1600, 2560, 60, helveticaBold, "#1a3a4a", "right", 649);

@@ -693,6 +693,7 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
       i.work_status,
       i.payment_status,
       i.bank_account_id,
+      i.tax_rate,
       COALESCE(ac.full_name, i.user_email) as client_name,
       ac.address as billing_address,
       ba.name as bank_acc_name,
@@ -920,13 +921,13 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
   INSERT INTO invoices (
     invoice_id, user_email, project_name, date, 
     subtotal, discount, total, advance, total_due, 
-    work_status, payment_status, currency, category, bank_account_id
+    work_status, payment_status, currency, category, bank_account_id, tax_rate
   ) VALUES (
     ${invoiceId}, ${invoiceData.userEmail},
     ${invoiceData.projectName}, ${invoiceData.date},
     ${invoiceData.subtotal}, ${invoiceData.discount}, ${invoiceData.total}, ${invoiceData.advance}, ${invoiceData.totalDue},
     ${invoiceData.workStatus}, ${invoiceData.paymentStatus}, ${invoiceData.currency}, ${invoiceData.category || null},
-    ${invoiceData.bankAccountId || null}
+    ${invoiceData.bankAccountId || null}, ${parseFloat(invoiceData.taxRate) || 0}
   )
 `;
 
@@ -967,7 +968,8 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
     payment_status = ${invoiceData.paymentStatus},
     currency = ${invoiceData.currency},
     category = ${invoiceData.category || null},
-    bank_account_id = ${invoiceData.bankAccountId || null}
+    bank_account_id = ${invoiceData.bankAccountId || null},
+    tax_rate = ${parseFloat(invoiceData.taxRate) || 0}
   WHERE invoice_id = ${invoiceId}
 `;
 
