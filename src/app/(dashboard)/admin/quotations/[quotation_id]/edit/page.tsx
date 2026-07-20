@@ -56,6 +56,7 @@ export default function EditQuotationPage() {
     advance: 0,
     bankAccountId: "",
     legalName: "",
+    invoiceId: "",
   });
 
   const [lineItems, setLineItems] = useState([
@@ -91,7 +92,7 @@ export default function EditQuotationPage() {
           date: toLocalDateInput(data.date),
           category: data.category || "Web dev",
           paymentMethod: data.payment_method || "Bank Transfer",
-          referenceDoc: data.invoice_id || "",
+          invoiceId: data.invoice_id || "",
           notes: data.notes || "This quotation is valid for 14 days from the date of issue.",
           taxRate: 0,
           discount: Number(data.discount) || 0,
@@ -194,7 +195,7 @@ export default function EditQuotationPage() {
         description: formData.projectName || formData.description,
         category: selectedCategories.join(", "),
         paymentMethod: formData.paymentMethod,
-        invoiceId: formData.referenceDoc || null,
+        invoiceId: formData.invoiceId || null,
         receiptUrl: null,
         bankAccountId: formData.bankAccountId ? parseInt(formData.bankAccountId) : null,
         notes: formData.notes || null,
