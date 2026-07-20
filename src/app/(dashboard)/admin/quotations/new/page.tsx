@@ -203,7 +203,7 @@ export default function NewQuotationPage() {
         description: formData.projectName || formData.description,
         category: selectedCategories.join(", "),
         paymentMethod: formData.paymentMethod,
-        invoiceId: formData.referenceDoc || null,
+        invoiceId: null,
         receiptUrl: null,
         bankAccountId: formData.bankAccountId ? parseInt(formData.bankAccountId) : null,
         notes: formData.notes || null,
