@@ -18,7 +18,7 @@ export default function NewInvoicePage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["Web dev"]);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [newClientData, setNewClientData] = useState({
-    name: "", email: "", company: "", phone: "", address: ""
+    name: "", email: "", company: "", phone: "", address: "", legalName: ""
   });
 
   const [formData, setFormData] = useState({
@@ -38,6 +38,7 @@ export default function NewInvoicePage() {
     workStatus: "pending",
     paymentStatus: "unpaid",
     bankAccountId: "",
+    legalName: "",
   });
 
   const [lineItems, setLineItems] = useState([
@@ -55,7 +56,13 @@ export default function NewInvoicePage() {
 
   const handleFormChange = (e: any) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      const next = { ...prev, [name]: value };
+      if (name === "clientName" && prev.legalName === prev.clientName) {
+        next.legalName = value;
+      }
+      return next;
+    });
 
     if (name === "clientId" && value && value !== "new") {
       const selected = clients.find(c => c.id === value);
@@ -68,6 +75,7 @@ export default function NewInvoicePage() {
           userEmail: selected.email,
           phone: selected.phone || "",
           billingAddress: selected.address || "",
+          legalName: selected.legalName || selected.name || "",
         }));
       }
     } else if (name === "clientId" && value === "new") {
@@ -77,7 +85,13 @@ export default function NewInvoicePage() {
 
   const handleNewClientChange = (e: any) => {
     const { name, value } = e.target;
-    setNewClientData(prev => ({ ...prev, [name]: value }));
+    setNewClientData(prev => {
+      const next = { ...prev, [name]: value };
+      if (name === "name" && prev.legalName === prev.name) {
+        next.legalName = value;
+      }
+      return next;
+    });
   };
 
   const handleCreateNewClient = async () => {
@@ -92,8 +106,17 @@ export default function NewInvoicePage() {
         company: newClientData.company || null,
         phone: newClientData.phone || null,
         address: newClientData.address || null,
+        legal_name: newClientData.legalName || null
       });
-      const newClient = { id: clientId, ...newClientData };
+      const newClient = {
+        id: clientId,
+        name: newClientData.name,
+        email: newClientData.email,
+        company: newClientData.company,
+        phone: newClientData.phone,
+        address: newClientData.address,
+        legalName: newClientData.legalName || newClientData.name
+      };
       setClients(prev => [...prev, newClient]);
       setFormData(prev => ({
         ...prev,
@@ -103,9 +126,10 @@ export default function NewInvoicePage() {
         userEmail: newClientData.email,
         phone: newClientData.phone,
         billingAddress: newClientData.address,
+        legalName: newClientData.legalName || newClientData.name
       }));
       setShowNewClientForm(false);
-      setNewClientData({ name: "", email: "", company: "", phone: "", address: "" });
+      setNewClientData({ name: "", email: "", company: "", phone: "", address: "", legalName: "" });
     } catch (e) {
       alert("Failed to create client");
     }
@@ -188,6 +212,8 @@ export default function NewInvoicePage() {
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
                 <input type="text" name="company" placeholder="Company (Optional)" value={newClientData.company} onChange={handleNewClientChange}
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
+                <input type="text" name="legalName" placeholder="Client Name (Legal) (Optional)" value={newClientData.legalName} onChange={handleNewClientChange}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
                 <input type="text" name="phone" placeholder="Phone (Optional)" value={newClientData.phone} onChange={handleNewClientChange}
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
                 <textarea name="address" placeholder="Billing Address (Optional)" value={newClientData.address} onChange={handleNewClientChange}
@@ -231,14 +257,22 @@ export default function NewInvoicePage() {
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-400">
-                    Billing Address
-                    <span className="ml-2 text-xs text-brand-400/70">(saved to client profile)</span>
-                  </label>
-                  <textarea name="billingAddress" value={formData.billingAddress} onChange={handleFormChange}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors resize-none"
-                    rows={2} placeholder="Street, City, Country..." />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-400">Client Name (Legal)</label>
+                    <input type="text" name="legalName" value={formData.legalName} onChange={handleFormChange}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors"
+                      placeholder="Legal company / individual name..." />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-400">
+                      Address
+                      <span className="ml-2 text-xs text-brand-400/70">(saved to client profile)</span>
+                    </label>
+                    <textarea name="billingAddress" value={formData.billingAddress} onChange={handleFormChange}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors resize-none"
+                      rows={2} placeholder="Street Address, City, Country..." />
+                  </div>
                 </div>
               </>
             )}

@@ -267,7 +267,12 @@ const handleDelete = async (id: number) => {
                 <tr key={row.id} className="hover:bg-white/5 transition-colors">
                   <td className="p-4 text-sm">{row.date}</td>
                   <td className="p-4 font-semibold text-blue-400">{formatLKR(row.amount)}</td>
-                  <td className="p-4 text-sm">{row.client || '-'}</td>
+                  <td className="p-4">
+                    <div className="text-sm font-medium text-white">{row.client || '-'}</div>
+                    {row.clientEmail && (
+                      <div className="text-xs text-gray-500 mt-0.5">{row.clientEmail}</div>
+                    )}
+                  </td>
                   <td className="p-4 text-sm text-gray-300">{row.desc}</td>
                   <td className="p-4">
                     <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-white/10 border border-white/10">

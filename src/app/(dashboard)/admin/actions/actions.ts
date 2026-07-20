@@ -263,17 +263,17 @@ export async function createIncome(data: any) {
   await logSystemAction(`Created income: Recorded $${data.amount} for "${data.description}"`);
 }
 
-export async function createClient(data: { name: string; email: string; company?: string | null; phone?: string | null; address?: string | null }): Promise<string> {
+export async function createClient(data: { name: string; email: string; company?: string | null; phone?: string | null; address?: string | null; legal_name?: string | null }): Promise<string> {
   const clientId = 'C-' + Date.now();
   await sql`
-    INSERT INTO admin_clients (id, full_name, email, company, phone, address, active)
-    VALUES (${clientId}, ${data.name}, ${data.email}, ${data.company || null}, ${data.phone || null}, ${data.address || null}, true)
+    INSERT INTO admin_clients (id, full_name, email, company, phone, address, active, legal_name)
+    VALUES (${clientId}, ${data.name}, ${data.email}, ${data.company || null}, ${data.phone || null}, ${data.address || null}, true, ${data.legal_name || null})
   `;
   await logSystemAction(`Created client: "${data.name}" (${data.email})`);
   return clientId;
 }
 
-export async function updateClient(clientId: string, data: { name?: string; email?: string; company?: string | null; phone?: string | null; address?: string | null }) {
+export async function updateClient(clientId: string, data: { name?: string; email?: string; company?: string | null; phone?: string | null; address?: string | null; legal_name?: string | null }) {
   // Fetch current email first so we can cascade if it changes
   const existing = await sql`SELECT email, full_name FROM admin_clients WHERE id = ${clientId}`;
   if (existing.length === 0) throw new Error("Client not found");
@@ -290,7 +290,8 @@ export async function updateClient(clientId: string, data: { name?: string; emai
       email   = ${newEmail},
       company = ${data.company ?? null},
       phone   = ${data.phone   ?? null},
-      address = ${data.address ?? null}
+      address = ${data.address ?? null},
+      legal_name = ${data.legal_name ?? null}
     WHERE id = ${clientId}
   `;
 
@@ -625,9 +626,10 @@ export async function getInvoices() {
   `;
 
   const rows = await sql`
-    SELECT invoice_id as id, user_email as client, project_name as service, subtotal, total, discount, total_due, date as due_date, payment_status as status, work_status
-    FROM invoices
-    ORDER BY created_at DESC
+    SELECT i.invoice_id as id, i.user_email as client_email, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.total_due, i.date as due_date, i.payment_status as status, i.work_status, i.legal_name
+    FROM invoices i
+    LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
+    ORDER BY i.created_at DESC
   `;
 
   return {
@@ -642,7 +644,9 @@ export async function getInvoices() {
 
       return {
         id: r.id,
-        client: r.client || 'Unknown',
+        client: r.client_name || r.client_email.split('@')[0] || 'Unknown',
+        clientEmail: r.client_email || '',
+        legalName: r.legal_name || '',
         service: r.service,
         amount: finalAmount,
         total_due: parseFloat(r.total_due != null ? r.total_due : finalAmount),
@@ -694,6 +698,7 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
       i.payment_status,
       i.bank_account_id,
       i.tax_rate,
+      i.legal_name,
       COALESCE(ac.full_name, i.user_email) as client_name,
       ac.address as billing_address,
       ba.name as bank_acc_name,
@@ -745,6 +750,7 @@ export async function getClients() {
            c.phone,
            c.address,
            c.clerk_id,
+           c.legal_name,
            (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email)) as invoices,
            COALESCE((SELECT SUM(amount) FROM admin_incomes inc WHERE inc.client_id = c.id), 0) as revenue,
            (SELECT COUNT(*) FROM admin_incomes inc WHERE inc.client_id = c.id) as income_count,
@@ -774,6 +780,7 @@ export async function getClients() {
       company: r.company,
       phone: r.phone,
       address: r.address,
+      legalName: r.legal_name || "",
       imageUrl: imageUrl,
       invoices: parseInt(r.invoices),
       revenue: parseFloat(r.revenue),
@@ -798,7 +805,8 @@ export async function getClientById(clientId: string) {
            c.phone,
            c.address,
            c.clerk_id,
-           c.website
+           c.website,
+           c.legal_name
     FROM admin_clients c
     WHERE c.id = ${clientId}
   `;
@@ -870,6 +878,7 @@ export async function getClientById(clientId: string) {
     phone: c.phone,
     address: c.address,
     website: c.website,
+    legalName: c.legal_name || "",
     imageUrl,
     orders,
     invoices: invoiceOrders, // kept for backward compatibility
@@ -894,7 +903,7 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
   if (existingClient.length === 0 && invoiceData.userEmail) {
     const clientId = 'C-' + Date.now();
     await sql`
-      INSERT INTO admin_clients (id, full_name, company, email, phone, address, active)
+      INSERT INTO admin_clients (id, full_name, company, email, phone, address, active, legal_name)
       VALUES (
         ${clientId},
         ${invoiceData.clientName || invoiceData.userEmail.split('@')[0]},
@@ -902,7 +911,8 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
         ${invoiceData.userEmail},
         ${invoiceData.phone || null},
         ${invoiceData.billingAddress || null},
-        true
+        true,
+        ${invoiceData.legalName || null}
       )
     `;
   } else if (existingClient.length > 0) {
@@ -911,7 +921,8 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
       UPDATE admin_clients
       SET 
         full_name = COALESCE(${invoiceData.clientName || null}, full_name),
-        address = COALESCE(${invoiceData.billingAddress || null}, address)
+        address = COALESCE(${invoiceData.billingAddress || null}, address),
+        legal_name = COALESCE(${invoiceData.legalName || null}, legal_name)
       WHERE LOWER(email) = LOWER(${invoiceData.userEmail})
     `;
   }
@@ -921,13 +932,13 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
   INSERT INTO invoices (
     invoice_id, user_email, project_name, date, 
     subtotal, discount, total, advance, total_due, 
-    work_status, payment_status, currency, category, bank_account_id, tax_rate
+    work_status, payment_status, currency, category, bank_account_id, tax_rate, legal_name
   ) VALUES (
     ${invoiceId}, ${invoiceData.userEmail},
     ${invoiceData.projectName}, ${invoiceData.date},
     ${invoiceData.subtotal}, ${invoiceData.discount}, ${invoiceData.total}, ${invoiceData.advance}, ${invoiceData.totalDue},
     ${invoiceData.workStatus}, ${invoiceData.paymentStatus}, ${invoiceData.currency}, ${invoiceData.category || null},
-    ${invoiceData.bankAccountId || null}, ${parseFloat(invoiceData.taxRate) || 0}
+    ${invoiceData.bankAccountId || null}, ${parseFloat(invoiceData.taxRate) || 0}, ${invoiceData.legalName || null}
   )
 `;
 
@@ -949,7 +960,9 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
   if (invoiceData.billingAddress) {
     await sql`
       UPDATE admin_clients
-      SET address = ${invoiceData.billingAddress}
+      SET 
+        address = ${invoiceData.billingAddress},
+        legal_name = COALESCE(${invoiceData.legalName || null}, legal_name)
       WHERE LOWER(email) = LOWER(${invoiceData.userEmail})
     `;
   }
@@ -969,7 +982,8 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
     currency = ${invoiceData.currency},
     category = ${invoiceData.category || null},
     bank_account_id = ${invoiceData.bankAccountId || null},
-    tax_rate = ${parseFloat(invoiceData.taxRate) || 0}
+    tax_rate = ${parseFloat(invoiceData.taxRate) || 0},
+    legal_name = ${invoiceData.legalName || null}
   WHERE invoice_id = ${invoiceId}
 `;
 
@@ -1065,8 +1079,8 @@ export async function getQuotations(startDate?: string, endDate?: string) {
   
   const rows = await sql`
     SELECT q.id, q.date, q.amount, q.advance, q.total_due as "totalDue", q.discount, q.bank_account_id as "bankAccountId",
-           c.full_name as client, q.client_id as "clientId", q.description as desc, q.category,
-           q.invoice_id as invoice, q.receipt_url as "receiptUrl", q.status, q.project_confirmed as "projectConfirmed"
+           c.full_name as client, c.email as "clientEmail", q.client_id as "clientId", q.description as desc, q.category,
+           q.invoice_id as invoice, q.receipt_url as "receiptUrl", q.status, q.project_confirmed as "projectConfirmed", q.legal_name as "legalName"
     FROM admin_quotations q
     LEFT JOIN admin_clients c ON q.client_id = c.id
     WHERE q.date >= ${start}::timestamp AND q.date <= (${end} || ' 23:59:59.999')::timestamp
@@ -1086,6 +1100,8 @@ export async function getQuotations(startDate?: string, endDate?: string) {
       advance: parseFloat(r.advance || 0),
       discount: parseFloat(r.discount || 0),
       bankAccountId: r.bankAccountId,
+      clientEmail: r.clientEmail || '',
+      legalName: r.legalName || '',
       totalDue: parseFloat(r.totalDue || r.amount),
       paymentMethod: 'Bank Transfer'
     }))
@@ -1101,20 +1117,22 @@ export async function createQuotation(data: any, lineItems: any[] = []) {
   if (data.clientId && data.billingAddress) {
     await sql`
       UPDATE admin_clients
-      SET address = ${data.billingAddress}
-      WHERE id = ${data.clientId} AND (address IS NULL OR address = '')
+      SET 
+        address = ${data.billingAddress},
+        legal_name = COALESCE(${data.legalName || null}, legal_name)
+      WHERE id = ${data.clientId}
     `;
   }
 
   const result = await sql`
     INSERT INTO admin_quotations (
       date, amount, advance, total_due, discount,
-      description, category, payment_method, invoice_id, client_id, receipt_url, status, bank_account_id, notes
+      description, category, payment_method, invoice_id, client_id, receipt_url, status, bank_account_id, notes, legal_name
     )
     VALUES (
       ${data.date}, ${data.amount}, ${advance}, ${totalDue}, ${discount},
       ${data.description}, ${data.category}, ${data.paymentMethod},
-      ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, 'draft', ${data.bankAccountId || null}, ${data.notes || null}
+      ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, 'draft', ${data.bankAccountId || null}, ${data.notes || null}, ${data.legalName || null}
     )
     RETURNING id
   `;
@@ -1142,7 +1160,9 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
     if (data.clientId && data.billingAddress) {
       await sql`
         UPDATE admin_clients
-        SET address = ${data.billingAddress}
+        SET 
+          address = ${data.billingAddress},
+          legal_name = COALESCE(${data.legalName || null}, legal_name)
         WHERE id = ${data.clientId}
       `;
     }
@@ -1161,7 +1181,8 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
         invoice_id    = ${data.invoiceId || null}, 
         receipt_url   = ${data.receiptUrl || null},
         bank_account_id = ${data.bankAccountId || null},
-        notes         = ${data.notes || null}
+        notes         = ${data.notes || null},
+        legal_name    = ${data.legalName || null}
       WHERE id = ${id} AND status != 'confirmed'
     `;
 
@@ -1359,6 +1380,7 @@ export async function getQuotationById(quotationId: string) {
       updated_at: q.updated_at,
       discount: q.discount || 0,
       notes: q.notes || "",
+      legal_name: q.legal_name || "",
       bank_account_id: q.bank_account_id,
       bank_acc_name: q.bank_acc_name,
       bank_acc_number: q.bank_acc_number,

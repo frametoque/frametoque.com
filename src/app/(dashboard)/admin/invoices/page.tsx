@@ -250,7 +250,12 @@ export default function InvoicesPage() {
                         {row.id}
                       </Link>
                     </td>
-                    <td className="p-4 text-sm text-gray-300">{row.client}</td>
+                    <td className="p-4">
+                      <div className="text-sm font-medium text-white">{row.client}</div>
+                      {row.clientEmail && (
+                        <div className="text-xs text-gray-500 mt-0.5">{row.clientEmail}</div>
+                      )}
+                    </td>
                     <td className="p-4 text-sm text-gray-300">{row.service}</td>
                     <td className="p-4">
                       <div className="font-semibold text-white">{formatLKR(row.amount)}</div>

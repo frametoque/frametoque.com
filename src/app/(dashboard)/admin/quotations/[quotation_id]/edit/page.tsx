@@ -50,12 +50,12 @@ export default function EditQuotationPage() {
     date: localToday(),
     category: "Web dev",
     paymentMethod: "Bank Transfer",
-    referenceDoc: "",
     notes: "",
     taxRate: 0,
     discount: 0,
     advance: 0,
     bankAccountId: "",
+    legalName: "",
   });
 
   const [lineItems, setLineItems] = useState([
@@ -97,6 +97,7 @@ export default function EditQuotationPage() {
           discount: Number(data.discount) || 0,
           advance: Number(data.advance) || 0,
           bankAccountId: data.bank_account_id ? String(data.bank_account_id) : "",
+          legalName: data.legal_name || data.client_name || "",
         });
 
         // Seed multi-select from stored comma-separated value
@@ -125,7 +126,13 @@ export default function EditQuotationPage() {
 
   const handleFormChange = (e: any) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      const next = { ...prev, [name]: value };
+      if (name === "clientName" && prev.legalName === prev.clientName) {
+        next.legalName = value;
+      }
+      return next;
+    });
   };
 
   const handleLineItemChange = (id: number, field: string, value: any) => {
@@ -190,7 +197,8 @@ export default function EditQuotationPage() {
         invoiceId: formData.referenceDoc || null,
         receiptUrl: null,
         bankAccountId: formData.bankAccountId ? parseInt(formData.bankAccountId) : null,
-        notes: formData.notes || null
+        notes: formData.notes || null,
+        legalName: formData.legalName || null
       }, lineItems);
       
       router.push("/admin/quotations");
@@ -262,15 +270,22 @@ export default function EditQuotationPage() {
                   disabled={isConfirmed} />
               </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-sm text-gray-400">
-                Billing Address
-                <span className="ml-2 text-xs text-brand-400/70">(saved to client profile)</span>
-              </label>
-              <textarea name="billingAddress" value={formData.billingAddress} onChange={handleFormChange}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors resize-none disabled:opacity-50"
-                rows={2} placeholder="Street, City, Country..."
-                disabled={isConfirmed} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-sm text-gray-400">Client Name (Legal)</label>
+                <input type="text" name="legalName" value={formData.legalName} onChange={handleFormChange}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors disabled:opacity-50"
+                  disabled={isConfirmed} placeholder="Legal company / individual name..." />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm text-gray-400">
+                  Address
+                  <span className="ml-2 text-xs text-brand-400/70">(saved to client profile)</span>
+                </label>
+                <textarea name="billingAddress" value={formData.billingAddress} onChange={handleFormChange}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors resize-none disabled:opacity-50"
+                  rows={2} placeholder="Street Address, City, Country..." disabled={isConfirmed} />
+              </div>
             </div>
           </div>
 

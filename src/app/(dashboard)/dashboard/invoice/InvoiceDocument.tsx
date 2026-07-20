@@ -106,6 +106,7 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
     bank_acc_number,
     bank_acc_bank,
     bank_acc_branch,
+    legal_name,
   } = invoice;
 
   const width     = 595.276;
@@ -147,15 +148,15 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
   // ── 1. Invoice Number ────────────────────────────────────────────────────────
   drawTextAligned(invoice_id || "", 1942, 473, 40, helveticaBold, "#1a3a4a");
 
-  // ── 2. Client Name + Billing Address ────────────────────────────────────────
-  if (client_name || billing_address) {
+  // ── 2. Billing Address ────────────────────────────────────────
+  if (legal_name || billing_address) {
     const { x, y, size } = convert(940, 130, 45);
     const color       = hexToRgb("#1a3a4a");
     const lineSpacing = size * 1.35;
     let   currentY    = y - size;
 
-    if (client_name) {
-      page.drawText(client_name, { x, y: currentY, size, font: helveticaBold, color });
+    if (legal_name) {
+      page.drawText(legal_name, { x, y: currentY, size, font: helveticaBold, color });
       currentY -= lineSpacing;
     }
     if (billing_address) {

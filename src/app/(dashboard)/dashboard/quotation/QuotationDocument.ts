@@ -93,6 +93,7 @@ export async function generateQuotationPDF(quotation: any) {
     bank_acc_bank,
     bank_acc_branch,
     notes,
+    legal_name,
   } = quotation;
 
   const discountVal = parseFloat(discount || 0);
@@ -141,15 +142,15 @@ export async function generateQuotationPDF(quotation: any) {
   const quoteNum = `QT-${String(id).padStart(5, "0")}`;
   drawTextAligned(quoteNum, 1942, 473, 40, helveticaBold, "#1a3a4a");
 
-  // ── 2. Client Name + Billing Address ────────────────────────────────────────
-  if (client_name || billing_address) {
+  // ── 2. Billing Address ────────────────────────────────────────
+  if (legal_name || billing_address) {
     const { x, y, size } = convert(940, 130, 45);
     const color       = hexToRgb("#1a3a4a");
     const lineSpacing = size * 1.35;
     let   currentY    = y - size;
 
-    if (client_name) {
-      page.drawText(client_name, { x, y: currentY, size, font: helveticaBold, color });
+    if (legal_name) {
+      page.drawText(legal_name, { x, y: currentY, size, font: helveticaBold, color });
       currentY -= lineSpacing;
     }
     if (billing_address) {
