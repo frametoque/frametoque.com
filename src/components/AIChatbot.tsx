@@ -26,7 +26,7 @@ export default function AIChatbot() {
 
 
   const whatsappConfig = {
-    phoneNumber: "+94701901461",
+    phoneNumber: "+94702771361",
     defaultMessage: "Hello! I'd like to speak with agent regarding my project inquiry.",
     responseTime: "15 minutes",
     businessHours: "8 AM - 10 PM"
