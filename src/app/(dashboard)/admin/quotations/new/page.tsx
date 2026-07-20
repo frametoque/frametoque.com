@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Trash2, ArrowLeft, Send, Save, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createQuotation, getClients, createClient } from "../../actions/actions";
+import { createQuotation, getClients, createClient, getBankAccounts } from "../../actions/actions";
 import CategoryPicker from "../../components/CategoryPicker";
 
 /** Returns today's date as YYYY-MM-DD in local time (avoids UTC off-by-one). */
@@ -22,6 +22,8 @@ export default function NewQuotationPage() {
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewClientForm, setShowNewClientForm] = useState(false);
+
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
 
   const [newClientData, setNewClientData] = useState({
     name: "", email: "", company: "", phone: "", address: ""
@@ -44,6 +46,7 @@ export default function NewQuotationPage() {
     taxRate: 0,
     discount: 0,
     advance: 0,
+    bankAccountId: "",
   });
 
   const [lineItems, setLineItems] = useState([
@@ -54,17 +57,24 @@ export default function NewQuotationPage() {
   const ALL_CATEGORIES = ["Web dev", "Graphic design", "Video editing", "Photography", "Videography"];
 
   useEffect(() => {
-    const loadClients = async () => {
+    const loadData = async () => {
       try {
-        const cls = await getClients();
+        const [cls, accs] = await Promise.all([
+          getClients(),
+          getBankAccounts()
+        ]);
         setClients(cls);
+        setBankAccounts(accs);
+        if (accs.length > 0) {
+          setFormData(prev => ({ ...prev, bankAccountId: String(accs[0].id) }));
+        }
       } catch (e) {
-        console.error("Failed to load clients", e);
+        console.error("Failed to load clients or bank accounts", e);
       } finally {
         setLoading(false);
       }
     };
-    loadClients();
+    loadData();
   }, []);
 
   const handleFormChange = (e: any) => {
@@ -179,6 +189,8 @@ export default function NewQuotationPage() {
         paymentMethod: formData.paymentMethod,
         invoiceId: formData.referenceDoc || null,
         receiptUrl: null,
+        bankAccountId: formData.bankAccountId ? parseInt(formData.bankAccountId) : null,
+        notes: formData.notes || null,
       }, lineItems);
 
       alert("Quotation created successfully!");
@@ -327,11 +339,26 @@ export default function NewQuotationPage() {
                 </select>
               </div>
             </div>
+
+
+            {/* Payment Bank Account — PDF only */}
             <div className="space-y-1">
-              <label className="text-sm text-gray-400">Reference Document (Optional)</label>
-              <input type="text" name="referenceDoc" value={formData.referenceDoc} onChange={handleFormChange}
-                placeholder="e.g. QT-2024-001"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
+              <label className="text-sm text-gray-400">
+                Payment Bank Account
+              </label>
+              <select
+                name="bankAccountId"
+                value={formData.bankAccountId}
+                onChange={handleFormChange}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none"
+              >
+                <option value="" className="bg-black">— No bank account —</option>
+                {bankAccounts.map(acc => (
+                  <option key={acc.id} value={String(acc.id)} className="bg-black">
+                    {acc.name} · {acc.bank} · {acc.number}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

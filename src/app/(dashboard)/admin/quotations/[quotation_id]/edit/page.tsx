@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Trash2, ArrowLeft, Send, Save, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { updateQuotation, getQuotationById } from "../../../actions/actions";
+import { updateQuotation, getQuotationById, getBankAccounts } from "../../../actions/actions";
 import CategoryPicker from "../../../components/CategoryPicker";
 
 /** Returns today's date as YYYY-MM-DD in local time (avoids UTC off-by-one). */
@@ -35,6 +35,8 @@ export default function EditQuotationPage() {
   const [error, setError] = useState<string | null>(null);
   const [quotationStatus, setQuotationStatus] = useState<string>("draft");
 
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+
   const [formData, setFormData] = useState({
     clientId: "",
     clientName: "",
@@ -53,6 +55,7 @@ export default function EditQuotationPage() {
     taxRate: 0,
     discount: 0,
     advance: 0,
+    bankAccountId: "",
   });
 
   const [lineItems, setLineItems] = useState([
@@ -65,11 +68,15 @@ export default function EditQuotationPage() {
 
   useEffect(() => {
     if (!quotation_id) return;
-    const fetchQuotation = async () => {
+    const fetchQuotationAndBanks = async () => {
       try {
-        const data = await getQuotationById(quotation_id as string);
+        const [data, banks] = await Promise.all([
+          getQuotationById(quotation_id as string),
+          getBankAccounts()
+        ]);
         if (!data) throw new Error("Quotation not found");
 
+        setBankAccounts(banks);
         setQuotationStatus(data.status || "draft");
 
         setFormData({
@@ -78,7 +85,6 @@ export default function EditQuotationPage() {
           company: data.company || "",
           userEmail: data.email || "",
           phone: data.phone || "",
-          // billing_address now comes from the JOIN in getQuotationById (client or users table)
           billingAddress: data.billing_address || "",
           projectName: data.project_name || "",
           description: data.description || "",
@@ -86,10 +92,11 @@ export default function EditQuotationPage() {
           category: data.category || "Web dev",
           paymentMethod: data.payment_method || "Bank Transfer",
           referenceDoc: data.invoice_id || "",
-          notes: "",
+          notes: data.notes || "This quotation is valid for 14 days from the date of issue.",
           taxRate: 0,
-          discount: Number(data.discount) || 0,   // ← pulled from DB
+          discount: Number(data.discount) || 0,
           advance: Number(data.advance) || 0,
+          bankAccountId: data.bank_account_id ? String(data.bank_account_id) : "",
         });
 
         // Seed multi-select from stored comma-separated value
@@ -113,7 +120,7 @@ export default function EditQuotationPage() {
         setLoading(false);
       }
     };
-    fetchQuotation();
+    fetchQuotationAndBanks();
   }, [quotation_id]);
 
   const handleFormChange = (e: any) => {
@@ -181,7 +188,9 @@ export default function EditQuotationPage() {
         category: selectedCategories.join(", "),
         paymentMethod: formData.paymentMethod,
         invoiceId: formData.referenceDoc || null,
-        receiptUrl: null
+        receiptUrl: null,
+        bankAccountId: formData.bankAccountId ? parseInt(formData.bankAccountId) : null,
+        notes: formData.notes || null
       }, lineItems);
       
       router.push("/admin/quotations");
@@ -305,12 +314,27 @@ export default function EditQuotationPage() {
                 </select>
               </div>
             </div>
+
+            
+            {/* Payment Bank Account — PDF only */}
             <div className="space-y-1">
-              <label className="text-sm text-gray-400">Reference Document (Optional)</label>
-              <input type="text" name="referenceDoc" value={formData.referenceDoc} onChange={handleFormChange}
-                placeholder="e.g. QT-2024-001"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors disabled:opacity-50"
-                disabled={isConfirmed} />
+              <label className="text-sm text-gray-400">
+                Payment Bank Account
+              </label>
+              <select
+                name="bankAccountId"
+                value={formData.bankAccountId}
+                onChange={handleFormChange}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none disabled:opacity-50"
+                disabled={isConfirmed}
+              >
+                <option value="" className="bg-black">— No bank account —</option>
+                {bankAccounts.map(acc => (
+                  <option key={acc.id} value={String(acc.id)} className="bg-black">
+                    {acc.name} · {acc.bank} · {acc.number}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

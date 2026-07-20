@@ -91,115 +91,22 @@ export default function ClientQuotationsPage() {
 
   const handleDownloadPDF = async (q: Quotation) => {
     try {
-      const jsPDF = (await import("jspdf")).default;
-      const doc = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-
-      // Colors
-      const primaryColor = [31, 169, 236]; 
-      const darkColor = [31, 41, 55]; 
-      const grayColor = [107, 114, 128]; 
-
-      // Header
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
-      doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-      doc.text("FrameToque", 20, 25);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-      doc.text("Digital Media", 20, 30);
-      doc.text("contact@frametoque.online | +94 70 190 1461", 20, 35);
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(24);
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.text("QUOTATION", 140, 25);
-
-      // Divider
-      doc.setDrawColor(229, 231, 235);
-      doc.setLineWidth(0.5);
-      doc.line(20, 42, 190, 42);
-
-      // Info Block
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-      doc.text("QUOTATION DETAILS", 20, 52);
-      doc.text("PREPARED FOR", 110, 52);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-      doc.text(`Reference: QT-${String(q.id).padStart(5, "0")}`, 20, 58);
-      doc.text(`Date: ${formatDate(q.date)}`, 20, 64);
-      doc.text(`Status: ${statusLabels[q.status] || q.status}`, 20, 70);
-
+      const { generateQuotationPDF } = await import("@/app/(dashboard)/dashboard/quotation/QuotationDocument");
       const clientEmail = user?.primaryEmailAddress?.emailAddress || "Client";
-      doc.text(`Email: ${clientEmail}`, 110, 58);
-      doc.text(`Payment: ${q.paymentMethod || "Bank Transfer"}`, 110, 64);
-
-      // Table Header Background
-      doc.setFillColor(243, 244, 246);
-      doc.rect(20, 82, 170, 8, "F");
-
-      // Table Header Text
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-      doc.text("Description", 22, 87);
-      doc.text("Qty", 125, 87, { align: "center" });
-      doc.text("Unit Price (LKR)", 150, 87, { align: "right" });
-      doc.text("Total (LKR)", 188, 87, { align: "right" });
-
-      // Rows
-      let y = 96;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(55, 65, 81);
-
-      q.items.forEach((item) => {
-        const descText = doc.splitTextToSize(item.description, 95);
-        doc.text(descText, 22, y);
-        
-        doc.text(String(item.quantity), 125, y, { align: "center" });
-        doc.text(parseFloat(String(item.price)).toLocaleString("en-US"), 150, y, { align: "right" });
-        doc.text(parseFloat(String(item.total)).toLocaleString("en-US"), 188, y, { align: "right" });
-
-        y += descText.length * 5 + 2;
-
-        doc.setDrawColor(243, 244, 246);
-        doc.setLineWidth(0.3);
-        doc.line(20, y - 4, 190, y - 4);
-      });
-
-      // Totals
-      y += 5;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-      doc.text("Subtotal:", 145, y, { align: "right" });
-      doc.text("Advance Paid:", 145, y + 6, { align: "right" });
-      doc.text("Total Due:", 145, y + 12, { align: "right" });
-
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-      doc.text(`${parseFloat(String(q.amount)).toLocaleString("en-US")} LKR`, 188, y, { align: "right" });
-      doc.text(`${parseFloat(String(q.advance || 0)).toLocaleString("en-US")} LKR`, 188, y + 6, { align: "right" });
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.text(`${parseFloat(String(q.totalDue)).toLocaleString("en-US")} LKR`, 188, y + 12, { align: "right" });
-
-      // Footer
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(9);
-      doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
-      doc.text("Thank you for choosing FrameToque Digital Media!", 105, 275, { align: "center" });
-
-      doc.save(`Quotation_QT-${String(q.id).padStart(5, "0")}.pdf`);
+      const payload = {
+        ...q,
+        client_name: user?.fullName || clientEmail.split("@")[0] || "Client",
+        email: clientEmail,
+        discount: (q as any).discount || 0,
+      };
+      const pdfBytes = await generateQuotationPDF(payload);
+      const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `QT-${String(q.id).padStart(5, "0")}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert("Failed to generate PDF. Please try again.");

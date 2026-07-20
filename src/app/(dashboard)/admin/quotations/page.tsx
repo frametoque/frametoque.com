@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Wallet, TrendingUp, Plus, Edit2, Trash2, Eye, Loader2, CheckCircle2, FolderOpen, X } from "lucide-react";
+import { Wallet, TrendingUp, Plus, Edit2, Trash2, Eye, Loader2, CheckCircle2, FolderOpen, X, Download } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   getQuotations, 
   deleteQuotation, 
   confirmQuotation,
-  getBankAccounts
+  getBankAccounts,
+  getQuotationById
 } from "../actions/actions";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
@@ -38,6 +39,33 @@ export default function QuotationsPage() {
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [selectedBankAccountId, setSelectedBankAccountId] = useState<string>("");
   const [discountInput, setDiscountInput] = useState<string>("");
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+
+  const handleDownloadPDF = async (row: any) => {
+    setDownloadingId(row.id);
+    try {
+      const q = await getQuotationById(row.id.toString());
+      if (!q) {
+        alert("Failed to load quotation details");
+        return;
+      }
+      
+      const { generateQuotationPDF } = await import("@/app/(dashboard)/dashboard/quotation/QuotationDocument");
+      const pdfBytes = await generateQuotationPDF(q);
+      const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `QT-${String(q.id).padStart(5, "0")}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Failed to generate PDF. Please try again.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -276,6 +304,18 @@ const handleDelete = async (id: number) => {
                         <Eye className="w-4 h-4" />
                       </button>
                     )}
+                    <button 
+                      onClick={() => handleDownloadPDF(row)}
+                      disabled={downloadingId === row.id}
+                      className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white disabled:opacity-50"
+                      title="Download PDF"
+                    >
+                      {downloadingId === row.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Download className="w-4 h-4" />
+                      )}
+                    </button>
                     <button 
                       onClick={() => router.push(`/admin/quotations/${row.id}/edit`)}
                       className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed" 

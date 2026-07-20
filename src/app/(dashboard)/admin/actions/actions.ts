@@ -1064,7 +1064,7 @@ export async function getQuotations(startDate?: string, endDate?: string) {
   const end = endDate || '2099-12-31';
   
   const rows = await sql`
-    SELECT q.id, q.date, q.amount, q.advance, q.total_due as "totalDue",
+    SELECT q.id, q.date, q.amount, q.advance, q.total_due as "totalDue", q.discount, q.bank_account_id as "bankAccountId",
            c.full_name as client, q.client_id as "clientId", q.description as desc, q.category,
            q.invoice_id as invoice, q.receipt_url as "receiptUrl", q.status, q.project_confirmed as "projectConfirmed"
     FROM admin_quotations q
@@ -1084,6 +1084,8 @@ export async function getQuotations(startDate?: string, endDate?: string) {
       date: new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       amount: parseFloat(r.amount),
       advance: parseFloat(r.advance || 0),
+      discount: parseFloat(r.discount || 0),
+      bankAccountId: r.bankAccountId,
       totalDue: parseFloat(r.totalDue || r.amount),
       paymentMethod: 'Bank Transfer'
     }))
@@ -1107,12 +1109,12 @@ export async function createQuotation(data: any, lineItems: any[] = []) {
   const result = await sql`
     INSERT INTO admin_quotations (
       date, amount, advance, total_due, discount,
-      description, category, payment_method, invoice_id, client_id, receipt_url, status
+      description, category, payment_method, invoice_id, client_id, receipt_url, status, bank_account_id, notes
     )
     VALUES (
       ${data.date}, ${data.amount}, ${advance}, ${totalDue}, ${discount},
       ${data.description}, ${data.category}, ${data.paymentMethod},
-      ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, 'draft'
+      ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, 'draft', ${data.bankAccountId || null}, ${data.notes || null}
     )
     RETURNING id
   `;
@@ -1157,7 +1159,9 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
         category      = ${data.category}, 
         payment_method= ${data.paymentMethod}, 
         invoice_id    = ${data.invoiceId || null}, 
-        receipt_url   = ${data.receiptUrl || null}
+        receipt_url   = ${data.receiptUrl || null},
+        bank_account_id = ${data.bankAccountId || null},
+        notes         = ${data.notes || null}
       WHERE id = ${id} AND status != 'confirmed'
     `;
 
@@ -1313,16 +1317,18 @@ export async function getQuotationById(quotationId: string) {
     const quotation = await sql`
       SELECT q.*,
              c.full_name as client_name, c.email, c.company, c.phone,
-             c.address as billing_address
+             c.address as billing_address,
+             ba.name as bank_acc_name, ba.number as bank_acc_number, ba.bank as bank_acc_bank, ba.branch as bank_acc_branch
       FROM admin_quotations q
       LEFT JOIN admin_clients c ON q.client_id = c.id
+      LEFT JOIN bank_accs ba ON q.bank_account_id = ba.id
       WHERE q.id = ${parseInt(quotationId)}
     `;
  
     if (quotation.length === 0) return null;
  
     const q = quotation[0];
-
+ 
     const itemRows = await sql`
       SELECT id, description, quantity, price, total
       FROM quotation_items
@@ -1352,6 +1358,12 @@ export async function getQuotationById(quotationId: string) {
       created_at: q.created_at,
       updated_at: q.updated_at,
       discount: q.discount || 0,
+      notes: q.notes || "",
+      bank_account_id: q.bank_account_id,
+      bank_acc_name: q.bank_acc_name,
+      bank_acc_number: q.bank_acc_number,
+      bank_acc_bank: q.bank_acc_bank,
+      bank_acc_branch: q.bank_acc_branch,
       items: itemRows.map((i: any) => ({
         id: i.id,
         description: i.description,
