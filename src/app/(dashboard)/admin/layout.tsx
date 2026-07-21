@@ -161,7 +161,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isDomains = pathname.startsWith("/admin/domains");
   const isSettings = pathname.startsWith("/admin/settings");
   const isAgreements = pathname.startsWith("/admin/agreements");
-  const hideSelector = isServices || isPortfolio || isSettings || isClients || isBookings || isAgreements || isDomains;
+  const hideSelector = isServices || isPortfolio || isBookings || isDomains;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [currentTime, setCurrentTime] = useState("");
