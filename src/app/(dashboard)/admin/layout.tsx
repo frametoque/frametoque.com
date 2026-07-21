@@ -548,17 +548,17 @@ const Sidebar = ({
   const { user, isLoaded } = useUser();
   const isSettingsActive = pathname.startsWith("/admin/settings");
 
-  const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
+  const links: { name: string; href: string; icon: any; divider?: boolean; newtab?: boolean }[] = [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Income", href: "/admin/income", icon: Wallet },
     { name: "Expenses", href: "/admin/expenses", icon: Receipt },
-    { name: "Bookings", href: "/admin/bookings", icon: Calendar },
-    { name: "Invoices", href: "/admin/invoices", icon: FileText },
+    { name: "Invoices", href: "/admin/invoices", icon: FileText, divider: true },
     { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
     { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
-    { name: "Clients", href: "/admin/clients", icon: Users },
+    { name: "Bookings", href: "/admin/bookings", icon: Calendar, divider: true },
     { name: "Domains", href: "/admin/domains", icon: Globe },
-    { name: "Reports", href: "/admin/reports", icon: BarChart3 },
+    { name: "Clients", href: "/admin/clients", icon: Users },
+    { name: "Reports", href: "/admin/reports", icon: BarChart3, divider: true },
     { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
     { name: "Services", href: "/admin/services", icon: Briefcase },
     { name: "Portfolio", href: "/admin/portfolio", icon: Layers },
@@ -686,6 +686,9 @@ const Sidebar = ({
               const active = isActive(item.href);
               return (
                 <div key={item.href}>
+                  {item.divider && (
+                    <div className="my-2 border-t border-white/10" />
+                  )}
                   {item.name === "Services" && (
                     <div className="my-4 border-t border-white/10" />
                   )}
