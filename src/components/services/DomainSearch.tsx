@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Search, CheckCircle, XCircle, ShoppingCart, Globe, Server, ShieldCheck, Mail } from "lucide-react";
-import { useCart } from "@/context/CartContext";
+import { Search, CheckCircle, XCircle, Globe, Server, ShieldCheck, Mail, ShoppingCart, Loader2 } from "lucide-react";
 
 export default function DomainSearch() {
   const [domainInput, setDomainInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
-  const { addToCart, cartItems } = useCart();
-  const [added, setAdded] = useState(false);
+  const [orderingDomain, setOrderingDomain] = useState<string | null>(null);
+  const [orderedDomains, setOrderedDomains] = useState<string[]>([]);
+  const [successMsg, setSuccessMsg] = useState("");
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,9 +19,9 @@ export default function DomainSearch() {
       return;
     }
     setError("");
+    setSuccessMsg("");
     setLoading(true);
     setResult(null);
-    setAdded(false);
 
     try {
       const res = await fetch(`/api/services/domains/check?domain=${encodeURIComponent(domainInput)}`);
@@ -37,21 +37,34 @@ export default function DomainSearch() {
     }
   };
 
-  const handleAddToCart = () => {
-    if (!result || !result.available) return;
+  const handleOrderDomain = async (targetDomain: string) => {
+    if (!targetDomain) return;
+    setOrderingDomain(targetDomain);
+    setError("");
+    setSuccessMsg("");
 
-    addToCart({
-      id: `domain-${result.domain}`,
-      serviceId: `domain-reg`,
-      serviceTitle: `Domain Registration: ${result.domain}`,
-      categorySlug: "domain",
-      categoryName: "Domains",
-      tier: `1 Year Registration (Renews at $${result.renew_price_usd}/yr)`,
-      price: String(result.reg_price_usd * 300), 
-      duration: "1 Year",
-    });
+    try {
+      const res = await fetch("/api/services/domains/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: targetDomain }),
+      });
+      const data = await res.json();
 
-    setAdded(true);
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to place domain order.");
+      }
+
+      setOrderedDomains((prev) => [...prev, targetDomain.toLowerCase()]);
+      setSuccessMsg(`Domain order placed for "${targetDomain}"! Your order is now pending invoice processing.`);
+
+      // Notify the domains table on dashboard to refresh
+      window.dispatchEvent(new CustomEvent("domains:refresh"));
+    } catch (err: any) {
+      setError(err.message || "Could not complete domain order.");
+    } finally {
+      setOrderingDomain(null);
+    }
   };
 
   return (
@@ -100,6 +113,12 @@ export default function DomainSearch() {
           </p>
         )}
 
+        {successMsg && (
+          <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm mt-4 p-4 rounded-2xl text-center font-medium">
+            {successMsg}
+          </div>
+        )}
+
         {/* Result Area */}
         {result && (
           <div className="mt-8 pt-8 border-t border-neutral-800 max-w-2xl mx-auto relative z-10 space-y-6">
@@ -118,18 +137,24 @@ export default function DomainSearch() {
                     <p className="text-2xl font-black text-white">${result.reg_price_usd}</p>
                     <p className="text-[10px] text-gray-400 mt-0.5">Renews at ${result.renew_price_usd}/yr</p>
                   </div>
-                  <button
-                    onClick={handleAddToCart}
-                    disabled={added}
-                    className={`px-6 py-3 rounded-3xl font-bold flex items-center gap-2 transition-all cursor-pointer ${
-                      added
-                        ? "bg-slate-800/45 text-gray-500 border border-slate-700/20 cursor-not-allowed"
-                        : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
-                    }`}
-                  >
-                    <ShoppingCart className="w-4 h-4" />
-                    <span>{added ? "Added to Cart" : "Buy Domain"}</span>
-                  </button>
+                  {orderedDomains.includes(result.domain.toLowerCase()) ? (
+                    <span className="px-6 py-3 rounded-3xl font-bold bg-slate-800/45 text-emerald-400 border border-emerald-500/30 text-sm flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4" /> Ordered
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleOrderDomain(result.domain)}
+                      disabled={orderingDomain === result.domain}
+                      className="px-6 py-3 rounded-3xl font-bold flex items-center gap-2 transition-all cursor-pointer bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                    >
+                      {orderingDomain === result.domain ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <ShoppingCart className="w-4 h-4" />
+                      )}
+                      <span>{orderingDomain === result.domain ? "Ordering..." : "Buy Domain"}</span>
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
@@ -153,7 +178,8 @@ export default function DomainSearch() {
                 <h4 className="text-sm font-semibold text-gray-400">Suggested domain names</h4>
                 <div className="space-y-3">
                   {result.suggestions.map((s: any) => {
-                    const isSuggestionAdded = cartItems.some((item) => item.id === `domain-${s.domain}`);
+                    const isOrdered = orderedDomains.includes(s.domain.toLowerCase());
+                    const isOrdering = orderingDomain === s.domain;
                     
                     return (
                       <div key={s.domain} className="flex items-center justify-between p-4 bg-white/[0.02] border border-neutral-900 rounded-xl gap-4 hover:border-neutral-800 transition-colors">
@@ -165,28 +191,22 @@ export default function DomainSearch() {
                           <div className="text-right">
                             <span className="text-sm font-bold text-white">${s.reg_price_usd}</span>
                           </div>
-                          <button
-                            onClick={() => {
-                              addToCart({
-                                id: `domain-${s.domain}`,
-                                serviceId: `domain-reg`,
-                                serviceTitle: `Domain Registration: ${s.domain}`,
-                                categorySlug: "domain",
-                                categoryName: "Domains",
-                                tier: `1 Year Registration (Renews at $${s.renew_price_usd}/yr)`,
-                                price: String(s.reg_price_usd * 300),
-                                duration: "1 Year",
-                              });
-                            }}
-                            disabled={isSuggestionAdded}
-                            className={`px-4 py-2 text-xs font-semibold rounded-2xl transition-all cursor-pointer ${
-                              isSuggestionAdded
-                                ? "bg-slate-800/45 text-gray-500 border border-slate-700/20 cursor-not-allowed"
-                                : "bg-white hover:bg-neutral-200 text-black shadow-md"
-                            }`}
-                          >
-                            {isSuggestionAdded ? "Added" : "Confirm"}
-                          </button>
+                          {isOrdered ? (
+                            <span className="px-4 py-2 text-xs font-semibold rounded-2xl bg-slate-800/45 text-emerald-400 border border-emerald-500/20">
+                              Ordered
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleOrderDomain(s.domain)}
+                              disabled={isOrdering}
+                              className="px-4 py-2 text-xs font-semibold rounded-2xl transition-all cursor-pointer bg-white hover:bg-neutral-200 text-black shadow-md disabled:opacity-50 flex items-center gap-1.5"
+                            >
+                              {isOrdering ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : null}
+                              <span>{isOrdering ? "Ordering..." : "Confirm"}</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     );

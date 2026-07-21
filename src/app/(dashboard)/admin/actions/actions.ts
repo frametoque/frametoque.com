@@ -471,23 +471,6 @@ export async function deleteExpense(id: number) {
 }
 
 async function ensureScheduledExpensesTable() {
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS admin_scheduled_expenses (
-        id SERIAL PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        amount NUMERIC(12, 2) NOT NULL,
-        category VARCHAR(255) NOT NULL,
-        frequency VARCHAR(50) DEFAULT 'monthly',
-        next_due_date DATE NOT NULL,
-        payment_method VARCHAR(255) NOT NULL,
-        status VARCHAR(50) DEFAULT 'active',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `;
-  } catch (err) {
-    console.error("Migration: failed to create admin_scheduled_expenses table", err);
-  }
 }
 
 export async function processRecurringExpenses() {

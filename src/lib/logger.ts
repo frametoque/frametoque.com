@@ -6,22 +6,7 @@ let isTableEnsured = false;
 
 export async function ensureSystemLogsTable() {
   if (isTableEnsured) return;
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS admin_system_logs (
-        id SERIAL PRIMARY KEY,
-        task VARCHAR(255) NOT NULL,
-        timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        device_ip VARCHAR(100),
-        device_os VARCHAR(100),
-        device_type VARCHAR(100),
-        user_email VARCHAR(255)
-      )
-    `;
-    isTableEnsured = true;
-  } catch (err) {
-    console.error("Migration error for system logs table:", err);
-  }
+  isTableEnsured = true;
 }
 
 export async function logSystemAction(task: string) {

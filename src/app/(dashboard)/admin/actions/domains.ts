@@ -44,21 +44,6 @@ type CreateInvoiceResult =
 
 export async function ensureDomainOrdersTable() {
   try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS admin_domain_orders (
-          id SERIAL PRIMARY KEY,
-          client_email VARCHAR(255) NOT NULL,
-          domain_name VARCHAR(255) NOT NULL,
-          actual_price NUMERIC(12, 2) NOT NULL,
-          selling_price NUMERIC(12, 2) NOT NULL,
-          profit NUMERIC(12, 2) NOT NULL,
-          purchase_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          expiry_date TIMESTAMP,
-          status VARCHAR(50) DEFAULT 'pending',
-          invoice_id VARCHAR(100),
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `;
     try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS renewal_cost NUMERIC(12, 2)`; } catch(e){}
     try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS renewal_price NUMERIC(12, 2)`; } catch(e){}
     try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS registrar VARCHAR(100) DEFAULT 'Internet.bs'`; } catch(e){}

@@ -6,15 +6,6 @@ import { logSystemAction } from "@/lib/logger";
 export const dynamic = "force-dynamic";
 
 async function ensurePrefsTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS admin_preferences (
-      user_id VARCHAR(255) PRIMARY KEY,
-      currency VARCHAR(10) DEFAULT 'USD',
-      invoice_prefix VARCHAR(50) DEFAULT 'INV',
-      auto_refresh VARCHAR(50) DEFAULT '30',
-      max_upload_size VARCHAR(50) DEFAULT '5'
-    )
-  `;
 }
 
 export async function GET() {

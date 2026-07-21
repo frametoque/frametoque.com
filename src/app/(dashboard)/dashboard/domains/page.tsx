@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
-import { Globe, CreditCard, Eye, HelpCircle, ShieldAlert, CheckCircle, Package } from "lucide-react";
+import { Globe, CreditCard, Eye, HelpCircle, ShieldAlert, CheckCircle, Package, Plus, X, Trash2, Loader2 } from "lucide-react";
 import PayModal from "@/components/PayModal";
+import DomainSearch from "@/components/services/DomainSearch";
 
 interface ClientDomain {
   id: number;
@@ -26,15 +27,34 @@ export default function ClientDomainsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lkrRate, setLkrRate] = useState(300);
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
   
   // Pay Modal States
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+
+  const handleCancelOrder = async (id: number, domainName: string) => {
+    if (!confirm(`Are you sure you want to cancel your pending order for "${domainName}"?`)) return;
+    try {
+      setCancellingId(id);
+      const res = await fetch(`/api/services/domains/order?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to cancel domain order.");
+        return;
+      }
+      await fetchDomains();
+    } catch (err: any) {
+      alert(err.message || "Failed to cancel domain order.");
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   const fetchDomains = async () => {
     if (!user?.primaryEmailAddress?.emailAddress) return;
     try {
-      setLoading(true);
       const email = user.primaryEmailAddress.emailAddress;
       const res = await fetch(`/api/services/domains/client?user_email=${encodeURIComponent(email)}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch domains list");
@@ -68,6 +88,12 @@ export default function ClientDomainsPage() {
       setError("Please sign in to view your domains.");
     }
   }, [isUserLoaded, user]);
+
+  useEffect(() => {
+    const handleRefresh = () => fetchDomains();
+    window.addEventListener("domains:refresh", handleRefresh);
+    return () => window.removeEventListener("domains:refresh", handleRefresh);
+  }, [user]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -113,15 +139,41 @@ export default function ClientDomainsPage() {
   return (
     <div className="space-y-8 pb-10">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl sm:text-4xl font-bold mb-2">
-          <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">My</span>
-          <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Domains</span>
-        </h1>
-        <p className="text-gray-400 text-lg max-w-2xl">
-          Manage your active domain names, see registration/renewal dates, and pay linked invoices.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2">
+            <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">My</span>
+            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Domains</span>
+          </h1>
+          <p className="text-gray-400 text-lg max-w-2xl">
+            Search for new domains, manage your active domain names, see registration/renewal dates, and pay linked invoices.
+          </p>
+        </div>
+
+        {domains.length > 0 && (
+          <button
+            onClick={() => setShowSearch((prev) => !prev)}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white font-bold text-sm shadow-lg shadow-brand-500/20 transition-all cursor-pointer shrink-0 self-start sm:self-center"
+          >
+            {showSearch ? (
+              <>
+                <X className="w-4 h-4" />
+                <span>Close Search</span>
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                <span>Buy New Domain</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
+
+      {/* Domain Search & Direct Order (Always shown if 0 domains, toggled if user has domains) */}
+      {(domains.length === 0 || showSearch) && (
+        <DomainSearch />
+      )}
 
       {domains.length > 0 ? (
         <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
@@ -234,6 +286,21 @@ export default function ClientDomainsPage() {
                               Pending Invoice
                             </span>
                           )}
+
+                          {d.status.toLowerCase() === "pending" && (
+                            <button
+                              onClick={() => handleCancelOrder(d.id, d.domain_name)}
+                              disabled={cancellingId === d.id}
+                              className="p-2 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 text-red-400 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+                              title="Cancel Order"
+                            >
+                              {cancellingId === d.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -244,18 +311,13 @@ export default function ClientDomainsPage() {
           </div>
         </div>
       ) : (
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-12 text-center">
-          <Package className="w-16 h-16 text-gray-600 mx-auto mb-6" />
-          <h3 className="text-2xl font-semibold text-white mb-2">No Registered Domains Yet</h3>
-          <p className="text-gray-400 mb-6 max-w-md mx-auto">
-            You don't have any domains registered. Explore our Services page to search and configure your web domains.
-          </p>
-          <Link
-            href="/services/web-dev"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity"
-          >
-            Browse Domains
-          </Link>
+        // <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 text-center">
+        <div>
+          {/* <Package className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-white mb-2">No Active Registered Domains</h3>
+          <p className="text-gray-400 text-sm max-w-md mx-auto">
+            You don't have any registered domains yet. Use the search tool above to search availability and order your domain directly!
+          </p> */}
         </div>
       )}
 

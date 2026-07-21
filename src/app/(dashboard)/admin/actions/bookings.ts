@@ -31,27 +31,8 @@ export type BookingData = {
   updated_at?: string;
 };
 
-// Auto-migration helper to ensure the bookings table exists
 async function ensureBookingsTable() {
   try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS admin_bookings (
-        id SERIAL PRIMARY KEY,
-        client_id VARCHAR(255) REFERENCES admin_clients(id) ON DELETE SET NULL,
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        customer_name VARCHAR(255) NOT NULL,
-        customer_email VARCHAR(255),
-        customer_phone VARCHAR(50),
-        booking_date DATE NOT NULL,
-        start_time TIME,
-        end_time TIME,
-        status VARCHAR(50) DEFAULT 'confirmed',
-        price NUMERIC(12, 2) DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `;
     // Add client_id column if it doesn't exist
     await sql`
       ALTER TABLE admin_bookings 

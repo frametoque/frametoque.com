@@ -8,7 +8,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 import ServicesSub from "@/components/services/ServicesSub";
-import DomainSearch from "@/components/services/DomainSearch";
 
 // ─── Tab config ────────────────────────────────────────────────────────────────
 const TABS = [
@@ -168,22 +167,6 @@ export default function ServicesMain({ params }: { params?: { slug?: string } })
             className="space-y-16"
           >
             <ServicesSub categorySlug={activeTab} />
-            
-            {activeTab === "web-dev" && (
-              <div className="pt-16 border-t border-neutral-900 space-y-10">
-                <div className="max-w-3xl mx-auto text-center space-y-4">
-                  <h3 className="text-2xl sm:text-3xl font-black text-white leading-tight">
-                    Secure Your <span className="text-brand-400">Domain</span>
-                  </h3>
-                  <div className="bg-brand-500/5 border border-brand-500/15 px-6 py-4 rounded-2xl inline-block max-w-2xl text-left backdrop-blur-sm">
-                    <p className="text-gray-300 text-sm leading-relaxed">
-                      ⚠️ <strong>Eligibility Notice:</strong> Domain registration services are exclusively offered to clients who have developed or are currently building their web application with FrameToque. We do not provide standalone domain registry services to the public.
-                    </p>
-                  </div>
-                </div>
-                <DomainSearch />
-              </div>
-            )}
           </motion.div>
         </AnimatePresence>
 
