@@ -1,18 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getDomainOrders, updateDomainOrderStatus, deleteDomainOrder, updateDomainOrder, createDomainInvoice, DomainOrder } from "../actions/domains";
-import { Globe, DollarSign, TrendingUp, AlertTriangle, Mail, Check, Search, Trash2, Edit2, X, Clock, FileText } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import {
+  getDomainOrders,
+  getDomainRenewalHistory,
+  updateDomainOrderStatus,
+  deleteDomainOrder,
+  updateDomainOrder,
+  createDomainInvoice,
+  DomainOrder,
+  DomainRenewalHistoryRow,
+} from "../actions/domains";
+import {
+  Globe,
+  AlertTriangle,
+  Mail,
+  Check,
+  Search,
+  Trash2,
+  Edit2,
+  X,
+  Clock,
+  FileText,
+  History,
+  ChevronDown,
+  ChevronUp,
+  TrendingUp,
+  Lock,
+  RefreshCw,
+} from "lucide-react";
 
+// ---------------------------------------------------------------------------
+// Formatters
+// ---------------------------------------------------------------------------
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" }).format(amount || 0);
 
-/**
- * Safely reads an `error` message off any server-action result object,
- * regardless of how TypeScript happens to be narrowing the result's union
- * type at that call site. Works for any shape: { success: false; error: string },
- * { success: true; ... } (returns fallback), or anything unexpected.
- */
+const formatUSD = (amount: number) => `$${amount.toFixed(2)}`;
+
 function extractError(res: unknown, fallback = "Unknown error"): string {
   if (
     res &&
@@ -25,24 +50,165 @@ function extractError(res: unknown, fallback = "Unknown error"): string {
   return fallback;
 }
 
-/** Only count domains where registration profit was actually realized. */
 function countsTowardProfit(o: DomainOrder): boolean {
   const status = o.status.toLowerCase();
   if (status === "pending") return false;
   if (status === "active") return true;
   if (status === "expired") {
-    // Include expired only if the domain was previously activated (invoice paid & expiry set)
     return !!(o.invoice_id && o.expiry_date);
   }
   return false;
 }
 
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+/** Compact single-line: $X.XX (LKR Y,YYY @rate) */
+function RegPricePair({
+  usd,
+  lockedLkr,
+  lockedRate,
+  liveRate,
+  isActivated,
+  dimmed = false,
+}: {
+  usd: number;
+  lockedLkr?: number | null;
+  lockedRate?: number | null;
+  liveRate: number;
+  isActivated: boolean;
+  dimmed?: boolean;
+}) {
+  const lkrValue = isActivated && lockedLkr != null ? lockedLkr : usd * liveRate;
+  const rate = isActivated && lockedRate != null ? lockedRate : liveRate;
+  const isFixed = isActivated && lockedLkr != null;
+
+  return (
+    <div className={`text-sm ${dimmed ? "text-gray-400" : "text-white font-medium"}`}>
+      {formatUSD(usd)}
+      <span className={`text-xs font-normal ml-1 ${isFixed ? "text-amber-300/80" : "text-gray-500"}`}>
+        ({formatLKR(lkrValue)}
+        <span className="text-gray-600 text-[9px] ml-0.5">@{Math.round(rate)}</span>)
+      </span>
+    </div>
+  );
+}
+
+/** Compact single-line renewal: $X.XX (LKR Y,YYY @rate) — always live */
+function RenewalPricePair({
+  usd,
+  liveRate,
+  dimmed = false,
+}: {
+  usd: number;
+  liveRate: number;
+  dimmed?: boolean;
+}) {
+  const lkr = usd * liveRate;
+  return (
+    <div className={`text-sm ${dimmed ? "text-gray-400" : "text-white font-medium"}`}>
+      {formatUSD(usd)}
+      <span className="text-xs font-normal ml-1 text-gray-500">
+        ({formatLKR(lkr)}
+        <span className="text-gray-600 text-[9px] ml-0.5">@{Math.round(liveRate)}</span>)
+      </span>
+    </div>
+  );
+}
+
+/** Renewal history panel shown inline under a domain row. */
+function RenewalHistoryPanel({
+  history,
+  loading,
+}: {
+  history: DomainRenewalHistoryRow[];
+  loading: boolean;
+}) {
+  const getStatusBadge = (status: string) => {
+    const s = status.toLowerCase();
+    if (s === "fully paid" || s === "paid") {
+      return "text-green-400 bg-green-400/10 border-green-400/20";
+    }
+    if (s === "on review") {
+      return "text-amber-400 bg-amber-400/10 border-amber-400/20";
+    }
+    return "text-red-400 bg-red-400/10 border-red-400/20";
+  };
+
+  return (
+    <div className="bg-white/[0.02] border-t border-white/5 px-4 py-3">
+      <p className="text-xs font-semibold text-gray-400 mb-3 flex items-center gap-1.5">
+        <History className="w-3.5 h-3.5" />
+        Renewal History
+      </p>
+      {loading ? (
+        <div className="flex items-center gap-2 text-xs text-gray-500 py-2">
+          <div className="w-3.5 h-3.5 border border-brand-500 border-t-transparent rounded-full animate-spin" />
+          Loading history...
+        </div>
+      ) : history.length === 0 ? (
+        <p className="text-xs text-gray-600 italic py-1">No renewal invoices generated yet.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-white/5">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr className="bg-white/5 text-gray-500">
+                <th className="px-3 py-2 text-left font-medium">Date</th>
+                <th className="px-3 py-2 text-left font-medium">Invoice</th>
+                <th className="px-3 py-2 text-right font-medium">USD</th>
+                <th className="px-3 py-2 text-right font-medium">LKR (rate)</th>
+                <th className="px-3 py-2 text-center font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {history.map((h) => (
+                <tr key={h.id} className="hover:bg-white/5 transition-colors">
+                  <td className="px-3 py-2 text-gray-400">
+                    {new Date(h.renewal_date).toLocaleDateString("en-US", {
+                      month: "short", day: "numeric", year: "numeric",
+                    })}
+                  </td>
+                  <td className="px-3 py-2">
+                    <span className="text-brand-400 font-mono">{h.invoice_id}</span>
+                  </td>
+                  <td className="px-3 py-2 text-right text-white font-medium">
+                    {formatUSD(h.usd_price)}
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <span className="text-amber-300/90">{formatLKR(h.lkr_price)}</span>
+                    <span className="text-gray-600 ml-1 text-[9px]">(@{h.lkr_rate.toFixed(2)})</span>
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    <span className={`inline-flex px-2 py-0.5 rounded-full border text-[10px] font-semibold ${getStatusBadge(h.status)}`}>
+                      {h.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main page
+// ---------------------------------------------------------------------------
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<DomainOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [activeFilter, setActiveFilter] = useState("All");
+  const [lkrRate, setLkrRate] = useState(300);
+
+  // Renewal history state per domain id
+  const [expandedHistory, setExpandedHistory] = useState<Record<number, boolean>>({});
+  const [historyData, setHistoryData] = useState<Record<number, DomainRenewalHistoryRow[]>>({});
+  const [historyLoading, setHistoryLoading] = useState<Record<number, boolean>>({});
 
   // Activation & Invoice Modal States
   const [activationModalOpen, setActivationModalOpen] = useState(false);
@@ -71,12 +237,11 @@ export default function AdminOrdersPage() {
   const [expiringDomainId, setExpiringDomainId] = useState<number | null>(null);
   const [expiringDomainName, setExpiringDomainName] = useState("");
   const [expiringWithInvoice, setExpiringWithInvoice] = useState(false);
-  const [lkrRate, setLkrRate] = useState(300);
 
+  // ---------------------------------------------------------------------------
+  // Data fetching
+  // ---------------------------------------------------------------------------
   const usdToLkr = (usd: number) => usd * lkrRate;
-
-  const formatUsdWithLkr = (usd: number) =>
-    `$${usd.toFixed(2)} (${formatLKR(usdToLkr(usd))})`;
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -110,16 +275,34 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-
-    const handleRefreshEvent = () => {
-      fetchOrders();
-    };
+    const handleRefreshEvent = () => { fetchOrders(); };
     window.addEventListener("domains:refresh", handleRefreshEvent);
-    return () => {
-      window.removeEventListener("domains:refresh", handleRefreshEvent);
-    };
+    return () => { window.removeEventListener("domains:refresh", handleRefreshEvent); };
   }, []);
 
+  // ---------------------------------------------------------------------------
+  // Renewal history toggle
+  // ---------------------------------------------------------------------------
+  const toggleHistory = async (orderId: number) => {
+    const isOpen = expandedHistory[orderId];
+    setExpandedHistory((prev) => ({ ...prev, [orderId]: !isOpen }));
+
+    if (!isOpen && !historyData[orderId]) {
+      setHistoryLoading((prev) => ({ ...prev, [orderId]: true }));
+      try {
+        const rows = await getDomainRenewalHistory(orderId);
+        setHistoryData((prev) => ({ ...prev, [orderId]: rows }));
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setHistoryLoading((prev) => ({ ...prev, [orderId]: false }));
+      }
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Status / CRUD handlers
+  // ---------------------------------------------------------------------------
   const handleStatusChange = async (id: number, newStatus: string) => {
     setUpdatingId(id);
     try {
@@ -128,7 +311,7 @@ export default function AdminOrdersPage() {
         setOrders((prev) =>
           prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o))
         );
-        fetchOrders(); // reload expiry dates automatically
+        fetchOrders();
       } else {
         alert("Failed to update status: " + extractError(res));
       }
@@ -205,6 +388,12 @@ export default function AdminOrdersPage() {
         }
         setExpireModalOpen(false);
         setExpiringDomainId(null);
+        // Invalidate cached history for this domain
+        setHistoryData((prev) => {
+          const next = { ...prev };
+          delete next[expiringDomainId];
+          return next;
+        });
         await fetchOrders();
       } else {
         alert("Failed to mark domain as expired: " + extractError(res));
@@ -281,6 +470,12 @@ export default function AdminOrdersPage() {
           }
         }
         setEditModalOpen(false);
+        // Invalidate cached history
+        setHistoryData((prev) => {
+          const next = { ...prev };
+          delete next[selectedOrder.id];
+          return next;
+        });
         await fetchOrders();
       } else {
         alert("Failed to save changes: " + extractError(res));
@@ -305,7 +500,9 @@ export default function AdminOrdersPage() {
     }
   };
 
-  // Filter orders based on search query and status filter
+  // ---------------------------------------------------------------------------
+  // Derived data
+  // ---------------------------------------------------------------------------
   const filteredOrders = orders.filter((o) => {
     const statusMatch = activeFilter === "All" || o.status.toLowerCase() === activeFilter.toLowerCase();
     const searchMatch =
@@ -314,18 +511,13 @@ export default function AdminOrdersPage() {
     return statusMatch && searchMatch;
   });
 
-  // Summaries — profit totals exclude pending and never-activated expired domains
-  const totalDomains = orders.length;
-  const activeDomains = orders.filter((o) => o.status === "active").length;
-  const profitOrders = orders.filter(countsTowardProfit);
-  const totalCost = profitOrders.reduce((sum, o) => sum + o.actual_price, 0);
-  const totalRevenue = profitOrders.reduce((sum, o) => sum + o.selling_price, 0);
-  const totalProfit = totalRevenue - totalCost;
-
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
   return (
     <div className="space-y-6 pb-10 mt-2">
 
-      {/* Main List Section */}
+      {/* Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           {/* Search */}
@@ -336,34 +528,36 @@ export default function AdminOrdersPage() {
               placeholder="Search domains..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-full pl-11 pr-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm text-white"
-          />
+              className="w-full bg-white/5 border border-white/10 rounded-full pl-11 pr-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm text-white"
+            />
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-wrap gap-2">
+            {["All", "Pending", "Active", "Expired"].map((f) => (
+              <button
+                key={f}
+                onClick={() => setActiveFilter(f)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
+                  activeFilter === f
+                    ? "bg-white text-black"
+                    : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-2">
-          {["All", "Pending", "Active", "Expired"].map((f) => (
-            <button
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-                activeFilter === f
-                  ? "bg-white text-black"
-                  : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
+        <span className="text-gray-400 text-xs font-medium self-end lg:self-auto">
+          Today's rate (1 USD = {lkrRate.toFixed(2)} LKR)
+        </span>
       </div>
 
-      <span className="text-gray-400 text-xs font-medium self-end lg:self-auto">
-        Showing {filteredOrders.length} of {orders.length} entries
-      </span>
-    </div>
+    
 
-      {/* Table Container */}
+      {/* Table */}
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden">
         <div className="overflow-x-auto w-full">
           {loading ? (
@@ -388,145 +582,230 @@ export default function AdminOrdersPage() {
                   <th className="p-4 font-medium text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody>
                 {filteredOrders.map((o) => {
                   const daysToExpiry = Math.ceil(
                     (new Date(o.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
                   );
                   const isExpiringSoon = daysToExpiry > 0 && daysToExpiry <= 30;
+                  const isActivated = o.status.toLowerCase() !== "pending";
+
                   const regProfit = o.selling_price - o.actual_price;
                   const renewCost = o.renewal_cost || 14.25;
                   const renewPrice = o.renewal_price || 19.99;
                   const renewProfit = renewPrice - renewCost;
 
+                  // Fixed LKR values for registration (locked at activation)
+                  const lockedRegCostLkr = o.activation_lkr_cost ?? null;
+                  const lockedRegPriceLkr = o.activation_lkr_price ?? null;
+                  const lockedRate = o.activation_lkr_rate ?? null;
+
+                  // Fixed LKR profit (locked)
+                  const regProfitLkr =
+                    isActivated && lockedRegPriceLkr != null && lockedRegCostLkr != null
+                      ? lockedRegPriceLkr - lockedRegCostLkr
+                      : regProfit * lkrRate;
+                  const effectiveRate =
+                    isActivated && lockedRate != null ? lockedRate : lkrRate;
+
+                  const isHistoryOpen = expandedHistory[o.id] ?? false;
+                  const historyRows = historyData[o.id] ?? [];
+                  const isHistoryLoading = historyLoading[o.id] ?? false;
+
                   return (
-                    <tr key={o.id} className="hover:bg-white/5 transition-colors">
-                      <td className="p-4">
-                        <div className="font-semibold text-white flex items-center gap-1.5 flex-wrap">
-                          <Globe className="w-4 h-4 text-brand-400" />
-                          {o.domain_name}
-                          <span className="text-[10px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-gray-400 font-medium">
-                            {o.registrar || 'Internet.bs'}
-                          </span>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                          <Mail className="w-3.5 h-3.5 text-gray-500" />
-                          {o.client_email}
-                        </div>
-                        <div className="text-[10px] text-gray-500 mt-1.5 flex items-center gap-1.5">
-                          <Clock className="w-3 h-3 text-gray-500 shrink-0" />
-                          <span>Ordered: {o.created_at ? new Date(o.created_at).toLocaleDateString() : (o.purchase_date ? new Date(o.purchase_date).toLocaleDateString() : 'N/A')}</span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-right text-sm">
-                        <div className="text-gray-400">{formatUsdWithLkr(o.actual_price)}</div>
-                        <div className="text-white font-medium mt-0.5">{formatUsdWithLkr(o.selling_price)}</div>
-                      </td>
-                      <td className="p-4 text-right font-semibold text-brand-400">
-                        {formatUsdWithLkr(regProfit)}
-                      </td>
-                      <td className="p-4 text-right text-sm">
-                        <div className="text-gray-400">{formatUsdWithLkr(renewCost)}</div>
-                        <div className="text-white font-medium mt-0.5">{formatUsdWithLkr(renewPrice)}</div>
-                      </td>
-                      <td className="p-4 text-right font-semibold text-brand-400">
-                        {formatUsdWithLkr(renewProfit)}
-                      </td>
-                      <td className="p-4">
-                        {o.status.toLowerCase() === "pending" || !o.expiry_date ? (
-                          <span className="text-gray-500 font-medium text-xs">Not Active Yet</span>
-                        ) : (
-                          <>
-                            <div className="text-white">
-                              {new Date(o.expiry_date).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              })}
-                            </div>
-                            {isExpiringSoon && (
-                              <span className="text-[10px] text-red-400 font-semibold flex items-center gap-1 mt-1">
-                                <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                                Expiring in {daysToExpiry} days!
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full border ${getStatusColor(o.status)}`}>
-                          {o.status}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center justify-end gap-1">
-                          {o.status === "pending" && (
+                    <React.Fragment key={o.id}>
+                      <tr className={`hover:bg-white/5 transition-colors border-t border-white/5 ${isHistoryOpen ? "bg-white/[0.02]" : ""}`}>
+                        <td className="p-4">
+                          <div className="font-semibold text-white flex items-center gap-1.5 flex-wrap">
+                            <Globe className="w-4 h-4 text-brand-400" />
+                            {o.domain_name}
+                            <span className="text-[10px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-gray-400 font-medium">
+                              {o.registrar || 'Internet.bs'}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            <Mail className="w-3.5 h-3.5 text-gray-500" />
+                            {o.client_email}
+                          </div>
+                          <div className="text-[10px] text-gray-500 mt-1.5 flex items-center gap-1.5">
+                            <Clock className="w-3 h-3 text-gray-500 shrink-0" />
+                            <span>Ordered: {o.created_at ? new Date(o.created_at).toLocaleDateString() : (o.purchase_date ? new Date(o.purchase_date).toLocaleDateString() : 'N/A')}</span>
+                          </div>
+                        </td>
+
+                        {/* Reg Cost / Retail — fixed after activation */}
+                        <td className="p-4 text-right text-sm space-y-1">
+                          <RegPricePair
+                            usd={o.actual_price}
+                            lockedLkr={lockedRegCostLkr}
+                            lockedRate={lockedRate}
+                            liveRate={lkrRate}
+                            isActivated={isActivated}
+                            dimmed
+                          />
+                          <RegPricePair
+                            usd={o.selling_price}
+                            lockedLkr={lockedRegPriceLkr}
+                            lockedRate={lockedRate}
+                            liveRate={lkrRate}
+                            isActivated={isActivated}
+                          />
+                        </td>
+
+                        {/* Reg Profit — fixed after activation */}
+                        <td className="p-4 text-right font-semibold text-brand-400">
+                          <div>{formatUSD(regProfit)}</div>
+                          <div className={`text-xs mt-0.5 ${isActivated && lockedRate != null ? "text-amber-300/80" : "text-gray-500"}`}>
+                            ({formatLKR(regProfitLkr)}
+                            <span className="text-gray-600 text-[9px] ml-0.5">@{Math.round(effectiveRate)}</span>)
+                          </div>
+                        </td>
+
+                        {/* Renewal Cost / Retail — always live */}
+                        <td className="p-4 text-right text-sm">
+                          <RenewalPricePair usd={renewCost} liveRate={lkrRate} dimmed />
+                          <RenewalPricePair usd={renewPrice} liveRate={lkrRate} />
+                        </td>
+
+                        {/* Renewal Profit — always live */}
+                        <td className="p-4 text-right font-semibold text-brand-400">
+                          <div>{formatUSD(renewProfit)}</div>
+                          <div className="text-xs mt-0.5 text-gray-500">
+                            ({formatLKR(renewProfit * lkrRate)}
+                            <span className="text-gray-600 text-[9px] ml-0.5">@{Math.round(lkrRate)}</span>)
+                          </div>
+                        </td>
+
+                        {/* Expiry */}
+                        <td className="p-4">
+                          {o.status.toLowerCase() === "pending" || !o.expiry_date ? (
+                            <span className="text-gray-500 font-medium text-xs">Not Active Yet</span>
+                          ) : (
                             <>
-                              {!o.invoice_id ? (
-                                <button
-                                  onClick={() => {
-                                    setActiveDomainId(o.id);
-                                    setSelectedCurrency('USD');
-                                    setActivationModalOpen(true);
-                                  }}
-                                  disabled={updatingId !== null}
-                                  title="Create Invoice"
-                                  className="p-2 hover:bg-blue-400/10 text-gray-400 hover:text-blue-400 rounded-xl transition-colors flex items-center justify-center cursor-pointer"
-                                >
-                                  <FileText className="w-4 h-4" />
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => handleStatusChange(o.id, "active")}
-                                  disabled={updatingId !== null}
-                                  title="Mark as Registered/Active"
-                                  className="p-2 hover:bg-green-400/10 text-gray-400 hover:text-green-400 rounded-xl transition-colors flex items-center justify-center cursor-pointer"
-                                >
-                                  <Check className="w-4 h-4" />
-                                </button>
+                              <div className="text-white">
+                                {new Date(o.expiry_date).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })}
+                              </div>
+                              {isExpiringSoon && (
+                                <span className="text-[10px] text-red-400 font-semibold flex items-center gap-1 mt-1">
+                                  <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                                  Expiring in {daysToExpiry} days!
+                                </span>
                               )}
                             </>
                           )}
+                        </td>
 
-                          {o.status?.toLowerCase() === "active" && (
+                        {/* Status */}
+                        <td className="p-4 text-center">
+                          <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full border ${getStatusColor(o.status)}`}>
+                            {o.status}
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="p-4">
+                          <div className="flex items-center justify-end gap-1">
+                            {o.status === "pending" && (
+                              <>
+                                {!o.invoice_id ? (
+                                  <button
+                                    onClick={() => {
+                                      setActiveDomainId(o.id);
+                                      setSelectedCurrency('USD');
+                                      setActivationModalOpen(true);
+                                    }}
+                                    disabled={updatingId !== null}
+                                    title="Create Invoice"
+                                    className="p-2 hover:bg-blue-400/10 text-gray-400 hover:text-blue-400 rounded-xl transition-colors flex items-center justify-center cursor-pointer"
+                                  >
+                                    <FileText className="w-4 h-4" />
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleStatusChange(o.id, "active")}
+                                    disabled={updatingId !== null}
+                                    title="Mark as Registered/Active"
+                                    className="p-2 hover:bg-green-400/10 text-gray-400 hover:text-green-400 rounded-xl transition-colors flex items-center justify-center cursor-pointer"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </>
+                            )}
+
+                            {o.status?.toLowerCase() === "active" && (
+                              <button
+                                onClick={() => handleOpenExpireModal(o)}
+                                disabled={updatingId !== null}
+                                title="Mark as Expired"
+                                className="p-2 hover:bg-red-400/10 text-gray-400 hover:text-red-400 rounded-xl transition-colors flex items-center justify-center cursor-pointer"
+                              >
+                                <AlertTriangle className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {/* Renewal history toggle */}
                             <button
-                              onClick={() => handleOpenExpireModal(o)}
-                              disabled={updatingId !== null}
-                              title="Mark as Expired"
-                              className="p-2 hover:bg-red-400/10 text-gray-400 hover:text-red-400 rounded-xl transition-colors flex items-center justify-center cursor-pointer"
+                              onClick={() => toggleHistory(o.id)}
+                              title="Renewal History"
+                              className={`p-2 rounded-xl transition-colors flex items-center justify-center cursor-pointer ${
+                                isHistoryOpen
+                                  ? "bg-brand-500/20 text-brand-400"
+                                  : "hover:bg-white/10 text-gray-400 hover:text-white"
+                              }`}
                             >
-                              <AlertTriangle className="w-4 h-4" />
+                              {isHistoryOpen ? (
+                                <ChevronUp className="w-4 h-4" />
+                              ) : (
+                                <History className="w-4 h-4" />
+                              )}
                             </button>
-                          )}
 
-                          <button
-                            onClick={() => handleOpenEditModal(o)}
-                            className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl transition-colors flex items-center justify-center"
-                            title="Edit Order"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          
-                          <a
-                            href={`mailto:${o.client_email}?subject=Domain Renewal Reminder: ${o.domain_name}&body=Hi client,%0D%0A%0D%0AThis is a reminder that your domain registration for ${o.domain_name} expires on ${new Date(o.expiry_date).toLocaleDateString()} (${daysToExpiry} days remaining).%0D%0A%0D%0APlease let us know if you want us to handle the renewal for another year.%0D%0A%0D%0AThank you!`}
-                            className="p-2 hover:bg-brand-400/10 text-gray-400 hover:text-brand-400 rounded-xl transition-colors flex items-center justify-center"
-                            title="Send Expiry Reminder Email"
-                          >
-                            <Mail className="w-4 h-4" />
-                          </a>
-
-                          {o.status?.toLowerCase() !== "active" && (
                             <button
-                              onClick={() => handleDeleteOrder(o.id)}
-                              className="p-2 hover:bg-red-400/10 text-gray-400 hover:text-red-400 rounded-xl transition-colors flex items-center justify-center"
-                              title="Delete Order"
+                              onClick={() => handleOpenEditModal(o)}
+                              className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl transition-colors flex items-center justify-center"
+                              title="Edit Order"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Edit2 className="w-4 h-4" />
                             </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+
+                            <a
+                              href={`mailto:${o.client_email}?subject=Domain Renewal Reminder: ${o.domain_name}&body=Hi client,%0D%0A%0D%0AThis is a reminder that your domain registration for ${o.domain_name} expires on ${new Date(o.expiry_date).toLocaleDateString()} (${daysToExpiry} days remaining).%0D%0A%0D%0APlease let us know if you want us to handle the renewal for another year.%0D%0A%0D%0AThank you!`}
+                              className="p-2 hover:bg-brand-400/10 text-gray-400 hover:text-brand-400 rounded-xl transition-colors flex items-center justify-center"
+                              title="Send Expiry Reminder Email"
+                            >
+                              <Mail className="w-4 h-4" />
+                            </a>
+
+                            {o.status?.toLowerCase() !== "active" && (
+                              <button
+                                onClick={() => handleDeleteOrder(o.id)}
+                                className="p-2 hover:bg-red-400/10 text-gray-400 hover:text-red-400 rounded-xl transition-colors flex items-center justify-center"
+                                title="Delete Order"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Inline renewal history panel */}
+                      {isHistoryOpen && (
+                        <tr>
+                          <td colSpan={8} className="p-0">
+                            <RenewalHistoryPanel
+                              history={historyRows}
+                              loading={isHistoryLoading}
+                            />
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
@@ -829,8 +1108,11 @@ export default function AdminOrdersPage() {
             </button>
 
             <h3 className="text-xl font-bold text-white mb-2">Activate Domain & Generate Invoice</h3>
-            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-              Before activating the domain, please select the billing currency. If LKR is selected, the pricing will automatically convert using real-time currency rates.
+            <p className="text-gray-400 text-sm mb-2 leading-relaxed">
+              Select the billing currency for the registration invoice. 
+            </p>
+            <p className="text-xs text-brand-300/70 bg-brand-500/5 border border-brand-500/10 rounded-xl px-3 py-2 mb-6">
+              Current rate: <span className="font-bold text-brand-300">1 USD = {lkrRate.toFixed(2)} LKR</span>
             </p>
 
             <div className="space-y-4 mb-6">

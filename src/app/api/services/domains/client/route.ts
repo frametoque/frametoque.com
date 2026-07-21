@@ -3,6 +3,14 @@ import sql from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
 
+/** Ensure the new LKR columns exist before querying.
+ *  Safe to run on every request — ALTER TABLE IF NOT EXISTS is a no-op when already present. */
+async function ensureColumns() {
+  try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS activation_lkr_rate NUMERIC(10, 4)`; } catch (_) {}
+  try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS activation_lkr_price NUMERIC(12, 2)`; } catch (_) {}
+  try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS activation_lkr_cost NUMERIC(12, 2)`; } catch (_) {}
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -11,6 +19,9 @@ export async function GET(req: NextRequest) {
     if (!userEmail) {
       return NextResponse.json({ error: "user_email is required" }, { status: 400 });
     }
+
+    // Run migration so the new columns exist even if admin page hasn't been visited yet
+    await ensureColumns();
 
     const rows = await sql`
       SELECT 
@@ -22,6 +33,8 @@ export async function GET(req: NextRequest) {
         d.expiry_date,
         d.created_at,
         d.invoice_id,
+        d.activation_lkr_price,
+        d.activation_lkr_rate,
         i.payment_status,
         i.total_due,
         i.currency
