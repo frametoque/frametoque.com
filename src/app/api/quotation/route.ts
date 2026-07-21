@@ -21,6 +21,8 @@ export async function POST(req: NextRequest) {
     quoteEmail: string;
     quotePhone: string;
     cartItems: {
+      id?: string;
+      serviceId?: string;
       serviceTitle: string;
       tier: string;
       duration: string;

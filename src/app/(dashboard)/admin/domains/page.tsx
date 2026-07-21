@@ -7,6 +7,24 @@ import { Globe, DollarSign, TrendingUp, AlertTriangle, Mail, Check, Search, Tras
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" }).format(amount || 0);
 
+/**
+ * Safely reads an `error` message off any server-action result object,
+ * regardless of how TypeScript happens to be narrowing the result's union
+ * type at that call site. Works for any shape: { success: false; error: string },
+ * { success: true; ... } (returns fallback), or anything unexpected.
+ */
+function extractError(res: unknown, fallback = "Unknown error"): string {
+  if (
+    res &&
+    typeof res === "object" &&
+    "error" in res &&
+    typeof (res as { error?: unknown }).error === "string"
+  ) {
+    return (res as { error: string }).error;
+  }
+  return fallback;
+}
+
 /** Only count domains where registration profit was actually realized. */
 function countsTowardProfit(o: DomainOrder): boolean {
   const status = o.status.toLowerCase();
@@ -112,7 +130,7 @@ export default function AdminOrdersPage() {
         );
         fetchOrders(); // reload expiry dates automatically
       } else {
-        alert("Failed to update status: " + res.error);
+        alert("Failed to update status: " + extractError(res));
       }
     } catch (err) {
       console.error(err);
@@ -132,7 +150,7 @@ export default function AdminOrdersPage() {
         setActiveDomainId(null);
         fetchOrders();
       } else {
-        alert("Failed to create invoice: " + res.error);
+        alert("Failed to create invoice: " + extractError(res));
       }
     } catch (e: any) {
       console.error(e);
@@ -149,7 +167,7 @@ export default function AdminOrdersPage() {
         if (res.success) {
           setOrders((prev) => prev.filter((o) => o.id !== id));
         } else {
-          alert("Failed to delete order: " + res.error);
+          alert("Failed to delete order: " + extractError(res));
         }
       } catch (err) {
         console.error(err);
@@ -189,7 +207,7 @@ export default function AdminOrdersPage() {
         setExpiringDomainId(null);
         await fetchOrders();
       } else {
-        alert("Failed to mark domain as expired: " + res.error);
+        alert("Failed to mark domain as expired: " + extractError(res));
       }
     } catch (err: any) {
       console.error(err);
@@ -265,7 +283,7 @@ export default function AdminOrdersPage() {
         setEditModalOpen(false);
         await fetchOrders();
       } else {
-        alert("Failed to save changes: " + res.error);
+        alert("Failed to save changes: " + extractError(res));
       }
     } catch (err) {
       console.error(err);

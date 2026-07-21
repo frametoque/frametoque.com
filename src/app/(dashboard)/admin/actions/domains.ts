@@ -20,6 +20,28 @@ export interface DomainOrder {
   created_at: string;
 }
 
+/**
+ * Plain (non-generic) discriminated-union result types for server actions.
+ * Declaring these explicitly, and as flat object literal unions rather than
+ * a generic/intersection type, keeps `success` as a literal `true`/`false`
+ * and ensures TypeScript can correctly narrow `res` in
+ * `if (res.success) {...} else {...}`, exposing `res.error` only on the
+ * false branch. (A generic `{ success: true } & T | { success: false }`
+ * form looks equivalent but TS does not reliably narrow through the
+ * intersection, which is what caused the original build error.)
+ */
+type SimpleActionResult =
+  | { success: true }
+  | { success: false; error: string };
+
+type StatusUpdateResult =
+  | { success: true; invoiceId?: string; skippedInvoice?: boolean; alreadyExists?: boolean }
+  | { success: false; error: string };
+
+type CreateInvoiceResult =
+  | { success: true; invoiceId: string }
+  | { success: false; error: string };
+
 export async function ensureDomainOrdersTable() {
   try {
     await sql`
@@ -71,7 +93,9 @@ export async function getDomainOrders(): Promise<DomainOrder[]> {
   }
 }
 
-export async function addDomainOrder(order: Omit<DomainOrder, "id" | "created_at" | "purchase_date">) {
+export async function addDomainOrder(
+  order: Omit<DomainOrder, "id" | "created_at" | "purchase_date">
+): Promise<SimpleActionResult> {
   await ensureDomainOrdersTable();
   try {
     await sql`
@@ -203,7 +227,7 @@ export async function updateDomainOrderStatus(
   id: number,
   status: string,
   options?: DomainExpiryOptions
-) {
+): Promise<StatusUpdateResult> {
   try {
     const normalizedStatus = status.toLowerCase();
 
@@ -246,7 +270,7 @@ export async function updateDomainOrderStatus(
   }
 }
 
-export async function deleteDomainOrder(id: number) {
+export async function deleteDomainOrder(id: number): Promise<SimpleActionResult> {
   try {
     await sql`
       DELETE FROM admin_domain_orders
@@ -264,7 +288,7 @@ export async function updateDomainOrder(
   id: number,
   order: Partial<DomainOrder>,
   options?: DomainExpiryOptions
-) {
+): Promise<StatusUpdateResult> {
   try {
     const currentRows = await sql`SELECT status FROM admin_domain_orders WHERE id = ${id}`;
     if (currentRows.length === 0) return { success: false, error: "Order not found" };
@@ -310,7 +334,10 @@ export async function updateDomainOrder(
   }
 }
 
-export async function createDomainInvoice(id: number, currency: 'USD' | 'LKR') {
+export async function createDomainInvoice(
+  id: number,
+  currency: 'USD' | 'LKR'
+): Promise<CreateInvoiceResult> {
   await ensureDomainOrdersTable();
   try {
     // 1. Fetch domain order details
