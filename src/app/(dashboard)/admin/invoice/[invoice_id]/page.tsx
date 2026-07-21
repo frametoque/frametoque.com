@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase } from "lucide-react";
+import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, Image, CheckCircle2, ShieldCheck, XCircle } from "lucide-react";
 import Link from "next/link";
 import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
-import { getInvoiceByIdAdmin } from "../../actions/actions";
+import { getInvoiceByIdAdmin, approveBankSlip, declineBankSlip, undoApprovedBankSlipPayment } from "../../actions/actions";
 
 const workStatusStyles = {
   "in progress": "bg-brand-500/20 text-brand-400 border-brand-500/30",
@@ -20,6 +20,7 @@ const paymentStatusStyles = {
   pending: "bg-amber-500/20 text-amber-400 border-amber-500/30",
   "advance-paid": "bg-blue-500/20 text-blue-400 border-blue-500/30",
   "partially paid": "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+  "on review": "bg-amber-500/20 text-amber-400 border-amber-500/30",
 };
 
 const formatDate = (dateString: string) => {
@@ -46,6 +47,10 @@ export default function AdminInvoicePage() {
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [autoDownloaded, setAutoDownloaded] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [declining, setDeclining] = useState(false);
+  const [undoingApprovedPayment, setUndoingApprovedPayment] = useState(false);
+  const [activeSlipIndex, setActiveSlipIndex] = useState(0);
   const downloadTriggeredRef = useRef(false);
 
   useEffect(() => {
@@ -62,6 +67,11 @@ export default function AdminInvoicePage() {
       }
     };
     fetchInvoice();
+  }, [invoice_id]);
+
+  // Reset active payment-slip index when the invoice changes
+  useEffect(() => {
+    setActiveSlipIndex(0);
   }, [invoice_id]);
 
   // Auto-download if ?download=true
@@ -120,6 +130,20 @@ export default function AdminInvoicePage() {
   const taxAmount = subtotal * (taxRate / 100);
   const total = parseFloat(invoice.total || subtotal + taxAmount - discount);
   const totalDue = parseFloat(invoice.total_due || total - advance);
+
+  const paymentSlips = Array.isArray(invoice.payment_slips) ? invoice.payment_slips : [];
+  const hasSlipRecords = paymentSlips.length > 0 || !!invoice.bank_slip;
+  const activeSlip = paymentSlips[activeSlipIndex] || (invoice.bank_slip ? { id: 'legacy', url: invoice.bank_slip, amount: totalDue, status: 'pending' } : null);
+  const activeSlipUrl = activeSlip?.url || null;
+  const activeSlipAmount = activeSlip?.amount ?? totalDue;
+  const activeSlipIsImage = !!activeSlipUrl && (
+    activeSlipUrl.startsWith('data:image/') ||
+    /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(activeSlipUrl)
+  );
+  const activeSlipIsPdf = !!activeSlipUrl && (
+    activeSlipUrl.startsWith('data:application/pdf') ||
+    activeSlipUrl.toLowerCase().endsWith('.pdf')
+  );
 
   return (
     <div className="space-y-6 pb-20">
@@ -266,7 +290,9 @@ export default function AdminInvoicePage() {
           {/* Payment History */}
           {invoice.payments && invoice.payments.length > 0 && (
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mt-4 space-y-4">
-              <h3 className="text-lg font-semibold text-white">Payment History</h3>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h3 className="text-lg font-semibold text-white">Payment History</h3>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm text-gray-300">
                   <thead>
@@ -288,6 +314,248 @@ export default function AdminInvoicePage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* Bank Slip Review Section */}
+          {hasSlipRecords && (
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-4 sm:p-6 mt-4">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">Bank Transfer Slip</h3>
+                    <p className="text-xs text-gray-400">
+                      {paymentSlips.length > 1
+                        ? `Slip ${activeSlipIndex + 1} of ${paymentSlips.length}`
+                        : 'Uploaded by client for payment verification'}
+                    </p>
+                  </div>
+                </div>
+
+                {paymentSlips.length > 1 && (
+                  <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setActiveSlipIndex((value) => Math.max(0, value - 1))}
+                      className="rounded-xl px-3 py-1.5 text-sm font-semibold text-gray-300 transition hover:bg-white/10"
+                    >
+                      Prev
+                    </button>
+                    <span className="px-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+                      {activeSlipIndex + 1} / {paymentSlips.length}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveSlipIndex((value) => Math.min(paymentSlips.length - 1, value + 1))}
+                      className="rounded-xl px-3 py-1.5 text-sm font-semibold text-gray-300 transition hover:bg-white/10"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col lg:flex-row gap-6 mt-4">
+                <div className="lg:flex-[1.15] min-w-0">
+                  <div className="border border-white/10 rounded-2xl overflow-hidden bg-zinc-950/80 p-2 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
+                    {activeSlipIsImage ? (
+                      <img
+                        src={activeSlipUrl!}
+                        alt="Bank Transfer Slip"
+                        className="w-full max-h-[720px] object-contain rounded-xl"
+                      />
+                    ) : activeSlipIsPdf ? (
+                      <div className="w-full min-h-[540px] rounded-xl overflow-hidden">
+                        <object
+                          data={activeSlipUrl!}
+                          type="application/pdf"
+                          className="w-full h-[540px] rounded-xl"
+                        >
+                          <div className="p-6 text-center text-gray-300">
+                            <p>PDF preview unavailable.</p>
+                            <a href={activeSlipUrl!} download={`bank-slip-${invoice.invoice_id}.pdf`} className="text-brand-400 underline">
+                              Download bank slip
+                            </a>
+                          </div>
+                        </object>
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center text-gray-300">
+                        <p>Slip preview not available for this file type.</p>
+                        {activeSlipUrl ? (
+                          <a href={activeSlipUrl} download={`bank-slip-${invoice.invoice_id}`} className="text-brand-400 underline">
+                            Download bank slip
+                          </a>
+                        ) : (
+                          <p>No slip data found.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="lg:w-[320px] xl:w-[360px] flex-shrink-0 space-y-4">
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4 space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Review status</p>
+                        <p className="text-sm font-semibold text-white mt-1">
+                          {activeSlip?.status === 'approved'
+                            ? 'Approved'
+                            : activeSlip?.status === 'declined'
+                              ? 'Declined'
+                              : invoice.payment_status === 'on review'
+                                ? 'Awaiting review'
+                                : invoice.payment_status || 'Pending'}
+                        </p>
+                      </div>
+                      {activeSlip?.status === 'approved' ? (
+                        <span className="px-3 py-1 bg-green-500/20 text-green-400 border border-green-500/30 text-xs font-semibold rounded-full">
+                          Approved
+                        </span>
+                      ) : activeSlip?.status === 'declined' ? (
+                        <span className="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold rounded-full">
+                          Declined
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold rounded-full">
+                          Awaiting Review
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-3 divide-y divide-white/10">
+                      <div className="flex items-center justify-between pt-0">
+                        <span className="text-sm text-gray-400">Amount submitted</span>
+                        <span className="text-sm font-semibold text-white">{formatMoney(activeSlipAmount, invoice.currency)}</span>
+                      </div>
+                      <div className="flex items-center justify-between pt-3">
+                        <span className="text-sm text-gray-400">Invoice</span>
+                        <span className="text-sm font-semibold text-white">#{invoice.invoice_id}</span>
+                      </div>
+                      {activeSlip?.uploaded_at && (
+                        <div className="flex items-center justify-between pt-3">
+                          <span className="text-sm text-gray-400">Uploaded</span>
+                          <span className="text-xs text-gray-300">
+                            {new Date(activeSlip.uploaded_at).toLocaleString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                      )}
+                      {activeSlip?.review_note === 'Added by admin' && (
+                        <div className="flex items-center justify-between pt-3">
+                          <span className="text-sm text-gray-400">Uploaded by</span>
+                          <span className="text-xs font-semibold text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded-full border border-brand-500/20">
+                            Admin
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {activeSlip?.status === 'pending' ? (
+                    <div className="grid gap-3">
+                      <button
+                        onClick={async () => {
+                          if (!confirm('Are you sure you want to approve this bank slip and apply the submitted amount?')) return;
+                          setApproving(true);
+                          try {
+                            const res = await approveBankSlip(invoice.invoice_id, activeSlip.id);
+                            if (res.success) {
+                              alert('Bank slip approved and payment applied.');
+                              window.location.reload();
+                            } else {
+                              alert('Failed to approve: ' + res.error);
+                            }
+                          } catch (err) {
+                            alert('Error approving slip');
+                          } finally {
+                            setApproving(false);
+                          }
+                        }}
+                        disabled={approving || declining}
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-brand-500/30 bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                      >
+                        {approving ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" /> Approving...</>
+                        ) : (
+                          <><ShieldCheck className="w-5 h-5" /> Approve Slip</>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={async () => {
+                          if (!confirm('Are you sure you want to decline this bank slip?')) return;
+                          setDeclining(true);
+                          try {
+                            const res = await declineBankSlip(invoice.invoice_id, activeSlip.id);
+                            if (res.success) {
+                              alert('Bank slip declined.');
+                              window.location.reload();
+                            } else {
+                              alert('Failed to decline: ' + res.error);
+                            }
+                          } catch (err) {
+                            alert('Error declining slip');
+                          } finally {
+                            setDeclining(false);
+                          }
+                        }}
+                        disabled={approving || declining}
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-400 transition hover:bg-red-500/20 disabled:opacity-50"
+                      >
+                        {declining ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" /> Declining...</>
+                        ) : (
+                          <><XCircle className="w-5 h-5" /> Decline Slip</>
+                        )}
+                      </button>
+                    </div>
+                  ) : activeSlip?.status === 'approved' ? (
+                    <div className="space-y-3">
+                      <div className="rounded-2xl border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-400">
+                        This slip has already been approved and applied to the invoice balance.
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (!confirm('Are you sure you want to undo the approval of this bank slip? This will reverse the payment and update the invoice balance.')) return;
+                          setUndoingApprovedPayment(true);
+                          try {
+                            const res = await undoApprovedBankSlipPayment(invoice.invoice_id, activeSlip.id);
+                            if (res.success) {
+                              alert('Approval undone. Payment reversed.');
+                              window.location.reload();
+                            } else {
+                              alert('Failed to undo approval: ' + res.error);
+                            }
+                          } catch (err) {
+                            alert('Error undoing approval');
+                          } finally {
+                            setUndoingApprovedPayment(false);
+                          }
+                        }}
+                        disabled={undoingApprovedPayment}
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-400 transition hover:bg-amber-500/20 disabled:opacity-50"
+                      >
+                        {undoingApprovedPayment ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                        ) : (
+                          <><XCircle className="w-5 h-5" /> Undo Approval</>
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+                      This slip has been declined and will not affect the invoice balance.
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

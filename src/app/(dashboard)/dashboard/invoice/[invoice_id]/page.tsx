@@ -18,6 +18,7 @@ const paymentStatusStyles = {
   unpaid: "bg-red-500/20 text-red-400 border-red-500/30",
   "advance-paid": "bg-blue-500/20 text-blue-400 border-blue-500/30",
   "partially paid": "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+  "on review": "bg-amber-500/20 text-amber-400 border-amber-500/30",
 };
 
 const paymentStatusLabels = {
@@ -25,6 +26,7 @@ const paymentStatusLabels = {
   unpaid: "Unpaid",
   "advance-paid": "Advance Paid",
   "partially paid": "Partially Paid",
+  "on review": "On Review",
 };
 
 const formatDate = (dateString) => {
@@ -221,8 +223,14 @@ export default function InvoicePage() {
           Back to Invoices
         </Link>
 
-        <div className="flex items-center gap-3">
-          {totalDue > 0 && invoice?.payment_status !== 'fully paid' && invoice?.payment_status !== 'paid' && (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          {invoice?.payment_status === 'on review' && (
+            <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 px-5 py-4 text-amber-100 text-sm font-medium leading-snug">
+              Your bank transfer slip has been submitted and is currently under review. We will update this invoice once payment is confirmed.
+            </div>
+          )}
+
+          {totalDue > 0 && invoice?.payment_status !== 'fully paid' && invoice?.payment_status !== 'paid' && invoice?.payment_status !== 'on review' && (
             <button
               onClick={() => setIsPayModalOpen(true)}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer"

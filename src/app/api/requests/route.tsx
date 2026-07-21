@@ -66,7 +66,7 @@ export async function GET(request) {
         currency: (row as any).currency || 'LKR',
       };
     });
-    
+
     return NextResponse.json(formattedRequests);
     
   } catch (error: any) {

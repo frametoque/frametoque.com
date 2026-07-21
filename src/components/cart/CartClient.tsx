@@ -286,10 +286,11 @@ if (success) {
               </div>
 
               {/* ── GET YOUR QUOTATION ──────────────────────────────────── */}
-              <div className="mt-6 bg-slate-900/50 border border-slate-700/60 rounded-3xl p-6 backdrop-blur-md space-y-5 relative overflow-hidden">
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-brand-500/10 rounded-full blur-2xl pointer-events-none" />
+              {!cartItems.some((item) => item.categorySlug === "domain" || item.serviceId === "domain-reg") && (
+                <div className="mt-6 bg-slate-900/50 border border-slate-700/60 rounded-3xl p-6 backdrop-blur-md space-y-5 relative overflow-hidden">
+                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-brand-500/10 rounded-full blur-2xl pointer-events-none" />
 
-                <div className="space-y-1 relative">
+                  <div className="space-y-1 relative">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-300 text-xs font-semibold uppercase tracking-wider">
                       <FileText className="w-3 h-3" /> Free
@@ -377,6 +378,7 @@ if (success) {
                   </form>
                 )}
               </div>
+              )}
             </div>
 
             {/* ── Right: Summary & WhatsApp Booking ───────────────────── */}

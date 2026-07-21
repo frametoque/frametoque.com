@@ -8,7 +8,7 @@ import {
 } from "../actions/actions";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
-const filters = ["All", "Software", "Equipment", "Freelancers", "Transport", "Other"];
+const filters = ["All", "Software", "Equipment", "Freelancers", "Transport", "Domain", "Other"];
 
 const formatLKR = (amount: number) => {
   return new Intl.NumberFormat('en-LK', {

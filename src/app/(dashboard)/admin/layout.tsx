@@ -42,7 +42,9 @@ import {
   Plus,
   ExternalLink,
   Clock,
-  Settings
+  Settings,
+  Globe,
+  RefreshCw
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -156,7 +158,10 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isClients = pathname === "/admin/clients";
   const isServices = pathname === "/admin/services";
   const isPortfolio = pathname === "/admin/portfolio";
-  const hideSelector = isServices || isPortfolio;
+  const isDomains = pathname.startsWith("/admin/domains");
+  const isSettings = pathname.startsWith("/admin/settings");
+  const isAgreements = pathname.startsWith("/admin/agreements");
+  const hideSelector = isServices || isPortfolio || isSettings || isClients || isBookings || isAgreements || isDomains;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [currentTime, setCurrentTime] = useState("");
@@ -200,6 +205,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path.startsWith("/admin/services")) return "Services";
     if (path.startsWith("/admin/settings")) return "Settings";
     if (path.startsWith("/admin/agreements")) return "Agreements";
+    if (path.startsWith("/admin/domains")) return "Domain Orders";
     return "Admin";
   };
 
@@ -273,19 +279,30 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
             {getPageTitle(pathname)}
           </h1>
 
-          {/* View Page button for Services & Portfolio */}
+          {/* View Page button / Refresh button */}
           {hideSelector && (
             <>
               <span className="hidden sm:block w-[1px] h-5 bg-white/15" />
-              <a
-                href={isServices ? "/services" : "/work"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors text-sm"
-              >
-                <ExternalLink className="w-4 h-4 text-brand-400" />
-                View Page
-              </a>
+              {isDomains ? (
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("domains:refresh"))}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
+                  title="Refresh Orders"
+                >
+                  <RefreshCw className="w-4 h-4 text-brand-400" />
+                  <span>Refresh</span>
+                </button>
+              ) : (
+                <a
+                  href={isServices ? "/services" : "/work"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors text-sm"
+                >
+                  <ExternalLink className="w-4 h-4 text-brand-400" />
+                  View Page
+                </a>
+              )}
             </>
           )}
 
@@ -540,6 +557,7 @@ const Sidebar = ({
     { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
     { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
     { name: "Clients", href: "/admin/clients", icon: Users },
+    { name: "Domains", href: "/admin/domains", icon: Globe },
     { name: "Reports", href: "/admin/reports", icon: BarChart3 },
     { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
     { name: "Services", href: "/admin/services", icon: Briefcase },

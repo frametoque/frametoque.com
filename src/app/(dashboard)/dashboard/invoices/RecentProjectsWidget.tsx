@@ -16,6 +16,7 @@ const paymentStatusStyles = {
   unpaid: "bg-red-500/20 text-red-400 border-red-500/30",
   "advance-paid": "bg-blue-500/20 text-blue-400 border-blue-500/30",
   "partially paid": "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+  "on review": "bg-amber-500/20 text-amber-400 border-amber-500/30",
 };
 
 const paymentStatusLabels = {
@@ -23,6 +24,7 @@ const paymentStatusLabels = {
   unpaid: "Unpaid",
   "advance-paid": "Advance Paid",
   "partially paid": "Partially Paid",
+  "on review": "On Review",
 };
 
 const formatDate = (dateString) => {

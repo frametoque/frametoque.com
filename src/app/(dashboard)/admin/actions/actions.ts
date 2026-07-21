@@ -2,8 +2,9 @@
 
 import sql from "@/lib/db";
 import { clerkClient } from "@clerk/nextjs/server";
-import { put } from '@vercel/blob';
+import { put, del } from '@vercel/blob';
 import { logSystemAction } from "@/lib/logger";
+import { reactivateDomainAfterRenewalPayment } from "./domains-shared";
 
 export async function uploadReceipt(formData: FormData, type: 'income' | 'expenses'): Promise<string> {
   const file = formData.get('file') as File;
@@ -675,6 +676,13 @@ export async function deleteInvoice(id: string) {
         project_confirmed = false
     WHERE linked_invoice_id = ${id}
   `;
+  await sql`
+    UPDATE admin_domain_orders
+    SET invoice_id = NULL,
+        status = 'pending',
+        expiry_date = NULL
+    WHERE invoice_id = ${id}
+  `;
   await sql`DELETE FROM invoices WHERE invoice_id = ${id}`;
   await logSystemAction(`Deleted invoice: "${projectName}" (${id})`);
 }
@@ -699,6 +707,7 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
       i.bank_account_id,
       i.tax_rate,
       i.legal_name,
+      i.bank_slip,
       COALESCE(ac.full_name, i.user_email) as client_name,
       ac.address as billing_address,
       ba.name as bank_acc_name,
@@ -728,12 +737,27 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
     ORDER BY date DESC
   `;
 
+  const slipRows = await sql`
+    SELECT id, slip_url, amount, status, uploaded_at, review_note
+    FROM invoice_payment_slips
+    WHERE invoice_id = ${invoiceId}
+    ORDER BY uploaded_at DESC, id DESC
+  `;
+
   invoice.items = itemsResult;
   invoice.payments = payments.map(p => ({
     date: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     amount: parseFloat(p.amount),
     method: p.payment_method,
     description: p.description
+  }));
+  invoice.payment_slips = slipRows.map(s => ({
+    id: s.id,
+    url: s.slip_url,
+    amount: parseFloat(s.amount),
+    status: s.status,
+    uploaded_at: s.uploaded_at,
+    review_note: s.review_note
   }));
 
   return invoice;
@@ -1487,9 +1511,394 @@ export async function recordInvoicePayment(
 
     await logSystemAction(`Recorded payment of $${paidAmount} via ${paymentMethod} for invoice ${invoiceId}`);
 
+    if (newStatus === "fully paid") {
+      await reactivateDomainAfterRenewalPayment(invoiceId);
+    }
+
     return { success: true };
   } catch (e) {
     console.error("Failed to record invoice payment:", e);
     throw new Error(e instanceof Error ? e.message : "Failed to record invoice payment");
+  }
+}
+
+export async function submitBankSlip(invoiceId: string, slipBase64: string, amount?: string | number) {
+  try {
+    const invoiceRows = await sql`SELECT total, total_due, category FROM invoices WHERE invoice_id = ${invoiceId}`;
+    if (invoiceRows.length === 0) return { success: false, error: "Invoice not found" };
+
+    const invoice = invoiceRows[0];
+    const currentDue = parseFloat(invoice.total_due != null ? invoice.total_due : invoice.total || '0');
+    const isDomainInvoice = String(invoice.category || '').toLowerCase() === 'domain';
+    let slipAmount = isDomainInvoice ? currentDue : parseFloat(String(amount ?? ''));
+
+    if (isDomainInvoice) {
+      slipAmount = currentDue;
+    }
+
+    if (!Number.isFinite(slipAmount) || slipAmount <= 0) {
+      return { success: false, error: "Please enter a valid payment amount" };
+    }
+
+    if (slipAmount > currentDue + 0.0001) {
+      return { success: false, error: "Amount cannot exceed the remaining balance" };
+    }
+
+    let bankSlipUrl = slipBase64;
+    if (typeof slipBase64 === 'string' && slipBase64.startsWith('data:')) {
+      const matches = slipBase64.match(/^data:(.+);base64,(.*)$/);
+      if (!matches) {
+        throw new Error('Invalid slip data');
+      }
+      const mimeType = matches[1];
+      const base64Data = matches[2];
+      const fileExtension = mimeType.split('/')[1].split('+')[0] || 'png';
+      const binary = Buffer.from(base64Data, 'base64');
+      const filename = `admin/bank-slips/${Date.now()}-${invoiceId}.${fileExtension}`;
+      const blob = await put(filename, binary, {
+        access: 'public',
+        contentType: mimeType,
+      });
+      bankSlipUrl = blob.url;
+    }
+
+    await sql`
+      INSERT INTO invoice_payment_slips (invoice_id, slip_url, amount, status)
+      VALUES (${invoiceId}, ${bankSlipUrl}, ${parseFloat(slipAmount.toFixed(2))}, 'pending')
+    `;
+
+    await sql`
+      UPDATE invoices
+      SET payment_status = 'on review',
+          bank_slip = ${bankSlipUrl}
+      WHERE invoice_id = ${invoiceId}
+    `;
+
+    await logSystemAction(`Bank slip uploaded for invoice ${invoiceId}. Status changed to on review.`);
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to upload bank slip:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function approveBankSlip(invoiceId: string, slipId?: string | number) {
+  try {
+    let slipRows: any[] = [];
+    if (slipId != null) {
+      slipRows = await sql`SELECT * FROM invoice_payment_slips WHERE invoice_id = ${invoiceId} AND id = ${slipId}`;
+    } else {
+      slipRows = await sql`
+        SELECT * FROM invoice_payment_slips
+        WHERE invoice_id = ${invoiceId} AND status = 'pending'
+        ORDER BY uploaded_at ASC, id ASC
+        LIMIT 1
+      `;
+    }
+
+    if (slipRows.length === 0) return { success: false, error: "Slip not found" };
+    const slip = slipRows[0];
+    if (slip.status !== 'pending') return { success: false, error: "Slip already processed" };
+
+    const invoiceRows = await sql`SELECT * FROM invoices WHERE invoice_id = ${invoiceId}`;
+    if (invoiceRows.length === 0) return { success: false, error: "Invoice not found" };
+    const invoice = invoiceRows[0];
+
+    const paidAmount = parseFloat(slip.amount || 0);
+    const currentTotalDue = parseFloat(invoice.total_due != null ? invoice.total_due : invoice.total);
+    const newTotalDue = Math.max(0, currentTotalDue - paidAmount);
+
+    let newStatus = 'unpaid';
+    if (newTotalDue < 0.01) {
+      newStatus = 'fully paid';
+    } else if (currentTotalDue > 0.01) {
+      newStatus = 'partially paid';
+    }
+
+    let clientId = null;
+    if (invoice.user_email) {
+      const clientRows = await sql`
+        SELECT id FROM admin_clients WHERE LOWER(email) = LOWER(${invoice.user_email})
+      `;
+      if (clientRows.length > 0) {
+        clientId = clientRows[0].id;
+      }
+    }
+
+    const description = `Bank Transfer Payment for ${invoice.project_name || 'Project'}`;
+    const category = invoice.category || 'Web dev';
+    await sql`
+      INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id)
+      VALUES (CURRENT_DATE, ${paidAmount}, ${description}, ${category}, 'Bank Transfer', ${invoiceId}, ${clientId})
+    `;
+
+    await sql`
+      UPDATE invoice_payment_slips
+      SET status = 'approved', reviewed_at = CURRENT_TIMESTAMP
+      WHERE id = ${slip.id}
+    `;
+
+    await sql`
+      UPDATE invoices
+      SET payment_status = ${newStatus},
+          total_due = ${newTotalDue}
+      WHERE invoice_id = ${invoiceId}
+    `;
+
+    await logSystemAction(`Approved bank slip for invoice ${invoiceId}. Amount: ${paidAmount}.`);
+
+    if (newStatus === "fully paid") {
+      await reactivateDomainAfterRenewalPayment(invoiceId);
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to approve bank slip:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function declineBankSlip(invoiceId: string, slipId?: string | number) {
+  try {
+    let slipRows: any[] = [];
+    if (slipId != null) {
+      slipRows = await sql`SELECT * FROM invoice_payment_slips WHERE invoice_id = ${invoiceId} AND id = ${slipId}`;
+    } else {
+      slipRows = await sql`
+        SELECT * FROM invoice_payment_slips
+        WHERE invoice_id = ${invoiceId} AND status = 'pending'
+        ORDER BY uploaded_at ASC, id ASC
+        LIMIT 1
+      `;
+    }
+
+    if (slipRows.length === 0) return { success: false, error: "Slip not found" };
+    const slip = slipRows[0];
+    if (slip.status !== 'pending') return { success: false, error: "Slip already processed" };
+
+    // Delete the slip image from blob storage if it exists
+    const slipUrl = slip.slip_url;
+    if (slipUrl && (slipUrl.includes('blob.vercel-storage.com') || slipUrl.includes('public.blob.vercel-storage.com'))) {
+      try {
+        // Extract the blob path from the URL
+        const urlParts = slipUrl.split('.com/');
+        if (urlParts.length > 1) {
+          const blobPath = urlParts[1];
+          await del(blobPath);
+        }
+      } catch (blobErr) {
+        console.warn("Failed to delete slip image from blob storage:", blobErr);
+      }
+    }
+
+    // Delete the slip record from the database
+    await sql`
+      DELETE FROM invoice_payment_slips
+      WHERE id = ${slip.id}
+    `;
+
+    const remainingPendingRows = await sql`
+      SELECT id FROM invoice_payment_slips
+      WHERE invoice_id = ${invoiceId} AND status = 'pending'
+    `;
+    const approvedRows = await sql`
+      SELECT id FROM invoice_payment_slips
+      WHERE invoice_id = ${invoiceId} AND status = 'approved'
+    `;
+
+    if (remainingPendingRows.length === 0 && approvedRows.length === 0) {
+      await sql`
+        UPDATE invoices
+        SET payment_status = 'pending'
+        WHERE invoice_id = ${invoiceId}
+      `;
+    }
+
+    await logSystemAction(`Deleted declined bank slip for invoice ${invoiceId}.`);
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to decline bank slip:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function undoApprovedBankSlipPayment(invoiceId: string, slipId: number) {
+  try {
+    // First, get the specific slip to find its amount
+    const slipRows = await sql`
+      SELECT amount FROM invoice_payment_slips
+      WHERE invoice_id = ${invoiceId} AND id = ${slipId} AND status = 'approved'
+    `;
+
+    if (slipRows.length === 0) {
+      return { success: false, error: "No approved bank slip found with this ID" };
+    }
+
+    const slipAmount = parseFloat(slipRows[0].amount || "0");
+
+    // Find the corresponding income record for this specific slip
+    const incomeRows = await sql`
+      SELECT id, amount, description
+      FROM admin_incomes
+      WHERE invoice_id = ${invoiceId}
+        AND payment_method = 'Bank Transfer'
+        AND amount = ${slipAmount}
+      ORDER BY id DESC
+      LIMIT 1
+    `;
+
+    if (incomeRows.length === 0) {
+      // Even if no income record found, we can still mark the slip as declined
+      await sql`
+        UPDATE invoice_payment_slips
+        SET status = 'declined', reviewed_at = CURRENT_TIMESTAMP
+        WHERE id = ${slipId}
+      `;
+
+      await logSystemAction(`Marked bank slip ${slipId} as declined (no income record to reverse).`);
+      return { success: true };
+    }
+
+    const incomeId = incomeRows[0].id;
+
+    // Delete the income record
+    await deleteIncome(incomeId);
+
+    // Mark the slip as declined
+    await sql`
+      UPDATE invoice_payment_slips
+      SET status = 'declined', reviewed_at = CURRENT_TIMESTAMP
+      WHERE id = ${slipId}
+    `;
+
+    await logSystemAction(`Declined approved bank slip ${slipId} for invoice ${invoiceId}. Reversed income record of ${slipAmount}.`);
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to undo approved bank slip payment:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function adminUploadPaymentSlip(invoiceId: string, slipBase64: string, amount: number) {
+  try {
+    // Validate amount
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return { success: false, error: "Please enter a valid payment amount" };
+    }
+
+    // Process the slip image
+    let slipUrl = slipBase64;
+    if (typeof slipBase64 === 'string' && slipBase64.startsWith('data:')) {
+      const matches = slipBase64.match(/^data:(.+);base64,(.*)$/);
+      if (!matches) {
+        throw new Error('Invalid slip data');
+      }
+      const mimeType = matches[1];
+      const base64Data = matches[2];
+      const fileExtension = mimeType.split('/')[1].split('+')[0] || 'png';
+      const binary = Buffer.from(base64Data, 'base64');
+      const filename = `admin/payment-slips/${Date.now()}-${invoiceId}.${fileExtension}`;
+      const blob = await put(filename, binary, {
+        access: 'public',
+        contentType: mimeType,
+      });
+      slipUrl = blob.url;
+    }
+
+    // Insert the slip with 'approved' status and mark as admin-uploaded
+    await sql`
+      INSERT INTO invoice_payment_slips (invoice_id, slip_url, amount, status, reviewed_at, review_note)
+      VALUES (${invoiceId}, ${slipUrl}, ${amount}, 'approved', CURRENT_TIMESTAMP, 'Added by admin')
+    `;
+
+    await logSystemAction(`Admin uploaded and auto-approved payment slip for invoice ${invoiceId}: $${amount}`);
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to upload admin payment slip:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+// -- PAYMENT SLIPS --
+export async function submitPaymentSlip(invoiceId: string, amount: number, slipBase64: string) {
+  try {
+    let slipUrl = slipBase64;
+    if (typeof slipBase64 === 'string' && slipBase64.startsWith('data:')) {
+      const matches = slipBase64.match(/^data:(.+);base64,(.*)$/);
+      if (!matches) {
+        throw new Error('Invalid slip data');
+      }
+      const mimeType = matches[1];
+      const base64Data = matches[2];
+      const fileExtension = mimeType.split('/')[1].split('+')[0] || 'png';
+      const binary = Buffer.from(base64Data, 'base64');
+      const filename = `admin/payment-slips/${Date.now()}-${invoiceId}.${fileExtension}`;
+      const blob = await put(filename, binary, {
+        access: 'public',
+        contentType: mimeType,
+      });
+      slipUrl = blob.url;
+    }
+
+    await sql`
+      INSERT INTO invoice_payment_slips (invoice_id, slip_url, amount, status)
+      VALUES (${invoiceId}, ${slipUrl}, ${amount}, 'pending')
+    `;
+
+    await logSystemAction(`Payment slip submitted for invoice ${invoiceId}: $${amount}`);
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to submit payment slip:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function reviewPaymentSlip(id: number, approved: boolean, reviewerId: string, note?: string) {
+  try {
+    const slipRows = await sql`SELECT * FROM invoice_payment_slips WHERE id = ${id}`;
+    if (slipRows.length === 0) return { success: false, error: "Slip not found" };
+    const slip = slipRows[0];
+
+    const invoiceId = slip.invoice_id;
+    const amount = slip.amount;
+
+    if (approved) {
+      // On approval, find the corresponding invoice and update its payment status
+      const invoiceRows = await sql`SELECT * FROM invoices WHERE invoice_id = ${invoiceId}`;
+           if (invoiceRows.length > 0) {
+        const invoice = invoiceRows[0];
+        const newTotalDue = Math.max(0, parseFloat(invoice.total_due) - amount);
+        let newStatus = 'partially paid';
+
+        if (newTotalDue < 0.01) {
+          newStatus = 'fully paid';
+        }
+
+        await sql`
+          UPDATE invoices
+          SET payment_status = ${newStatus},
+              total_due = ${newTotalDue}
+          WHERE invoice_id = ${invoiceId}
+        `;
+      }
+
+      await logSystemAction(`Approved payment slip for invoice ${invoiceId}: $${amount}`);
+    } else {
+      await logSystemAction(`Declined payment slip for invoice ${invoiceId}: $${amount}`);
+    }
+
+    await sql`
+      UPDATE invoice_payment_slips
+      SET status = ${approved ? 'approved' : 'declined'},
+          reviewed_at = CURRENT_TIMESTAMP,
+          reviewed_by = ${reviewerId},
+          review_note = ${note || null}
+      WHERE id = ${id}
+    `;
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to review payment slip:", err);
+    return { success: false, error: err.message };
   }
 }

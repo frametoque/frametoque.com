@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 import ServicesSub from "@/components/services/ServicesSub";
+import DomainSearch from "@/components/services/DomainSearch";
 
 // ─── Tab config ────────────────────────────────────────────────────────────────
 const TABS = [
@@ -73,8 +74,16 @@ export default function ServicesMain({ params }: { params?: { slug?: string } })
     router.push(`/services/${tab}`, { scroll: false });
   };
 
-  const activeLabel          = TABS.find((t) => t.value === activeTab)?.label ?? "";
-  const [firstWord, ...rest] = activeLabel.split(" ");
+  const getHeadingAndDesc = () => {
+    const label = TABS.find((t) => t.value === activeTab)?.label ?? "";
+    const [first, ...r] = label.split(" ");
+    return {
+      firstWord: first,
+      rest: r,
+      desc: "From websites and graphics to photography, videography, and editing, we create powerful digital experiences that elevate your brand everywhere."
+    };
+  };
+  const { firstWord, rest, desc } = getHeadingAndDesc();
 
   return (
     <>
@@ -97,7 +106,7 @@ export default function ServicesMain({ params }: { params?: { slug?: string } })
             )}
           </h2>
           <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
-            From websites and graphics to photography, videography, and editing, we create powerful digital experiences that elevate your brand everywhere.
+            {desc}
           </p>
         </div>
 
@@ -156,8 +165,25 @@ export default function ServicesMain({ params }: { params?: { slug?: string } })
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
+            className="space-y-16"
           >
             <ServicesSub categorySlug={activeTab} />
+            
+            {activeTab === "web-dev" && (
+              <div className="pt-16 border-t border-neutral-900 space-y-10">
+                <div className="max-w-3xl mx-auto text-center space-y-4">
+                  <h3 className="text-2xl sm:text-3xl font-black text-white leading-tight">
+                    Secure Your <span className="text-brand-400">Domain</span>
+                  </h3>
+                  <div className="bg-brand-500/5 border border-brand-500/15 px-6 py-4 rounded-2xl inline-block max-w-2xl text-left backdrop-blur-sm">
+                    <p className="text-gray-300 text-sm leading-relaxed">
+                      ⚠️ <strong>Eligibility Notice:</strong> Domain registration services are exclusively offered to clients who have developed or are currently building their web application with FrameToque. We do not provide standalone domain registry services to the public.
+                    </p>
+                  </div>
+                </div>
+                <DomainSearch />
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
 

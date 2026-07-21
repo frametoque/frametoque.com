@@ -27,7 +27,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Clock,
-  Calendar
+  Calendar,
+  Globe
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -73,6 +74,7 @@ export default function DashboardLayout({ children }) {
   const getPageTitle = (path: string): string => {
     if (path === "/dashboard") return "Dashboard";
     if (path.startsWith("/dashboard/invoices") || path.startsWith("/dashboard/invoice")) return "My Invoices";
+    if (path.startsWith("/dashboard/domains")) return "My Domains";
     if (path.startsWith("/dashboard/quotations")) return "Quotations";
     if (path.startsWith("/dashboard/agreements")) return "Agreements";
     if (path.startsWith("/dashboard/settings")) return "Settings";
@@ -203,10 +205,29 @@ const Sidebar = ({
 }) => {
   const pathname = usePathname();
   const { user, isLoaded } = useUser();
+  const [hasDomains, setHasDomains] = useState(false);
+
+  useEffect(() => {
+    if (isLoaded && user?.primaryEmailAddress?.emailAddress) {
+      const email = user.primaryEmailAddress.emailAddress;
+      fetch(`/api/services/domains/client?user_email=${encodeURIComponent(email)}`)
+        .then((res) => {
+          if (res.ok) return res.json();
+          return [];
+        })
+        .then((data) => {
+          if (Array.isArray(data) && data.length > 0) {
+            setHasDomains(true);
+          }
+        })
+        .catch((e) => console.error("Failed to verify client domains", e));
+    }
+  }, [isLoaded, user]);
 
   const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
     { name: "Dashboard",   href: "/dashboard",             icon: LayoutDashboard },
     { name: "My Invoices", href: "/dashboard/invoices",    icon: ClipboardList },
+    ...(hasDomains ? [{ name: "My Domains",  href: "/dashboard/domains",     icon: Globe }] : []),
     { name: "Quotations",  href: "/dashboard/quotations",  icon: NotepadTextDashed },
     { name: "Agreements",  href: "/dashboard/agreements",  icon: FilePenLine },
     { name: "Settings",    href: "/dashboard/settings",    icon: Settings },

@@ -7,7 +7,7 @@ import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, ge
 import CategoryPicker from "../components/CategoryPicker";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
-const ALL_CATEGORIES = ["Web dev", "Graphic design", "Video editing", "Photography", "Videography", "Other"];
+const ALL_CATEGORIES = ["Web dev", "Graphic design", "Video editing", "Photography", "Videography", "Domain", "Other"];
 const filters = ["All", ...ALL_CATEGORIES];
 
 const formatLKR = (amount: number) =>

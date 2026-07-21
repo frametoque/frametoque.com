@@ -11,7 +11,21 @@ const workStatusStyles = {
   completed: "bg-green-500/20 text-green-400 border-green-500/30",
   pending: "bg-amber-500/20 text-amber-400 border-amber-500/30",
 };
+const paymentStatusStyles = {
+  "fully paid": "bg-green-500/20 text-green-400 border-green-500/30",
+  unpaid: "bg-red-500/20 text-red-400 border-red-500/30",
+  "advance-paid": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  "partially paid": "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+  "on review": "bg-amber-500/20 text-amber-400 border-amber-500/30",
+};
 
+const paymentStatusLabels = {
+  "fully paid": "Fully Paid",
+  unpaid: "Unpaid",
+  "advance-paid": "Advance Paid",
+  "partially paid": "Partially Paid",
+  "on review": "On Review",
+};
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
   const date = new Date(dateString);
@@ -22,9 +36,10 @@ const formatDate = (dateString) => {
   });
 };
 
-const formatPrice = (price) => {
+const formatPrice = (price, currency = "LKR") => {
   if (!price || isNaN(parseFloat(price))) return "N/A";
-  return `Rs. ${parseFloat(price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatted = parseFloat(price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return currency === "USD" ? `$ ${formatted}` : `Rs. ${formatted}`;
 };
 
 export default function DashboardProjectsPage() {
@@ -155,14 +170,20 @@ export default function DashboardProjectsPage() {
                     <span className={`px-3 py-1 text-xs font-medium rounded-full border ${workStatusStyles[request.status] || workStatusStyles.pending}`}>
                       {request.status || "pending"}
                     </span>
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${paymentStatusStyles[request.payment_status] || paymentStatusStyles.unpaid}`}>
+                      {paymentStatusLabels[request.payment_status] || request.payment_status || "Unpaid"}
+                    </span>
                   </div>
                   <p className="text-gray-400 text-sm mb-3">
                     Invoice ID: {request.invoice_number || request.id} • Type: {request.type || "N/A"} • Submitted: {formatDate(request.submitted_at)}
                   </p>
+                  {request.payment_status === 'on review' && (
+                    <p className="text-amber-300 text-xs mt-2">Bank transfer receipt uploaded. Awaiting admin review.</p>
+                  )}
                   <div className="flex items-baseline gap-2">
                     <span className="text-gray-400 text-sm">Total Due: </span>
                     <span className="text-lg font-semibold text-white">
-                      {formatPrice(request.total_due)}
+                      {formatPrice(request.total_due, request.currency)}
                     </span>
                   </div>
                   {request.progress > 0 && (
@@ -177,7 +198,7 @@ export default function DashboardProjectsPage() {
 
                 {/* Right - Invoice button */}
                 <div className="shrink-0 flex items-center gap-2">
-                  {request.invoice_number && request.invoice_number !== "null" && request.total_due > 0 && request.payment_status !== 'fully paid' && request.payment_status !== 'paid' && (
+                  {request.invoice_number && request.invoice_number !== "null" && request.total_due > 0 && request.payment_status !== 'fully paid' && request.payment_status !== 'paid' && request.payment_status !== 'on review' && (
                     <button
                       onClick={() => {
                         setSelectedInvoice({

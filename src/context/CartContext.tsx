@@ -77,6 +77,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = (newItem: Omit<CartItem, "quantity">) => {
     setCartItems((prevItems) => {
+      const isNewItemDomain = newItem.categorySlug === "domain" || newItem.id.startsWith("domain-") || newItem.serviceId === "domain-reg";
+      const hasDomain = prevItems.some((item) => item.categorySlug === "domain" || item.id.startsWith("domain-") || item.serviceId === "domain-reg");
+      const hasOther = prevItems.some((item) => item.categorySlug !== "domain" && !item.id.startsWith("domain-") && item.serviceId !== "domain-reg");
+
+      if (isNewItemDomain && hasOther) {
+        alert("Domain registrations must be ordered separately. Clearing your cart to proceed with the domain registration.");
+        return [{ ...newItem, quantity: 1 }];
+      }
+      if (!isNewItemDomain && hasDomain) {
+        alert("Your cart contains a domain registration. Domains must be ordered separately. Clearing your cart to proceed with this service.");
+        return [{ ...newItem, quantity: 1 }];
+      }
+
       const existing = prevItems.find((item) => item.id === newItem.id);
       if (existing) {
         return prevItems.map((item) =>
