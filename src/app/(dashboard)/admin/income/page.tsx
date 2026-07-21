@@ -208,6 +208,7 @@ export default function IncomePage() {
     // Find matching client email
     const matchedClient = clients.find(c => c.id === row.clientId);
 
+    const defBank = bankAccounts.find((a: any) => a.is_default === 1);
     setInvoiceFormData({
       clientName: row.client || matchedClient?.name || '',
       userEmail: matchedClient?.email || '',
@@ -216,7 +217,7 @@ export default function IncomePage() {
       currency: 'LKR',
       discount: 0,
       advance: 0,
-      bankAccountId: '',
+      bankAccountId: defBank ? String(defBank.id) : '',
     });
 
     // Pre-populate a single line item from the income row

@@ -50,7 +50,13 @@ export default function NewInvoicePage() {
       .then(cls => { setClients(cls); setClientsLoading(false); })
       .catch(() => setClientsLoading(false));
     getBankAccounts()
-      .then(accs => setBankAccounts(accs))
+      .then(accs => {
+        setBankAccounts(accs);
+        const def = accs.find((a: any) => a.is_default === 1);
+        if (def) {
+          setFormData(prev => ({ ...prev, bankAccountId: String(def.id) }));
+        }
+      })
       .catch(() => {});
   }, []);
 

@@ -135,6 +135,19 @@ export async function getDomainOrders(): Promise<DomainOrder[]> {
       SELECT * FROM admin_domain_orders
       ORDER BY created_at DESC
     `;
+
+    const now = new Date();
+    // Auto-expire active domains that reached/passed their expiry_date
+    for (const r of rows) {
+      if (String(r.status || "").toLowerCase() === "active" && r.expiry_date) {
+        const expDate = new Date(r.expiry_date);
+        if (expDate <= now) {
+          await updateDomainOrderStatus(r.id, "expired");
+          r.status = "expired";
+        }
+      }
+    }
+
     return rows.map((r: any) => ({
       ...r,
       actual_price: parseFloat(r.actual_price || 0),

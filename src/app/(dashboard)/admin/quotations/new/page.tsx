@@ -66,7 +66,8 @@ export default function NewQuotationPage() {
         setClients(cls);
         setBankAccounts(accs);
         if (accs.length > 0) {
-          setFormData(prev => ({ ...prev, bankAccountId: String(accs[0].id) }));
+          const def = accs.find((a: any) => a.is_default === 1) || accs[0];
+          setFormData(prev => ({ ...prev, bankAccountId: String(def.id) }));
         }
       } catch (e) {
         console.error("Failed to load clients or bank accounts", e);

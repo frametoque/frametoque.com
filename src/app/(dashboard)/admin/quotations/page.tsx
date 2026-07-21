@@ -89,7 +89,8 @@ export default function QuotationsPage() {
         const banks = await getBankAccounts();
         setBankAccounts(banks);
         if (banks.length > 0) {
-          setSelectedBankAccountId(banks[0].id.toString());
+          const def = banks.find((a: any) => a.is_default === 1) || banks[0];
+          setSelectedBankAccountId(def.id.toString());
         }
       } catch (e) {
         console.error("Failed to load bank accounts", e);

@@ -89,7 +89,7 @@ function RegPricePair({
       {formatUSD(usd)}
       <span className={`text-xs font-normal ml-1 ${isFixed ? "text-amber-300/80" : "text-gray-500"}`}>
         ({formatLKR(lkrValue)}
-        <span className="text-gray-600 text-[9px] ml-0.5">@{Math.round(rate)}</span>)
+        <span className={`${isFixed ? "text-amber-300/80" : "text-gray-500"} text-[9px] ml-0.5`}> @{Math.round(rate)}</span>)
       </span>
     </div>
   );
@@ -111,7 +111,7 @@ function RenewalPricePair({
       {formatUSD(usd)}
       <span className="text-xs font-normal ml-1 text-gray-500">
         ({formatLKR(lkr)}
-        <span className="text-gray-600 text-[9px] ml-0.5">@{Math.round(liveRate)}</span>)
+        <span className="text-gray-600 text-[9px] ml-0.5"> @{Math.round(liveRate)}</span>)
       </span>
     </div>
   );
@@ -657,7 +657,7 @@ export default function AdminOrdersPage() {
                           <div>{formatUSD(regProfit)}</div>
                           <div className={`text-xs mt-0.5 ${isActivated && lockedRate != null ? "text-amber-300/80" : "text-gray-500"}`}>
                             ({formatLKR(regProfitLkr)}
-                            <span className="text-gray-600 text-[9px] ml-0.5">@{Math.round(effectiveRate)}</span>)
+                            <span className={`${isActivated && lockedRate != null ? "text-amber-300/60" : "text-gray-500"} text-[9px] ml-0.5}`}> @{Math.round(effectiveRate)}</span>)
                           </div>
                         </td>
 
@@ -682,7 +682,7 @@ export default function AdminOrdersPage() {
                             <span className="text-gray-500 font-medium text-xs">Not Active Yet</span>
                           ) : (
                             <>
-                              <div className="text-white">
+                              <div className={daysToExpiry <= 14 ? "text-red-500 font-bold" : "text-white"}>
                                 {new Date(o.expiry_date).toLocaleDateString("en-US", {
                                   month: "short",
                                   day: "numeric",

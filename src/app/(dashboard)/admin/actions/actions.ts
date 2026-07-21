@@ -699,7 +699,7 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
       ba.branch as bank_acc_branch
     FROM invoices i
     LEFT JOIN admin_clients ac ON LOWER(i.user_email) = LOWER(ac.email)
-    LEFT JOIN bank_accs ba ON i.bank_account_id = ba.id
+    LEFT JOIN bank_accs ba ON COALESCE(i.bank_account_id, (SELECT id FROM bank_accs WHERE is_default = 1 LIMIT 1)) = ba.id
     WHERE i.invoice_id = ${invoiceId}
   `;
 
@@ -766,19 +766,7 @@ export async function getClients() {
     ORDER BY c.id DESC
   `;
 
-  const clerk = await clerkClient();
-
-  const clients = await Promise.all(rows.map(async r => {
-    let imageUrl = null;
-    if (r.clerk_id) {
-      try {
-        const user = await clerk.users.getUser(r.clerk_id);
-        imageUrl = user.imageUrl;
-      } catch (e) {
-        console.error("Failed to fetch clerk user image for", r.clerk_id, e);
-      }
-    }
-
+  const clients = rows.map(r => {
     return {
       id: r.id,
       name: r.name || r.email.split('@')[0],
@@ -788,13 +776,12 @@ export async function getClients() {
       phone: r.phone,
       address: r.address,
       legalName: r.legal_name || "",
-      imageUrl: imageUrl,
       invoices: parseInt(r.invoices),
       revenue: parseFloat(r.revenue),
       incomeCount: parseInt(r.income_count),
       projectCount: parseInt(r.project_count),
     };
-  }));
+  });
 
   return clients;
 }
@@ -1349,7 +1336,7 @@ export async function getQuotationById(quotationId: string) {
              ba.name as bank_acc_name, ba.number as bank_acc_number, ba.bank as bank_acc_bank, ba.branch as bank_acc_branch
       FROM admin_quotations q
       LEFT JOIN admin_clients c ON q.client_id = c.id
-      LEFT JOIN bank_accs ba ON q.bank_account_id = ba.id
+      LEFT JOIN bank_accs ba ON COALESCE(q.bank_account_id, (SELECT id FROM bank_accs WHERE is_default = 1 LIMIT 1)) = ba.id
       WHERE q.id = ${parseInt(quotationId)}
     `;
  
@@ -1411,7 +1398,7 @@ export async function getQuotationById(quotationId: string) {
 // -- BANK ACCOUNTS --
 export async function getBankAccounts() {
   const rows = await sql`
-    SELECT id, name, number, bank, branch
+    SELECT id, name, number, bank, branch, COALESCE(is_default, 0) as is_default
     FROM bank_accs
     ORDER BY id ASC
   `;
@@ -1421,6 +1408,7 @@ export async function getBankAccounts() {
     number: r.number,
     bank: r.bank,
     branch: r.branch,
+    is_default: Number(r.is_default || 0),
   }));
 }
 

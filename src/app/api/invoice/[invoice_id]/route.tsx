@@ -51,7 +51,7 @@ export async function GET(request, { params }) {
         ac.address as billing_address
       FROM public.invoices i
       LEFT JOIN public.admin_clients ac ON LOWER(i.user_email) = LOWER(ac.email)
-      LEFT JOIN public.bank_accs ba ON i.bank_account_id = ba.id
+      LEFT JOIN public.bank_accs ba ON COALESCE(i.bank_account_id, (SELECT id FROM public.bank_accs WHERE is_default = 1 LIMIT 1)) = ba.id
       WHERE i.invoice_id = ${invoice_id} AND LOWER(i.user_email) = LOWER(${userEmail})
     `;
 
