@@ -208,10 +208,10 @@ const Sidebar = ({
 
   const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
     { name: "Dashboard",   href: "/dashboard",             icon: LayoutDashboard },
-    { name: "My Invoices", href: "/dashboard/invoices",    icon: ClipboardList },
-    { name: "My Domains",  href: "/dashboard/domains",     icon: Globe },
+    { name: "Invoices", href: "/dashboard/invoices",    icon: ClipboardList },
     { name: "Quotations",  href: "/dashboard/quotations",  icon: NotepadTextDashed },
     { name: "Agreements",  href: "/dashboard/agreements",  icon: FilePenLine },
+    { name: "Domains",  href: "/dashboard/domains",     icon: Globe },
     { name: "Settings",    href: "/dashboard/settings",    icon: Settings },
   ];
 
