@@ -5,7 +5,7 @@ import { FileText, CheckCircle, Clock, AlertCircle, Search, Eye, Edit2, Send, Do
 import Link from "next/link";
 import { getInvoices, deleteInvoice, recordInvoicePayment, adminUploadPaymentSlip } from "../actions/actions";
 
-const filters = ["All", "Paid", "Fully Paid", "Partially Paid", "On Review", "Overdue", "Advance-Paid", "Unpaid"];
+const filters = ["All", "Fully Paid", "Partially Paid", "On Review", "Overdue", "Advance-Paid", "Unpaid"];
 
 const formatLKR = (amount: number) => {
   return new Intl.NumberFormat('en-LK', {

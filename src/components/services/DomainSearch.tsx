@@ -3,7 +3,16 @@
 import { useState } from "react";
 import { Search, CheckCircle, XCircle, Globe, Server, ShieldCheck, Mail, ShoppingCart, Loader2 } from "lucide-react";
 
-export default function DomainSearch() {
+interface DomainSearchProps {
+  lkrRate?: number;
+}
+
+const formatLKR = (amount: number) =>
+  new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" }).format(amount || 0);
+
+const formatUSD = (amount: number) => `$${amount.toFixed(2)}`;
+
+export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
   const [domainInput, setDomainInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -134,8 +143,11 @@ export default function DomainSearch() {
                 <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                   <div className="text-right">
                     <p className="text-xs text-gray-500">Price (1st Yr)</p>
-                    <p className="text-2xl font-black text-white">${result.reg_price_usd}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">Renews at ${result.renew_price_usd}/yr</p>
+                    <p className="text-2xl font-black text-white">{formatLKR(parseFloat(result.reg_price_usd || 0) * lkrRate)}</p>
+                    <p className="text-xs text-white/70 mt-0.5">({formatUSD(parseFloat(result.reg_price_usd || 0))})</p>
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      Renews at {formatLKR(parseFloat(result.renew_price_usd || 0) * lkrRate)} ({formatUSD(parseFloat(result.renew_price_usd || 0))})/yr
+                    </p>
                   </div>
                   {orderedDomains.includes(result.domain.toLowerCase()) ? (
                     <span className="px-6 py-3 rounded-3xl font-bold bg-slate-800/45 text-emerald-400 border border-emerald-500/30 text-sm flex items-center gap-2">
@@ -185,11 +197,14 @@ export default function DomainSearch() {
                       <div key={s.domain} className="flex items-center justify-between p-4 bg-white/[0.02] border border-neutral-900 rounded-xl gap-4 hover:border-neutral-800 transition-colors">
                         <div>
                           <span className="font-semibold text-white text-sm">{s.domain}</span>
-                          <div className="text-[10px] text-gray-500 mt-1">Renews at ${s.renew_price_usd}/yr</div>
+                          <div className="text-[10px] text-gray-500 mt-1">
+                            Renews at {formatLKR(parseFloat(s.renew_price_usd || 0) * lkrRate)} ({formatUSD(parseFloat(s.renew_price_usd || 0))})/yr
+                          </div>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <span className="text-sm font-bold text-white">${s.reg_price_usd}</span>
+                            <span className="text-sm font-bold text-white block">{formatLKR(parseFloat(s.reg_price_usd || 0) * lkrRate)}</span>
+                            <span className="text-[10px] text-gray-500 block">({formatUSD(parseFloat(s.reg_price_usd || 0))})</span>
                           </div>
                           {isOrdered ? (
                             <span className="px-4 py-2 text-xs font-semibold rounded-2xl bg-slate-800/45 text-emerald-400 border border-emerald-500/20">

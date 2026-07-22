@@ -142,7 +142,7 @@ export async function getDomainOrders(): Promise<DomainOrder[]> {
       if (String(r.status || "").toLowerCase() === "active" && r.expiry_date) {
         const expDate = new Date(r.expiry_date);
         if (expDate <= now) {
-          await updateDomainOrderStatus(r.id, "expired");
+          await updateDomainOrderStatus(r.id, "expired", { skipRenewalInvoice: true });
           r.status = "expired";
         }
       }
@@ -175,11 +175,11 @@ export async function getDomainRenewalHistory(domainOrderId: number): Promise<Do
     const rows = await sql`
       SELECT h.*, i.payment_status
       FROM domain_renewal_history h
-      LEFT JOIN invoices i ON h.invoice_id = i.invoice_id
+      INNER JOIN invoices i ON h.invoice_id = i.invoice_id
       WHERE h.domain_order_id = ${domainOrderId}
       ORDER BY h.renewal_date DESC
     `;
-    return rows.map((r: any) => ({
+    const history = rows.map((r: any) => ({
       id: r.id,
       domain_order_id: r.domain_order_id,
       domain_name: r.domain_name,
@@ -190,6 +190,46 @@ export async function getDomainRenewalHistory(domainOrderId: number): Promise<Do
       lkr_rate: parseFloat(r.lkr_rate || 0),
       status: r.payment_status || r.status || 'unpaid',
     }));
+
+    // Fetch original registration invoice details to show in the list
+    const orderRows = await sql`
+      SELECT domain_name, actual_price, selling_price, activation_lkr_rate, activation_lkr_price 
+      FROM admin_domain_orders 
+      WHERE id = ${domainOrderId}
+    `;
+
+    if (orderRows.length > 0) {
+      const order = orderRows[0];
+      const regInvoiceRows = await sql`
+        SELECT invoice_id, date, payment_status, subtotal 
+        FROM invoices 
+        WHERE project_name = ${`Domain Registration: ${order.domain_name}`}
+        LIMIT 1
+      `;
+
+      if (regInvoiceRows.length > 0) {
+        const regInv = regInvoiceRows[0];
+        const usdPrice = parseFloat(order.selling_price || 0);
+        const lkrRate = parseFloat(order.activation_lkr_rate || 300);
+        const lkrPrice = parseFloat(order.activation_lkr_price || (usdPrice * lkrRate).toFixed(2));
+
+        history.push({
+          id: -1, // Dummy ID indicating registration
+          domain_order_id: domainOrderId,
+          domain_name: order.domain_name,
+          invoice_id: regInv.invoice_id,
+          renewal_date: regInv.date ? new Date(regInv.date).toISOString() : '',
+          usd_price: usdPrice,
+          lkr_price: lkrPrice,
+          lkr_rate: lkrRate,
+          status: regInv.payment_status || 'unpaid',
+        });
+      }
+    }
+
+    // Sort by date descending
+    history.sort((a, b) => new Date(b.renewal_date).getTime() - new Date(a.renewal_date).getTime());
+    return history;
   } catch (error) {
     console.error("Failed to get domain renewal history:", error);
     return [];
@@ -202,7 +242,7 @@ export async function getAllRenewalHistory(): Promise<DomainRenewalHistoryRow[]>
     const rows = await sql`
       SELECT h.*, i.payment_status
       FROM domain_renewal_history h
-      LEFT JOIN invoices i ON h.invoice_id = i.invoice_id
+      INNER JOIN invoices i ON h.invoice_id = i.invoice_id
       ORDER BY h.renewal_date DESC
     `;
     return rows.map((r: any) => ({
@@ -403,13 +443,65 @@ export async function updateDomainOrderStatus(
   }
 }
 
-export async function deleteDomainOrder(id: number): Promise<SimpleActionResult> {
+export async function deleteDomainOrder(id: number, deleteInvoices: boolean = false): Promise<SimpleActionResult> {
   try {
+    // 1. Fetch domain order details first
+    const orders = await sql`SELECT domain_name, invoice_id FROM admin_domain_orders WHERE id = ${id}`;
+    if (orders.length === 0) return { success: false, error: "Order not found" };
+    const o = orders[0];
+    const domainName = o.domain_name;
+
+    if (deleteInvoices) {
+      // 2. Fetch all renewal invoices linked in history
+      const renewalRows = await sql`
+        SELECT invoice_id FROM domain_renewal_history WHERE domain_order_id = ${id}
+      `;
+      const invoiceIds = renewalRows.map((r: any) => r.invoice_id);
+
+      // 3. Find registration invoice
+      const regInvoices = await sql`
+        SELECT invoice_id FROM invoices 
+        WHERE project_name = ${`Domain Registration: ${domainName}`}
+      `;
+      regInvoices.forEach((r: any) => {
+        if (!invoiceIds.includes(r.invoice_id)) {
+          invoiceIds.push(r.invoice_id);
+        }
+      });
+
+      // 4. Include the currently linked invoice ID on the domain order if any
+      if (o.invoice_id && !invoiceIds.includes(o.invoice_id)) {
+        invoiceIds.push(o.invoice_id);
+      }
+
+      // 5. Delete all these invoices and their items
+      if (invoiceIds.length > 0) {
+        // Delete items first
+        await sql`
+          DELETE FROM invoice_items 
+          WHERE invoice_id = ANY(${invoiceIds})
+        `;
+        // Delete invoices
+        await sql`
+          DELETE FROM invoices 
+          WHERE invoice_id = ANY(${invoiceIds})
+        `;
+      }
+
+      // 6. Delete renewal history records
+      await sql`
+        DELETE FROM domain_renewal_history 
+        WHERE domain_order_id = ${id}
+      `;
+    }
+
+    // 7. Delete the domain order itself
     await sql`
       DELETE FROM admin_domain_orders
       WHERE id = ${id}
     `;
-    await logSystemAction(`Domain order deleted (ID: ${id})`);
+
+    await logSystemAction(`Domain order deleted (ID: ${id}) ${deleteInvoices ? "with all linked invoices" : "only"}`);
     return { success: true };
   } catch (err: any) {
     console.error("Failed to delete domain order:", err);
@@ -534,6 +626,80 @@ export async function createDomainInvoice(
     return { success: true, invoiceId };
   } catch (err: any) {
     console.error("Failed to create domain invoice:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function renewExpiredDomain(id: number): Promise<CreateInvoiceResult> {
+  await ensureDomainOrdersTable();
+  await ensureDomainRenewalHistoryTable();
+  try {
+    const orders = await sql`SELECT * FROM admin_domain_orders WHERE id = ${id}`;
+    if (orders.length === 0) return { success: false, error: "Order not found" };
+    const o = orders[0];
+
+    // Calculate new expiry date (+1 year from now)
+    const expiry = new Date();
+    expiry.setFullYear(expiry.getFullYear() + 1);
+    const expiryStr = expiry.toISOString().split("T")[0] + " 00:00:00";
+
+    const renewalPriceUsd = parseFloat(o.renewal_price || o.selling_price || 0);
+    if (renewalPriceUsd <= 0) {
+      return { success: false, error: "Renewal price is not configured for this domain" };
+    }
+
+    // Get live exchange rate
+    const lkrRate = await getUsdToLkrRate();
+    const lkrPrice = parseFloat((renewalPriceUsd * lkrRate).toFixed(2));
+
+    const num = Math.floor(100000 + Math.random() * 900000);
+    const invoiceId = `INV-${num}`;
+
+    // Create invoice in LKR
+    await sql`
+      INSERT INTO invoices (
+        invoice_id, user_email, project_name, date,
+        subtotal, discount, total, advance, total_due,
+        work_status, payment_status, currency, category
+      ) VALUES (
+        ${invoiceId}, ${o.client_email},
+        ${`Domain Renewal: ${o.domain_name}`}, CURRENT_DATE,
+        ${lkrPrice}, 0, ${lkrPrice}, 0, ${lkrPrice},
+        'completed', 'unpaid', 'LKR', 'Domain'
+      )
+    `;
+
+    // Create invoice item
+    await sql`
+      INSERT INTO invoice_items (invoice_id, description, quantity, price, total)
+      VALUES (${invoiceId}, ${`1 Year Renewal for ${o.domain_name}`}, 1, ${lkrPrice}, ${lkrPrice})
+    `;
+
+    // Update domain order to active & link invoice
+    await sql`
+      UPDATE admin_domain_orders
+      SET 
+        status = 'active', 
+        expiry_date = ${expiryStr},
+        invoice_id = ${invoiceId}
+      WHERE id = ${id}
+    `;
+
+    // Insert renewal history row with locked LKR details
+    await sql`
+      INSERT INTO domain_renewal_history (
+        domain_order_id, domain_name, client_email, invoice_id,
+        usd_price, lkr_price, lkr_rate, status
+      ) VALUES (
+        ${id}, ${o.domain_name}, ${o.client_email}, ${invoiceId},
+        ${renewalPriceUsd}, ${lkrPrice}, ${lkrRate}, 'unpaid'
+      )
+    `;
+
+    await logSystemAction(`Domain renewed manually by admin (ID: ${id}, Inv: ${invoiceId})`);
+    return { success: true, invoiceId };
+  } catch (err: any) {
+    console.error("Failed to renew expired domain:", err);
     return { success: false, error: err.message };
   }
 }

@@ -350,7 +350,7 @@ export default function ClientDomainsPage() {
       </div>
 
       {/* Domain Search */}
-      {(domains.length === 0 || showSearch) && <DomainSearch />}
+      {(domains.length === 0 || showSearch) && <DomainSearch lkrRate={lkrRate} />}
 
       {domains.length > 0 ? (
         <>
@@ -413,10 +413,10 @@ export default function ClientDomainsPage() {
                           {/* Registration Price — fixed LKR after activation */}
                           <td className="p-5 text-right">
                             <div className="text-white font-semibold">
-                              {formatUSD(reg.usd)}
-                              <span className={`text-xs font-normal ml-1 ${reg.isFixed ? "text-amber-300/80" : "text-gray-500"}`}>
-                                ({formatLKR(reg.lkrValue)}
-                                <span className="text-gray-600 text-[9px] ml-0.5">@{Math.round(reg.rate)}</span>)
+                              {formatLKR(reg.lkrValue)}
+                              <span className="text-xs font-normal ml-1 text-gray-500">
+                                ({formatUSD(reg.usd)}
+                                <span className={`text-[9px] ml-0.5 ${reg.isFixed ? "text-amber-300/80" : "text-gray-600"}`}> @{Math.round(reg.rate)}</span>)
                               </span>
                             </div>
                           </td>
@@ -424,10 +424,10 @@ export default function ClientDomainsPage() {
                           {/* Renewal Price — always live */}
                           <td className="p-5 text-right">
                             <div className="text-gray-300 font-medium">
-                              {formatUSD(renew.usd)}
+                              {formatLKR(renew.lkrValue)}
                               <span className="text-xs font-normal ml-1 text-gray-500">
-                                ({formatLKR(renew.lkrValue)}
-                                <span className="text-gray-600 text-[9px] ml-0.5">@{Math.round(lkrRate)}</span>)
+                                ({formatUSD(renew.usd)}
+                                <span className="text-gray-600 text-[9px] ml-0.5"> @{Math.round(lkrRate)}</span>)
                               </span>
                             </div>
                           </td>

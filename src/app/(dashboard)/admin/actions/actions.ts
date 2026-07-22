@@ -659,13 +659,57 @@ export async function deleteInvoice(id: string) {
         project_confirmed = false
     WHERE linked_invoice_id = ${id}
   `;
-  await sql`
-    UPDATE admin_domain_orders
-    SET invoice_id = NULL,
-        status = 'pending',
-        expiry_date = NULL
-    WHERE invoice_id = ${id}
+  // Check if this invoice is a renewal invoice
+  const renewalRows = await sql`
+    SELECT domain_order_id, domain_name FROM domain_renewal_history WHERE invoice_id = ${id}
   `;
+
+  if (renewalRows.length > 0) {
+    const domainOrderId = renewalRows[0].domain_order_id;
+    const domainName = renewalRows[0].domain_name;
+
+    // Find a previous invoice ID (either the latest prior renewal, or the registration invoice)
+    const prevRenewals = await sql`
+      SELECT invoice_id FROM domain_renewal_history 
+      WHERE domain_order_id = ${domainOrderId} AND invoice_id != ${id} 
+      ORDER BY renewal_date DESC LIMIT 1
+    `;
+
+    let prevInvoiceId = null;
+    if (prevRenewals.length > 0) {
+      prevInvoiceId = prevRenewals[0].invoice_id;
+    } else {
+      const regInvoices = await sql`
+        SELECT invoice_id FROM invoices 
+        WHERE project_name = ${`Domain Registration: ${domainName}`} LIMIT 1
+      `;
+      if (regInvoices.length > 0) {
+        prevInvoiceId = regInvoices[0].invoice_id;
+      }
+    }
+
+    // Update domain order: only update invoice_id, do NOT touch status/expiry
+    await sql`
+      UPDATE admin_domain_orders
+      SET invoice_id = ${prevInvoiceId}
+      WHERE id = ${domainOrderId}
+    `;
+
+    // Delete renewal history record
+    await sql`
+      DELETE FROM domain_renewal_history WHERE invoice_id = ${id}
+    `;
+  } else {
+    // Normal registration invoice deletion behavior
+    await sql`
+      UPDATE admin_domain_orders
+      SET invoice_id = NULL,
+          status = 'pending',
+          expiry_date = NULL
+      WHERE invoice_id = ${id}
+    `;
+  }
+
   await sql`DELETE FROM invoices WHERE invoice_id = ${id}`;
   await logSystemAction(`Deleted invoice: "${projectName}" (${id})`);
 }

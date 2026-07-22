@@ -205,7 +205,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path.startsWith("/admin/services")) return "Services";
     if (path.startsWith("/admin/settings")) return "Settings";
     if (path.startsWith("/admin/agreements")) return "Agreements";
-    if (path.startsWith("/admin/domains")) return "Domain Orders";
+    if (path.startsWith("/admin/domains")) return "Domains";
     return "Admin";
   };
 

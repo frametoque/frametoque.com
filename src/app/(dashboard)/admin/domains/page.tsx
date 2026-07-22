@@ -8,6 +8,8 @@ import {
   deleteDomainOrder,
   updateDomainOrder,
   createDomainInvoice,
+  renewExpiredDomain,
+  getAllRenewalHistory,
   DomainOrder,
   DomainRenewalHistoryRow,
 } from "../actions/domains";
@@ -140,7 +142,7 @@ function RenewalHistoryPanel({
     <div className="bg-white/[0.02] border-t border-white/5 px-4 py-3">
       <p className="text-xs font-semibold text-gray-400 mb-3 flex items-center gap-1.5">
         <History className="w-3.5 h-3.5" />
-        Renewal History
+        Billing & Renewal History
       </p>
       {loading ? (
         <div className="flex items-center gap-2 text-xs text-gray-500 py-2">
@@ -148,7 +150,7 @@ function RenewalHistoryPanel({
           Loading history...
         </div>
       ) : history.length === 0 ? (
-        <p className="text-xs text-gray-600 italic py-1">No renewal invoices generated yet.</p>
+        <p className="text-xs text-gray-600 italic py-1">No billing invoices generated yet.</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-white/5">
           <table className="w-full text-xs border-collapse">
@@ -169,8 +171,17 @@ function RenewalHistoryPanel({
                       month: "short", day: "numeric", year: "numeric",
                     })}
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-2 flex items-center gap-2">
                     <span className="text-brand-400 font-mono">{h.invoice_id}</span>
+                    {h.id === -1 ? (
+                      <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1 py-0.5 rounded font-semibold select-none">
+                        Registration
+                      </span>
+                    ) : (
+                      <span className="text-[9px] bg-brand-500/10 text-brand-400 border border-brand-500/20 px-1 py-0.5 rounded font-semibold select-none">
+                        Renewal
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-right text-white font-medium">
                     {formatUSD(h.usd_price)}
@@ -209,11 +220,12 @@ export default function AdminOrdersPage() {
   const [expandedHistory, setExpandedHistory] = useState<Record<number, boolean>>({});
   const [historyData, setHistoryData] = useState<Record<number, DomainRenewalHistoryRow[]>>({});
   const [historyLoading, setHistoryLoading] = useState<Record<number, boolean>>({});
+  const [allRenewals, setAllRenewals] = useState<DomainRenewalHistoryRow[]>([]);
 
   // Activation & Invoice Modal States
   const [activationModalOpen, setActivationModalOpen] = useState(false);
   const [activeDomainId, setActiveDomainId] = useState<number | null>(null);
-  const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'LKR'>('USD');
+  const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'LKR'>('LKR');
   const [activatingWithInvoice, setActivatingWithInvoice] = useState(false);
 
   // Edit Modal States
@@ -238,6 +250,12 @@ export default function AdminOrdersPage() {
   const [expiringDomainName, setExpiringDomainName] = useState("");
   const [expiringWithInvoice, setExpiringWithInvoice] = useState(false);
 
+  // Delete Modal States
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingOrderId, setDeletingOrderId] = useState<number | null>(null);
+  const [deletingDomainName, setDeletingDomainName] = useState("");
+  const [deletingWithInvoices, setDeletingWithInvoices] = useState(false);
+
   // ---------------------------------------------------------------------------
   // Data fetching
   // ---------------------------------------------------------------------------
@@ -252,11 +270,14 @@ export default function AdminOrdersPage() {
       for (let i = 0; i < updatedData.length; i++) {
         const o = updatedData[i];
         if (o.status.toLowerCase() === "active" && o.expiry_date && new Date(o.expiry_date) < now) {
-          await updateDomainOrderStatus(o.id, "expired");
+          await updateDomainOrderStatus(o.id, "expired", { skipRenewalInvoice: true });
           updatedData[i] = { ...o, status: "expired" };
         }
       }
       setOrders(updatedData);
+      
+      const renewals = await getAllRenewalHistory();
+      setAllRenewals(renewals);
     } catch (err) {
       console.error(err);
     } finally {
@@ -343,18 +364,28 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const handleDeleteOrder = async (id: number) => {
-    if (confirm("Are you sure you want to delete this domain order?")) {
-      try {
-        const res = await deleteDomainOrder(id);
-        if (res.success) {
-          setOrders((prev) => prev.filter((o) => o.id !== id));
-        } else {
-          alert("Failed to delete order: " + extractError(res));
-        }
-      } catch (err) {
-        console.error(err);
+  const handleOpenDeleteModal = (order: DomainOrder) => {
+    setDeletingOrderId(order.id);
+    setDeletingDomainName(order.domain_name);
+    setDeletingWithInvoices(false);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingOrderId) return;
+    try {
+      const res = await deleteDomainOrder(deletingOrderId, deletingWithInvoices);
+      if (res.success) {
+        setOrders((prev) => prev.filter((o) => o.id !== deletingOrderId));
+        setDeleteModalOpen(false);
+        setDeletingOrderId(null);
+        alert("Domain order deleted successfully!");
+        await fetchOrders();
+      } else {
+        alert("Failed to delete order: " + extractError(res));
       }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -403,6 +434,33 @@ export default function AdminOrdersPage() {
       alert("Error marking domain as expired: " + err.message);
     } finally {
       setExpiringWithInvoice(false);
+    }
+  };
+
+  const handleRenewExpired = async (order: DomainOrder) => {
+    if (!confirm(`Are you sure you want to renew "${order.domain_name}"? This will generate a new renewal invoice.`)) {
+      return;
+    }
+    setUpdatingId(order.id);
+    try {
+      const res = await renewExpiredDomain(order.id);
+      if (res.success) {
+        alert(`Domain renewed successfully! Invoice ${res.invoiceId} (LKR) generated.`);
+        // Invalidate cached history
+        setHistoryData((prev) => {
+          const next = { ...prev };
+          delete next[order.id];
+          return next;
+        });
+        await fetchOrders();
+      } else {
+        alert("Failed to renew domain: " + extractError(res));
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Error renewing domain: " + err.message);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -503,6 +561,32 @@ export default function AdminOrdersPage() {
   // ---------------------------------------------------------------------------
   // Derived data
   // ---------------------------------------------------------------------------
+  const activeCount = orders.filter((o) => o.status.toLowerCase() === "active").length;
+  const expiredCount = orders.filter((o) => o.status.toLowerCase() === "expired").length;
+  const pendingCount = orders.filter((o) => o.status.toLowerCase() === "pending").length;
+
+  const totalRegProfitLkr = orders.reduce((acc, o) => {
+    if (!countsTowardProfit(o)) return acc;
+    const regProfit = o.selling_price - o.actual_price;
+    const lockedRegCostLkr = o.activation_lkr_cost ?? null;
+    const lockedRegPriceLkr = o.activation_lkr_price ?? null;
+    const regProfitLkr = (lockedRegPriceLkr != null && lockedRegCostLkr != null)
+      ? (lockedRegPriceLkr - lockedRegCostLkr)
+      : (regProfit * lkrRate);
+    return acc + regProfitLkr;
+  }, 0);
+
+  const totalRenewalProfitLkr = allRenewals.reduce((acc, h) => {
+    const status = h.status.toLowerCase();
+    if (status !== 'paid' && status !== 'fully paid') return acc;
+    const o = orders.find(d => d.id === h.domain_order_id);
+    const renewCostUsd = o?.renewal_cost || 14.25;
+    const renewProfitLkr = h.lkr_price - (renewCostUsd * h.lkr_rate);
+    return acc + renewProfitLkr;
+  }, 0);
+
+  const totalProfitLkr = totalRegProfitLkr + totalRenewalProfitLkr;
+
   const filteredOrders = orders.filter((o) => {
     const statusMatch = activeFilter === "All" || o.status.toLowerCase() === activeFilter.toLowerCase();
     const searchMatch =
@@ -514,8 +598,143 @@ export default function AdminOrdersPage() {
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
+  if (loading) {
+    return (
+      <div className="space-y-6 pb-10 mt-2">
+        {/* Skeleton Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((idx) => (
+            <div key={idx} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center justify-between h-[104px] animate-pulse">
+              <div className="space-y-2.5">
+                <div className="h-3 w-24 bg-white/10 rounded-full" />
+                <div className="h-7 w-12 bg-white/10 rounded-full" />
+              </div>
+              <div className="p-3 bg-white/5 rounded-2xl w-12 h-12" />
+            </div>
+          ))}
+        </div>
+
+        {/* Skeleton Controls */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 animate-pulse">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
+            <div className="h-[42px] w-full sm:w-64 bg-white/5 border border-white/10 rounded-full" />
+            <div className="flex gap-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-[38px] w-20 bg-white/5 border border-white/10 rounded-full" />
+              ))}
+            </div>
+          </div>
+          <div className="h-3 w-40 bg-white/5 rounded-full self-end lg:self-auto" />
+        </div>
+
+        {/* Skeleton Table */}
+        <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden animate-pulse">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-white/10 text-gray-400 text-sm bg-white/[0.02]">
+                  <th className="p-4 font-medium">Domain & Client</th>
+                  <th className="p-4 font-medium text-right">Reg. Cost / Retail</th>
+                  <th className="p-4 font-medium text-right text-brand-400">Reg. Profit</th>
+                  <th className="p-4 font-medium text-right">Renewal Cost / Retail</th>
+                  <th className="p-4 font-medium text-right text-brand-400">Renewal Profit</th>
+                  <th className="p-4 font-medium">Expiry Date</th>
+                  <th className="p-4 font-medium text-center">Status</th>
+                  <th className="p-4 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1, 2, 3, 4, 5].map((idx) => (
+                  <tr key={idx} className="border-t border-white/5">
+                    <td className="p-4 space-y-2.5">
+                      <div className="h-4 w-40 bg-white/10 rounded-full" />
+                      <div className="h-3.5 w-32 bg-white/5 rounded-full" />
+                      <div className="h-3 w-24 bg-white/5 rounded-full" />
+                    </td>
+                    <td className="p-4 text-right space-y-2">
+                      <div className="h-3.5 w-20 bg-white/10 rounded-full ml-auto" />
+                      <div className="h-3 w-16 bg-white/5 rounded-full ml-auto" />
+                    </td>
+                    <td className="p-4 text-right space-y-2">
+                      <div className="h-4 w-14 bg-white/10 rounded-full ml-auto" />
+                      <div className="h-3 w-12 bg-white/5 rounded-full ml-auto" />
+                    </td>
+                    <td className="p-4 text-right space-y-2">
+                      <div className="h-3.5 w-20 bg-white/10 rounded-full ml-auto" />
+                      <div className="h-3 w-16 bg-white/5 rounded-full ml-auto" />
+                    </td>
+                    <td className="p-4 text-right space-y-2">
+                      <div className="h-4 w-14 bg-white/10 rounded-full ml-auto" />
+                      <div className="h-3 w-12 bg-white/5 rounded-full ml-auto" />
+                    </td>
+                    <td className="p-4">
+                      <div className="h-4 w-24 bg-white/10 rounded-full" />
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className="h-6 w-16 bg-white/10 rounded-full mx-auto" />
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="h-8 w-24 bg-white/10 rounded-xl ml-auto" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-10 mt-2">
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Active Domains Card */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs text-gray-400 font-medium block">Active Domains</span>
+            <span className="text-3xl font-bold text-white">{activeCount}</span>
+          </div>
+          <div className="p-3 bg-green-400/10 rounded-2xl text-green-400">
+            <Globe className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Expired Domains Card */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs text-gray-400 font-medium block">Expired Domains</span>
+            <span className="text-3xl font-bold text-white">{expiredCount}</span>
+          </div>
+          <div className="p-3 bg-red-400/10 rounded-2xl text-red-400">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Pending Domains Card */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs text-gray-400 font-medium block">Pending Orders</span>
+            <span className="text-3xl font-bold text-white">{pendingCount}</span>
+          </div>
+          <div className="p-3 bg-amber-400/10 rounded-2xl text-amber-400">
+            <Clock className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Total Profit Card */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs text-gray-400 font-medium block">Total profit (LKR)</span>
+            <span className="text-2xl font-bold text-brand-400">{formatLKR(totalProfitLkr)}</span>
+          </div>
+          <div className="p-3 bg-brand-400/10 rounded-2xl text-brand-400">
+            <TrendingUp className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
 
       {/* Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -560,11 +779,7 @@ export default function AdminOrdersPage() {
       {/* Table */}
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden">
         <div className="overflow-x-auto w-full">
-          {loading ? (
-            <div className="py-20 flex justify-center items-center">
-              <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : filteredOrders.length === 0 ? (
+          {filteredOrders.length === 0 ? (
             <div className="py-20 text-center text-gray-500 text-sm font-medium">
               No domain registrations found matching search criteria.
             </div>
@@ -715,7 +930,7 @@ export default function AdminOrdersPage() {
                                   <button
                                     onClick={() => {
                                       setActiveDomainId(o.id);
-                                      setSelectedCurrency('USD');
+                                      setSelectedCurrency('LKR');
                                       setActivationModalOpen(true);
                                     }}
                                     disabled={updatingId !== null}
@@ -745,6 +960,18 @@ export default function AdminOrdersPage() {
                                 className="p-2 hover:bg-red-400/10 text-gray-400 hover:text-red-400 rounded-xl transition-colors flex items-center justify-center cursor-pointer"
                               >
                                 <AlertTriangle className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {o.status?.toLowerCase() === "expired" && (
+                              <button
+                                onClick={() => handleRenewExpired(o)}
+                                disabled={updatingId !== null}
+                                title="Renew Domain (LKR Invoice)"
+                                className="px-2.5 py-1 hover:bg-green-400/10 text-gray-400 hover:text-green-400 rounded-xl transition-colors flex items-center justify-center cursor-pointer font-medium text-xs gap-1 border border-white/10 hover:border-green-400/20"
+                              >
+                                <RefreshCw className="w-3.5 h-3.5" />
+                                <span>Renew</span>
                               </button>
                             )}
 
@@ -781,15 +1008,13 @@ export default function AdminOrdersPage() {
                               <Mail className="w-4 h-4" />
                             </a>
 
-                            {o.status?.toLowerCase() !== "active" && (
-                              <button
-                                onClick={() => handleDeleteOrder(o.id)}
-                                className="p-2 hover:bg-red-400/10 text-gray-400 hover:text-red-400 rounded-xl transition-colors flex items-center justify-center"
-                                title="Delete Order"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleOpenDeleteModal(o)}
+                              className="p-2 hover:bg-red-400/10 text-gray-400 hover:text-red-400 rounded-xl transition-colors flex items-center justify-center cursor-pointer"
+                              title="Delete Order"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -1099,7 +1324,7 @@ export default function AdminOrdersPage() {
       {/* Activation & Currency Selection Modal */}
       {activationModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
-          <div className="bg-neutral-900 border border-white/10 rounded-3xl w-full max-w-md p-6 relative shadow-2xl">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-md p-6 relative shadow-2xl">
             <button
               onClick={() => setActivationModalOpen(false)}
               className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors"
@@ -1158,6 +1383,56 @@ export default function AdminOrdersPage() {
                 className="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl font-semibold transition-colors text-sm disabled:opacity-50 cursor-pointer"
               >
                 {activatingWithInvoice ? "Activating..." : "Confirm & Activate"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Domain Modal */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-md p-6 relative shadow-2xl text-white">
+            <button
+              onClick={() => setDeleteModalOpen(false)}
+              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-xl font-bold text-white mb-2">Delete Domain Order</h3>
+            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+              Are you sure you want to delete the domain <span className="text-white font-semibold">{deletingDomainName}</span>?
+            </p>
+
+            <div className="space-y-4 mb-6">
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={deletingWithInvoices}
+                  onChange={(e) => setDeletingWithInvoices(e.target.checked)}
+                  className="mt-1 rounded border-white/20 bg-white/5"
+                />
+                <div className="space-y-0.5">
+                  <span className="text-sm text-gray-300 font-semibold block">Delete associated invoices</span>
+                  <span className="text-xs text-gray-500 block">Deletes the registration invoice & all renewal invoices linked to this domain.</span>
+                </div>
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(false)}
+                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 rounded-2xl font-semibold transition-colors text-sm text-gray-300 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-semibold transition-colors text-sm cursor-pointer"
+              >
+                Delete Domain
               </button>
             </div>
           </div>
