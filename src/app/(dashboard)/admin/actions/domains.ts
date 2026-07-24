@@ -2,6 +2,24 @@
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
+import { put } from '@vercel/blob';
+
+export async function uploadProviderInvoice(formData: FormData): Promise<string> {
+  const file = formData.get('file') as File;
+  if (!file) {
+    throw new Error("No file uploaded");
+  }
+  try {
+    const filename = `admin/provider-invoices/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+    const blob = await put(filename, file, {
+      access: 'public',
+    });
+    return blob.url;
+  } catch (err: any) {
+    console.error("Failed to upload provider invoice:", err);
+    throw err;
+  }
+}
 
 export interface DomainOrder {
   id: number;
@@ -24,6 +42,8 @@ export interface DomainOrder {
   activation_lkr_price?: number | null;
   /** Actual cost (our cost) converted to LKR and locked at activation time */
   activation_lkr_cost?: number | null;
+  provider_invoice_url?: string | null;
+  actual_price_currency?: string;
 }
 
 export interface DomainRenewalHistoryRow {
@@ -36,6 +56,8 @@ export interface DomainRenewalHistoryRow {
   lkr_price: number;
   lkr_rate: number;
   status: string; // e.g. "unpaid" | "paid" | "fully paid"
+  renewal_invoice_url?: string | null;
+  client_email?: string;
 }
 
 /**
@@ -54,25 +76,30 @@ type CreateInvoiceResult =
   | { success: false; error: string };
 
 // ---------------------------------------------------------------------------
-// Schema migrations
+// Schema migrations  (run once per server process, cached with a module flag)
 // ---------------------------------------------------------------------------
 
+let _domainTableMigrated = false;
+let _renewalTableMigrated = false;
+
 export async function ensureDomainOrdersTable() {
+  if (_domainTableMigrated) return;
   try {
     try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS renewal_cost NUMERIC(12, 2)`; } catch(e){}
     try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS renewal_price NUMERIC(12, 2)`; } catch(e){}
     try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS registrar VARCHAR(100) DEFAULT 'Internet.bs'`; } catch(e){}
     try { await sql`ALTER TABLE admin_domain_orders ALTER COLUMN expiry_date DROP NOT NULL`; } catch(e){}
-    // New columns — locked LKR values at activation time
     try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS activation_lkr_rate NUMERIC(10, 4)`; } catch(e){}
     try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS activation_lkr_price NUMERIC(12, 2)`; } catch(e){}
     try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS activation_lkr_cost NUMERIC(12, 2)`; } catch(e){}
+    _domainTableMigrated = true;
   } catch (err: any) {
     console.error("Migration: failed to alter admin_domain_orders table", err);
   }
 }
 
 export async function ensureDomainRenewalHistoryTable() {
+  if (_renewalTableMigrated) return;
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS domain_renewal_history (
@@ -88,8 +115,38 @@ export async function ensureDomainRenewalHistoryTable() {
         status           VARCHAR(50) NOT NULL DEFAULT 'unpaid'
       )
     `;
+    try { await sql`ALTER TABLE domain_renewal_history ADD COLUMN IF NOT EXISTS renewal_invoice_url TEXT`; } catch(e){}
+    _renewalTableMigrated = true;
   } catch (err: any) {
     console.error("Migration: failed to create domain_renewal_history table", err);
+  }
+}
+
+export async function uploadRenewalInvoiceForDomain(formData: FormData): Promise<string> {
+  const file = formData.get('file') as File;
+  if (!file) throw new Error('No file uploaded');
+  try {
+    const { put } = await import('@vercel/blob');
+    const filename = `admin/renewal-invoices/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+    const blob = await put(filename, file, { access: 'public' });
+    return blob.url;
+  } catch (err: any) {
+    console.error('Failed to upload renewal invoice:', err);
+    throw err;
+  }
+}
+
+export async function setDomainRenewalInvoiceUrl(
+  renewalId: number,
+  url: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await ensureDomainRenewalHistoryTable();
+    await sql`UPDATE domain_renewal_history SET renewal_invoice_url = ${url} WHERE id = ${renewalId}`;
+    return { success: true };
+  } catch (err: any) {
+    console.error('Failed to set renewal invoice url:', err);
+    return { success: false, error: err.message };
   }
 }
 
@@ -128,26 +185,23 @@ function countsTowardProfit(o: DomainOrder): boolean {
 // ---------------------------------------------------------------------------
 
 export async function getDomainOrders(): Promise<DomainOrder[]> {
-  await ensureDomainOrdersTable();
-  await ensureDomainRenewalHistoryTable();
+  // Run migrations in parallel — both are idempotent ALTER TABLE / CREATE IF NOT EXISTS
+  await Promise.all([ensureDomainOrdersTable(), ensureDomainRenewalHistoryTable()]);
   try {
+    // Batch-expire all overdue active domains in a single SQL statement
+    const now = new Date().toISOString();
+    await sql`
+      UPDATE admin_domain_orders
+      SET status = 'expired'
+      WHERE status = 'active'
+        AND expiry_date IS NOT NULL
+        AND expiry_date <= ${now}::timestamptz
+    `;
+
     const rows = await sql`
       SELECT * FROM admin_domain_orders
       ORDER BY created_at DESC
     `;
-
-    const now = new Date();
-    // Auto-expire active domains that reached/passed their expiry_date
-    for (const r of rows) {
-      if (String(r.status || "").toLowerCase() === "active" && r.expiry_date) {
-        const expDate = new Date(r.expiry_date);
-        if (expDate <= now) {
-          await updateDomainOrderStatus(r.id, "expired", { skipRenewalInvoice: true });
-          r.status = "expired";
-        }
-      }
-    }
-
     return rows.map((r: any) => ({
       ...r,
       actual_price: parseFloat(r.actual_price || 0),
@@ -162,6 +216,8 @@ export async function getDomainOrders(): Promise<DomainOrder[]> {
       activation_lkr_rate: r.activation_lkr_rate ? parseFloat(r.activation_lkr_rate) : null,
       activation_lkr_price: r.activation_lkr_price ? parseFloat(r.activation_lkr_price) : null,
       activation_lkr_cost: r.activation_lkr_cost ? parseFloat(r.activation_lkr_cost) : null,
+      provider_invoice_url: r.provider_invoice_url || null,
+      actual_price_currency: r.actual_price_currency || 'USD',
     }));
   } catch (error) {
     console.error("Failed to get domain orders:", error);
@@ -183,12 +239,14 @@ export async function getDomainRenewalHistory(domainOrderId: number): Promise<Do
       id: r.id,
       domain_order_id: r.domain_order_id,
       domain_name: r.domain_name,
+      client_email: r.client_email,
       invoice_id: r.invoice_id,
       renewal_date: r.renewal_date ? new Date(r.renewal_date).toISOString() : '',
       usd_price: parseFloat(r.usd_price || 0),
       lkr_price: parseFloat(r.lkr_price || 0),
       lkr_rate: parseFloat(r.lkr_rate || 0),
       status: r.payment_status || r.status || 'unpaid',
+      renewal_invoice_url: r.renewal_invoice_url || null,
     }));
 
     // Fetch original registration invoice details to show in the list
@@ -217,12 +275,14 @@ export async function getDomainRenewalHistory(domainOrderId: number): Promise<Do
           id: -1, // Dummy ID indicating registration
           domain_order_id: domainOrderId,
           domain_name: order.domain_name,
+          client_email: order.client_email,
           invoice_id: regInv.invoice_id,
           renewal_date: regInv.date ? new Date(regInv.date).toISOString() : '',
           usd_price: usdPrice,
           lkr_price: lkrPrice,
           lkr_rate: lkrRate,
           status: regInv.payment_status || 'unpaid',
+          renewal_invoice_url: null,
         });
       }
     }
@@ -273,10 +333,10 @@ export async function addDomainOrder(
   try {
     await sql`
       INSERT INTO admin_domain_orders (
-        client_email, domain_name, actual_price, selling_price, profit, renewal_cost, renewal_price, registrar, expiry_date, status, invoice_id
+        client_email, domain_name, actual_price, selling_price, profit, renewal_cost, renewal_price, registrar, expiry_date, status, invoice_id, provider_invoice_url, actual_price_currency
       ) VALUES (
         ${order.client_email}, ${order.domain_name}, ${order.actual_price}, ${order.selling_price}, 
-        ${order.profit}, ${order.renewal_cost || null}, ${order.renewal_price || null}, ${order.registrar || 'Internet.bs'}, ${order.expiry_date || null}, ${order.status}, ${order.invoice_id}
+        ${order.profit}, ${order.renewal_cost || null}, ${order.renewal_price || null}, ${order.registrar || 'Internet.bs'}, ${order.expiry_date || null}, ${order.status}, ${order.invoice_id}, ${order.provider_invoice_url || null}, ${order.actual_price_currency || 'USD'}
       )
     `;
     await logSystemAction(`Domain order placed: "${order.domain_name}" for client "${order.client_email}"`);
@@ -535,7 +595,12 @@ export async function updateDomainOrder(
         renewal_price = COALESCE(${order.renewal_price}, renewal_price),
         registrar = COALESCE(${order.registrar}, registrar),
         expiry_date = COALESCE(${expiryStr ? expiryStr + " 00:00:00" : null}::timestamp, expiry_date),
-        status = COALESCE(${order.status}, status)
+        status = COALESCE(${order.status}, status),
+        provider_invoice_url = COALESCE(${order.provider_invoice_url}, provider_invoice_url),
+        actual_price_currency = COALESCE(${order.actual_price_currency}, actual_price_currency),
+        activation_lkr_rate = COALESCE(${order.activation_lkr_rate}, activation_lkr_rate),
+        activation_lkr_price = COALESCE(${order.activation_lkr_price}, activation_lkr_price),
+        activation_lkr_cost = COALESCE(${order.activation_lkr_cost}, activation_lkr_cost)
       WHERE id = ${id}
     `;
 

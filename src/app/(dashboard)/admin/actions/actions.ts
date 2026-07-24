@@ -90,9 +90,9 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
   `;
 
   const recentTransactionsRaw = await sql`
-    SELECT id, 'income' as type, description as name, date, amount FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+    SELECT id, 'income' as type, description as name, created_at as date, amount FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
     UNION ALL
-    SELECT id, 'expense' as type, description as name, date, amount FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+    SELECT id, 'expense' as type, description as name, created_at as date, amount FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
     ORDER BY date DESC
     LIMIT 5
   `;
@@ -236,12 +236,13 @@ export async function getIncomes(startDate?: string, endDate?: string) {
     SELECT 
       i.id, i.date, i.amount, c.full_name as client, i.client_id as "clientId", 
       i.description as desc, i.category, i.invoice_id as invoice, i.receipt_url as "receiptUrl",
-      CASE WHEN inv.invoice_id IS NOT NULL THEN true ELSE false END as "hasValidInvoice"
+      CASE WHEN inv.invoice_id IS NOT NULL THEN true ELSE false END as "hasValidInvoice",
+      i.created_at
     FROM admin_incomes i
     LEFT JOIN admin_clients c ON i.client_id = c.id
     LEFT JOIN invoices inv ON i.invoice_id = inv.invoice_id
     WHERE i.date >= ${start}::timestamp AND i.date <= (${end} || ' 23:59:59.999')::timestamp
-    ORDER BY i.date DESC
+    ORDER BY i.created_at DESC, i.id DESC
   `;
 
   return {
@@ -250,6 +251,7 @@ export async function getIncomes(startDate?: string, endDate?: string) {
     ytd: parseFloat(statsYtd[0]?.total || 0),
     items: rows.map(r => ({
       ...r,
+      created_at: r.created_at,
       date: new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       amount: parseFloat(r.amount)
     }))
@@ -405,10 +407,10 @@ export async function getExpenses(startDate?: string, endDate?: string) {
   const statsYtd = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('year', date) = date_trunc('year', current_date)`;
 
   const rows = await sql`
-    SELECT id, date, amount, description as desc, category, payment_method as "paidVia", receipt_url as "receiptUrl"
+    SELECT id, date, amount, description as desc, category, payment_method as "paidVia", receipt_url as "receiptUrl", created_at
     FROM admin_expenses
     WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
-    ORDER BY date DESC
+    ORDER BY created_at DESC, id DESC
   `;
 
   return {
@@ -417,6 +419,7 @@ export async function getExpenses(startDate?: string, endDate?: string) {
     ytd: parseFloat(statsYtd[0]?.total || 0),
     items: rows.map(r => ({
       ...r,
+      created_at: r.created_at,
       date: new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       amount: parseFloat(r.amount)
     }))
@@ -610,7 +613,7 @@ export async function getInvoices() {
   `;
 
   const rows = await sql`
-    SELECT i.invoice_id as id, i.user_email as client_email, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.total_due, i.date as due_date, i.payment_status as status, i.work_status, i.legal_name
+    SELECT i.invoice_id as id, i.user_email as client_email, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.total_due, i.date as due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at
     FROM invoices i
     LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
     ORDER BY i.created_at DESC
@@ -628,6 +631,7 @@ export async function getInvoices() {
 
       return {
         id: r.id,
+        created_at: r.created_at,
         client: r.client_name || r.client_email.split('@')[0] || 'Unknown',
         clientEmail: r.client_email || '',
         legalName: r.legal_name || '',
@@ -758,10 +762,10 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
   `;
 
   const payments = await sql`
-    SELECT date, amount, payment_method, description
+    SELECT date, amount, payment_method, description, created_at
     FROM admin_incomes
     WHERE invoice_id = ${invoiceId}
-    ORDER BY date DESC
+    ORDER BY created_at DESC, id DESC
   `;
 
   const slipRows = await sql`
@@ -863,18 +867,18 @@ export async function getClientById(clientId: string) {
   }
 
   const invoices = await sql`
-    SELECT invoice_id as id, project_name as service, total as amount, date as due_date, payment_status as status
+    SELECT invoice_id as id, project_name as service, total as amount, date as due_date, payment_status as status, created_at
     FROM invoices
     WHERE LOWER(user_email) = LOWER(${c.email})
-    ORDER BY date DESC
+    ORDER BY created_at DESC
   `;
 
   // Also fetch manual income entries linked to this client
   const incomes = await sql`
-    SELECT id, description as service, amount, date, category, invoice_id
+    SELECT id, description as service, amount, date, category, invoice_id, created_at
     FROM admin_incomes
     WHERE client_id = ${clientId}
-    ORDER BY date DESC
+    ORDER BY created_at DESC, id DESC
   `;
 
   // Build unified orders list — skip income rows already represented by a linked invoice
@@ -1081,9 +1085,9 @@ export async function getReports(startDate?: string, endDate?: string) {
   `;
 
   const journalEntriesRaw = await sql`
-    SELECT id, 'income' as type, description, date, amount, category, payment_method, invoice_id FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+    SELECT id, 'income' as type, description, created_at as date, amount, category, payment_method, invoice_id FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
     UNION ALL
-    SELECT id, 'expense' as type, description, date, amount, category, payment_method, NULL as invoice_id FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+    SELECT id, 'expense' as type, description, created_at as date, amount, category, payment_method, NULL as invoice_id FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
     ORDER BY date DESC
   `;
 
@@ -1118,11 +1122,11 @@ export async function getQuotations(startDate?: string, endDate?: string) {
   const rows = await sql`
     SELECT q.id, q.date, q.amount, q.advance, q.total_due as "totalDue", q.discount, q.bank_account_id as "bankAccountId",
            c.full_name as client, c.email as "clientEmail", q.client_id as "clientId", q.description as desc, q.category,
-           q.invoice_id as invoice, q.receipt_url as "receiptUrl", q.status, q.project_confirmed as "projectConfirmed", q.legal_name as "legalName"
+           q.invoice_id as invoice, q.receipt_url as "receiptUrl", q.status, q.project_confirmed as "projectConfirmed", q.legal_name as "legalName", q.created_at
     FROM admin_quotations q
     LEFT JOIN admin_clients c ON q.client_id = c.id
     WHERE q.date >= ${start}::timestamp AND q.date <= (${end} || ' 23:59:59.999')::timestamp
-    ORDER BY q.date DESC
+    ORDER BY q.created_at DESC, q.id DESC
   `;
  
   const confirmedCount = rows.filter((r: any) => r.status === 'confirmed').length;
@@ -1133,6 +1137,7 @@ export async function getQuotations(startDate?: string, endDate?: string) {
     totalValue,
     items: rows.map(r => ({
       ...r,
+      created_at: r.created_at,
       date: new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       amount: parseFloat(r.amount),
       advance: parseFloat(r.advance || 0),

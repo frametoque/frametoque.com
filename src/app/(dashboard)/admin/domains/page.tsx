@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   getDomainOrders,
   getDomainRenewalHistory,
@@ -10,8 +10,12 @@ import {
   createDomainInvoice,
   renewExpiredDomain,
   getAllRenewalHistory,
+  uploadRenewalInvoiceForDomain,
+  setDomainRenewalInvoiceUrl,
   DomainOrder,
   DomainRenewalHistoryRow,
+  uploadProviderInvoice,
+  addDomainOrder,
 } from "../actions/domains";
 import {
   Globe,
@@ -30,6 +34,9 @@ import {
   TrendingUp,
   Lock,
   RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  Upload,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -39,6 +46,68 @@ const formatLKR = (amount: number) =>
   new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" }).format(amount || 0);
 
 const formatUSD = (amount: number) => `$${amount.toFixed(2)}`;
+
+const convertPdfToImage = async (file: File): Promise<File> => {
+  const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+  if (!isPdf) return file;
+
+  console.log("PDF file detected, initiating image conversion:", file.name);
+
+  if (!(window as any).pdfjsLib) {
+    const existingScript = document.querySelector('script[src*="pdf.min.js"]');
+    if (existingScript) {
+      await new Promise<void>((resolve) => {
+        const interval = setInterval(() => {
+          if ((window as any).pdfjsLib) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 100);
+      });
+    } else {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js";
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error("Failed to load PDF.js"));
+        document.head.appendChild(script);
+      });
+    }
+  }
+
+  const pdfjsLib = (window as any).pdfjsLib;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+
+  const arrayBuffer = await file.arrayBuffer();
+  const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+  const pdf = await loadingTask.promise;
+  const page = await pdf.getPage(1);
+
+  const scale = 2.0;
+  const viewport = page.getViewport({ scale });
+
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Could not create canvas context");
+
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+
+  await page.render({ canvasContext: context, viewport }).promise;
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Failed to convert PDF canvas to blob"));
+        return;
+      }
+      const newFilename = file.name.replace(/\.[^/.]+$/, "") + ".png";
+      const convertedFile = new File([blob], newFilename, { type: "image/png" });
+      console.log("PDF successfully converted to image file:", newFilename);
+      resolve(convertedFile);
+    }, "image/png");
+  });
+};
 
 function extractError(res: unknown, fallback = "Unknown error"): string {
   if (
@@ -123,9 +192,13 @@ function RenewalPricePair({
 function RenewalHistoryPanel({
   history,
   loading,
+  onViewRenewalInvoice,
+  onUploadRenewalInvoice,
 }: {
   history: DomainRenewalHistoryRow[];
   loading: boolean;
+  onViewRenewalInvoice?: (h: DomainRenewalHistoryRow) => void;
+  onUploadRenewalInvoice?: (h: DomainRenewalHistoryRow, file: File) => void;
 }) {
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();
@@ -142,7 +215,7 @@ function RenewalHistoryPanel({
     <div className="bg-white/[0.02] border-t border-white/5 px-4 py-3">
       <p className="text-xs font-semibold text-gray-400 mb-3 flex items-center gap-1.5">
         <History className="w-3.5 h-3.5" />
-        Billing & Renewal History
+        Billing &amp; Renewal History
       </p>
       {loading ? (
         <div className="flex items-center gap-2 text-xs text-gray-500 py-2">
@@ -161,47 +234,132 @@ function RenewalHistoryPanel({
                 <th className="px-3 py-2 text-right font-medium">USD</th>
                 <th className="px-3 py-2 text-right font-medium">LKR (rate)</th>
                 <th className="px-3 py-2 text-center font-medium">Status</th>
+                <th className="px-3 py-2 text-center font-medium">Invoice</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {history.map((h) => (
-                <tr key={h.id} className="hover:bg-white/5 transition-colors">
-                  <td className="px-3 py-2 text-gray-400">
-                    {new Date(h.renewal_date).toLocaleDateString("en-US", {
-                      month: "short", day: "numeric", year: "numeric",
-                    })}
-                  </td>
-                  <td className="px-3 py-2 flex items-center gap-2">
-                    <span className="text-brand-400 font-mono">{h.invoice_id}</span>
-                    {h.id === -1 ? (
-                      <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1 py-0.5 rounded font-semibold select-none">
-                        Registration
-                      </span>
-                    ) : (
-                      <span className="text-[9px] bg-brand-500/10 text-brand-400 border border-brand-500/20 px-1 py-0.5 rounded font-semibold select-none">
-                        Renewal
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-right text-white font-medium">
-                    {formatUSD(h.usd_price)}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <span className="text-amber-300/90">{formatLKR(h.lkr_price)}</span>
-                    <span className="text-gray-600 ml-1 text-[9px]">(@{h.lkr_rate.toFixed(2)})</span>
-                  </td>
-                  <td className="px-3 py-2 text-center">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full border text-[10px] font-semibold ${getStatusBadge(h.status)}`}>
-                      {h.status}
-                    </span>
-                  </td>
-                </tr>
+                <RenewalHistoryRow
+                  key={h.id}
+                  h={h}
+                  getStatusBadge={getStatusBadge}
+                  onView={onViewRenewalInvoice}
+                  onUpload={onUploadRenewalInvoice}
+                />
               ))}
             </tbody>
           </table>
         </div>
       )}
     </div>
+  );
+}
+
+function RenewalHistoryRow({
+  h,
+  getStatusBadge,
+  onView,
+  onUpload,
+}: {
+  h: DomainRenewalHistoryRow;
+  getStatusBadge: (s: string) => string;
+  onView?: (h: DomainRenewalHistoryRow) => void;
+  onUpload?: (h: DomainRenewalHistoryRow, file: File) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !onUpload) return;
+    setUploading(true);
+    try {
+      let uploadFile = file;
+      // PDF → image conversion
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        if (!(window as any).pdfjsLib) {
+          await new Promise<void>((res, rej) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js';
+            s.onload = () => res(); s.onerror = rej;
+            document.head.appendChild(s);
+          });
+        }
+        const lib = (window as any).pdfjsLib;
+        lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        const ab = await file.arrayBuffer();
+        const pdf = await lib.getDocument({ data: ab }).promise;
+        const page = await pdf.getPage(1);
+        const vp = page.getViewport({ scale: 2 });
+        const canvas = document.createElement('canvas');
+        canvas.width = vp.width; canvas.height = vp.height;
+        await page.render({ canvasContext: canvas.getContext('2d')!, viewport: vp }).promise;
+        const blob = await new Promise<Blob>(r => canvas.toBlob(b => r(b!), 'image/png'));
+        uploadFile = new File([blob], file.name.replace(/\.pdf$/i, '.png'), { type: 'image/png' });
+      }
+      onUpload(h, uploadFile);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <tr className="hover:bg-white/5 transition-colors">
+      <td className="px-3 py-2 text-gray-400">
+        {new Date(h.renewal_date).toLocaleDateString("en-US", {
+          month: "short", day: "numeric", year: "numeric",
+        })}
+      </td>
+      <td className="px-3 py-2 flex items-center gap-2">
+        <span className="text-brand-400 font-mono">{h.invoice_id}</span>
+        {h.id === -1 ? (
+          <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1 py-0.5 rounded font-semibold select-none">
+            Registration
+          </span>
+        ) : (
+          <span className="text-[9px] bg-brand-500/10 text-brand-400 border border-brand-500/20 px-1 py-0.5 rounded font-semibold select-none">
+            Renewal
+          </span>
+        )}
+      </td>
+      <td className="px-3 py-2 text-right text-white font-medium">
+        {formatUSD(h.usd_price)}
+      </td>
+      <td className="px-3 py-2 text-right">
+        <span className="text-amber-300/90">{formatLKR(h.lkr_price)}</span>
+        <span className="text-gray-600 ml-1 text-[9px]">(@{h.lkr_rate.toFixed(2)})</span>
+      </td>
+      <td className="px-3 py-2 text-center">
+        <span className={`inline-flex px-2 py-0.5 rounded-full border text-[10px] font-semibold ${getStatusBadge(h.status)}`}>
+          {h.status}
+        </span>
+      </td>
+      <td className="px-3 py-2 text-center">
+        <div className="flex items-center justify-center gap-1">
+          {h.renewal_invoice_url ? (
+            <button
+              onClick={() => onView?.(h)}
+              title="View renewal invoice"
+              className="p-1.5 hover:bg-white/10 text-brand-400 rounded-lg transition-colors cursor-pointer"
+            >
+              <FileText className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <>
+              <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFile} />
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading || h.id === -1}
+                title={h.id === -1 ? "Cannot upload for registration" : "Upload renewal invoice"}
+                className="p-1.5 hover:bg-white/10 text-gray-500 hover:text-gray-300 rounded-lg transition-colors cursor-pointer disabled:opacity-30"
+              >
+                {uploading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+              </button>
+            </>
+          )}
+        </div>
+      </td>
+    </tr>
   );
 }
 
@@ -243,6 +401,31 @@ export default function AdminOrdersPage() {
   const [createRenewalInvoiceOnExpire, setCreateRenewalInvoiceOnExpire] = useState(true);
   const [expireCurrency, setExpireCurrency] = useState<"USD" | "LKR">("USD");
   const [savingEdit, setSavingEdit] = useState(false);
+  const [editProviderInvoiceUrl, setEditProviderInvoiceUrl] = useState<string | null>(null);
+  const [editActualPriceCurrency, setEditActualPriceCurrency] = useState("USD");
+  const [editActivationLkrRate, setEditActivationLkrRate] = useState<string>("");
+  const [viewingInvoice, setViewingInvoice] = useState<{ order: DomainOrder } | null>(null);
+  const [viewingRenewalInvoice, setViewingRenewalInvoice] = useState<DomainRenewalHistoryRow | null>(null);
+  const [uploadingInvoice, setUploadingInvoice] = useState(false);
+
+  // Add Domain Modal States
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addEmail, setAddEmail] = useState("");
+  const [addDomainName, setAddDomainName] = useState("");
+  const [addRegistrar, setAddRegistrar] = useState("Internet.bs");
+  const [addRegCost, setAddRegCost] = useState("");
+  const [addRegPrice, setAddRegPrice] = useState("");
+  const [addRenewCost, setAddRenewCost] = useState("");
+  const [addRenewPrice, setAddRenewPrice] = useState("");
+  const [addStatus, setAddStatus] = useState("active");
+  const [addExpiry, setAddExpiry] = useState("");
+  const [addProviderInvoiceUrl, setAddProviderInvoiceUrl] = useState<string | null>(null);
+  const [uploadingAddInvoice, setUploadingAddInvoice] = useState(false);
+  const [addActualPriceCurrency, setAddActualPriceCurrency] = useState("USD");
+
+  // Domain search states
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState<any>(null);
 
   // Expire Modal States
   const [expireModalOpen, setExpireModalOpen] = useState(false);
@@ -264,19 +447,12 @@ export default function AdminOrdersPage() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const data = await getDomainOrders();
-      const now = new Date();
-      const updatedData = [...data];
-      for (let i = 0; i < updatedData.length; i++) {
-        const o = updatedData[i];
-        if (o.status.toLowerCase() === "active" && o.expiry_date && new Date(o.expiry_date) < now) {
-          await updateDomainOrderStatus(o.id, "expired", { skipRenewalInvoice: true });
-          updatedData[i] = { ...o, status: "expired" };
-        }
-      }
-      setOrders(updatedData);
-      
-      const renewals = await getAllRenewalHistory();
+      // Run both fetches in parallel — server already handles auto-expire in batch
+      const [data, renewals] = await Promise.all([
+        getDomainOrders(),
+        getAllRenewalHistory(),
+      ]);
+      setOrders(data);
       setAllRenewals(renewals);
     } catch (err) {
       console.error(err);
@@ -286,20 +462,101 @@ export default function AdminOrdersPage() {
   };
 
   useEffect(() => {
+    // Fetch LKR rate and orders in parallel on mount
     fetch("https://open.er-api.com/v6/latest/USD")
       .then((res) => res.json())
-      .then((data) => {
-        if (data?.rates?.LKR) setLkrRate(data.rates.LKR);
-      })
+      .then((data) => { if (data?.rates?.LKR) setLkrRate(data.rates.LKR); })
       .catch((e) => console.error("Failed to load LKR exchange rate", e));
+
+    fetchOrders();
+
+    const handleOpenAdd = () => {
+      setAddEmail("");
+      setAddDomainName("");
+      setAddActualPriceCurrency("USD");
+      setAddRegCost("");
+      setAddRegPrice("");
+      setAddRenewCost("");
+      setAddRenewPrice("");
+      setAddRegistrar("Internet.bs");
+      setAddExpiry("");
+      setAddStatus("active");
+      setAddProviderInvoiceUrl(null);
+      setSearchResults(null);
+      setIsAddModalOpen(true);
+    };
+
+    const handleRefreshEvent = () => { fetchOrders(); };
+
+    window.addEventListener("domains:open-add", handleOpenAdd);
+    window.addEventListener("domains:refresh", handleRefreshEvent);
+    return () => {
+      window.removeEventListener("domains:open-add", handleOpenAdd);
+      window.removeEventListener("domains:refresh", handleRefreshEvent);
+    };
   }, []);
 
-  useEffect(() => {
-    fetchOrders();
-    const handleRefreshEvent = () => { fetchOrders(); };
-    window.addEventListener("domains:refresh", handleRefreshEvent);
-    return () => { window.removeEventListener("domains:refresh", handleRefreshEvent); };
-  }, []);
+  const checkDomainAvailability = async () => {
+    if (!addDomainName || !addDomainName.includes(".")) {
+      alert("Please enter a valid domain name");
+      return;
+    }
+    setSearchLoading(true);
+    setSearchResults(null);
+    try {
+      const res = await fetch(`/api/services/domains/check?domain=${encodeURIComponent(addDomainName)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to check domain");
+      setSearchResults(data);
+      if (data.available) {
+        setAddRegCost(String(data.reg_price_usd || ""));
+        setAddRenewCost(String(data.renew_price_usd || ""));
+        // Automatically default retail prices slightly higher for helper convenience
+        setAddRegPrice(String(Math.round((data.reg_price_usd || 12.0) * 1.3)));
+        setAddRenewPrice(String(Math.round((data.renew_price_usd || 14.0) * 1.3)));
+      } else {
+        alert("Domain is already registered according to WHOIS, but you can still record it manually.");
+      }
+    } catch (err: any) {
+      alert("WHOIS search error: " + err.message);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingEdit(true);
+    const actPrice = parseFloat(addRegCost) || 0;
+    const sellPrice = parseFloat(addRegPrice) || 0;
+    const profit = sellPrice - actPrice;
+
+    const res = await addDomainOrder({
+      client_email: addEmail,
+      domain_name: addDomainName,
+      actual_price: actPrice,
+      actual_price_currency: addActualPriceCurrency,
+      selling_price: sellPrice,
+      profit: profit,
+      renewal_cost: parseFloat(addRenewCost) || 0,
+      renewal_price: parseFloat(addRenewPrice) || 0,
+      registrar: addRegistrar,
+      expiry_date: addExpiry ? addExpiry + " 00:00:00" : "",
+      status: addStatus,
+      invoice_id: null,
+      provider_invoice_url: addProviderInvoiceUrl,
+    });
+
+    if (res.success) {
+      alert("Domain order added successfully!");
+      setIsAddModalOpen(false);
+      fetchOrders();
+    } else {
+      const errMessage = (res as any).error || "Unknown error";
+      alert("Failed to add domain order: " + errMessage);
+    }
+    setSavingEdit(false);
+  };
 
   // ---------------------------------------------------------------------------
   // Renewal history toggle
@@ -477,6 +734,9 @@ export default function AdminOrdersPage() {
     setEditExpiry(order.expiry_date ? order.expiry_date.split("T")[0] : "");
     setCreateRenewalInvoiceOnExpire(true);
     setExpireCurrency("USD");
+    setEditActualPriceCurrency(order.actual_price_currency || "USD");
+    setEditProviderInvoiceUrl(order.provider_invoice_url || null);
+    setEditActivationLkrRate(order.activation_lkr_rate != null ? String(order.activation_lkr_rate) : String(lkrRate));
     setEditModalOpen(true);
   };
 
@@ -492,6 +752,9 @@ export default function AdminOrdersPage() {
       editStatus.toLowerCase() === "expired" &&
       selectedOrder.status.toLowerCase() !== "expired";
 
+    const isUsd = editActualPriceCurrency === "USD";
+    const rateNum = parseFloat(editActivationLkrRate) || lkrRate;
+
     try {
       const res = await updateDomainOrder(
         selectedOrder.id,
@@ -506,6 +769,11 @@ export default function AdminOrdersPage() {
           registrar: editRegistrar,
           expiry_date: editExpiry,
           status: editStatus,
+          provider_invoice_url: editProviderInvoiceUrl,
+          actual_price_currency: editActualPriceCurrency,
+          activation_lkr_rate: isUsd ? rateNum : null,
+          activation_lkr_price: isUsd ? regPriceNum * rateNum : null,
+          activation_lkr_cost: isUsd ? regCostNum * rateNum : null,
         },
         isBecomingExpired
           ? {
@@ -632,15 +900,14 @@ export default function AdminOrdersPage() {
           <div className="overflow-x-auto w-full">
             <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="border-b border-white/10 text-gray-400 text-sm bg-white/[0.02]">
-                  <th className="p-4 font-medium">Domain & Client</th>
-                  <th className="p-4 font-medium text-right">Reg. Cost / Retail</th>
-                  <th className="p-4 font-medium text-right text-brand-400">Reg. Profit</th>
-                  <th className="p-4 font-medium text-right">Renewal Cost / Retail</th>
-                  <th className="p-4 font-medium text-right text-brand-400">Renewal Profit</th>
-                  <th className="p-4 font-medium">Expiry Date</th>
-                  <th className="p-4 font-medium text-center">Status</th>
-                  <th className="p-4 font-medium text-right">Actions</th>
+                <tr className="border-b border-white/10 bg-white/[0.02]">
+                  <th className="p-4"><div className="h-4 w-28 bg-white/10 rounded-full" /></th>
+                  <th className="p-4 text-right"><div className="h-4 w-32 bg-white/10 rounded-full ml-auto" /></th>
+                  <th className="p-4 text-right"><div className="h-4 w-32 bg-white/10 rounded-full ml-auto" /></th>
+                  <th className="p-4 text-right"><div className="h-4 w-24 bg-white/10 rounded-full ml-auto" /></th>
+                  <th className="p-4"><div className="h-4 w-20 bg-white/10 rounded-full" /></th>
+                  <th className="p-4 text-center"><div className="h-4 w-12 bg-white/10 rounded-full mx-auto" /></th>
+                  <th className="p-4 text-right"><div className="h-4 w-16 bg-white/10 rounded-full ml-auto" /></th>
                 </tr>
               </thead>
               <tbody>
@@ -654,10 +921,6 @@ export default function AdminOrdersPage() {
                     <td className="p-4 text-right space-y-2">
                       <div className="h-3.5 w-20 bg-white/10 rounded-full ml-auto" />
                       <div className="h-3 w-16 bg-white/5 rounded-full ml-auto" />
-                    </td>
-                    <td className="p-4 text-right space-y-2">
-                      <div className="h-4 w-14 bg-white/10 rounded-full ml-auto" />
-                      <div className="h-3 w-12 bg-white/5 rounded-full ml-auto" />
                     </td>
                     <td className="p-4 text-right space-y-2">
                       <div className="h-3.5 w-20 bg-white/10 rounded-full ml-auto" />
@@ -788,10 +1051,9 @@ export default function AdminOrdersPage() {
               <thead>
                 <tr className="border-b border-white/10 text-gray-400 text-sm bg-white/[0.02]">
                   <th className="p-4 font-medium">Domain & Client</th>
-                  <th className="p-4 font-medium text-right">Reg. Cost / Retail</th>
-                  <th className="p-4 font-medium text-right text-brand-400">Reg. Profit</th>
-                  <th className="p-4 font-medium text-right">Renewal Cost / Retail</th>
-                  <th className="p-4 font-medium text-right text-brand-400">Renewal Profit</th>
+                  <th className="p-4 font-medium text-right">Cost Price (Reg / Ren)</th>
+                  <th className="p-4 font-medium text-right">Selling Price (Reg / Ren)</th>
+                  <th className="p-4 font-medium text-right text-brand-400">Profit (Reg / Ren)</th>
                   <th className="p-4 font-medium">Expiry Date</th>
                   <th className="p-4 font-medium text-center">Status</th>
                   <th className="p-4 font-medium text-right">Actions</th>
@@ -848,7 +1110,7 @@ export default function AdminOrdersPage() {
                           </div>
                         </td>
 
-                        {/* Reg Cost / Retail — fixed after activation */}
+                        {/* Cost Price (Reg / Ren) */}
                         <td className="p-4 text-right text-sm space-y-1">
                           <RegPricePair
                             usd={o.actual_price}
@@ -858,6 +1120,11 @@ export default function AdminOrdersPage() {
                             isActivated={isActivated}
                             dimmed
                           />
+                          <RenewalPricePair usd={renewCost} liveRate={lkrRate} dimmed />
+                        </td>
+
+                        {/* Selling Price (Reg / Ren) */}
+                        <td className="p-4 text-right text-sm space-y-1">
                           <RegPricePair
                             usd={o.selling_price}
                             lockedLkr={lockedRegPriceLkr}
@@ -865,29 +1132,22 @@ export default function AdminOrdersPage() {
                             liveRate={lkrRate}
                             isActivated={isActivated}
                           />
-                        </td>
-
-                        {/* Reg Profit — fixed after activation */}
-                        <td className="p-4 text-right font-semibold text-brand-400">
-                          <div>{formatUSD(regProfit)}</div>
-                          <div className={`text-xs mt-0.5 ${isActivated && lockedRate != null ? "text-amber-300/80" : "text-gray-500"}`}>
-                            ({formatLKR(regProfitLkr)}
-                            <span className={`${isActivated && lockedRate != null ? "text-amber-300/60" : "text-gray-500"} text-[9px] ml-0.5}`}> @{Math.round(effectiveRate)}</span>)
-                          </div>
-                        </td>
-
-                        {/* Renewal Cost / Retail — always live */}
-                        <td className="p-4 text-right text-sm">
-                          <RenewalPricePair usd={renewCost} liveRate={lkrRate} dimmed />
                           <RenewalPricePair usd={renewPrice} liveRate={lkrRate} />
                         </td>
 
-                        {/* Renewal Profit — always live */}
-                        <td className="p-4 text-right font-semibold text-brand-400">
-                          <div>{formatUSD(renewProfit)}</div>
-                          <div className="text-xs mt-0.5 text-gray-500">
-                            ({formatLKR(renewProfit * lkrRate)}
-                            <span className="text-gray-600 text-[9px] ml-0.5">@{Math.round(lkrRate)}</span>)
+                        {/* Profit (Reg / Ren) */}
+                        <td className="p-4 text-right font-semibold text-brand-400 space-y-1">
+                          <div>
+                            {formatUSD(regProfit)}
+                            <span className={`text-[10px] ml-1 font-normal ${isActivated && lockedRate != null ? "text-amber-300/80" : "text-gray-500"}`}>
+                              ({formatLKR(regProfitLkr)})
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-500 font-normal">
+                            {formatUSD(renewProfit)}
+                            <span className="text-[10px] ml-1 font-normal text-gray-500">
+                              ({formatLKR(renewProfit * lkrRate)})
+                            </span>
                           </div>
                         </td>
 
@@ -992,6 +1252,16 @@ export default function AdminOrdersPage() {
                               )}
                             </button>
 
+                            {o.provider_invoice_url && (
+                              <button
+                              onClick={() => setViewingInvoice({ order: o })}
+                                title="View Provider Invoice"
+                                className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl transition-colors flex items-center justify-center cursor-pointer"
+                              >
+                                <FileText className="w-4 h-4 text-brand-400" />
+                              </button>
+                            )}
+
                             <button
                               onClick={() => handleOpenEditModal(o)}
                               className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl transition-colors flex items-center justify-center"
@@ -1026,6 +1296,16 @@ export default function AdminOrdersPage() {
                             <RenewalHistoryPanel
                               history={historyRows}
                               loading={isHistoryLoading}
+                              onViewRenewalInvoice={(h) => setViewingRenewalInvoice(h)}
+                              onUploadRenewalInvoice={async (h, file) => {
+                                const fd = new FormData();
+                                fd.append('file', file);
+                                const url = await uploadRenewalInvoiceForDomain(fd);
+                                await setDomainRenewalInvoiceUrl(h.id, url);
+                                // Refresh history
+                                const fresh = await getDomainRenewalHistory(o.id);
+                                setHistoryData(prev => ({ ...prev, [o.id]: fresh }));
+                              }}
                             />
                           </td>
                         </tr>
@@ -1165,9 +1445,47 @@ export default function AdminOrdersPage() {
                   </div>
                 )}
 
-              <div className="grid sm:grid-cols-2 gap-4 border-t border-white/5 pt-4">
+              {/* Exchange Rate Input — shown when cost currency is USD */}
+              {editActualPriceCurrency === "USD" && (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-2 mt-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-amber-300 flex items-center gap-1">
+                      <Lock className="w-3.5 h-3.5 text-amber-400" />
+                      Fixed Exchange Rate (1 USD = ? LKR)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setEditActivationLkrRate(String(lkrRate))}
+                      className="text-[11px] text-brand-400 hover:underline cursor-pointer"
+                    >
+                      Reset to Live Rate ({Math.round(lkrRate)} LKR)
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editActivationLkrRate}
+                    onChange={(e) => setEditActivationLkrRate(e.target.value)}
+                    placeholder={`Live rate: ${lkrRate}`}
+                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-amber-400 transition-colors font-mono"
+                  />
+                </div>
+              )}
+
+              <div className="grid sm:grid-cols-3 gap-4 border-t border-white/5 pt-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-400 block">Purchase Cost (Our Cost - Registration)</label>
+                  <label className="text-xs font-semibold text-gray-400 block">Cost Currency</label>
+                  <select
+                    value={editActualPriceCurrency}
+                    onChange={(e) => setEditActualPriceCurrency(e.target.value)}
+                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="LKR">LKR (Rs.)</option>
+                  </select>
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="text-xs font-semibold text-gray-400 block">Purchase Cost ({editActualPriceCurrency === "USD" ? "$" : "Rs."})</label>
                   <input
                     type="number"
                     step="0.01"
@@ -1177,6 +1495,62 @@ export default function AdminOrdersPage() {
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1 border-t border-white/5 pt-4">
+                <label className="text-xs font-semibold text-gray-400 block">Provider Invoice (Admin Only)</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploadingInvoice(true);
+                      try {
+                        const convertedFile = await convertPdfToImage(file);
+                        const formData = new FormData();
+                        formData.append("file", convertedFile);
+                        const url = await uploadProviderInvoice(formData);
+                        setEditProviderInvoiceUrl(url);
+                      } catch (err: any) {
+                        alert("Failed to upload: " + err.message);
+                      } finally {
+                        setUploadingInvoice(false);
+                      }
+                    }}
+                    className="hidden"
+                    id="provider-invoice-upload"
+                  />
+                  <label
+                    htmlFor="provider-invoice-upload"
+                    className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-semibold cursor-pointer transition-colors text-white"
+                  >
+                    {uploadingInvoice ? "Uploading..." : editProviderInvoiceUrl ? "Change Invoice" : "Upload Invoice"}
+                  </label>
+                  {editProviderInvoiceUrl && (
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={editProviderInvoiceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-brand-400 hover:underline"
+                      >
+                        View
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setEditProviderInvoiceUrl(null)}
+                        className="text-xs text-red-400 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4 border-t border-white/5 pt-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-400 block">Selling Price (Client Price - Registration)</label>
                   <input
@@ -1225,10 +1599,10 @@ export default function AdminOrdersPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={savingEdit}
+                  disabled={savingEdit || uploadingInvoice}
                   className="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl font-semibold transition-colors text-sm disabled:opacity-50"
                 >
-                  {savingEdit ? "Saving..." : "Save Changes"}
+                  {savingEdit ? "Saving..." : uploadingInvoice ? "Uploading..." : "Save Changes"}
                 </button>
               </div>
             </form>
@@ -1438,6 +1812,542 @@ export default function AdminOrdersPage() {
           </div>
         </div>
       )}
+
+      {/* Add Domain Order Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-neutral-900 border border-white/10 rounded-3xl w-full max-w-xl p-6 relative shadow-2xl overflow-y-auto max-h-[90vh] text-white">
+            <button
+              onClick={() => setIsAddModalOpen(false)}
+              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-xl font-bold mb-4">Add Domain Order</h3>
+            <form onSubmit={handleAddSubmit} className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Client Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={addEmail}
+                    onChange={(e) => setAddEmail(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Domain Name</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      required
+                      placeholder="example.com"
+                      value={addDomainName}
+                      onChange={(e) => setAddDomainName(e.target.value)}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={checkDomainAvailability}
+                      disabled={searchLoading}
+                      className="px-3 bg-brand-600 hover:bg-brand-500 rounded-xl text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                    >
+                      {searchLoading ? "Checking..." : "Check API"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {searchResults && (
+                <div className={`p-3 rounded-xl border text-xs ${searchResults.available ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                  {searchResults.available 
+                    ? `✓ Domain is available! Registrar Cost: $${searchResults.reg_price_usd} (Renews: $${searchResults.renew_price_usd}). Prices auto-filled.` 
+                    : `✗ WHOIS: Domain is already registered.`
+                  }
+                </div>
+              )}
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Registrar</label>
+                  <input
+                    type="text"
+                    required
+                    value={addRegistrar}
+                    onChange={(e) => setAddRegistrar(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Status</label>
+                  <select
+                    value={addStatus}
+                    onChange={(e) => setAddStatus(e.target.value)}
+                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                  >
+                    <option value="active">Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="expired">Expired</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Pricing Grid */}
+              <div className="grid sm:grid-cols-4 gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Cost Currency</label>
+                  <select
+                    value={addActualPriceCurrency}
+                    onChange={(e) => setAddActualPriceCurrency(e.target.value)}
+                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="LKR">LKR (Rs.)</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Reg Cost</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={addRegCost}
+                    onChange={(e) => setAddRegCost(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-xs font-semibold text-gray-500 block">Selling Currency</span>
+                  <div className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-gray-400">
+                    LKR (Rs.)
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Reg Price (Retail)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={addRegPrice}
+                    onChange={(e) => setAddRegPrice(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                  />
+                </div>
+              </div>
+
+              {/* Renewal Pricing Grid */}
+              <div className="grid sm:grid-cols-2 gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Renewal Cost ({addActualPriceCurrency === "USD" ? "$" : "Rs."})</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={addRenewCost}
+                    onChange={(e) => setAddRenewCost(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Renewal Price (LKR)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={addRenewPrice}
+                    onChange={(e) => setAddRenewPrice(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-400 block">Expiry Date</label>
+                <input
+                  type="date"
+                  required
+                  value={addExpiry}
+                  onChange={(e) => setAddExpiry(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                />
+              </div>
+
+              {/* Upload Provider Invoice */}
+              <div className="space-y-1 border-t border-white/5 pt-4">
+                <label className="text-xs font-semibold text-gray-400 block">Provider Invoice (Admin Only)</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploadingAddInvoice(true);
+                      try {
+                        const convertedFile = await convertPdfToImage(file);
+                        const formData = new FormData();
+                        formData.append("file", convertedFile);
+                        const url = await uploadProviderInvoice(formData);
+                        setAddProviderInvoiceUrl(url);
+                      } catch (err: any) {
+                        alert("Failed to upload: " + err.message);
+                      } finally {
+                        setUploadingAddInvoice(false);
+                      }
+                    }}
+                    className="hidden"
+                    id="provider-invoice-add-upload-dom"
+                  />
+                  <label
+                    htmlFor="provider-invoice-add-upload-dom"
+                    className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-semibold cursor-pointer transition-colors text-white"
+                  >
+                    {uploadingAddInvoice ? "Uploading..." : addProviderInvoiceUrl ? "Change Invoice" : "Upload Invoice"}
+                  </label>
+                  {addProviderInvoiceUrl && (
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={addProviderInvoiceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-brand-400 hover:underline"
+                      >
+                        View
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-5 py-2.5 bg-white/5 hover:bg-white/10 rounded-2xl font-semibold transition-colors text-sm text-gray-300 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit || uploadingAddInvoice}
+                  className="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl font-semibold transition-colors text-sm disabled:opacity-50 cursor-pointer"
+                >
+                  {savingEdit ? "Adding..." : uploadingAddInvoice ? "Uploading..." : "Add Domain"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Invoice Viewer Modal */}
+      {viewingInvoice && <DomainInvoiceModal
+        order={viewingInvoice.order}
+        lkrRate={lkrRate}
+        onClose={() => setViewingInvoice(null)}
+      />}
+
+      {viewingRenewalInvoice && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={() => setViewingRenewalInvoice(null)}>
+          <div className="relative bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden max-w-3xl w-full max-h-[90vh] shadow-2xl" onClick={e => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-white/20 rounded-full text-white transition-colors cursor-pointer" onClick={() => setViewingRenewalInvoice(null)}>
+              <X className="w-5 h-5" />
+            </button>
+            <div className="p-5 border-b border-white/10">
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Renewal Invoice</p>
+              <p className="text-white font-semibold mt-0.5">{viewingRenewalInvoice.domain_name} — {viewingRenewalInvoice.invoice_id}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{new Date(viewingRenewalInvoice.renewal_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            </div>
+            <div className="flex items-center justify-center p-6 bg-black/50 min-h-[400px]">
+              <img src={viewingRenewalInvoice.renewal_invoice_url!} alt="Renewal Invoice" className="max-w-full max-h-full object-contain rounded-xl shadow-lg border border-white/5" />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DomainInvoiceModal({
+  order,
+  lkrRate,
+  onClose,
+}: {
+  order: DomainOrder;
+  lkrRate: number;
+  onClose: () => void;
+}) {
+  const [tab, setTab] = useState<'purchase' | 'renewals'>('purchase');
+  const [renewals, setRenewals] = useState<DomainRenewalHistoryRow[]>([]);
+  const [loadingRenewals, setLoadingRenewals] = useState(false);
+  const [renewalIdx, setRenewalIdx] = useState(0);
+  const [uploadingRenewal, setUploadingRenewal] = useState(false);
+  const renewalFileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoadingRenewals(true);
+    getDomainRenewalHistory(order.id).then(res => {
+      if (isMounted) {
+        setRenewals(res);
+        setLoadingRenewals(false);
+      }
+    });
+    return () => { isMounted = false; };
+  }, [order.id]);
+
+  const renewalInvoices = renewals.filter(r => r.renewal_invoice_url);
+
+  const lockedRate    = order.activation_lkr_rate ?? null;
+  const lockedCost    = order.activation_lkr_cost  ?? null;
+  const lockedPrice   = order.activation_lkr_price ?? null;
+  const effectiveRate = lockedRate ?? lkrRate;
+
+  const costLkr   = lockedCost  != null ? lockedCost  : order.actual_price  * effectiveRate;
+  const priceLkr  = lockedPrice != null ? lockedPrice : order.selling_price * effectiveRate;
+  const profitLkr = priceLkr - costLkr;
+
+  const fmtLKR = (v: number) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(v || 0);
+  const fmtUSD = (v: number) => `$${v.toFixed(2)}`;
+
+  const date = order.purchase_date
+    ? new Date(order.purchase_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    : order.created_at
+    ? new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    : 'N/A';
+
+  async function handleRenewalUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingRenewal(true);
+    try {
+      let uploadFile = file;
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        if (!(window as any).pdfjsLib) {
+          await new Promise<void>((res, rej) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js';
+            s.onload = () => res(); s.onerror = rej;
+            document.head.appendChild(s);
+          });
+        }
+        const lib = (window as any).pdfjsLib;
+        lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        const ab = await file.arrayBuffer();
+        const pdf = await lib.getDocument({ data: ab }).promise;
+        const page = await pdf.getPage(1);
+        const vp = page.getViewport({ scale: 2 });
+        const canvas = document.createElement('canvas');
+        canvas.width = vp.width; canvas.height = vp.height;
+        await page.render({ canvasContext: canvas.getContext('2d')!, viewport: vp }).promise;
+        const blob = await new Promise<Blob>(r => canvas.toBlob(b => r(b!), 'image/png'));
+        uploadFile = new File([blob], file.name.replace(/\.pdf$/i, '.png'), { type: 'image/png' });
+      }
+      const fd = new FormData();
+      fd.append('file', uploadFile);
+      const url = await uploadRenewalInvoiceForDomain(fd);
+      
+      // Target latest renewal record or create one
+      const targetRow = renewals.find(r => r.id !== -1);
+      if (targetRow) {
+        await setDomainRenewalInvoiceUrl(targetRow.id, url);
+        const updated = await getDomainRenewalHistory(order.id);
+        setRenewals(updated);
+        setRenewalIdx(updated.filter(r => r.renewal_invoice_url).length - 1);
+      } else {
+        alert("Upload successful! Please assign to a renewal record in the history panel below.");
+      }
+    } catch (err) {
+      console.error('Renewal invoice upload failed:', err);
+    } finally {
+      setUploadingRenewal(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={onClose}>
+      <div className="relative flex flex-col md:flex-row bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden max-w-5xl w-full max-h-[90vh] shadow-2xl" onClick={e => e.stopPropagation()}>
+        <button className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md cursor-pointer" onClick={onClose}>
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Left panel — clean receipt style */}
+        <div className="w-full md:w-72 shrink-0 bg-white/5 p-8 flex flex-col gap-6 border-b md:border-b-0 md:border-r border-white/10 overflow-y-auto">
+          <div>
+            <h3 className="text-xl font-bold text-white">Domain Provider Invoice</h3>
+            <p className="text-sm text-gray-400">Transaction Information</p>
+          </div>
+
+          <div className="space-y-5">
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Domain</p>
+              <p className="text-sm font-semibold text-white">{order.domain_name}</p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Purchase Cost</p>
+              <p className="text-3xl font-bold text-green-400">{fmtUSD(order.actual_price)}</p>
+              {lockedRate != null && (
+                <p className="text-xs text-amber-300/70 mt-0.5">{fmtLKR(costLkr)} <span className="text-[10px]">@{Math.round(effectiveRate)}</span></p>
+              )}
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Date</p>
+              <p className="text-sm font-medium text-white">{date}</p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Client</p>
+              <p className="text-sm font-medium text-white">{order.client_email}</p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Registrar</p>
+              <p className="text-sm font-medium text-white">{order.registrar || 'Internet.bs'}</p>
+            </div>
+
+            <hr className="border-white/10" />
+
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2">Financials</p>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Actual Cost</span>
+                  <span className="text-white font-medium">{fmtUSD(order.actual_price)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Selling Price</span>
+                  <span className="text-white font-medium">{fmtUSD(order.selling_price)}</span>
+                </div>
+                <div className="flex justify-between border-t border-white/10 pt-2">
+                  <span className="text-gray-400">Profit</span>
+                  <span className={`font-bold ${profitLkr >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmtLKR(profitLkr)}</span>
+                </div>
+              </div>
+            </div>
+
+            {order.invoice_id && (
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Linked Invoice</p>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 border border-brand-500/20 rounded-xl text-brand-400 font-mono text-sm">
+                  <FileText className="w-3.5 h-3.5" />{order.invoice_id}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right panel — invoice images & tabs */}
+        <div className="flex-1 flex flex-col min-h-0">
+          {/* Tabs */}
+          <div className="flex border-b border-white/10 bg-black/30">
+            <button
+              onClick={() => setTab('purchase')}
+              className={`px-5 py-3 text-sm font-medium transition-colors cursor-pointer ${
+                tab === 'purchase' ? 'text-white border-b-2 border-brand-500' : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >Provider Invoice</button>
+            <button
+              onClick={() => { setTab('renewals'); setRenewalIdx(Math.max(0, renewalInvoices.length - 1)); }}
+              className={`px-5 py-3 text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 ${
+                tab === 'renewals' ? 'text-white border-b-2 border-brand-500' : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Renewal Invoices
+              {renewalInvoices.length > 0 && <span className="text-[10px] bg-brand-500 text-white rounded-full px-1.5 py-0.5">{renewalInvoices.length}</span>}
+            </button>
+          </div>
+
+          {tab === 'purchase' && (
+            <div className="flex-1 flex items-center justify-center p-6 bg-black/50 overflow-auto">
+              {order.provider_invoice_url ? (
+                <img src={order.provider_invoice_url} alt="Provider Invoice" className="max-w-full max-h-full object-contain rounded-xl shadow-lg border border-white/5" />
+              ) : (
+                <p className="text-gray-500 text-sm">No provider invoice uploaded</p>
+              )}
+            </div>
+          )}
+
+          {tab === 'renewals' && (
+            <div className="flex-1 flex flex-col">
+              {loadingRenewals ? (
+                <div className="flex-1 flex items-center justify-center p-8 text-gray-500 text-sm gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin" /> Loading renewal invoices...
+                </div>
+              ) : renewalInvoices.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
+                  <RefreshCw className="w-10 h-10 text-gray-700" />
+                  <p className="text-gray-500 text-sm text-center">No renewal invoices yet.<br/>Upload one below.</p>
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col">
+                  {/* Invoice image */}
+                  <div className="flex-1 flex items-center justify-center p-6 bg-black/50 overflow-auto relative">
+                    <img
+                      src={renewalInvoices[renewalIdx]?.renewal_invoice_url!}
+                      alt={`Renewal Invoice ${renewalIdx + 1}`}
+                      className="max-w-full max-h-full object-contain rounded-xl shadow-lg border border-white/5"
+                    />
+                    {/* Nav arrows */}
+                    {renewalInvoices.length > 1 && (
+                      <>
+                        <button
+                          onClick={() => setRenewalIdx(i => Math.max(0, i - 1))}
+                          disabled={renewalIdx === 0}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-black/70 hover:bg-white/20 rounded-full text-white disabled:opacity-30 transition-all cursor-pointer"
+                        ><ChevronLeft className="w-5 h-5" /></button>
+                        <button
+                          onClick={() => setRenewalIdx(i => Math.min(renewalInvoices.length - 1, i + 1))}
+                          disabled={renewalIdx === renewalInvoices.length - 1}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-black/70 hover:bg-white/20 rounded-full text-white disabled:opacity-30 transition-all cursor-pointer"
+                        ><ChevronRight className="w-5 h-5" /></button>
+                      </>
+                    )}
+                  </div>
+                  {/* Thumbnails + meta */}
+                  <div className="p-4 border-t border-white/10 bg-black/30 flex items-center gap-3 overflow-x-auto">
+                    {renewalInvoices.map((inv, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setRenewalIdx(i)}
+                        className={`shrink-0 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                          i === renewalIdx ? 'border-brand-500' : 'border-white/10 opacity-50 hover:opacity-80'
+                        }`}
+                      >
+                        <img src={inv.renewal_invoice_url!} alt={`Thumbnail ${i+1}`} className="w-14 h-14 object-cover" />
+                      </button>
+                    ))}
+                    <div className="ml-auto text-xs text-gray-500 shrink-0">
+                      {renewalIdx + 1} / {renewalInvoices.length}
+                      {renewalInvoices[renewalIdx]?.renewal_date && (
+                        <div>{new Date(renewalInvoices[renewalIdx].renewal_date).toLocaleDateString()}</div>
+                      )}
+                      {renewalInvoices[renewalIdx]?.invoice_id && (
+                        <div className="text-gray-400 font-mono">{renewalInvoices[renewalIdx].invoice_id}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Upload new renewal invoice */}
+              <div className="p-4 border-t border-white/10 bg-black/20">
+                <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wider">Add Renewal Invoice</p>
+                <input ref={renewalFileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleRenewalUpload} />
+                <button
+                  onClick={() => renewalFileRef.current?.click()}
+                  disabled={uploadingRenewal}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors cursor-pointer"
+                >
+                  {uploadingRenewal ? <><RefreshCw className="w-4 h-4 animate-spin" />Uploading...</> : <><Upload className="w-4 h-4" />Upload Renewal Invoice</>}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -42,9 +42,10 @@ import {
   Plus,
   ExternalLink,
   Clock,
-  Settings,
   Globe,
-  RefreshCw
+  RefreshCw,
+  Server,
+  Settings
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -159,9 +160,9 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isServices = pathname === "/admin/services";
   const isPortfolio = pathname === "/admin/portfolio";
   const isDomains = pathname.startsWith("/admin/domains");
-  const isSettings = pathname.startsWith("/admin/settings");
   const isAgreements = pathname.startsWith("/admin/agreements");
-  const hideSelector = isServices || isPortfolio || isBookings || isDomains;
+  const isHosting = pathname === "/admin/hosting";
+  const hideSelector = isServices || isPortfolio || isBookings || isDomains || isHosting;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [currentTime, setCurrentTime] = useState("");
@@ -206,6 +207,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path.startsWith("/admin/settings")) return "Settings";
     if (path.startsWith("/admin/agreements")) return "Agreements";
     if (path.startsWith("/admin/domains")) return "Domains";
+    if (path.startsWith("/admin/hosting")) return "Hosting";
     return "Admin";
   };
 
@@ -285,12 +287,19 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
               <span className="hidden sm:block w-[1px] h-5 bg-white/15" />
               {isDomains ? (
                 <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("domains:refresh"))}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
-                  title="Refresh Orders"
+                  onClick={() => window.dispatchEvent(new CustomEvent("domains:open-add"))}
+                  className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
                 >
-                  <RefreshCw className="w-4 h-4 text-brand-400" />
-                  <span>Refresh</span>
+                  <Plus className="w-4 h-4" />
+                  <span>Add New</span>
+                </button>
+              ) : isHosting ? (
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("hosting:open-add"))}
+                  className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add New</span>
                 </button>
               ) : (
                 <a
@@ -341,7 +350,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                   className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
                 >
                   <CalendarPlus className="w-4 h-4 text-brand-500" />
-                  <span className="hidden sm:inline">Add to Your Calendar</span>
+                  <span className="hidden sm:inline">Sync with Your Calendar</span>
                 </button>
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("bookings:open-new-event"))}
@@ -376,6 +385,14 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                       Add Client
                     </button>
                   </div>
+                ) : isHosting ? (
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("hosting:open-add"))}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors active:scale-95 duration-200 cursor-pointer text-xs whitespace-nowrap"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Hosting Order
+                  </button>
                 ) : isReports && reportsActiveTab === "trial_balance" ? (
                   <button
                     type="button"
@@ -555,11 +572,12 @@ const Sidebar = ({
     { name: "Invoices", href: "/admin/invoices", icon: FileText, divider: true },
     { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
     { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
-    { name: "Bookings", href: "/admin/bookings", icon: Calendar, divider: true },
-    { name: "Domains", href: "/admin/domains", icon: Globe },
+    { name: "Bookings", href: "/admin/bookings", icon: Calendar },
     { name: "Clients", href: "/admin/clients", icon: Users },
     { name: "Reports", href: "/admin/reports", icon: BarChart3, divider: true },
     { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
+    { name: "Domains", href: "/admin/domains", icon: Globe, divider: true },
+    { name: "Hosting", href: "/admin/hosting", icon: Server },
     { name: "Services", href: "/admin/services", icon: Briefcase },
     { name: "Portfolio", href: "/admin/portfolio", icon: Layers },
   ];
@@ -680,7 +698,7 @@ const Sidebar = ({
           </div>
 
           {/* Nav links */}
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
             {links.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
@@ -696,7 +714,7 @@ const Sidebar = ({
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     target={item.newtab ? "_blank" : "_self"}
-                    className={`flex items-center gap-3 pl-[14px] pr-3 py-3 rounded-3xl transition-colors duration-150 overflow-hidden w-full justify-start
+                    className={`flex items-center gap-3 pl-[14px] pr-3 py-2.5 rounded-3xl transition-colors duration-150 overflow-hidden w-full justify-start
                       ${active
                         ? "bg-white text-black font-semibold"
                         : "text-gray-300 hover:bg-white/5"
@@ -723,7 +741,7 @@ const Sidebar = ({
           <div className="p-4 border-t border-white/10">
             <Link href="/admin/settings">
               <div
-                className={`flex items-center gap-3 pl-[14px] pr-3 py-3 rounded-3xl mb-3 overflow-hidden w-full justify-start transition-colors duration-150
+                className={`flex items-center gap-3 pl-[14px] pr-3 py-2.5 rounded-3xl mb-2.5 overflow-hidden w-full justify-start transition-colors duration-150
                   ${isSettingsActive
                     ? "bg-white text-black font-semibold"
                     : "text-gray-300 hover:bg-white/5"
@@ -745,7 +763,7 @@ const Sidebar = ({
 
             <SignOutButton redirectUrl="/login">
               <button
-                className="flex items-center gap-3 pl-[14px] pr-3 py-3 w-full text-gray-300 hover:text-red-400 rounded-3xl overflow-hidden justify-start transition-colors hover:bg-red-500/10"
+                className="flex items-center gap-3 pl-[14px] pr-3 py-2.5 w-full text-gray-300 hover:text-red-400 rounded-3xl overflow-hidden justify-start transition-colors hover:bg-red-500/10"
               >
                 <LogOut className="w-5 h-5 flex-shrink-0" />
 
