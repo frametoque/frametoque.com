@@ -301,6 +301,23 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                   <Plus className="w-4 h-4" />
                   <span>Add New</span>
                 </button>
+              ) : isBookings ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("bookings:open-new-event"))}
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Booking</span>
+                  </button>
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("bookings:open-subscribe"))}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
+                  >
+                    <CalendarPlus className="w-4 h-4 text-brand-400" />
+                    <span>Sync with your calendar</span>
+                  </button>
+                </div>
               ) : (
                 <a
                   href={isServices ? "/services" : "/work"}
