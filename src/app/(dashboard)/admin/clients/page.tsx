@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Search, Plus, Edit2, Trash2, X, Loader2, ChevronRight, Users, Crown, Sparkles, Clock } from "lucide-react";
 import Link from "next/link";
 import { getClients, createClient, updateClient, deleteClient } from "../actions/actions";
@@ -34,7 +34,22 @@ export default function ClientsPage() {
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await getClients();
+        if (!cancelled) setData(res);
+      } catch (e) {
+        console.error("Failed to load clients", e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     const handleSearch = (e: Event) => {

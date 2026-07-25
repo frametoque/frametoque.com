@@ -178,11 +178,27 @@ export default function HostingPage() {
   };
 
   useEffect(() => {
-    fetchOrders();
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const [rateRes, data] = await Promise.all([
+          fetch("https://open.er-api.com/v6/latest/USD").then(r => r.json()).catch(() => null),
+          getHostingOrders(),
+        ]);
+        if (!cancelled) {
+          if (rateRes?.rates?.LKR) setLkrRate(rateRes.rates.LKR);
+          setOrders(data);
+        }
+      } catch (_) {}
+      if (!cancelled) setLoading(false);
+    }
+    load();
 
     const handleOpenAdd = () => handleOpenAddModal();
     window.addEventListener("hosting:open-add", handleOpenAdd);
     return () => {
+      cancelled = true;
       window.removeEventListener("hosting:open-add", handleOpenAdd);
     };
   }, []);

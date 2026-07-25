@@ -160,13 +160,18 @@ export default function AnalyticsPage() {
   const [chartLoading, setChartLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       setLoading(true);
-      try { setData(await getAnalyticsData(dateRange)); }
+      try { 
+        const result = await getAnalyticsData(dateRange);
+        if (!cancelled) setData(result);
+      }
       catch (e) { console.error(e); }
-      finally { setLoading(false); }
+      finally { if (!cancelled) setLoading(false); }
     }
     load();
+    return () => { cancelled = true; };
   }, [dateRange]);
 
   // Fetch chart-specific data whenever the zoom level changes. This is

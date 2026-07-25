@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Wallet, TrendingUp, Plus, Edit2, Trash2, Eye, Loader2, CheckCircle2, FolderOpen, X, Download } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -80,7 +80,20 @@ export default function QuotationsPage() {
   };
 
   useEffect(() => {
-    loadData();
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await getQuotations(startDate, endDate);
+        if (!cancelled) setData(res);
+      } catch (e) {
+        console.error("Failed to load quotations", e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
   }, [startDate, endDate]);
 
   useEffect(() => {

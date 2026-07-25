@@ -138,7 +138,23 @@ export default function ServicesAdminPage() {
 
   useEffect(() => {
     setIsReorderMode(false);
-    loadServices();
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const data = await getServicesByCategory(activeCategory);
+        if (!cancelled) {
+          setServices(data);
+          setDragItems(data);
+        }
+      } catch (err) {
+        console.error("Failed to load services:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
   }, [activeCategory]);
 
   // Lock body & document scroll when modal is open

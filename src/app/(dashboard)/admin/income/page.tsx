@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2, Eye, FilePlus, Trash } from "lucide-react";
 import Link from "next/link";
 import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice, getBankAccounts } from "../actions/actions";
@@ -135,7 +135,26 @@ export default function IncomePage() {
     }
   };
 
-  useEffect(() => { loadData(); }, [startDate, endDate]);
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const [res, cls, accs] = await Promise.all([getIncomes(startDate, endDate), getClients(), getBankAccounts()]);
+        if (!cancelled) {
+          setData(res);
+          setClients(cls);
+          setBankAccounts(accs);
+        }
+      } catch (e) {
+        console.error("Failed to load incomes", e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [startDate, endDate]);
 
   const openNew = () => {
     setEditingId(null);

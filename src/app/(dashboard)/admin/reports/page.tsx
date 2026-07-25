@@ -41,6 +41,7 @@ export default function ReportsPage() {
 
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       setLoading(true);
       try {
@@ -48,15 +49,18 @@ export default function ReportsPage() {
           getReports(startDate, endDate),
           getClients(),
         ]);
-        setData(res);
-        setClients(cls);
+        if (!cancelled) {
+          setData(res);
+          setClients(cls);
+        }
       } catch (e) {
         console.error("Failed to load reports", e);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     load();
+    return () => { cancelled = true; };
   }, [startDate, endDate]);
 
   useEffect(() => {

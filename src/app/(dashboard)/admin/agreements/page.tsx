@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   FilePenLine, Plus, Eye, Download, Trash2, Edit2,
   Clock, CheckCircle2, AlertCircle, X,
@@ -56,16 +56,29 @@ export default function AgreementsPage() {
   };
 
   useEffect(() => {
-    fetchAgreements();
+    let cancelled = false;
+    async function load() {
+      try {
+        setLoading(true);
+        const data = await getAgreements();
+        if (!cancelled) setAgreements(data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
   }, []);
 
   // Derived stats
-  const totalValue = agreements
-    .filter(a => a.status === "signed")
-    .reduce((s, a) => s + (a.total_fee || 0), 0);
-  const activeCount = agreements.filter(a => a.status === "signed").length;
-  const pendingCount = agreements.filter(a => a.status === "pending").length;
-  const expiredCount = agreements.filter(a => a.status === "expired").length;
+  const { totalValue, activeCount, pendingCount, expiredCount } = useMemo(() => ({
+    totalValue: agreements.filter(a => a.status === "signed").reduce((s, a) => s + (a.total_fee || 0), 0),
+    activeCount: agreements.filter(a => a.status === "signed").length,
+    pendingCount: agreements.filter(a => a.status === "pending").length,
+    expiredCount: agreements.filter(a => a.status === "expired").length,
+  }), [agreements]);
 
   const stats = [
     { label: "Signed Agreements", value: activeCount.toString(), icon: CheckCircle2, color: "text-green-400", bg: "bg-green-400/10" },

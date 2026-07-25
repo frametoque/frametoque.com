@@ -462,13 +462,32 @@ export default function AdminOrdersPage() {
   };
 
   useEffect(() => {
-    // Fetch LKR rate and orders in parallel on mount
+    let cancelled = false;
+
+    // Fetch LKR rate (no cancel needed — just state update, low stakes)
     fetch("https://open.er-api.com/v6/latest/USD")
       .then((res) => res.json())
-      .then((data) => { if (data?.rates?.LKR) setLkrRate(data.rates.LKR); })
+      .then((data) => { if (!cancelled && data?.rates?.LKR) setLkrRate(data.rates.LKR); })
       .catch((e) => console.error("Failed to load LKR exchange rate", e));
 
-    fetchOrders();
+    async function load() {
+      setLoading(true);
+      try {
+        const [data, renewals] = await Promise.all([
+          getDomainOrders(),
+          getAllRenewalHistory(),
+        ]);
+        if (!cancelled) {
+          setOrders(data);
+          setAllRenewals(renewals);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
 
     const handleOpenAdd = () => {
       setAddEmail("");
@@ -491,6 +510,7 @@ export default function AdminOrdersPage() {
     window.addEventListener("domains:open-add", handleOpenAdd);
     window.addEventListener("domains:refresh", handleRefreshEvent);
     return () => {
+      cancelled = true;
       window.removeEventListener("domains:open-add", handleOpenAdd);
       window.removeEventListener("domains:refresh", handleRefreshEvent);
     };

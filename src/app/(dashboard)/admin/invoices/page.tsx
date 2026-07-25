@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { FileText, CheckCircle, Clock, AlertCircle, Search, Eye, Edit2, Send, Download, Trash2, DollarSign, X, Loader2, Upload, Image as ImageIcon, FileText as FileIcon } from "lucide-react";
 import Link from "next/link";
 import { getInvoices, deleteInvoice, recordInvoicePayment, adminUploadPaymentSlip } from "../actions/actions";
@@ -214,7 +214,23 @@ export default function InvoicesPage() {
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const res = await getInvoices();
+        if (!cancelled) {
+          setData(res);
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error("Failed to load invoices", e);
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this invoice?")) {
@@ -232,6 +248,28 @@ export default function InvoicesPage() {
     navigator.clipboard.writeText(url);
     alert("Invoice link copied to clipboard: " + url);
   };
+
+  const filteredInvoices = useMemo(() => data?.items?.filter((row: any) => {
+    let statusMatch = false;
+    const rowStatus = row.status?.toLowerCase() || '';
+    if (activeFilter === "All") {
+      statusMatch = true;
+    } else if (activeFilter === "Paid") {
+      statusMatch = rowStatus === "paid" || rowStatus === "fully paid";
+    } else if (activeFilter === "Fully Paid") {
+      statusMatch = rowStatus === "fully paid";
+    } else if (activeFilter === "Partially Paid") {
+      statusMatch = rowStatus === "partially paid";
+    } else if (activeFilter === "On Review") {
+      statusMatch = rowStatus === "on review";
+    } else {
+      statusMatch = rowStatus === activeFilter.toLowerCase();
+    }
+    const searchMatch =
+      row.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      row.id.toLowerCase().includes(searchTerm.toLowerCase());
+    return statusMatch && searchMatch;
+  }) ?? [], [data, activeFilter, searchTerm]);
 
   if (loading || !data) {
     return (
@@ -264,34 +302,14 @@ export default function InvoicesPage() {
     );
   }
 
+
+
   const stats = [
     { label: "Total Issued", value: data.totalIssued.toString(), icon: FileText, color: "text-brand-400", bg: "bg-brand-400/10" },
     { label: "Paid", value: data.paid.toString(), icon: CheckCircle, color: "text-green-400", bg: "bg-green-400/10" },
     { label: "Unpaid", value: data.pending.toString(), icon: Clock, color: "text-amber-400", bg: "bg-amber-400/10" },
     { label: "Total Due", value: formatLKR(data.totalDue), icon: AlertCircle, color: "text-red-400", bg: "bg-red-400/10" },
   ];
-
-  const filteredInvoices = data.items.filter((row: any) => {
-    let statusMatch = false;
-    const rowStatus = row.status?.toLowerCase() || '';
-    if (activeFilter === "All") {
-      statusMatch = true;
-    } else if (activeFilter === "Paid") {
-      statusMatch = rowStatus === "paid" || rowStatus === "fully paid";
-    } else if (activeFilter === "Fully Paid") {
-      statusMatch = rowStatus === "fully paid";
-    } else if (activeFilter === "Partially Paid") {
-      statusMatch = rowStatus === "partially paid";
-    } else if (activeFilter === "On Review") {
-      statusMatch = rowStatus === "on review";
-    } else {
-      statusMatch = rowStatus === activeFilter.toLowerCase();
-    }
-    const searchMatch =
-      row.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      row.id.toLowerCase().includes(searchTerm.toLowerCase());
-    return statusMatch && searchMatch;
-  });
 
   return (
     <div className="space-y-6">

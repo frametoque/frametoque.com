@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import {
   Plus,
   Edit2,
@@ -28,9 +28,62 @@ import {
   uploadPortfolioMedia,
   uploadPortfolioMediaFromUrl,
   uploadPortfolioMediaWithDimensions,
+  createBatchPortfolioPhotos,
   reorderPortfolioItems,
-  reorderPortfolioItemsBatch
+  reorderPortfolioItemsBatch,
+  reorderEventPhotosBatch,
+  cleanDuplicatesFromEvent
 } from "../actions/portfolioActions";
+
+/**
+ * Executes async tasks with a controlled concurrency limit and retry capability per task.
+ */
+async function runWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>,
+  onProgress?: (completed: number, total: number) => void
+): Promise<{ results: (R | null)[]; errors: { index: number; error: any }[] }> {
+  const results: (R | null)[] = new Array(items.length).fill(null);
+  const errors: { index: number; error: any }[] = [];
+  let completed = 0;
+  let nextIndex = 0;
+
+  const worker = async () => {
+    while (nextIndex < items.length) {
+      const idx = nextIndex++;
+      const item = items[idx];
+      let attempts = 0;
+      let success = false;
+
+      while (attempts < 3 && !success) {
+        try {
+          attempts++;
+          const res = await fn(item, idx);
+          results[idx] = res;
+          success = true;
+        } catch (err: any) {
+          if (attempts >= 3) {
+            console.error(`Item ${idx} failed after 3 attempts:`, err);
+            errors.push({ index: idx, error: err });
+          } else {
+            await new Promise(r => setTimeout(r, 500));
+          }
+        }
+      }
+
+      completed++;
+      if (onProgress) {
+        onProgress(completed, items.length);
+      }
+    }
+  };
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
+  await Promise.all(workers);
+
+  return { results, errors };
+}
 
 // Map slugs to categories
 const CATEGORIES = [
@@ -135,7 +188,7 @@ export default function PortfolioAdminPage() {
   const [bulkUploading, setBulkUploading] = useState(false);
 
   // New photography event staging state
-  type StagedPhoto = { file: File; previewUrl: string; width: number; height: number; name: string };
+  type StagedPhoto = { file: File; previewUrl: string; width?: number; height?: number; name: string; hash?: string };
   const [photoNewEventName, setPhotoNewEventName] = useState("");
   const [photoStagedFiles, setPhotoStagedFiles] = useState<StagedPhoto[]>([]);
   
@@ -147,6 +200,98 @@ export default function PortfolioAdminPage() {
   const [dragItems, setDragItems] = useState<any[]>([]);
   const [dragEvents, setDragEvents] = useState<any[]>([]);
   const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
+
+  // Sub-event photos reordering state
+  const [subEventPhotos, setSubEventPhotos] = useState<any[]>([]);
+  const [draggingSubPhotoIdx, setDraggingSubPhotoIdx] = useState<number | null>(null);
+  const [savingSubPhotoOrder, setSavingSubPhotoOrder] = useState(false);
+  const [hasReorderedSubPhotos, setHasReorderedSubPhotos] = useState(false);
+
+  useEffect(() => {
+    if (photoSubManagerEvent) {
+      const list = items.filter(img => img.event_name === photoSubManagerEvent);
+      setSubEventPhotos(list);
+      setHasReorderedSubPhotos(false);
+    } else {
+      setSubEventPhotos([]);
+      setHasReorderedSubPhotos(false);
+    }
+  }, [photoSubManagerEvent, items]);
+
+  const hasSubEventDuplicates = useMemo(() => {
+    if (!subEventPhotos || subEventPhotos.length <= 1) return false;
+    const seen = new Set<string>();
+    for (const photo of subEventPhotos) {
+      let key = "";
+      if (photo.file_hash) {
+        key = `hash:${photo.file_hash}`;
+      } else if (photo.original_filename) {
+        key = `name:${photo.original_filename.toLowerCase()}`;
+      } else if (photo.src) {
+        const decoded = decodeURIComponent(photo.src);
+        const basename = decoded.split('/').pop() || "";
+        const cleanName = basename.replace(/^[0-9a-fA-F]{12}-/, "").replace(/^\d+-/, "");
+        key = `name:${cleanName.toLowerCase()}`;
+      } else {
+        key = `id:${photo.id}`;
+      }
+      if (seen.has(key)) return true;
+      seen.add(key);
+    }
+    return false;
+  }, [subEventPhotos]);
+
+  const handleSubPhotoDragStart = (e: React.DragEvent, index: number) => {
+    setDraggingSubPhotoIdx(index);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleSubPhotoDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggingSubPhotoIdx === null || draggingSubPhotoIdx === index) return;
+    const list = [...subEventPhotos];
+    const dragged = list[draggingSubPhotoIdx];
+    list.splice(draggingSubPhotoIdx, 1);
+    list.splice(index, 0, dragged);
+    setDraggingSubPhotoIdx(index);
+    setSubEventPhotos(list);
+    setHasReorderedSubPhotos(true);
+  };
+
+  const handleSubPhotoDragEnd = () => {
+    setDraggingSubPhotoIdx(null);
+  };
+
+  const handleSaveSubPhotoOrder = async () => {
+    setSavingSubPhotoOrder(true);
+    try {
+      const orderedIds = subEventPhotos.map(p => p.id);
+      await reorderEventPhotosBatch(orderedIds);
+      setHasReorderedSubPhotos(false);
+      await loadItems();
+    } catch (err) {
+      console.error("Failed to save reordered photos:", err);
+      alert("Failed to save the new photo order.");
+    } finally {
+      setSavingSubPhotoOrder(false);
+    }
+  };
+  const [cleaningDuplicates, setCleaningDuplicates] = useState(false);
+
+  const handleCleanDuplicates = async () => {
+    if (!photoSubManagerEvent) return;
+    setCleaningDuplicates(true);
+    try {
+      const res = await cleanDuplicatesFromEvent(photoSubManagerEvent);
+      alert(`Deduplication complete!\nKept: ${res.kept} photos\nDeleted: ${res.deleted} duplicate photos from database & Vercel Blob CDN.`);
+      await loadItems();
+    } catch (err) {
+      console.error("Failed to clean duplicates:", err);
+      alert("Failed to clean duplicates.");
+    } finally {
+      setCleaningDuplicates(false);
+    }
+  };
 
   // Fetch portfolio items
   const loadItems = async () => {
@@ -180,7 +325,37 @@ export default function PortfolioAdminPage() {
 
   useEffect(() => {
     setIsReorderMode(false);
-    loadItems();
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await getPortfolioByCategory(activeCategory);
+        if (!cancelled) {
+          setItems(res);
+          setDragItems(res);
+          if (activeCategory === "photography") {
+            const groups = new Map<string, any[]>();
+            for (const item of res) {
+              const name = item.event_name || "Uncategorized";
+              if (!groups.has(name)) groups.set(name, []);
+              groups.get(name)!.push(item);
+            }
+            const eventList = Array.from(groups.entries()).map(([name, images]) => ({
+              name,
+              images,
+              id: images[0]?.event_id
+            }));
+            setDragEvents(eventList);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load portfolio items:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
   }, [activeCategory]);
 
   const handleGenerateScreenshots = () => {
@@ -333,41 +508,50 @@ export default function PortfolioAdminPage() {
     e.target.value = "";
 
     // Initialise queue entries
-    const initialQueue: { name: string; status: "queued" | "uploading" | "done" | "error" }[] = files.map(f => ({
+    const initialQueue: { name: string; status: "queued" | "uploading" | "done" | "error"; error?: string }[] = files.map(f => ({
       name: f.name,
       status: "queued"
     }));
     setBulkQueue(initialQueue);
     setBulkUploading(true);
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    const eventName = photoSubManagerEvent;
 
-      // Mark current as uploading
-      setBulkQueue(prev => prev.map((entry, idx) =>
-        idx === i ? { ...entry, status: "uploading" } : entry
-      ));
-
-      try {
+    const { results, errors } = await runWithConcurrency(
+      files,
+      4, // 4 parallel concurrent uploads
+      async (file, idx) => {
+        setBulkQueue(prev => prev.map((entry, i) => i === idx ? { ...entry, status: "uploading" } : entry));
         const uploadData = new FormData();
         uploadData.append("file", file);
-        const { url, width, height } = await uploadPortfolioMediaWithDimensions(uploadData, photoSubManagerEvent ?? undefined);
+        const res = await uploadPortfolioMediaWithDimensions(uploadData, eventName);
+        setBulkQueue(prev => prev.map((entry, i) => i === idx ? { ...entry, status: "done" } : entry));
+        return res;
+      }
+    );
 
-        await createPortfolioItem("photography", {
-          event_name: photoSubManagerEvent,
-          src: url,
-          width: String(width),
-          height: String(height)
-        });
+    // Update error state for failed items
+    if (errors.length > 0) {
+      errors.forEach(({ index, error }) => {
+        setBulkQueue(prev => prev.map((entry, i) =>
+          i === index ? { ...entry, status: "error", error: error?.message || "Upload failed" } : entry
+        ));
+      });
+    }
 
-        setBulkQueue(prev => prev.map((entry, idx) =>
-          idx === i ? { ...entry, status: "done" } : entry
-        ));
-      } catch (err: any) {
-        console.error(`Failed to upload ${file.name}:`, err);
-        setBulkQueue(prev => prev.map((entry, idx) =>
-          idx === i ? { ...entry, status: "error", error: err?.message || "Unknown error" } : entry
-        ));
+    const successfulPhotos = results.filter((r): r is { url: string; width: number; height: number; hash: string; filename: string } => r !== null).map(r => ({
+      src: r.url,
+      width: r.width,
+      height: r.height,
+      hash: r.hash,
+      filename: r.filename
+    }));
+
+    if (successfulPhotos.length > 0) {
+      try {
+        await createBatchPortfolioPhotos(eventName, successfulPhotos);
+      } catch (err) {
+        console.error("Failed to batch save DB items for sub-event:", err);
       }
     }
 
@@ -541,18 +725,38 @@ export default function PortfolioAdminPage() {
   };
 
   // Stage selected files for photography bulk upload (client-side preview, no server call yet)
-  const handleStageFiles = (files: FileList | File[]) => {
+  const handleStageFiles = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
-    fileArray.forEach(file => {
-      const previewUrl = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = () => {
-        setPhotoStagedFiles(prev => [
-          ...prev,
-          { file, previewUrl, width: img.naturalWidth, height: img.naturalHeight, name: file.name }
-        ]);
-      };
-      img.src = previewUrl;
+
+    const stagedList: StagedPhoto[] = [];
+    for (const file of fileArray) {
+      let hash = "";
+      try {
+        const buf = await file.arrayBuffer();
+        const digest = await crypto.subtle.digest("SHA-256", buf);
+        hash = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+      } catch (err) {
+        hash = `${file.name}-${file.size}-${file.lastModified}`;
+      }
+      stagedList.push({
+        file,
+        previewUrl: URL.createObjectURL(file),
+        name: file.name,
+        hash
+      });
+    }
+
+    setPhotoStagedFiles(prev => {
+      const map = new Map<string, StagedPhoto>();
+      prev.forEach(item => {
+        const key = item.hash || item.name;
+        map.set(key, item);
+      });
+      stagedList.forEach(item => {
+        const key = item.hash || item.name;
+        map.set(key, item);
+      });
+      return Array.from(map.values());
     });
   };
 
@@ -563,28 +767,47 @@ export default function PortfolioAdminPage() {
 
     setSaving(true);
     setPhotoUploadProgress({ current: 0, total: photoStagedFiles.length });
+
     try {
-      let idx = 0;
-      for (const staged of photoStagedFiles) {
-        const uploadData = new FormData();
-        uploadData.append("file", staged.file);
-        const { url, width, height } = await uploadPortfolioMediaWithDimensions(uploadData, photoNewEventName.trim());
-        await createPortfolioItem("photography", {
-          event_name: photoNewEventName.trim(),
-          src: url,
-          width: String(width),
-          height: String(height)
-        });
-        idx++;
-        setPhotoUploadProgress({ current: idx, total: photoStagedFiles.length });
+      const eventName = photoNewEventName.trim();
+      const { results, errors } = await runWithConcurrency(
+        photoStagedFiles,
+        4, // 4 parallel concurrent uploads
+        async (staged) => {
+          const uploadData = new FormData();
+          uploadData.append("file", staged.file);
+          return await uploadPortfolioMediaWithDimensions(uploadData, eventName);
+        },
+        (current, total) => {
+          setPhotoUploadProgress({ current, total });
+        }
+      );
+
+      const successfulPhotos = results
+        .filter((r): r is { url: string; width: number; height: number; hash: string; filename: string } => r !== null)
+        .map(r => ({
+          src: r.url,
+          width: r.width,
+          height: r.height,
+          hash: r.hash,
+          filename: r.filename
+        }));
+
+      if (successfulPhotos.length > 0) {
+        await createBatchPortfolioPhotos(eventName, successfulPhotos);
       }
+
+      if (errors.length > 0) {
+        alert(`Uploaded ${successfulPhotos.length} out of ${photoStagedFiles.length} photos. ${errors.length} photo(s) failed after retries.`);
+      }
+
       setIsModalOpen(false);
       setPhotoStagedFiles([]);
       setPhotoNewEventName("");
       await loadItems();
     } catch (err) {
       console.error("Failed to save photos:", err);
-      alert("Failed to save one or more photos. Check logs.");
+      alert("Failed to save photos. Check logs.");
     } finally {
       setSaving(false);
       setPhotoUploadProgress(null);
@@ -592,7 +815,7 @@ export default function PortfolioAdminPage() {
   };
 
   // Group photography items by event category name
-  const groupedPhotography = (() => {
+  const groupedPhotography = useMemo(() => {
     if (activeCategory !== "photography") return [];
     const groups = new Map<string, any[]>();
     for (const item of items) {
@@ -605,7 +828,7 @@ export default function PortfolioAdminPage() {
       images,
       id: images[0]?.id
     }));
-  })();
+  }, [activeCategory, items]);
 
   // Retrieve current photos list inside sub-manager event
   const subEventImages = items.filter(img => img.event_name === photoSubManagerEvent);
@@ -756,7 +979,7 @@ export default function PortfolioAdminPage() {
                         <div className="flex items-center gap-1.5 overflow-hidden max-w-xs">
                           {event.images.slice(0, 4).map((img: any) => (
                             <div key={img.id} className="w-10 h-10 rounded-lg overflow-hidden bg-slate-900 border border-white/10 flex-shrink-0">
-                              <img src={img.src} alt="" className="w-full h-full object-cover" />
+                              <img src={img.src} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                             </div>
                           ))}
                           {event.images.length > 4 && (
@@ -1270,10 +1493,10 @@ export default function PortfolioAdminPage() {
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-72 overflow-y-auto pr-1">
                         {photoStagedFiles.map((staged, idx) => (
                           <div key={idx} className="relative group rounded-xl overflow-hidden bg-white/5 border border-white/10 aspect-square">
-                            <img src={staged.previewUrl} alt={staged.name} className="w-full h-full object-cover" />
-                            {/* Dimension badge */}
+                            <img src={staged.previewUrl} alt={staged.name} loading="lazy" decoding="async" className="w-full h-full object-contain p-1 bg-neutral-950" />
+                            {/* File info badge */}
                             <div className="absolute bottom-0 inset-x-0 bg-black/70 px-2 py-1 flex items-center justify-between">
-                              <span className="text-[10px] text-gray-300 font-semibold">{staged.width} × {staged.height}</span>
+                              <span className="text-[10px] text-gray-300 font-semibold truncate max-w-full">{staged.width && staged.height ? `${staged.width} × ${staged.height}` : staged.name}</span>
                             </div>
                             {/* Remove button */}
                             <button
@@ -1367,22 +1590,40 @@ export default function PortfolioAdminPage() {
                   <div>
                     <h3 className="font-semibold text-sm">Add Photos to Category</h3>
                   </div>
-                  <button
-                    type="button"
-                    disabled={bulkUploading}
-                    onClick={() => {
-                      setBulkQueue([]);
-                      subFileInputRef.current?.click();
-                    }}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white rounded-3xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
-                  >
-                    {bulkUploading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Plus className="w-4 h-4" />
+                  <div className="flex items-center gap-2">
+                    {hasSubEventDuplicates && (
+                      <button
+                        type="button"
+                        disabled={cleaningDuplicates}
+                        onClick={handleCleanDuplicates}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 disabled:opacity-50 text-red-400 rounded-3xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
+                        title="Remove duplicate photos from DB and Vercel Blob CDN"
+                      >
+                        {cleaningDuplicates ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4 text-red-400" />
+                        )}
+                        Clean Duplicates
+                      </button>
                     )}
-                    Bulk Upload
-                  </button>
+                    <button
+                      type="button"
+                      disabled={bulkUploading}
+                      onClick={() => {
+                        setBulkQueue([]);
+                        subFileInputRef.current?.click();
+                      }}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white rounded-3xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
+                    >
+                      {bulkUploading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
+                      Bulk Upload
+                    </button>
+                  </div>
                   <input
                     type="file"
                     ref={subFileInputRef}
@@ -1450,23 +1691,53 @@ export default function PortfolioAdminPage() {
 
               {/* Photos List Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {subEventImages.map((photo) => (
-                  <div key={photo.id} className="group relative bg-white/5 border border-white/10 rounded-xl overflow-hidden aspect-square flex flex-col">
-                    <img src={photo.src} alt="" className="w-full flex-1 object-cover" />
-                    <div className="p-2 border-t border-white/5 flex items-center justify-between bg-black/40">
-                      <span className="text-[10px] text-gray-400 font-mono">{photo.width} x {photo.height}</span>
+                {subEventPhotos.map((photo, index) => (
+                  <div
+                    key={photo.id}
+                    draggable
+                    onDragStart={(e) => handleSubPhotoDragStart(e, index)}
+                    onDragOver={(e) => handleSubPhotoDragOver(e, index)}
+                    onDragEnd={handleSubPhotoDragEnd}
+                    className={`group relative bg-neutral-900 border ${
+                      draggingSubPhotoIdx === index ? "border-brand-500 opacity-50 scale-95" : "border-white/10 hover:border-white/30"
+                    } rounded-xl overflow-hidden aspect-square flex flex-col transition-all cursor-grab active:cursor-grabbing shadow-md`}
+                  >
+                    {/* Full Photo Fit (object-contain) */}
+                    <div className="w-full flex-1 min-h-0 bg-neutral-950 p-1.5 flex items-center justify-center relative">
+                      <img
+                        src={photo.src}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-contain pointer-events-none"
+                      />
+                      {/* Drag Handle Indicator */}
+                      <div className="absolute top-2 left-2 p-1.5 rounded-lg bg-black/70 backdrop-blur-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <GripVertical className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+
+                    {/* Footer bar with photo dimensions & delete icon - 100% fixed & visible */}
+                    <div className="h-9 px-2.5 border-t border-white/10 flex items-center justify-between bg-black/90 backdrop-blur-md flex-shrink-0 z-10">
+                      <span className="text-[10px] text-gray-300 font-mono truncate max-w-[70%]">
+                        {photo.width && photo.height ? `${photo.width} × ${photo.height}` : "Photo"}
+                      </span>
                       <button
-                        onClick={() => handleDeletePhotoFromSubEvent(photo.id)}
-                        className="p-1.5 hover:bg-red-500/10 text-gray-400 hover:text-red-400 rounded-md transition-colors cursor-pointer"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePhotoFromSubEvent(photo.id);
+                        }}
                         title="Delete photo"
+                        className="p-1.5 hover:bg-red-500/20 text-gray-300 hover:text-red-400 rounded-lg transition-colors cursor-pointer"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
                 ))}
 
-                {subEventImages.length === 0 && (
+                {subEventPhotos.length === 0 && (
                   <div className="col-span-full p-12 text-center text-gray-500">
                     No images registered under this event.
                   </div>
@@ -1475,14 +1746,30 @@ export default function PortfolioAdminPage() {
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-white/10 flex justify-end bg-black/40 flex-shrink-0 rounded-b-2xl">
-              <button
-                type="button"
-                onClick={() => setPhotoSubManagerEvent(null)}
-                className="px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold text-sm transition-colors cursor-pointer"
-              >
-                Close
-              </button>
+            <div className="p-6 border-t border-white/10 flex items-center justify-between bg-black/40 flex-shrink-0 rounded-b-2xl">
+              <span className="text-xs text-gray-400">
+                {hasReorderedSubPhotos ? "Photo order changed." : "Drag and drop photos to reorder."}
+              </span>
+              <div className="flex items-center gap-3">
+                {hasReorderedSubPhotos && (
+                  <button
+                    type="button"
+                    disabled={savingSubPhotoOrder}
+                    onClick={handleSaveSubPhotoOrder}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    {savingSubPhotoOrder && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Save Order
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPhotoSubManagerEvent(null)}
+                  className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-3xl font-semibold text-sm transition-colors cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </div>
 
           </div>

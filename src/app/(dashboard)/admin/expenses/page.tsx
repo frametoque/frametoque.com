@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Receipt, Calendar, CreditCard, Plus, Edit2, Trash2, X, UploadCloud, Loader2, Eye, RefreshCw } from "lucide-react";
 import { 
   getExpenses, createExpense, deleteExpense, updateExpense, uploadReceipt,
@@ -120,7 +120,26 @@ export default function ExpensesPage() {
   };
 
   useEffect(() => {
-    loadData();
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const [res, schedRes] = await Promise.all([
+          getExpenses(startDate, endDate),
+          getScheduledExpenses().catch(() => [])
+        ]);
+        if (!cancelled) {
+          setData(res);
+          setScheduledExpenses(schedRes);
+        }
+      } catch (e) {
+        console.error("Failed to load expenses data:", e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
   }, [startDate, endDate]);
 
   // Handle actual expense save

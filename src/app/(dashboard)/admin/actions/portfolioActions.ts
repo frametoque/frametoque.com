@@ -3,8 +3,9 @@
 import sql from "@/lib/db";
 import { promises as fs } from "fs";
 import path from "path";
+import crypto from "crypto";
 import { imageSize } from "image-size";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 import { headers } from "next/headers";
 
 // Mapping category slugs to table names
@@ -192,17 +193,24 @@ export async function deletePortfolioItem(categorySlug: string, id: number) {
     const eventId = photoRes[0].event_id;
     const src = photoRes[0].src;
 
-    // 2. Physically delete the photo file from disk if it exists
-    if (src) {
+    // 2. Delete photo file from Vercel Blob CDN if it's a remote blob URL
+    if (src && src.startsWith("http")) {
+      try {
+        await del(src);
+        console.log(`Deleted photo from Vercel Blob CDN: ${src}`);
+      } catch (err: any) {
+        console.error(`Failed to delete Vercel Blob CDN file ${src}:`, err);
+      }
+    } else if (src) {
+      // Local file fallback
       const relativePath = decodeURIComponent(src);
       const cleanedPath = path.normalize(relativePath).replace(/^(\.\.(\/|\\))+/, '');
       const absoluteFilePath = path.join(process.cwd(), "public", cleanedPath);
       try {
         await fs.unlink(absoluteFilePath);
-        console.log(`Physically deleted photo file: ${absoluteFilePath}`);
       } catch (err: any) {
         if (err.code !== 'ENOENT') {
-          console.error(`Failed to delete physical file ${absoluteFilePath}:`, err);
+          console.error(`Failed to delete local file ${absoluteFilePath}:`, err);
         }
       }
     }
@@ -210,27 +218,10 @@ export async function deletePortfolioItem(categorySlug: string, id: number) {
     // 3. Delete the photo row from database
     await sql.query(`DELETE FROM work_photography_photos WHERE id = $1`, [id]);
     
-    // 4. Check if the event now has 0 photos remaining, if so delete the event and its folder
+    // 4. Check if the event now has 0 photos remaining, if so delete the event
     const countRes = await sql.query(`SELECT COUNT(*) as count FROM work_photography_photos WHERE event_id = $1`, [eventId]);
     if (parseInt(countRes[0].count) === 0) {
-      const eventRes = await sql.query(`SELECT event_name FROM work_photography_events WHERE id = $1`, [eventId]);
-      if (eventRes.length > 0) {
-        const eventName = eventRes[0].event_name;
-        // Delete the event row from database
-        await sql.query(`DELETE FROM work_photography_events WHERE id = $1`, [eventId]);
-        
-        // Delete the event's physical directory from disk
-        if (eventName) {
-          const cleanEventName = eventName.trim();
-          const eventDirPath = path.join(process.cwd(), "public", "projects", "photography", cleanEventName);
-          try {
-            await fs.rm(eventDirPath, { recursive: true, force: true });
-            console.log(`Physically deleted event directory: ${eventDirPath}`);
-          } catch (err: any) {
-            console.error(`Failed to delete event directory ${eventDirPath}:`, err);
-          }
-        }
-      }
+      await sql.query(`DELETE FROM work_photography_events WHERE id = $1`, [eventId]);
     }
     return;
   }
@@ -238,6 +229,19 @@ export async function deletePortfolioItem(categorySlug: string, id: number) {
   const table = TABLE_MAP[categorySlug];
   if (!table) {
     throw new Error(`Invalid portfolio category: ${categorySlug}`);
+  }
+
+  // Delete image from Vercel Blob CDN if item has image_path or src
+  try {
+    const rows = await sql.query(`SELECT image_path, src FROM ${table} WHERE id = $1`, [id]);
+    if (rows.length > 0) {
+      const url = rows[0].image_path || rows[0].src;
+      if (url && url.startsWith("http")) {
+        await del(url);
+      }
+    }
+  } catch (err) {
+    // Ignore if column doesn't exist
   }
 
   await sql.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
@@ -278,34 +282,62 @@ export async function reorderPortfolioItems(
 }
 
 /**
- * Batch-assign sort_order 1,2,3... based on the provided id order.
+ * Batch-assign sort_order 1,2,3... based on the provided id order in a single database query.
  * Used when saving a drag-and-drop reorder session.
  */
 export async function reorderPortfolioItemsBatch(
   categorySlug: string,
   orderedIds: number[]
 ) {
-  if (categorySlug === "photography") {
-    for (let i = 0; i < orderedIds.length; i++) {
-      await sql.query(
-        `UPDATE work_photography_events SET sort_order = $1 WHERE id = $2`,
-        [i + 1, orderedIds[i]]
-      );
-    }
-    return;
-  }
+  if (!orderedIds || orderedIds.length === 0) return;
 
-  const table = TABLE_MAP[categorySlug];
+  const table = categorySlug === "photography" ? "work_photography_events" : TABLE_MAP[categorySlug];
   if (!table) {
     throw new Error(`Invalid portfolio category: ${categorySlug}`);
   }
 
-  for (let i = 0; i < orderedIds.length; i++) {
-    await sql.query(
-      `UPDATE ${table} SET sort_order = $1 WHERE id = $2`,
-      [i + 1, orderedIds[i]]
-    );
-  }
+  const valuePairs: string[] = [];
+  const params: any[] = [];
+
+  orderedIds.forEach((id, index) => {
+    const offset = index * 2;
+    valuePairs.push(`($${offset + 1}::int, $${offset + 2}::int)`);
+    params.push(id, index + 1);
+  });
+
+  const query = `
+    UPDATE ${table} AS t
+    SET sort_order = v.sort_order
+    FROM (VALUES ${valuePairs.join(", ")}) AS v(id, sort_order)
+    WHERE t.id = v.id
+  `;
+
+  await sql.query(query, params);
+}
+
+/**
+ * Batch-assign sort_order to photos inside a photography event in a single database query.
+ */
+export async function reorderEventPhotosBatch(orderedPhotoIds: number[]) {
+  if (!orderedPhotoIds || orderedPhotoIds.length === 0) return;
+
+  const valuePairs: string[] = [];
+  const params: any[] = [];
+
+  orderedPhotoIds.forEach((id, index) => {
+    const offset = index * 2;
+    valuePairs.push(`($${offset + 1}::int, $${offset + 2}::int)`);
+    params.push(id, index + 1);
+  });
+
+  const query = `
+    UPDATE work_photography_photos AS p
+    SET sort_order = v.sort_order
+    FROM (VALUES ${valuePairs.join(", ")}) AS v(id, sort_order)
+    WHERE p.id = v.id
+  `;
+
+  await sql.query(query, params);
 }
 
 /**
@@ -366,15 +398,17 @@ export async function uploadPortfolioMediaFromUrl(url: string): Promise<string> 
 export async function uploadPortfolioMediaWithDimensions(
   formData: FormData,
   eventName?: string
-): Promise<{ url: string; width: number; height: number }> {
+): Promise<{ url: string; width: number; height: number; hash: string; filename: string }> {
   const file = formData.get("file") as File;
   if (!file) {
     throw new Error("No file uploaded");
   }
 
+  const originalFilename = file.name;
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
-  const safeFilename = file.name.replace(/\s+/g, "_");
+  const hash = crypto.createHash("sha256").update(buffer).digest("hex");
+  const safeFilename = originalFilename.replace(/[^\w.-]/g, "_");
 
   let filename: string;
   if (eventName) {
@@ -383,9 +417,9 @@ export async function uploadPortfolioMediaWithDimensions(
       .replace(/[^a-zA-Z0-9 '_\-]/g, "")
       .replace(/\s+/g, " ")
       .trim();
-    filename = `projects/photography/${safeEvent}/${Date.now()}-${safeFilename}`;
+    filename = `projects/photography/${safeEvent}/${hash.slice(0, 12)}-${safeFilename}`;
   } else {
-    filename = `uploads/portfolio/${Date.now()}-${safeFilename}`;
+    filename = `uploads/portfolio/${hash.slice(0, 12)}-${safeFilename}`;
   }
 
   const blob = await put(filename, buffer, {
@@ -404,5 +438,208 @@ export async function uploadPortfolioMediaWithDimensions(
     console.error("Failed to parse image dimensions, using defaults:", err);
   }
 
-  return { url: blob.url, width, height };
+  return { url: blob.url, width, height, hash, filename: originalFilename };
 }
+
+/**
+ * Batch insert or update portfolio photos under a photography event.
+ * Replaces duplicate photos (matched by same filename or binary content SHA-256 hash) instead of duplicating them.
+ */
+export async function createBatchPortfolioPhotos(
+  eventName: string,
+  photos: { src: string; width: number; height: number; hash?: string; filename?: string }[]
+) {
+  if (!photos || photos.length === 0) return;
+  const cleanEvent = eventName.trim();
+
+  // Ensure file_hash & original_filename columns exist in database schema
+  try {
+    await sql.query(`ALTER TABLE work_photography_photos ADD COLUMN IF NOT EXISTS file_hash TEXT`);
+    await sql.query(`ALTER TABLE work_photography_photos ADD COLUMN IF NOT EXISTS original_filename TEXT`);
+  } catch (e) {
+    // Ignore if columns already exist
+  }
+
+  // 1. Shift event sort orders
+  await sql.query(`UPDATE work_photography_events SET sort_order = sort_order + 1`);
+  
+  // 2. Insert event if it doesn't exist
+  await sql.query(
+    `INSERT INTO work_photography_events (event_name, sort_order)
+     VALUES ($1, 1)
+     ON CONFLICT (event_name) DO NOTHING`,
+    [cleanEvent]
+  );
+  
+  // Fetch event ID
+  const eventRes = await sql.query(
+    `SELECT id FROM work_photography_events WHERE event_name = $1`,
+    [cleanEvent]
+  );
+  if (!eventRes || eventRes.length === 0) {
+    throw new Error(`Failed to find or create event: ${cleanEvent}`);
+  }
+  const eventId = eventRes[0].id;
+
+  // Fetch all existing photos for this event
+  const existingPhotos = await sql.query(
+    `SELECT id, src, original_filename, file_hash FROM work_photography_photos WHERE event_id = $1`,
+    [eventId]
+  );
+
+  const newPhotos: { src: string; width: number; height: number; hash?: string; filename?: string }[] = [];
+
+  for (const photo of photos) {
+    // Look for matching existing photo by filename OR by content hash
+    const match = existingPhotos.find((existing: any) => {
+      // 1. Check exact original filename match
+      if (photo.filename && existing.original_filename) {
+        if (existing.original_filename.toLowerCase() === photo.filename.toLowerCase()) {
+          return true;
+        }
+      }
+      // 2. Check filename extracted from src URL path
+      if (photo.filename && existing.src) {
+        const decodedSrc = decodeURIComponent(existing.src);
+        const urlBasename = decodedSrc.split('/').pop() || "";
+        const cleanBasename = urlBasename.replace(/^[0-9a-fA-F]{12}-/, "").replace(/^\d+-/, "");
+        if (cleanBasename.toLowerCase() === photo.filename.toLowerCase()) {
+          return true;
+        }
+      }
+      // 3. Check exact binary content hash match
+      if (photo.hash && existing.file_hash) {
+        if (existing.file_hash === photo.hash) {
+          return true;
+        }
+      }
+      return false;
+    });
+
+    if (match) {
+      // Delete old CDN blob file if a new file URL was uploaded to replace it
+      if (match.src && match.src !== photo.src && match.src.startsWith("http")) {
+        try {
+          await del(match.src);
+          console.log(`Deleted replaced photo blob from Vercel Blob CDN: ${match.src}`);
+        } catch (err) {
+          console.error(`Failed to delete replaced blob ${match.src}:`, err);
+        }
+      }
+
+      // Duplicate filename or content found! Replace existing photo record with the new upload
+      await sql.query(
+        `UPDATE work_photography_photos 
+         SET src = $1, width = $2, height = $3, original_filename = $4, file_hash = $5 
+         WHERE id = $6`,
+        [
+          photo.src,
+          photo.width || 0,
+          photo.height || 0,
+          photo.filename || match.original_filename || null,
+          photo.hash || match.file_hash || null,
+          match.id
+        ]
+      );
+    } else {
+      newPhotos.push(photo);
+    }
+  }
+
+  if (newPhotos.length === 0) return;
+
+  // 3. Shift photo sort orders for this event by newPhotos.length
+  await sql.query(
+    `UPDATE work_photography_photos SET sort_order = sort_order + $1 WHERE event_id = $2`,
+    [newPhotos.length, eventId]
+  );
+
+  // 4. Batch insert new photos in one query
+  const valueStrings: string[] = [];
+  const queryParams: any[] = [];
+
+  newPhotos.forEach((photo, idx) => {
+    const offset = idx * 7;
+    valueStrings.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7})`);
+    queryParams.push(
+      eventId,
+      photo.src,
+      photo.width || 0,
+      photo.height || 0,
+      idx + 1,
+      photo.hash || null,
+      photo.filename || null
+    );
+  });
+
+  const insertQuery = `INSERT INTO work_photography_photos (event_id, src, width, height, sort_order, file_hash, original_filename) VALUES ${valueStrings.join(", ")}`;
+  await sql.query(insertQuery, queryParams);
+}
+
+/**
+ * Deduplicate existing photos under a photography event.
+ * Keeps 1 photo per unique filename/hash and deletes all duplicate files from Vercel Blob CDN and database.
+ */
+export async function cleanDuplicatesFromEvent(eventName: string): Promise<{ kept: number; deleted: number }> {
+  if (!eventName) return { kept: 0, deleted: 0 };
+  const cleanEvent = eventName.trim();
+
+  // Find event ID
+  const eventRes = await sql.query(
+    `SELECT id FROM work_photography_events WHERE LOWER(event_name) = LOWER($1) OR LOWER(event_name) LIKE LOWER($2)`,
+    [cleanEvent, `%${cleanEvent}%`]
+  );
+  if (!eventRes || eventRes.length === 0) return { kept: 0, deleted: 0 };
+
+  const eventId = eventRes[0].id;
+  const photos = await sql.query(
+    `SELECT id, src, original_filename, file_hash, sort_order FROM work_photography_photos WHERE event_id = $1 ORDER BY id ASC`,
+    [eventId]
+  );
+
+  if (!photos || photos.length === 0) return { kept: 0, deleted: 0 };
+
+  const seenKeys = new Set<string>();
+  const toKeep: any[] = [];
+  const toDelete: any[] = [];
+
+  for (const photo of photos) {
+    let key = "";
+    if (photo.file_hash) {
+      key = `hash:${photo.file_hash}`;
+    } else if (photo.original_filename) {
+      key = `name:${photo.original_filename.toLowerCase()}`;
+    } else if (photo.src) {
+      const decoded = decodeURIComponent(photo.src);
+      const basename = decoded.split('/').pop() || "";
+      const cleanName = basename.replace(/^[0-9a-fA-F]{12}-/, "").replace(/^\d+-/, "");
+      key = `name:${cleanName.toLowerCase()}`;
+    } else {
+      key = `id:${photo.id}`;
+    }
+
+    if (seenKeys.has(key)) {
+      toDelete.push(photo);
+    } else {
+      seenKeys.add(key);
+      toKeep.push(photo);
+    }
+  }
+
+  let deletedCount = 0;
+  for (const photo of toDelete) {
+    if (photo.src && photo.src.startsWith("http")) {
+      try {
+        await del(photo.src);
+        console.log(`Deduplication: Deleted blob CDN file ${photo.src}`);
+      } catch (err) {
+        console.error(`Deduplication: Failed to delete blob ${photo.src}:`, err);
+      }
+    }
+    await sql.query(`DELETE FROM work_photography_photos WHERE id = $1`, [photo.id]);
+    deletedCount++;
+  }
+
+  return { kept: toKeep.length, deleted: deletedCount };
+}
+

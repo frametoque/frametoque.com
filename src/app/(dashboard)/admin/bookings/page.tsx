@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { 
   Calendar as CalendarIcon, Plus, Trash2, Edit2, ChevronLeft, ChevronRight,
   Clock, FileText, Folder, CalendarPlus, X, Apple, MapPin
@@ -122,7 +122,28 @@ export default function BookingsAdminPage() {
   };
 
   useEffect(() => {
-    loadData();
+    let cancelled = false;
+    async function load() {
+      try {
+        setLoading(true);
+        const [bList, eList, hList] = await Promise.all([
+          getBookings(),
+          getCalendarEvents(),
+          getSriLankaHolidays().catch(() => ({}))
+        ]);
+        if (!cancelled) {
+          setBookings(bList);
+          setCalendarEvents(eList);
+          setSriLankaHolidays(hList);
+        }
+      } catch (e) {
+        console.error("Failed to load bookings data:", e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
   }, []);
 
   const openNewModal = (dateStr?: string) => {
