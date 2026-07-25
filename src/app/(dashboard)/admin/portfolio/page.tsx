@@ -200,23 +200,23 @@ export default function PortfolioAdminPage() {
       const frames = [
         {
           name: "1s Delay (Desktop 16:9)",
-          url: `https://api.microlink.io/?url=${encoded}&screenshot=true&embed=screenshot.url&screenshot.viewport.width=1920&screenshot.viewport.height=1080&screenshot.waitForTimeout=1000`
+          url: `/api/admin/screenshot?url=${encoded}&delay=1000`
         },
         {
           name: "2s Delay (Desktop 16:9)",
-          url: `https://api.microlink.io/?url=${encoded}&screenshot=true&embed=screenshot.url&screenshot.viewport.width=1920&screenshot.viewport.height=1080&screenshot.waitForTimeout=2000`
+          url: `/api/admin/screenshot?url=${encoded}&delay=2000`
         },
         {
           name: "3s Delay (Desktop 16:9)",
-          url: `https://api.microlink.io/?url=${encoded}&screenshot=true&embed=screenshot.url&screenshot.viewport.width=1920&screenshot.viewport.height=1080&screenshot.waitForTimeout=3000`
+          url: `/api/admin/screenshot?url=${encoded}&delay=3000`
         },
         {
           name: "4s Delay (Desktop 16:9)",
-          url: `https://api.microlink.io/?url=${encoded}&screenshot=true&embed=screenshot.url&screenshot.viewport.width=1920&screenshot.viewport.height=1080&screenshot.waitForTimeout=4000`
+          url: `/api/admin/screenshot?url=${encoded}&delay=4000`
         },
         {
           name: "5s Delay (Desktop 16:9)",
-          url: `https://api.microlink.io/?url=${encoded}&screenshot=true&embed=screenshot.url&screenshot.viewport.width=1920&screenshot.viewport.height=1080&screenshot.waitForTimeout=5000`
+          url: `/api/admin/screenshot?url=${encoded}&delay=5000`
         }
       ];
       setSuggestedScreenshots(frames);

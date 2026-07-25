@@ -5,6 +5,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { imageSize } from "image-size";
 import { put } from "@vercel/blob";
+import { headers } from "next/headers";
 
 // Mapping category slugs to table names
 const TABLE_MAP: Record<string, string> = {
@@ -329,14 +330,22 @@ export async function uploadPortfolioMedia(formData: FormData, categorySlug?: st
 }
 
 /**
- * Download portfolio media files from an external URL and save them to Vercel Blob
+ * Download portfolio media files from an external URL or internal route and save them to Vercel Blob
  */
 export async function uploadPortfolioMediaFromUrl(url: string): Promise<string> {
   if (!url) {
     throw new Error("No URL provided");
   }
 
-  const response = await fetch(url);
+  let fetchUrl = url;
+  if (url.startsWith("/")) {
+    const headersList = await headers();
+    const host = headersList.get("host") || "localhost:3000";
+    const protocol = host.includes("localhost") ? "http" : "https";
+    fetchUrl = `${protocol}://${host}${url}`;
+  }
+
+  const response = await fetch(fetchUrl);
   if (!response.ok) {
     throw new Error(`Failed to download image: ${response.statusText}`);
   }
