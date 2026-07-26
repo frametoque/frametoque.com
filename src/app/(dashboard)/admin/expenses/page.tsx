@@ -186,8 +186,23 @@ export default function ExpensesPage() {
   };
 
   const handleEdit = (row: any) => {
-    let formattedDate = new Date().toISOString().split('T')[0];
-    try { if (row.date) formattedDate = new Date(row.date).toISOString().split('T')[0]; } catch(e) {}
+    let formattedDate = row.rawDate || '';
+    if (!formattedDate && row.date) {
+      if (typeof row.date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(row.date)) {
+        formattedDate = row.date.split('T')[0];
+      } else {
+        const dt = new Date(row.date);
+        if (!isNaN(dt.getTime())) {
+          const y = dt.getFullYear();
+          const m = String(dt.getMonth() + 1).padStart(2, '0');
+          const d = String(dt.getDate()).padStart(2, '0');
+          formattedDate = `${y}-${m}-${d}`;
+        }
+      }
+    }
+    if (!formattedDate) {
+      formattedDate = new Date().toISOString().split('T')[0];
+    }
     
     setEditingId(row.id);
     setFormData({

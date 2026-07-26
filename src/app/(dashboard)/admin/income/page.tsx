@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2, Eye, FilePlus, Trash } from "lucide-react";
 import Link from "next/link";
-import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice, getBankAccounts } from "../actions/actions";
+import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice, getBankAccounts, getInvoices } from "../actions/actions";
 import CategoryPicker from "../components/CategoryPicker";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
@@ -89,6 +89,7 @@ export default function IncomePage() {
   const [clients, setClients] = useState<any[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([ALL_CATEGORIES[0]]);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [invoicesList, setInvoicesList] = useState<any[]>([]);
 
   const [newClientName, setNewClientName] = useState("");
   const [newClientEmail, setNewClientEmail] = useState("");
@@ -104,6 +105,16 @@ export default function IncomePage() {
     invoiceId: '',
     receiptUrl: '',
   });
+
+  const filteredInvoicesList = useMemo(() => {
+    if (!formData.clientId || formData.clientId === 'new') {
+      return invoicesList;
+    }
+    const clientObj = clients.find((c: any) => c.id === formData.clientId);
+    if (!clientObj?.email) return invoicesList;
+    const clientEmail = clientObj.email.toLowerCase();
+    return invoicesList.filter((inv: any) => inv.client_email?.toLowerCase() === clientEmail);
+  }, [invoicesList, formData.clientId, clients]);
 
   // --- Create Invoice from Income ---
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
@@ -124,10 +135,11 @@ export default function IncomePage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [res, cls, accs] = await Promise.all([getIncomes(startDate, endDate), getClients(), getBankAccounts()]);
+      const [res, cls, accs, invsData] = await Promise.all([getIncomes(startDate, endDate), getClients(), getBankAccounts(), getInvoices()]);
       setData(res);
       setClients(cls);
       setBankAccounts(accs);
+      setInvoicesList(invsData?.items || []);
     } catch (e) {
       console.error("Failed to load incomes", e);
     } finally {
@@ -140,11 +152,12 @@ export default function IncomePage() {
     async function load() {
       setLoading(true);
       try {
-        const [res, cls, accs] = await Promise.all([getIncomes(startDate, endDate), getClients(), getBankAccounts()]);
+        const [res, cls, accs, invsData] = await Promise.all([getIncomes(startDate, endDate), getClients(), getBankAccounts(), getInvoices()]);
         if (!cancelled) {
           setData(res);
           setClients(cls);
           setBankAccounts(accs);
+          setInvoicesList(invsData?.items || []);
         }
       } catch (e) {
         console.error("Failed to load incomes", e);
@@ -166,8 +179,23 @@ export default function IncomePage() {
   };
 
   const handleEdit = (row: any) => {
-    let formattedDate = new Date().toISOString().split('T')[0];
-    try { if (row.date) formattedDate = new Date(row.date).toISOString().split('T')[0]; } catch (e) {}
+    let formattedDate = row.rawDate || '';
+    if (!formattedDate && row.date) {
+      if (typeof row.date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(row.date)) {
+        formattedDate = row.date.split('T')[0];
+      } else {
+        const dt = new Date(row.date);
+        if (!isNaN(dt.getTime())) {
+          const y = dt.getFullYear();
+          const m = String(dt.getMonth() + 1).padStart(2, '0');
+          const d = String(dt.getDate()).padStart(2, '0');
+          formattedDate = `${y}-${m}-${d}`;
+        }
+      }
+    }
+    if (!formattedDate) {
+      formattedDate = new Date().toISOString().split('T')[0];
+    }
     setEditingId(row.id);
     setFormData({ date: formattedDate, amount: row.amount.toString(), clientId: row.clientId || '', description: row.desc || '', paymentMethod: row.paymentMethod || 'Bank Transfer', invoiceId: row.invoice || '', receiptUrl: row.receiptUrl || '' });
     setSelectedCategories(parseCategories(row.category));
@@ -555,8 +583,34 @@ export default function IncomePage() {
 
               <div className="space-y-1">
                 <label className="text-sm text-gray-400">Linked Invoice (Optional)</label>
-                <input type="text" placeholder="e.g. INV-001" value={formData.invoiceId} onChange={e => setFormData({ ...formData, invoiceId: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
+                <select
+                  value={formData.invoiceId}
+                  onChange={e => {
+                    const invId = e.target.value;
+                    const inv = invoicesList.find((i: any) => i.id === invId);
+                    if (inv) {
+                      const dueAmount = inv.total_due != null ? inv.total_due : inv.amount;
+                      const clientMatch = clients.find((c: any) => c.email?.toLowerCase() === inv.client_email?.toLowerCase());
+                      setFormData(prev => ({
+                        ...prev,
+                        invoiceId: inv.id,
+                        amount: dueAmount > 0 ? dueAmount.toString() : inv.amount.toString(),
+                        description: `Invoice #${inv.id} - ${inv.service || 'Payment'}`,
+                        clientId: clientMatch ? clientMatch.id : prev.clientId
+                      }));
+                    } else {
+                      setFormData(prev => ({ ...prev, invoiceId: invId }));
+                    }
+                  }}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none text-white"
+                >
+                  <option value="" className="bg-black text-white">None / Select Invoice</option>
+                  {filteredInvoicesList.map((inv: any) => (
+                    <option key={inv.id} value={inv.id} className="bg-black text-white">
+                      {inv.id} - {inv.service || 'Invoice'}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-1">

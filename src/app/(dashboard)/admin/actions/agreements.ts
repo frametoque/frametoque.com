@@ -38,7 +38,7 @@ export async function getAgreements(): Promise<AgreementData[]> {
   try {
     const rows = await sql`
       SELECT * FROM admin_agreements
-      ORDER BY created_at DESC
+      ORDER BY COALESCE(agreement_date, created_at::date) DESC, created_at DESC
     `;
     return rows.map(r => ({
       ...r,
@@ -64,7 +64,7 @@ export async function getAgreementsByClient(email: string): Promise<AgreementDat
     const rows = await sql`
       SELECT * FROM admin_agreements
       WHERE LOWER(client_email) = LOWER(${email})
-      ORDER BY created_at DESC
+      ORDER BY COALESCE(agreement_date, created_at::date) DESC, created_at DESC
     `;
     return rows.map(r => ({
       ...r,

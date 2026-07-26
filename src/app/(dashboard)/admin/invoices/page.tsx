@@ -448,7 +448,7 @@ export default function InvoicesPage() {
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-1">
                         {row.status?.toLowerCase() !== 'paid' && row.status?.toLowerCase() !== 'fully paid' && (
-                          <button onClick={() => openRecordPaymentModal(row)} className="p-2 hover:bg-green-400/10 rounded-xl transition-colors text-gray-400 hover:text-green-400" title="Record Payment">
+                          <button onClick={() => openRecordPaymentModal(row)} className="p-2 hover:bg-green-400/10 rounded-xl transition-colors text-gray-400 hover:text-green-400" title="Create Income from Invoice">
                             <DollarSign className="w-4 h-4" />
                           </button>
                         )}
@@ -486,7 +486,7 @@ export default function InvoicesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-black border border-white/10 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h2 className="text-xl font-semibold text-white">Record Invoice Payment</h2>
+              <h2 className="text-xl font-semibold text-white">Create Income from Invoice</h2>
               <button onClick={() => setPaymentModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>

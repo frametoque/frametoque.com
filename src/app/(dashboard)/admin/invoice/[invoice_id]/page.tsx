@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, Image, CheckCircle2, ShieldCheck, XCircle } from "lucide-react";
+import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, Image, CheckCircle2, ShieldCheck, XCircle, DollarSign, X } from "lucide-react";
 import Link from "next/link";
 import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
-import { getInvoiceByIdAdmin, approveBankSlip, declineBankSlip, undoApprovedBankSlipPayment } from "../../actions/actions";
+import { getInvoiceByIdAdmin, approveBankSlip, declineBankSlip, undoApprovedBankSlipPayment, recordInvoicePayment } from "../../actions/actions";
 
 const workStatusStyles = {
   "in progress": "bg-brand-500/20 text-brand-400 border-brand-500/30",
@@ -145,6 +145,43 @@ export default function AdminInvoicePage() {
     activeSlipUrl.toLowerCase().endsWith('.pdf')
   );
 
+  const [incomeModalOpen, setIncomeModalOpen] = useState(false);
+  const [paidAmount, setPaidAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [savingIncome, setSavingIncome] = useState(false);
+
+  const openIncomeModal = () => {
+    const due = parseFloat(invoice?.total_due != null ? invoice.total_due : invoice?.total || 0);
+    setPaidAmount(due > 0 ? due.toString() : (invoice?.total || '0').toString());
+    setPaymentMethod("Bank Transfer");
+    setPaymentDate(new Date().toISOString().split('T')[0]);
+    setIncomeModalOpen(true);
+  };
+
+  const handleCreateIncomeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!invoice) return;
+    setSavingIncome(true);
+    try {
+      await recordInvoicePayment(
+        invoice.invoice_id,
+        parseFloat(paidAmount) || 0,
+        paymentMethod,
+        paymentDate,
+        false
+      );
+      setIncomeModalOpen(false);
+      const updated = await getInvoiceByIdAdmin(invoice_id as string);
+      setInvoice(updated);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to create income from invoice: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setSavingIncome(false);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-20">
 
@@ -158,14 +195,26 @@ export default function AdminInvoicePage() {
           Back to Invoices
         </Link>
 
-        <button
-          onClick={handleDownload}
-          disabled={downloading}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-          {downloading ? "Generating PDF..." : "Download PDF"}
-        </button>
+        <div className="flex items-center gap-3">
+          {invoice.payment_status?.toLowerCase() !== 'fully paid' && invoice.payment_status?.toLowerCase() !== 'paid' && (
+            <button
+              onClick={openIncomeModal}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-3xl bg-green-600 hover:bg-green-500 text-white font-semibold transition-colors"
+            >
+              <DollarSign className="w-4 h-4" />
+              Create Income
+            </button>
+          )}
+
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {downloading ? "Generating PDF..." : "Download PDF"}
+          </button>
+        </div>
       </div>
 
       {/* Main Layout */}
@@ -562,6 +611,84 @@ export default function AdminInvoicePage() {
 
         </div>
       </div>
+
+      {/* Income Modal */}
+      {incomeModalOpen && invoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <h2 className="text-xl font-semibold text-white">Create Income from Invoice</h2>
+              <button onClick={() => setIncomeModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateIncomeSubmit} className="p-6 space-y-4">
+              <div className="text-sm text-gray-400 space-y-1 bg-white/5 p-4 rounded-2xl border border-white/5">
+                <p><span className="font-semibold text-gray-300">Invoice ID:</span> {invoice.invoice_id}</p>
+                <p><span className="font-semibold text-gray-300">Project:</span> {invoice.project_name || 'Untitled'}</p>
+                <p><span className="font-semibold text-gray-300">Client:</span> {invoice.user_email}</p>
+                <p><span className="font-semibold text-gray-300">Due Amount:</span> {formatMoney(totalDue, invoice.currency)}</p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm text-gray-400 block font-medium">Income Amount ({invoice.currency || 'LKR'})</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  placeholder="0.00"
+                  value={paidAmount}
+                  onChange={(e) => setPaidAmount(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm text-gray-400 block font-medium">Date Received</label>
+                <input
+                  type="date"
+                  required
+                  value={paymentDate}
+                  onChange={(e) => setPaymentDate(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm text-gray-400 block font-medium">Payment Method</label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white appearance-none"
+                >
+                  <option value="Bank Transfer" className="bg-black text-white">Bank Transfer</option>
+                  <option value="Stripe" className="bg-black text-white">Stripe</option>
+                  <option value="PayPal" className="bg-black text-white">PayPal</option>
+                  <option value="Cash" className="bg-black text-white">Cash</option>
+                </select>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-white/10 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIncomeModalOpen(false)}
+                  className="px-5 py-2.5 border border-white/10 hover:bg-white/5 text-gray-300 rounded-3xl text-sm font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingIncome}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white rounded-3xl text-sm font-semibold transition-colors"
+                >
+                  {savingIncome && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Save Income
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

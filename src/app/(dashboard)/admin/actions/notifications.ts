@@ -44,14 +44,14 @@ export async function fetchLiveNotifications(): Promise<NotificationItem[]> {
         FROM admin_quotations q
         LEFT JOIN admin_clients c ON q.client_id = c.id
         WHERE q.status IN ('pending', 'client-draft')
-        ORDER BY q.created_at DESC LIMIT 2
+        ORDER BY q.date DESC, q.created_at DESC LIMIT 2
       `),
       sql.query(`
         SELECT invoice_id, user_email, total,
                EXTRACT(EPOCH FROM (NOW() - created_at)) * 1000 AS ms_ago
         FROM invoices
         WHERE payment_status = 'fully paid'
-        ORDER BY created_at DESC LIMIT 2
+        ORDER BY date DESC, created_at DESC LIMIT 2
       `),
       sql.query(`
         SELECT invoice_id, user_email, total,
