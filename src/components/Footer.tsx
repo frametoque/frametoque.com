@@ -20,7 +20,7 @@ const urls = [
   "https://youtube.com/@Frametoque",
   "https://tiktok.com/@frame.toque",
   "https://t.me/frametoque",
-  "mailto:contact@frametoque.online",
+  "mailto:info@frametoque.online",
 ];
 
 const TikTok = () => (
