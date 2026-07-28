@@ -53,6 +53,12 @@ export default function AdminInvoicePage() {
   const [activeSlipIndex, setActiveSlipIndex] = useState(0);
   const downloadTriggeredRef = useRef(false);
 
+  const [incomeModalOpen, setIncomeModalOpen] = useState(false);
+  const [paidAmount, setPaidAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [savingIncome, setSavingIncome] = useState(false);
+
   useEffect(() => {
     if (!invoice_id) return;
     const fetchInvoice = async () => {
@@ -144,12 +150,6 @@ export default function AdminInvoicePage() {
     activeSlipUrl.startsWith('data:application/pdf') ||
     activeSlipUrl.toLowerCase().endsWith('.pdf')
   );
-
-  const [incomeModalOpen, setIncomeModalOpen] = useState(false);
-  const [paidAmount, setPaidAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
-  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
-  const [savingIncome, setSavingIncome] = useState(false);
 
   const openIncomeModal = () => {
     const due = parseFloat(invoice?.total_due != null ? invoice.total_due : invoice?.total || 0);
