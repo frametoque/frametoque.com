@@ -152,9 +152,11 @@ export async function getAnalyticsData(dateRange = "all time") {
       : valueKey;
     const total = safeArr.reduce((s: number, r: any) => s + (r[resolvedValueKey] ?? 0), 0);
     return safeArr.map((r: any) => ({
+      ...r,
       label: r[labelKey] || r["x"] || "Direct",
       value: r[resolvedValueKey] ?? 0,
       pct:   total ? Math.round(((r[resolvedValueKey] ?? 0) / total) * 100) : 0,
+      country: r.country ?? r.countryCode ?? r.country_code ?? r.c ?? null,
     }));
   }
 

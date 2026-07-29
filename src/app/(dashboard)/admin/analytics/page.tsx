@@ -15,14 +15,15 @@ import { getAnalyticsData, getActiveVisitors, getActiveVisitors30m, getChartData
 import { formatDuration } from "../actions/utils";
 import {
   decodeRegion, regionToCountry,
-  getBrowserLogo, getOsLogo, decodeCountry
+  getBrowserLogo, getOsLogo, decodeCountry,
+  getCityCountryCode
 } from "@/app/(dashboard)/admin/actions/analyticsUtils";
 import { useAnalyticsDateRange } from "../context/AnalyticsDateRangeContext";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const countryFlag = (code: string) => {
-  if (!code) return "🌍";
+  if (!code || typeof code !== "string" || code.length !== 2) return null;
   return code.toUpperCase().replace(/./g, (c) =>
     String.fromCodePoint(127397 + c.charCodeAt(0))
   );
@@ -283,13 +284,15 @@ export default function AnalyticsPage() {
     label: decodeCountry(c.label),     
   }));
 
-  const cityCountryCode = decodedRegions[0]?._countryCode ?? 
-    (data.countries?.[0]?.label ?? "");
-
-  const decodedCities = (data.cities ?? []).map((c: any) => ({
-    ...c,
-    _countryCode: cityCountryCode,
-  }));
+  const decodedCities = (data.cities ?? []).map((c: any) => {
+    const code = getCityCountryCode(c.label, c.country ?? c.countryCode ?? c._countryCode);
+    const flag = countryFlag(code);
+    return {
+      ...c,
+      _countryCode: code,
+      label: flag ? `${c.label} ${flag}` : c.label,
+    };
+  });
 
   const statCards = [
     { label: "Live Now",              value: activeVisitors,      raw: true,  icon: Activity,          color: "text-emerald-400", bg: "bg-emerald-400/10" },
@@ -491,27 +494,26 @@ export default function AnalyticsPage() {
             icon={(label) => {
               if (locTab === "countries") {
                 const raw = decodedCountries.find((c: any) => c.label === label);
+                const flag = countryFlag(raw?._code ?? label);
+                if (!flag) return null;
                 return (
                   <span className="text-base leading-none shrink-0">
-                    {countryFlag(raw?._code ?? label)}
+                    {flag}
                   </span>
                 );
               }
               if (locTab === "regions") {
                 const raw = decodedRegions.find((r: any) => r.label === label);
+                const flag = countryFlag(raw?._countryCode ?? "");
+                if (!flag) return null;
                 return (
                   <span className="text-base leading-none shrink-0">
-                    {countryFlag(raw?._countryCode ?? "")}
+                    {flag}
                   </span>
                 );
               }
               if (locTab === "cities") {
-                const raw = decodedCities.find((c: any) => c.label === label);
-                return (
-                  <span className="text-base leading-none shrink-0">
-                    {countryFlag(raw?._countryCode ?? "")}
-                  </span>
-                );
+                return null;
               }
             }}
           />

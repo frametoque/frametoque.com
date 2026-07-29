@@ -128,3 +128,71 @@ export function decodeCountry(code: string): string {
   const upper = code.toUpperCase();
   return countryNameMap[upper] ?? code;
 }
+
+const cityCountryMap: Record<string, string> = {
+  // Sri Lanka
+  colombo: "LK", kandy: "LK", galle: "LK", jaffna: "LK", negombo: "LK",
+  batticaloa: "LK", trincomalee: "LK", kurunegala: "LK", ratnapura: "LK",
+  anuradhapura: "LK", badulla: "LK", matara: "LK", "nuwara eliya": "LK",
+  gampaha: "LK", kalutara: "LK", moratuwa: "LK", dehiwala: "LK", maharagama: "LK",
+  kotte: "LK", "sri jayawardenepura kotte": "LK",
+
+  // United States
+  "new york": "US", "los angeles": "US", chicago: "US", houston: "US",
+  phoenix: "US", philadelphia: "US", "san antonio": "US", "san diego": "US",
+  dallas: "US", "san jose": "US", austin: "US", seattle: "US",
+  "san francisco": "US", washington: "US", boston: "US", atlanta: "US",
+  miami: "US", denver: "US", "las vegas": "US", portland: "US",
+
+  // United Kingdom
+  london: "GB", manchester: "GB", birmingham: "GB", glasgow: "GB",
+  edinburgh: "GB", liverpool: "GB", bristol: "GB", leeds: "GB",
+  belfast: "GB", cardiff: "GB", cambridge: "GB", oxford: "GB",
+
+  // India
+  mumbai: "IN", delhi: "IN", bengaluru: "IN", bangalore: "IN",
+  hyderabad: "IN", chennai: "IN", kolkata: "IN", ahmedabad: "IN",
+  pune: "IN", jaipur: "IN", surat: "IN", lucknow: "IN",
+
+  // Australia
+  sydney: "AU", melbourne: "AU", brisbane: "AU", perth: "AU",
+  adelaide: "AU", "gold coast": "AU", canberra: "AU",
+
+  // Canada
+  toronto: "CA", vancouver: "CA", montreal: "CA", calgary: "CA",
+  ottawa: "CA", edmonton: "CA",
+
+  // Germany
+  berlin: "DE", munich: "DE", hamburg: "DE", frankfurt: "DE",
+  cologne: "DE", stuttgart: "DE", düsseldorf: "DE", dusseldorf: "DE",
+
+  // France
+  paris: "FR", marseille: "FR", lyon: "FR", toulouse: "FR", nice: "FR",
+
+  // Japan
+  tokyo: "JP", osaka: "JP", kyoto: "JP", yokohama: "JP", nagoya: "JP",
+
+  // UAE
+  dubai: "AE", "abu dhabi": "AE", sharjah: "AE",
+
+  // Singapore
+  singapore: "SG",
+
+  // Netherlands
+  amsterdam: "NL", rotterdam: "NL",
+
+  // Other common cities
+  dublin: "IE", auckland: "NZ", seoul: "KR", bangkok: "TH",
+  "kuala lumpur": "MY", jakarta: "ID", manila: "PH", dhaka: "BD",
+  karachi: "PK", istanbul: "TR", cairo: "EG", riyadh: "SA",
+};
+
+export function getCityCountryCode(cityName: string, itemCountry?: string): string {
+  if (itemCountry && typeof itemCountry === "string" && itemCountry.length === 2) {
+    return itemCountry.toUpperCase();
+  }
+  if (!cityName) return "";
+  const key = cityName.toLowerCase().trim();
+  if (cityCountryMap[key]) return cityCountryMap[key];
+  return "";
+}
