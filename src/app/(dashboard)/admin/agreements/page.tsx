@@ -272,7 +272,7 @@ export default function AgreementsPage() {
           onClick={() => setViewingId(null)}
         >
           <div
-            className="bg-[#0a0a0a] border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl"
+            className="bg-black border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}

@@ -1186,7 +1186,7 @@ export default function PortfolioAdminPage() {
       {/* Modal Dialog (Add / Edit Form) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overscroll-contain" data-lenis-prevent>
-          <div className="bg-zinc-950 border border-white/10 w-full max-w-4xl h-[80vh] rounded-2xl shadow-2xl flex flex-col overscroll-contain overflow-hidden" data-lenis-prevent>
+          <div className="bg-black border border-white/10 w-full max-w-4xl h-[80vh] rounded-2xl shadow-2xl flex flex-col overscroll-contain overflow-hidden" data-lenis-prevent>
             
             {/* Modal Header */}
             <div className="flex justify-between items-center p-6 border-b border-white/10 flex-shrink-0">
@@ -1564,7 +1564,7 @@ export default function PortfolioAdminPage() {
       {/* Photography Event Sub-Manager Modal */}
       {photoSubManagerEvent !== null && (
         <div className="fixed inset-0 z-50 overflow-hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overscroll-contain" data-lenis-prevent>
-          <div className="bg-zinc-950 border border-white/10 w-full max-w-5xl h-[80vh] rounded-2xl shadow-2xl flex flex-col overscroll-contain overflow-hidden" data-lenis-prevent>
+          <div className="bg-black border border-white/10 w-full max-w-5xl h-[80vh] rounded-2xl shadow-2xl flex flex-col overscroll-contain overflow-hidden" data-lenis-prevent>
             
             {/* Header */}
             <div className="flex justify-between items-center p-6 border-b border-white/10 flex-shrink-0">

@@ -65,40 +65,28 @@ export async function GET(request: NextRequest) {
       WHERE status != 'cancelled'
     `;
 
-    // 2. Fetch Domain Renewal Reminders
-    let domains: any[] = [];
+    // 2. Fetch Domain Renewal / Expiry Reminders
+    let domainOrders: any[] = [];
     try {
-      domains = await sql`
-        SELECT domain_name, renewal_date, expiry_date
-        FROM domains
-        WHERE renewal_date IS NOT NULL OR expiry_date IS NOT NULL
+      domainOrders = await sql`
+        SELECT domain_name, expiry_date
+        FROM admin_domain_orders
+        WHERE expiry_date IS NOT NULL AND status != 'cancelled'
       `;
     } catch (e) {
-      console.warn("Calendar Feed: domains query skipped:", e);
+      console.warn("Calendar Feed: admin_domain_orders query skipped:", e);
     }
 
     // 3. Fetch Hosting Expiry Reminders
     let hostingOrders: any[] = [];
     try {
       hostingOrders = await sql`
-        SELECT package_name, primary_domain, expiry_date
-        FROM hosting_orders
-        WHERE expiry_date IS NOT NULL
+        SELECT id, domain_name, hosting_provider, expiry_date
+        FROM admin_hosting_orders
+        WHERE expiry_date IS NOT NULL AND status != 'cancelled'
       `;
     } catch (e) {
-      console.warn("Calendar Feed: hosting_orders query skipped:", e);
-    }
-
-    // 4. Fetch Invoice Due Reminders
-    let pendingInvoices: any[] = [];
-    try {
-      pendingInvoices = await sql`
-        SELECT invoice_id, project_name, date, total_due, total
-        FROM invoices
-        WHERE payment_status NOT IN ('fully paid', 'paid') AND date IS NOT NULL
-      `;
-    } catch (e) {
-      console.warn("Calendar Feed: invoices query skipped:", e);
+      console.warn("Calendar Feed: admin_hosting_orders query skipped:", e);
     }
 
     let icsContent = [
@@ -166,21 +154,20 @@ export async function GET(request: NextRequest) {
       icsContent.push("END:VEVENT");
     });
 
-    // Add Domain Renewal Reminders
-    domains.forEach((d, idx) => {
-      const targetDate = d.renewal_date || d.expiry_date;
-      if (!targetDate) return;
-      const startDateOnly = formatDateOnly(targetDate);
-      const endDateOnly = getNextDayDateOnly(targetDate);
-      const uid = `domain-renewal-${idx}-${d.domain_name}@ft.online`;
+    // Add Domain Expiry Reminders
+    domainOrders.forEach((d, idx) => {
+      if (!d.expiry_date) return;
+      const startDateOnly = formatDateOnly(d.expiry_date);
+      const endDateOnly = getNextDayDateOnly(d.expiry_date);
+      const uid = `domain-expiry-${idx}-${d.domain_name}@ft.online`;
 
       icsContent.push("BEGIN:VEVENT");
       icsContent.push(`UID:${uid}`);
       icsContent.push(`DTSTAMP:${nowStr}`);
       icsContent.push(`DTSTART;VALUE=DATE:${startDateOnly}`);
       icsContent.push(`DTEND;VALUE=DATE:${endDateOnly}`);
-      icsContent.push(`SUMMARY:${escapeICS(`Ft. - Domain Renewal: ${d.domain_name}`)}`);
-      icsContent.push(`DESCRIPTION:${escapeICS(`Domain registration renewal reminder for ${d.domain_name}`)}`);
+      icsContent.push(`SUMMARY:${escapeICS(`Ft. - Domain Expiry: ${d.domain_name}`)}`);
+      icsContent.push(`DESCRIPTION:${escapeICS(`Domain expiration reminder for ${d.domain_name}`)}`);
       icsContent.push("END:VEVENT");
     });
 
@@ -189,33 +176,16 @@ export async function GET(request: NextRequest) {
       if (!h.expiry_date) return;
       const startDateOnly = formatDateOnly(h.expiry_date);
       const endDateOnly = getNextDayDateOnly(h.expiry_date);
-      const uid = `hosting-expiry-${idx}-${h.primary_domain || h.package_name}@ft.online`;
+      const nameLabel = h.domain_name ? h.domain_name : (h.hosting_provider || 'Hosting');
+      const uid = `hosting-expiry-${idx}-${h.id || idx}@ft.online`;
 
       icsContent.push("BEGIN:VEVENT");
       icsContent.push(`UID:${uid}`);
       icsContent.push(`DTSTAMP:${nowStr}`);
       icsContent.push(`DTSTART;VALUE=DATE:${startDateOnly}`);
       icsContent.push(`DTEND;VALUE=DATE:${endDateOnly}`);
-      icsContent.push(`SUMMARY:${escapeICS(`Ft. - Hosting Expiry: ${h.package_name || 'Hosting'} (${h.primary_domain || ''})`)}`);
-      icsContent.push(`DESCRIPTION:${escapeICS(`Hosting package expiration reminder for ${h.primary_domain || h.package_name}`)}`);
-      icsContent.push("END:VEVENT");
-    });
-
-    // Add Unpaid Invoice Due Reminders
-    pendingInvoices.forEach((inv) => {
-      if (!inv.date) return;
-      const startDateOnly = formatDateOnly(inv.date);
-      const endDateOnly = getNextDayDateOnly(inv.date);
-      const uid = `invoice-due-${inv.invoice_id}@ft.online`;
-      const dueAmt = inv.total_due != null ? inv.total_due : inv.total;
-
-      icsContent.push("BEGIN:VEVENT");
-      icsContent.push(`UID:${uid}`);
-      icsContent.push(`DTSTAMP:${nowStr}`);
-      icsContent.push(`DTSTART;VALUE=DATE:${startDateOnly}`);
-      icsContent.push(`DTEND;VALUE=DATE:${endDateOnly}`);
-      icsContent.push(`SUMMARY:${escapeICS(`Ft. - Invoice Due: #${inv.invoice_id} (${inv.project_name || 'Project'})`)}`);
-      icsContent.push(`DESCRIPTION:${escapeICS(`Payment due date for Invoice #${inv.invoice_id}. Amount Due: LKR ${dueAmt}`)}`);
+      icsContent.push(`SUMMARY:${escapeICS(`Ft. - Hosting Expiry: ${nameLabel}`)}`);
+      icsContent.push(`DESCRIPTION:${escapeICS(`Hosting package expiration reminder for ${nameLabel}`)}`);
       icsContent.push("END:VEVENT");
     });
 

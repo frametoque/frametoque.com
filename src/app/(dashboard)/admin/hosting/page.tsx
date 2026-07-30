@@ -142,6 +142,12 @@ export default function HostingPage() {
   const [addActivationLkrRate, setAddActivationLkrRate] = useState<number | null>(null);
   const [editActivationLkrRate, setEditActivationLkrRate] = useState<string>("");
 
+  // Free / Vercel hosting states
+  const [addIsFree, setAddIsFree] = useState(false);
+  const [addVercelEmail, setAddVercelEmail] = useState("");
+  const [editIsFree, setEditIsFree] = useState(false);
+  const [editVercelEmail, setEditVercelEmail] = useState("");
+
   // Edit form states
   const [editEmail, setEditEmail] = useState("");
   const [editDomain, setEditDomain] = useState("");
@@ -218,6 +224,8 @@ export default function HostingPage() {
     setAddExpiryDate("");
     setAddInvoiceId("");
     setAddProviderInvoiceUrl(null);
+    setAddIsFree(false);
+    setAddVercelEmail("");
     setIsAddModalOpen(true);
   };
 
@@ -239,35 +247,39 @@ export default function HostingPage() {
     setEditInvoiceId(order.invoice_id || "");
     setEditProviderInvoiceUrl(order.provider_invoice_url || null);
     setEditActivationLkrRate(order.activation_lkr_rate != null ? String(order.activation_lkr_rate) : String(lkrRate));
+    const isFreeOrder = !!order.is_free || String(order.hosting_provider).toLowerCase().includes('vercel') || order.billing_cycle === 'free';
+    setEditIsFree(isFreeOrder);
+    setEditVercelEmail(order.vercel_email || "");
     setIsEditModalOpen(true);
   };
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    const actPrice = parseFloat(addActualPrice) || 0;
-    const sellPrice = parseFloat(addSellingPrice) || 0;
+    const actPrice = addIsFree ? 0 : (parseFloat(addActualPrice) || 0);
+    const sellPrice = addIsFree ? 0 : (parseFloat(addSellingPrice) || 0);
     const profit = sellPrice - actPrice;
 
     const res = await addHostingOrder({
       client_email: addEmail,
       domain_name: addDomain,
-      hosting_provider: addProvider,
+      hosting_provider: addIsFree && (!addProvider || addProvider === "Other") ? "Vercel" : addProvider,
       actual_price: actPrice,
       actual_price_currency: addActualCurrency,
       selling_price: sellPrice,
       selling_price_currency: addSellingCurrency,
       profit: profit,
-      billing_cycle: addBillingCycle,
+      billing_cycle: addIsFree ? "free" : addBillingCycle,
       purchase_date: addPurchaseDate,
-      expiry_date: addExpiryDate,
+      expiry_date: addIsFree ? "" : addExpiryDate,
       status: "active",
       invoice_id: addInvoiceId || null,
       provider_invoice_url: addProviderInvoiceUrl,
-      renewal_cost: parseFloat(addRenewalCost) || 0,
-      renewal_price: parseFloat(addRenewalPrice) || 0,
-      // If cost is in USD, snapshot the live LKR rate at time of adding
+      renewal_cost: addIsFree ? 0 : (parseFloat(addRenewalCost) || 0),
+      renewal_price: addIsFree ? 0 : (parseFloat(addRenewalPrice) || 0),
       activation_lkr_rate: addActualCurrency === "USD" ? lkrRate : null,
+      is_free: addIsFree,
+      vercel_email: addIsFree ? addVercelEmail : null,
     });
 
     if (res.success) {
@@ -284,29 +296,30 @@ export default function HostingPage() {
     e.preventDefault();
     if (!selectedOrder) return;
     setSaving(true);
-    const actPrice = parseFloat(editActualPrice) || 0;
-    const sellPrice = parseFloat(editSellingPrice) || 0;
+    const actPrice = editIsFree ? 0 : (parseFloat(editActualPrice) || 0);
+    const sellPrice = editIsFree ? 0 : (parseFloat(editSellingPrice) || 0);
     const profit = sellPrice - actPrice;
 
     const res = await updateHostingOrder(selectedOrder.id, {
       client_email: editEmail,
       domain_name: editDomain,
-      hosting_provider: editProvider,
+      hosting_provider: editIsFree && (!editProvider || editProvider === "Other") ? "Vercel" : editProvider,
       actual_price: actPrice,
       actual_price_currency: editActualCurrency,
       selling_price: sellPrice,
       selling_price_currency: editSellingCurrency,
       profit: profit,
-      billing_cycle: editBillingCycle,
+      billing_cycle: editIsFree ? "free" : editBillingCycle,
       purchase_date: editPurchaseDate,
-      expiry_date: editExpiryDate,
+      expiry_date: editIsFree ? "" : editExpiryDate,
       status: editStatus,
       invoice_id: editInvoiceId || null,
       provider_invoice_url: editProviderInvoiceUrl,
-      renewal_cost: parseFloat(editRenewalCost) || 0,
-      renewal_price: parseFloat(editRenewalPrice) || 0,
-      // Fixed or custom exchange rate when currency is USD
+      renewal_cost: editIsFree ? 0 : (parseFloat(editRenewalCost) || 0),
+      renewal_price: editIsFree ? 0 : (parseFloat(editRenewalPrice) || 0),
       activation_lkr_rate: editActualCurrency === "USD" ? (parseFloat(editActivationLkrRate) || lkrRate) : null,
+      is_free: editIsFree,
+      vercel_email: editIsFree ? editVercelEmail : null,
     });
 
     if (res.success) {
@@ -378,8 +391,8 @@ export default function HostingPage() {
     return (
       <div className="space-y-6 pb-10 mt-2">
         {/* Skeleton Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
-          {[1, 2, 3, 4].map((idx) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
+          {[1, 2, 3].map((idx) => (
             <div key={idx} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center justify-between h-[104px]">
               <div className="space-y-2.5">
                 <div className="h-3 w-24 bg-white/10 rounded-full" />
@@ -398,7 +411,7 @@ export default function HostingPage() {
   return (
     <div className="space-y-6 pb-10 mt-2">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-gray-400 font-medium block">Active Hosting</span>
@@ -416,16 +429,6 @@ export default function HostingPage() {
           </div>
           <div className="p-3 bg-red-400/10 rounded-2xl text-red-400">
             <AlertTriangle className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium block">Hosting Cost (LKR)</span>
-            <span className="text-3xl font-bold text-white">{formatLKR(totalCostLkr)}</span>
-          </div>
-          <div className="p-3 bg-amber-400/10 rounded-2xl text-amber-400">
-            <HardDrive className="w-6 h-6" />
           </div>
         </div>
 
@@ -494,6 +497,8 @@ export default function HostingPage() {
                 const lockedRate = o.activation_lkr_rate ?? null;
                 const effectiveRate = lockedRate != null ? lockedRate : lkrRate;
 
+                const isFreeOrder = !!o.is_free || String(o.hosting_provider).toLowerCase().includes('vercel') || o.billing_cycle === 'free';
+
                 // Setup cost in LKR (using locked rate if USD and locked)
                 const setupCostLkr = isUsd ? o.actual_price * effectiveRate : o.actual_price;
                 // Setup price in LKR (selling is always LKR for now)
@@ -516,36 +521,70 @@ export default function HostingPage() {
                         <Mail className="w-3.5 h-3.5 text-gray-500" />
                         {o.client_email}
                       </div>
+                      {o.vercel_email && (
+                        <div className="text-[11px] text-brand-300 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-lg mt-1 inline-flex items-center gap-1">
+                          <Mail className="w-3 h-3 text-brand-400" />
+                          <span>Vercel: {o.vercel_email}</span>
+                        </div>
+                      )}
                     </td>
-                    <td className="p-4 text-gray-300 font-medium">{o.hosting_provider}</td>
+                    <td className="p-4 text-gray-300 font-medium">
+                      {o.hosting_provider}
+                      {isFreeOrder && (
+                        <span className="ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          FREE
+                        </span>
+                      )}
+                    </td>
                     <td className="p-4 text-right space-y-1">
-                      {isUsd ? (
+                      {isFreeOrder ? (
+                        <div className="text-sm text-gray-400 font-medium">Free ($0.00)</div>
+                      ) : isUsd ? (
                         <PricePair usd={o.actual_price} lockedRate={lockedRate} liveRate={lkrRate} />
                       ) : (
                         <div className="text-sm text-white font-medium">{formatLKR(o.actual_price)}</div>
                       )}
-                      <div className="text-xs text-gray-500 font-normal">
-                        Ren: {isUsd ? (
-                          <PricePair usd={o.renewal_cost || 0} lockedRate={lockedRate} liveRate={lkrRate} dimmed />
-                        ) : formatLKR(o.renewal_cost || 0)}
-                      </div>
+                      {!isFreeOrder && (
+                        <div className="text-xs text-gray-500 font-normal">
+                          Ren: {isUsd ? (
+                            <PricePair usd={o.renewal_cost || 0} lockedRate={lockedRate} liveRate={lkrRate} dimmed />
+                          ) : formatLKR(o.renewal_cost || 0)}
+                        </div>
+                      )}
                     </td>
                     <td className="p-4 text-right text-white space-y-1">
-                      <div className="text-sm font-medium">{formatLKR(o.selling_price)}</div>
-                      <div className="text-xs text-gray-500 font-normal">Ren: {formatLKR(o.renewal_price || 0)}</div>
+                      {isFreeOrder ? (
+                        <div className="text-sm text-gray-400 font-medium">Free</div>
+                      ) : (
+                        <>
+                          <div className="text-sm font-medium">{formatLKR(o.selling_price)}</div>
+                          <div className="text-xs text-gray-500 font-normal">Ren: {formatLKR(o.renewal_price || 0)}</div>
+                        </>
+                      )}
                     </td>
                     <td className="p-4 text-right font-semibold text-brand-400 space-y-1">
-                      <div>
-                        {formatLKR(profitSetup)}
-                        {lockedRate != null && (
-                          <span className="text-[9px] ml-1 font-normal text-amber-300/70" title="Rate locked at time of entry"></span>
-                        )}
-                      </div>
-                      <div className="text-xs text-gray-500 font-normal">Ren: {formatLKR(profitRen)}</div>
+                      {isFreeOrder ? (
+                        <div className="text-xs text-gray-500 font-normal">—</div>
+                      ) : (
+                        <>
+                          <div>
+                            {formatLKR(profitSetup)}
+                          </div>
+                          <div className="text-xs text-gray-500 font-normal">Ren: {formatLKR(profitRen)}</div>
+                        </>
+                      )}
                     </td>
-                    <td className="p-4 text-gray-400 capitalize">{o.billing_cycle}</td>
+                    <td className="p-4 text-gray-400 capitalize">{isFreeOrder ? 'Free' : o.billing_cycle}</td>
                     <td className="p-4 text-gray-300">
-                      {o.expiry_date ? new Date(o.expiry_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
+                      {isFreeOrder && !o.expiry_date ? (
+                        <span className="inline-flex px-2.5 py-0.5 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-full">
+                          Lifetime / Free
+                        </span>
+                      ) : o.expiry_date ? (
+                        new Date(o.expiry_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="p-4 text-center">
                       <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full border ${getStatusColor(o.status)}`}>
@@ -588,7 +627,7 @@ export default function HostingPage() {
       {/* Add Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-neutral-900 border border-white/10 rounded-3xl w-full max-w-xl p-6 relative shadow-2xl overflow-y-auto max-h-[90vh]">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-xl p-6 relative shadow-2xl overflow-y-auto max-h-[90vh]">
             <button
               onClick={() => setIsAddModalOpen(false)}
               className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
@@ -620,6 +659,46 @@ export default function HostingPage() {
                 </div>
               </div>
 
+              {/* Free Hosting Toggle */}
+              <div className="flex items-center justify-between p-3.5 bg-white/5 border border-white/10 rounded-2xl">
+                <div>
+                  <p className="text-xs font-semibold text-white">Free Hosting (e.g. Vercel, Netlify)</p>
+                  <p className="text-[11px] text-gray-400">No expiration date, no cost or selling price</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextVal = !addIsFree;
+                    setAddIsFree(nextVal);
+                    if (nextVal && (!addProvider || addProvider === "Other")) {
+                      setAddProvider("Vercel");
+                    }
+                  }}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                    addIsFree ? "bg-brand-500" : "bg-white/10"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      addIsFree ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {addIsFree && (
+                <div className="space-y-1 p-3.5 bg-brand-500/10 border border-brand-500/20 rounded-2xl">
+                  <label className="text-xs font-semibold text-brand-300 block">Vercel / Platform Account Email</label>
+                  <input
+                    type="email"
+                    placeholder="account@vercel.com"
+                    value={addVercelEmail}
+                    onChange={(e) => setAddVercelEmail(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                  />
+                </div>
+              )}
+
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-400 block">Hosting Provider</label>
@@ -631,122 +710,129 @@ export default function HostingPage() {
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-400 block">Billing Cycle</label>
-                  <select
-                    value={addBillingCycle}
-                    onChange={(e) => setAddBillingCycle(e.target.value)}
-                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
-                  >
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                </div>
+                {!addIsFree && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-400 block">Billing Cycle</label>
+                    <select
+                      value={addBillingCycle}
+                      onChange={(e) => setAddBillingCycle(e.target.value)}
+                      className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                    >
+                      <option value="monthly">Monthly</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
-              {/* Rate Info — shown when cost currency is USD */}
-              {addActualCurrency === "USD" && (
-                <div className="text-xs text-brand-300/70 bg-brand-500/5 border border-brand-500/10 rounded-xl px-3 py-2">
-                  Live rate: <span className="font-bold text-brand-300">1 USD = {lkrRate.toFixed(2)} LKR</span>
-                  <span className="text-gray-500 ml-2">— this rate will be locked when you save.</span>
-                </div>
+              {!addIsFree && (
+                <>
+                  {/* Rate Info — shown when cost currency is USD */}
+                  {addActualCurrency === "USD" && (
+                    <div className="text-xs text-brand-300/70 bg-brand-500/5 border border-brand-500/10 rounded-xl px-3 py-2">
+                      Live rate: <span className="font-bold text-brand-300">1 USD = {lkrRate.toFixed(2)} LKR</span>
+                      <span className="text-gray-500 ml-2">— this rate will be locked when you save.</span>
+                    </div>
+                  )}
+
+                  {/* Pricing Grid */}
+                  <div className="grid sm:grid-cols-4 gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-gray-400 block">Cost Currency</label>
+                      <select
+                        value={addActualCurrency}
+                        onChange={(e) => setAddActualCurrency(e.target.value)}
+                        className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                      >
+                        <option value="USD">USD ($)</option>
+                        <option value="LKR">LKR (Rs.)</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-gray-400 block">Setup Cost</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        value={addActualPrice}
+                        onChange={(e) => setAddActualPrice(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-gray-400 block">Selling Currency</label>
+                      <select
+                        value={addSellingCurrency}
+                        onChange={(e) => setAddSellingCurrency(e.target.value)}
+                        className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                      >
+                        <option value="USD">USD ($)</option>
+                        <option value="LKR">LKR (Rs.)</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-gray-400 block">Setup Price</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        value={addSellingPrice}
+                        onChange={(e) => setAddSellingPrice(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Renewal Pricing Grid */}
+                  <div className="grid sm:grid-cols-2 gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-gray-400 block">Renewal Cost ({addActualCurrency === "USD" ? "$" : "Rs."})</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        value={addRenewalCost}
+                        onChange={(e) => setAddRenewalCost(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-gray-400 block">Renewal Price ({addSellingCurrency === "USD" ? "$" : "Rs."})</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        value={addRenewalPrice}
+                        onChange={(e) => setAddRenewalPrice(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                      />
+                    </div>
+                  </div>
+                </>
               )}
-
-              {/* Pricing Grid */}
-              <div className="grid sm:grid-cols-4 gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-400 block">Cost Currency</label>
-                  <select
-                    value={addActualCurrency}
-                    onChange={(e) => setAddActualCurrency(e.target.value)}
-                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
-                  >
-                    <option value="USD">USD ($)</option>
-                    <option value="LKR">LKR (Rs.)</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-400 block">Setup Cost</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={addActualPrice}
-                    onChange={(e) => setAddActualPrice(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-400 block">Selling Currency</label>
-                  <select
-                    value={addSellingCurrency}
-                    onChange={(e) => setAddSellingCurrency(e.target.value)}
-                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
-                  >
-                    <option value="USD">USD ($)</option>
-                    <option value="LKR">LKR (Rs.)</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-400 block">Setup Price</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={addSellingPrice}
-                    onChange={(e) => setAddSellingPrice(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
-                  />
-                </div>
-              </div>
-
-              {/* Renewal Pricing Grid */}
-              <div className="grid sm:grid-cols-2 gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-400 block">Renewal Cost ({addActualCurrency === "USD" ? "$" : "Rs."})</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={addRenewalCost}
-                    onChange={(e) => setAddRenewalCost(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-400 block">Renewal Price ({addSellingCurrency === "USD" ? "$" : "Rs."})</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={addRenewalPrice}
-                    onChange={(e) => setAddRenewalPrice(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
-                  />
-                </div>
-              </div>
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-400 block">Purchase Date</label>
                   <input
                     type="date"
-                    required
                     value={addPurchaseDate}
                     onChange={(e) => setAddPurchaseDate(e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-400 block">Expiry Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={addExpiryDate}
-                    onChange={(e) => setAddExpiryDate(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
-                  />
-                </div>
+                {!addIsFree && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-400 block">Expiry Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={addExpiryDate}
+                      onChange={(e) => setAddExpiryDate(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Upload Provider Invoice */}
@@ -820,7 +906,7 @@ export default function HostingPage() {
       {/* Edit Modal */}
       {isEditModalOpen && selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-neutral-900 border border-white/10 rounded-3xl w-full max-w-xl p-6 relative shadow-2xl overflow-y-auto max-h-[90vh]">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-xl p-6 relative shadow-2xl overflow-y-auto max-h-[90vh]">
             <button
               onClick={() => setIsEditModalOpen(false)}
               className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
@@ -852,6 +938,46 @@ export default function HostingPage() {
                 </div>
               </div>
 
+              {/* Free Hosting Toggle */}
+              <div className="flex items-center justify-between p-3.5 bg-white/5 border border-white/10 rounded-2xl">
+                <div>
+                  <p className="text-xs font-semibold text-white">Free Hosting (e.g. Vercel, Netlify)</p>
+                  <p className="text-[11px] text-gray-400">No expiration date, no cost or selling price</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextVal = !editIsFree;
+                    setEditIsFree(nextVal);
+                    if (nextVal && (!editProvider || editProvider === "Other")) {
+                      setEditProvider("Vercel");
+                    }
+                  }}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                    editIsFree ? "bg-brand-500" : "bg-white/10"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      editIsFree ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {editIsFree && (
+                <div className="space-y-1 p-3.5 bg-brand-500/10 border border-brand-500/20 rounded-2xl">
+                  <label className="text-xs font-semibold text-brand-300 block">Vercel / Platform Account Email</label>
+                  <input
+                    type="email"
+                    placeholder="account@vercel.com"
+                    value={editVercelEmail}
+                    onChange={(e) => setEditVercelEmail(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                  />
+                </div>
+              )}
+
               <div className="grid sm:grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-400 block">Provider</label>
@@ -863,17 +989,19 @@ export default function HostingPage() {
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-400 block">Billing Cycle</label>
-                  <select
-                    value={editBillingCycle}
-                    onChange={(e) => setEditBillingCycle(e.target.value)}
-                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
-                  >
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                </div>
+                {!editIsFree && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-400 block">Billing Cycle</label>
+                    <select
+                      value={editBillingCycle}
+                      onChange={(e) => setEditBillingCycle(e.target.value)}
+                      className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                    >
+                      <option value="monthly">Monthly</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
+                  </div>
+                )}
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-400 block">Status</label>
                   <select
@@ -1177,7 +1305,7 @@ function HostingInvoiceModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={onClose}>
-      <div className="relative flex flex-col md:flex-row bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden max-w-5xl w-full max-h-[90vh] shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="relative flex flex-col md:flex-row bg-black border border-white/10 rounded-3xl overflow-hidden max-w-5xl w-full max-h-[90vh] shadow-2xl" onClick={e => e.stopPropagation()}>
         <button className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md cursor-pointer" onClick={onClose}>
           <X className="w-5 h-5" />
         </button>

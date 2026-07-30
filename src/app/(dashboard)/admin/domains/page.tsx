@@ -1633,7 +1633,7 @@ export default function AdminOrdersPage() {
       {/* Expire Domain Modal */}
       {expireModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
-          <div className="bg-neutral-900 border border-white/10 rounded-3xl w-full max-w-md p-6 relative shadow-2xl">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-md p-6 relative shadow-2xl">
             <button
               onClick={() => setExpireModalOpen(false)}
               className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors"
@@ -1836,7 +1836,7 @@ export default function AdminOrdersPage() {
       {/* Add Domain Order Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-neutral-900 border border-white/10 rounded-3xl w-full max-w-xl p-6 relative shadow-2xl overflow-y-auto max-h-[90vh] text-white">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-xl p-6 relative shadow-2xl overflow-y-auto max-h-[90vh] text-white">
             <button
               onClick={() => setIsAddModalOpen(false)}
               className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
@@ -2070,7 +2070,7 @@ export default function AdminOrdersPage() {
 
       {viewingRenewalInvoice && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={() => setViewingRenewalInvoice(null)}>
-          <div className="relative bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden max-w-3xl w-full max-h-[90vh] shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="relative bg-black border border-white/10 rounded-3xl overflow-hidden max-w-3xl w-full max-h-[90vh] shadow-2xl" onClick={e => e.stopPropagation()}>
             <button className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-white/20 rounded-full text-white transition-colors cursor-pointer" onClick={() => setViewingRenewalInvoice(null)}>
               <X className="w-5 h-5" />
             </button>
@@ -2187,7 +2187,7 @@ function DomainInvoiceModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={onClose}>
-      <div className="relative flex flex-col md:flex-row bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden max-w-5xl w-full max-h-[90vh] shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="relative flex flex-col md:flex-row bg-black border border-white/10 rounded-3xl overflow-hidden max-w-5xl w-full max-h-[90vh] shadow-2xl" onClick={e => e.stopPropagation()}>
         <button className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md cursor-pointer" onClick={onClose}>
           <X className="w-5 h-5" />
         </button>

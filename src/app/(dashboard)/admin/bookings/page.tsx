@@ -347,6 +347,10 @@ export default function BookingsAdminPage() {
               <span className="text-gray-300">Reminders</span>
             </div>
             <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+              <span className="text-gray-300">Expirations (Domain & Hosting)</span>
+            </div>
+            <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-red-700" />
               <span className="text-gray-300">Public Holiday (LK)</span>
             </div>

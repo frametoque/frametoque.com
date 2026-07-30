@@ -150,7 +150,7 @@ export async function deleteBooking(id: number): Promise<void> {
 export type CalendarEvent = {
   id: string;
   title: string;
-  type: 'booking' | 'project' | 'agreement' | 'invoice';
+  type: 'booking' | 'project' | 'agreement' | 'invoice' | 'domain' | 'hosting' | 'expiration';
   date: string;
   time?: string | null;
   status?: string;
@@ -158,7 +158,7 @@ export type CalendarEvent = {
   details?: string;
   location?: string | null;
   end_time?: string | null;
-  event_type?: 'booking' | 'task_reminder';
+  event_type?: 'booking' | 'task_reminder' | 'domain_expiration' | 'hosting_expiration' | 'expiration';
 };
 
 export async function getCalendarEvents(): Promise<CalendarEvent[]> {
@@ -192,9 +192,7 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
     console.error("Error fetching bookings for calendar:", e);
   }
 
-
-
-  // 3. Fetch Agreements
+  // 2. Fetch Agreements
   try {
     const agreements = await sql`SELECT id, title, start_date, delivery_date, deadline, status, client_name FROM admin_agreements`;
     agreements.forEach(a => {
@@ -223,6 +221,60 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
     console.error("Error fetching agreements for calendar:", e);
   }
 
+  // 3. Fetch Domain Expirations (admin_domain_orders)
+  try {
+    const domainOrders = await sql`
+      SELECT domain_name, expiry_date, status, client_email 
+      FROM admin_domain_orders 
+      WHERE expiry_date IS NOT NULL AND status != 'cancelled'
+    `;
+    domainOrders.forEach((d: any, idx: number) => {
+      if (d.expiry_date) {
+        const formattedDate = formatDateOnly(d.expiry_date);
+        if (formattedDate) {
+          events.push({
+            id: `domain-${idx}-${d.domain_name}`,
+            title: `Domain Expiry: ${d.domain_name}`,
+            type: 'expiration',
+            date: formattedDate,
+            color: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+            details: `Domain expiration for ${d.domain_name}. Status: ${d.status || 'Active'}`,
+            event_type: 'expiration'
+          });
+        }
+      }
+    });
+  } catch (e) {
+    console.error("Error fetching admin_domain_orders for calendar:", e);
+  }
+
+  // 4. Fetch Hosting Expirations (admin_hosting_orders)
+  try {
+    const hostingOrders = await sql`
+      SELECT id, domain_name, hosting_provider, expiry_date, status, client_email 
+      FROM admin_hosting_orders 
+      WHERE expiry_date IS NOT NULL AND status != 'cancelled'
+    `;
+    hostingOrders.forEach((h: any, idx: number) => {
+      if (h.expiry_date) {
+        const formattedDate = formatDateOnly(h.expiry_date);
+        if (formattedDate) {
+          const nameLabel = h.domain_name ? h.domain_name : (h.hosting_provider || 'Hosting');
+          events.push({
+            id: `hosting-${idx}-${h.id}`,
+            title: `Hosting Expiry: ${nameLabel}`,
+            type: 'expiration',
+            date: formattedDate,
+            color: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+            details: `Hosting package expiration for ${nameLabel}. Status: ${h.status || 'Active'}`,
+            event_type: 'expiration'
+          });
+        }
+      }
+    });
+  } catch (e) {
+    console.error("Error fetching admin_hosting_orders for calendar:", e);
+  }
 
   return events;
 }

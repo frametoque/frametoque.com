@@ -24,9 +24,24 @@ export interface HostingOrder {
   renewal_price?: number;
   activation_lkr_rate?: number | null;
   renewal_invoices?: Array<{ url: string; note: string; date: string }>;
+  is_free?: boolean;
+  vercel_email?: string | null;
+}
+
+let _hostingTableMigrated = false;
+async function ensureHostingTable() {
+  if (_hostingTableMigrated) return;
+  try {
+    await sql`ALTER TABLE admin_hosting_orders ADD COLUMN IF NOT EXISTS vercel_email VARCHAR(255)`;
+    await sql`ALTER TABLE admin_hosting_orders ADD COLUMN IF NOT EXISTS is_free BOOLEAN DEFAULT FALSE`;
+    _hostingTableMigrated = true;
+  } catch (err) {
+    console.error("Migration: failed to alter admin_hosting_orders table", err);
+  }
 }
 
 export async function getHostingOrders(): Promise<HostingOrder[]> {
+  await ensureHostingTable();
   try {
     const rows = await sql`
       SELECT * FROM admin_hosting_orders
@@ -50,6 +65,8 @@ export async function getHostingOrders(): Promise<HostingOrder[]> {
       renewal_invoices: Array.isArray(r.renewal_invoices)
         ? r.renewal_invoices
         : (r.renewal_invoices ? JSON.parse(r.renewal_invoices) : []),
+      is_free: !!r.is_free,
+      vercel_email: r.vercel_email || null,
     }));
   } catch (error) {
     console.error("Failed to get hosting orders:", error);
@@ -60,6 +77,7 @@ export async function getHostingOrders(): Promise<HostingOrder[]> {
 export async function addHostingOrder(
   order: Omit<HostingOrder, "id" | "created_at">
 ): Promise<{ success: boolean; error?: string }> {
+  await ensureHostingTable();
   try {
     const purchaseDate = order.purchase_date ? order.purchase_date.split("T")[0] : null;
     const expiryDate = order.expiry_date ? order.expiry_date.split("T")[0] : null;
@@ -68,12 +86,13 @@ export async function addHostingOrder(
       INSERT INTO admin_hosting_orders (
         client_email, domain_name, hosting_provider, actual_price, actual_price_currency, 
         selling_price, selling_price_currency, profit, billing_cycle, purchase_date, expiry_date, status, invoice_id, provider_invoice_url,
-        renewal_cost, renewal_price, activation_lkr_rate
+        renewal_cost, renewal_price, activation_lkr_rate, is_free, vercel_email
       ) VALUES (
-        ${order.client_email}, ${order.domain_name}, ${order.hosting_provider}, ${order.actual_price}, ${order.actual_price_currency || 'USD'}, 
-        ${order.selling_price}, ${order.selling_price_currency || 'LKR'}, ${order.profit}, ${order.billing_cycle || 'yearly'}, 
+        ${order.client_email}, ${order.domain_name}, ${order.hosting_provider}, ${order.actual_price || 0}, ${order.actual_price_currency || 'USD'}, 
+        ${order.selling_price || 0}, ${order.selling_price_currency || 'LKR'}, ${order.profit || 0}, ${order.billing_cycle || 'yearly'}, 
         ${purchaseDate || null}, ${expiryDate || null}, ${order.status}, ${order.invoice_id || null}, ${order.provider_invoice_url || null},
-        ${order.renewal_cost || 0}, ${order.renewal_price || 0}, ${order.activation_lkr_rate || null}
+        ${order.renewal_cost || 0}, ${order.renewal_price || 0}, ${order.activation_lkr_rate || null},
+        ${order.is_free || false}, ${order.vercel_email || null}
       )
     `;
     await logSystemAction(`Hosting order placed: "${order.domain_name}" for client "${order.client_email}"`);
@@ -88,6 +107,7 @@ export async function updateHostingOrder(
   id: number,
   order: Partial<HostingOrder>
 ): Promise<{ success: boolean; error?: string }> {
+  await ensureHostingTable();
   try {
     const purchaseDate = order.purchase_date ? order.purchase_date.split("T")[0] : null;
     const expiryDate = order.expiry_date ? order.expiry_date.split("T")[0] : null;
@@ -105,13 +125,15 @@ export async function updateHostingOrder(
         profit = COALESCE(${order.profit}, profit),
         billing_cycle = COALESCE(${order.billing_cycle}, billing_cycle),
         purchase_date = COALESCE(${purchaseDate ? purchaseDate + " 00:00:00" : null}::timestamp, purchase_date),
-        expiry_date = COALESCE(${expiryDate ? expiryDate + " 00:00:00" : null}::timestamp, expiry_date),
+        expiry_date = ${expiryDate ? expiryDate + " 00:00:00" : null}::timestamp,
         status = COALESCE(${order.status}, status),
         invoice_id = COALESCE(${order.invoice_id}, invoice_id),
         provider_invoice_url = COALESCE(${order.provider_invoice_url}, provider_invoice_url),
         renewal_cost = COALESCE(${order.renewal_cost}, renewal_cost),
         renewal_price = COALESCE(${order.renewal_price}, renewal_price),
-        activation_lkr_rate = COALESCE(${order.activation_lkr_rate}, activation_lkr_rate)
+        activation_lkr_rate = COALESCE(${order.activation_lkr_rate}, activation_lkr_rate),
+        is_free = COALESCE(${order.is_free}, is_free),
+        vercel_email = ${order.vercel_email !== undefined ? order.vercel_email : null}
       WHERE id = ${id}
     `;
 
@@ -168,12 +190,10 @@ export async function addHostingRenewalInvoiceUrl(
   note?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Ensure the renewal_invoices column exists
     try {
       await sql`ALTER TABLE admin_hosting_orders ADD COLUMN IF NOT EXISTS renewal_invoices JSONB NOT NULL DEFAULT '[]'`;
     } catch (e) {}
 
-    // Append the new invoice entry to the array
     const entry = JSON.stringify({ url, note: note || '', date: new Date().toISOString() });
     await sql`
       UPDATE admin_hosting_orders
@@ -187,4 +207,3 @@ export async function addHostingRenewalInvoiceUrl(
     return { success: false, error: err.message };
   }
 }
-
