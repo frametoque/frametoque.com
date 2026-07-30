@@ -130,11 +130,14 @@ function buildPassObject(invoice: Record<string, any>) {
   const objectId = `${ISSUER_ID}.invoice_${invoice.invoice_id}`;
 
   const currencyLabel = invoice.currency === "LKR" ? "Rs." : (invoice.currency ?? "");
-  const totalDue = (
-    parseFloat(invoice.subtotal ?? 0) -
-    parseFloat(invoice.discount ?? 0) -
-    parseFloat(invoice.advance  ?? 0)
-  ).toLocaleString("en-US", { minimumFractionDigits: 2 });
+  const totalDueVal = invoice.total_due !== undefined && invoice.total_due !== null
+    ? parseFloat(invoice.total_due)
+    : (
+        parseFloat(invoice.subtotal ?? 0) -
+        parseFloat(invoice.discount ?? 0) -
+        parseFloat(invoice.advance  ?? 0)
+      );
+  const totalDue = totalDueVal.toLocaleString("en-US", { minimumFractionDigits: 2 });
 
   const issueDate = invoice.date
     ? new Date(invoice.date).toLocaleDateString("en-US", {

@@ -86,17 +86,34 @@ export async function GET(request, { params }) {
 
     // Fetch payments history
     const paymentsResult = await sql`
-      SELECT date, amount, payment_method, description 
+      SELECT id, date, amount, payment_method, description, receipt_url 
       FROM public.admin_incomes 
       WHERE invoice_id = ${invoice_id}
       ORDER BY date DESC
     `;
     invoice.payments = paymentsResult.map((p: any) => ({
-      date: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      id: p.id,
+      date: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Colombo' }),
       amount: parseFloat(p.amount),
       method: p.payment_method,
-      description: p.description
+      description: p.description,
+      receipt_url: p.receipt_url
     }));
+
+    const subtotalVal = parseFloat(invoice.subtotal || 0);
+    const discountVal = parseFloat(invoice.discount || 0);
+    const advanceVal  = parseFloat(invoice.advance || 0);
+    const taxRateVal  = parseFloat(invoice.tax_rate || 0);
+    const taxAmountVal = subtotalVal * (taxRateVal / 100);
+    const totalVal    = parseFloat(invoice.total || (subtotalVal + taxAmountVal - discountVal));
+
+    const nonAdvancePayments = (invoice.payments || [])
+      .filter((p: any) => !String(p.description || '').toLowerCase().startsWith('advance'))
+      .reduce((sum: number, p: any) => sum + (parseFloat(p.amount) || 0), 0);
+
+    const calculatedTotalDue = Math.max(0, totalVal - advanceVal - nonAdvancePayments);
+    invoice.total_due = calculatedTotalDue;
+    invoice.payments_total = nonAdvancePayments;
 
     return NextResponse.json(invoice);
   } catch (error) {

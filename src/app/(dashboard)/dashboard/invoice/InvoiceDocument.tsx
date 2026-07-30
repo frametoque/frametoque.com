@@ -171,9 +171,25 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
   // ── 3. Date ──────────────────────────────────────────────────────────────────
   drawTextAligned(formatDate(date), 930, 842, 46, helvetica, "#222222");
 
+  const subtotalVal = parseFloat(subtotal || 0);
+  const discountVal = parseFloat(discount || 0);
+  const advanceVal  = parseFloat(advance || 0);
+  const taxRateVal  = parseFloat(tax_rate || 0);
+  const taxAmountVal = subtotalVal * (taxRateVal / 100);
+  const totalVal    = parseFloat(total || (subtotalVal + taxAmountVal - discountVal));
+
+  const paymentsList = Array.isArray(invoice.payments) ? invoice.payments : [];
+  const totalPaymentsVal = paymentsList
+    .filter((p: any) => !String(p.description || '').toLowerCase().startsWith('advance'))
+    .reduce((sum: number, p: any) => sum + (parseFloat(p.amount) || 0), 0);
+
+  const calculatedTotalDue = total_due !== undefined && total_due !== null
+    ? parseFloat(total_due)
+    : Math.max(0, totalVal - advanceVal - totalPaymentsVal);
+
   // ── 4. Total Due ─────────────────────────────────────────────────────────────
   drawTextAligned(
-    formatMoney(total_due || total, currency),
+    formatMoney(calculatedTotalDue, currency),
     769, 955, 70, helveticaBold, "#1a3a4a"
   );
 
@@ -214,7 +230,6 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
   drawTextAligned(formatMoneySlash(advance, currency), 1640, 2390, 45, helvetica, "#222222", "right", 649);
 
   // ── 8.5. Tax ──────────────────────────────────────────────────────────────────
-  const taxRateVal = parseFloat(tax_rate || 0);
   if (taxRateVal > 0) {
     const taxAmount = parseFloat(subtotal || 0) * (taxRateVal / 100);
     drawTextAligned(`Tax (${taxRateVal}%)`, 1450, 2475, 45, helvetica, "#222222", "center", 440);

@@ -271,6 +271,20 @@ export async function createIncome(data: any) {
   `;
 
   if (data.invoiceId) {
+    if (data.receiptUrl) {
+      try {
+        const existing = await sql`SELECT id FROM invoice_payment_slips WHERE invoice_id = ${data.invoiceId} AND slip_url = ${data.receiptUrl}`;
+        if (existing.length === 0) {
+          await sql`
+            INSERT INTO invoice_payment_slips (invoice_id, slip_url, amount, status, reviewed_at, review_note)
+            VALUES (${data.invoiceId}, ${data.receiptUrl}, ${data.amount}, 'approved', CURRENT_TIMESTAMP, ${data.description || 'Income Receipt'})
+          `;
+        }
+      } catch (err) {
+        console.warn("Failed to sync slip to invoice_payment_slips:", err);
+      }
+    }
+
     try {
       const invRows = await sql`SELECT total, advance, total_due, payment_status FROM invoices WHERE invoice_id = ${data.invoiceId}`;
       if (invRows.length > 0) {
@@ -346,6 +360,21 @@ export async function updateIncome(id: number, data: any) {
     SET date = ${data.date}, amount = ${data.amount}, description = ${data.description}, category = ${data.category}, payment_method = ${data.paymentMethod}, invoice_id = ${data.invoiceId || null}, client_id = ${data.clientId || null}, receipt_url = ${data.receiptUrl || null}
     WHERE id = ${id}
   `;
+
+  if (data.invoiceId && data.receiptUrl) {
+    try {
+      const existingSlip = await sql`SELECT id FROM invoice_payment_slips WHERE invoice_id = ${data.invoiceId} AND slip_url = ${data.receiptUrl}`;
+      if (existingSlip.length === 0) {
+        await sql`
+          INSERT INTO invoice_payment_slips (invoice_id, slip_url, amount, status, reviewed_at, review_note)
+          VALUES (${data.invoiceId}, ${data.receiptUrl}, ${data.amount}, 'approved', CURRENT_TIMESTAMP, ${data.description || 'Income Receipt'})
+        `;
+      }
+    } catch (err) {
+      console.warn("Failed to sync slip on updateIncome:", err);
+    }
+  }
+
   await logSystemAction(`Updated income ID ${id}: recorded $${data.amount} for "${data.description}"`);
 }
 
@@ -646,47 +675,75 @@ export async function payScheduledExpense(id: number) {
 // -- INVOICES --
 export async function getInvoices() {
   const totalIssuedCount = await sql`SELECT COUNT(*) as count FROM invoices`;
-  const paidCount = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status = 'fully paid'`;
-  const pendingCount = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status IN ('unpaid', 'pending', 'partially paid')`;
-  const totalDueSum = await sql`
-    SELECT SUM(COALESCE(total_due, total)) as total 
-    FROM invoices 
-    WHERE payment_status != 'fully paid'
-  `;
 
   const rows = await sql`
-    SELECT i.invoice_id as id, i.user_email as client_email, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.total_due, i.date as due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at
+    SELECT i.invoice_id as id, i.user_email as client_email, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.advance, i.tax_rate, i.total_due, i.date as due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at
     FROM invoices i
     LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
     ORDER BY i.date DESC, i.created_at DESC
   `;
 
+  const nonAdvancePaymentsRows = await sql`
+    SELECT invoice_id, SUM(amount) as paid_sum
+    FROM admin_incomes
+    WHERE invoice_id IS NOT NULL AND LOWER(description) NOT LIKE 'advance:%' AND LOWER(description) NOT LIKE 'advance payment%'
+    GROUP BY invoice_id
+  `;
+  const paymentsMap: Record<string, number> = {};
+  nonAdvancePaymentsRows.forEach((p: any) => {
+    paymentsMap[p.invoice_id] = parseFloat(p.paid_sum || '0');
+  });
+
+  let paidCount = 0;
+  let pendingCount = 0;
+  let computedTotalDueSum = 0;
+
+  const items = rows.map(r => {
+    const subtotal = parseFloat(r.subtotal || 0);
+    const discount = parseFloat(r.discount || 0);
+    const advance = parseFloat(r.advance || 0);
+    const taxRate = parseFloat(r.tax_rate || 0);
+    const taxAmount = subtotal * (taxRate / 100);
+    const totalVal = parseFloat(r.total != null ? r.total : (subtotal + taxAmount - discount));
+    const nonAdvanceVal = paymentsMap[r.id] || 0;
+
+    const calculatedTotalDue = Math.max(0, totalVal - advance - nonAdvanceVal);
+
+    let status = r.status;
+    if (calculatedTotalDue < 0.01) {
+      status = 'fully paid';
+    }
+
+    if (status === 'fully paid' || status === 'paid') {
+      paidCount++;
+    } else {
+      pendingCount++;
+      computedTotalDueSum += calculatedTotalDue;
+    }
+
+    return {
+      id: r.id,
+      created_at: r.created_at,
+      client: r.client_name || r.client_email?.split('@')[0] || 'Unknown',
+      clientEmail: r.client_email || '',
+      client_email: r.client_email || '',
+      legalName: r.legal_name || '',
+      service: r.service,
+      amount: totalVal,
+      total_due: calculatedTotalDue,
+      due: r.due_date ? new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Colombo' }) : '-',
+      status: status,
+      work_status: r.work_status,
+      overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && status !== 'paid' && status !== 'fully paid')
+    };
+  });
+
   return {
     totalIssued: parseInt(totalIssuedCount[0]?.count || '0'),
-    paid: parseInt(paidCount[0]?.count || '0'),
-    pending: parseInt(pendingCount[0]?.count || '0'),
-    totalDue: parseFloat(totalDueSum[0]?.total || '0'),
-    items: rows.map(r => {
-      const subtotal = parseFloat(r.subtotal || 0);
-      const discount = parseFloat(r.discount || 0);
-      const finalAmount = subtotal - discount;
-
-      return {
-        id: r.id,
-        created_at: r.created_at,
-        client: r.client_name || r.client_email.split('@')[0] || 'Unknown',
-        clientEmail: r.client_email || '',
-        client_email: r.client_email || '',
-        legalName: r.legal_name || '',
-        service: r.service,
-        amount: finalAmount,
-        total_due: parseFloat(r.total_due != null ? r.total_due : finalAmount),
-        due: r.due_date ? new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
-        status: r.status,
-        work_status: r.work_status,
-        overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && r.status !== 'paid' && r.status !== 'fully paid')
-      };
-    })
+    paid: paidCount,
+    pending: pendingCount,
+    totalDue: computedTotalDueSum,
+    items: items
   };
 }
 
@@ -805,7 +862,7 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
   `;
 
   const payments = await sql`
-    SELECT date, amount, payment_method, description, created_at
+    SELECT id, date, amount, payment_method, description, receipt_url, created_at
     FROM admin_incomes
     WHERE invoice_id = ${invoiceId}
     ORDER BY date DESC, created_at DESC, id DESC
@@ -820,12 +877,15 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
 
   invoice.items = itemsResult;
   invoice.payments = payments.map(p => ({
-    date: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    id: p.id,
+    date: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Colombo' }),
     amount: parseFloat(p.amount),
     method: p.payment_method,
-    description: p.description
+    description: p.description,
+    receipt_url: p.receipt_url
   }));
-  invoice.payment_slips = slipRows.map(s => ({
+
+  const mappedSlips = slipRows.map(s => ({
     id: s.id,
     url: s.slip_url,
     amount: parseFloat(s.amount),
@@ -833,6 +893,47 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
     uploaded_at: s.uploaded_at,
     review_note: s.review_note
   }));
+
+  for (const inc of payments) {
+    if (inc.receipt_url && !mappedSlips.some(s => s.url === inc.receipt_url)) {
+      mappedSlips.push({
+        id: `income-${inc.id}`,
+        url: inc.receipt_url,
+        amount: parseFloat(inc.amount || 0),
+        status: 'approved',
+        uploaded_at: inc.created_at || inc.date || null,
+        review_note: inc.description || 'Income Receipt'
+      });
+    }
+  }
+
+  const advanceVal  = parseFloat(invoice.advance || 0);
+  const subtotalVal = parseFloat(invoice.subtotal || 0);
+  const discountVal = parseFloat(invoice.discount || 0);
+  const taxRateVal  = parseFloat(invoice.tax_rate || 0);
+  const taxAmountVal = subtotalVal * (taxRateVal / 100);
+  const totalVal    = parseFloat(invoice.total || (subtotalVal + taxAmountVal - discountVal));
+
+  if (invoice.bank_slip && !mappedSlips.some(s => s.url === invoice.bank_slip)) {
+    mappedSlips.push({
+      id: 'legacy',
+      url: invoice.bank_slip,
+      amount: advanceVal > 0 ? advanceVal : totalVal,
+      status: invoice.payment_status === 'on review' ? 'pending' : (invoice.payment_status === 'fully paid' || invoice.payment_status === 'advance-paid' ? 'approved' : 'pending'),
+      uploaded_at: invoice.date || null,
+      review_note: 'Bank Slip'
+    });
+  }
+
+  invoice.payment_slips = mappedSlips;
+
+  const nonAdvancePayments = (invoice.payments || [])
+    .filter((p: any) => !String(p.description || '').toLowerCase().startsWith('advance'))
+    .reduce((sum: number, p: any) => sum + (parseFloat(p.amount) || 0), 0);
+
+  const calculatedTotalDue = Math.max(0, totalVal - advanceVal - nonAdvancePayments);
+  invoice.total_due = calculatedTotalDue;
+  invoice.payments_total = nonAdvancePayments;
 
   return invoice;
 }
@@ -1052,6 +1153,21 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
     `;
   }
 
+  const existingPayments = await sql`
+    SELECT amount, description FROM admin_incomes WHERE invoice_id = ${invoiceId}
+  `;
+  const nonAdvancePayments = existingPayments
+    .filter((p: any) => !String(p.description || '').toLowerCase().startsWith('advance'))
+    .reduce((sum: number, p: any) => sum + (parseFloat(p.amount) || 0), 0);
+
+  const subtotalVal = parseFloat(invoiceData.subtotal || 0);
+  const discountVal = parseFloat(invoiceData.discount || 0);
+  const advanceVal  = parseFloat(invoiceData.advance || 0);
+  const taxRateVal  = parseFloat(invoiceData.taxRate || 0);
+  const taxAmountVal = subtotalVal * (taxRateVal / 100);
+  const totalVal    = parseFloat(invoiceData.total || (subtotalVal + taxAmountVal - discountVal));
+  const calculatedTotalDue = Math.max(0, totalVal - advanceVal - nonAdvancePayments);
+
   await sql`
   UPDATE invoices SET
     user_email = ${invoiceData.userEmail},
@@ -1061,7 +1177,7 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
     discount = ${invoiceData.discount},
     total = ${invoiceData.total},
     advance = ${invoiceData.advance},
-    total_due = ${invoiceData.totalDue},
+    total_due = ${calculatedTotalDue},
     work_status = ${invoiceData.workStatus},
     payment_status = ${invoiceData.paymentStatus},
     currency = ${invoiceData.currency},
@@ -1544,10 +1660,22 @@ export async function recordInvoicePayment(
       : invoice.project_name || 'Payment';
     const category = invoice.category || 'Web dev';
 
-    // 4. Create the income record
+    // 4. Create the income record with receipt_url if available
+    let receiptUrlToAttach = null;
+    if (invoice.bank_slip) {
+      receiptUrlToAttach = invoice.bank_slip;
+    } else {
+      const existingSlips = await sql`
+        SELECT slip_url FROM invoice_payment_slips WHERE invoice_id = ${invoiceId} ORDER BY id DESC LIMIT 1
+      `;
+      if (existingSlips.length > 0) {
+        receiptUrlToAttach = existingSlips[0].slip_url;
+      }
+    }
+
     await sql`
-      INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id)
-      VALUES (${paymentDate}, ${paidAmount}, ${description}, ${category}, ${paymentMethod}, ${invoiceId}, ${clientId})
+      INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id, receipt_url)
+      VALUES (${paymentDate}, ${paidAmount}, ${description}, ${category}, ${paymentMethod}, ${invoiceId}, ${clientId}, ${receiptUrlToAttach})
     `;
 
     // 5. Update invoice payment fields
@@ -1692,8 +1820,8 @@ export async function approveBankSlip(invoiceId: string, slipId?: string | numbe
     const description = `Bank Transfer Payment for ${invoice.project_name || 'Project'}`;
     const category = invoice.category || 'Web dev';
     await sql`
-      INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id)
-      VALUES (CURRENT_DATE, ${paidAmount}, ${description}, ${category}, 'Bank Transfer', ${invoiceId}, ${clientId})
+      INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id, receipt_url)
+      VALUES (CURRENT_DATE, ${paidAmount}, ${description}, ${category}, 'Bank Transfer', ${invoiceId}, ${clientId}, ${slip.slip_url || null})
     `;
 
     await sql`

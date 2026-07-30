@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, Image, CheckCircle2, ShieldCheck, XCircle, DollarSign, X } from "lucide-react";
+import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, Image, CheckCircle2, ShieldCheck, XCircle, DollarSign, X, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
 import { getInvoiceByIdAdmin, approveBankSlip, declineBankSlip, undoApprovedBankSlipPayment, recordInvoicePayment } from "../../actions/actions";
@@ -25,8 +25,30 @@ const paymentStatusStyles = {
 
 const formatDate = (dateString: string) => {
   if (!dateString) return "N/A";
-  return new Date(dateString).toLocaleDateString("en-US", {
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return "N/A";
+  return d.toLocaleDateString("en-US", {
+    timeZone: "Asia/Colombo",
     year: "numeric", month: "short", day: "numeric",
+  });
+};
+
+const formatDateTime = (dateString: string | Date | null | undefined) => {
+  if (!dateString) return "N/A";
+  let str = String(dateString);
+  if (typeof dateString === 'string' && !str.endsWith('Z') && !str.includes('+') && !str.includes('Z')) {
+    str = str.replace(' ', 'T') + 'Z';
+  }
+  const date = new Date(str);
+  if (isNaN(date.getTime())) return "N/A";
+  return date.toLocaleString("en-US", {
+    timeZone: "Asia/Colombo",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   });
 };
 
@@ -50,7 +72,7 @@ export default function AdminInvoicePage() {
   const [approving, setApproving] = useState(false);
   const [declining, setDeclining] = useState(false);
   const [undoingApprovedPayment, setUndoingApprovedPayment] = useState(false);
-  const [activeSlipIndex, setActiveSlipIndex] = useState(0);
+  const [activeSlipIndex, setActiveSlipIndex] = useState(-1);
   const downloadTriggeredRef = useRef(false);
 
   const [incomeModalOpen, setIncomeModalOpen] = useState(false);
@@ -77,7 +99,7 @@ export default function AdminInvoicePage() {
 
   // Reset active payment-slip index when the invoice changes
   useEffect(() => {
-    setActiveSlipIndex(0);
+    setActiveSlipIndex(-1);
   }, [invoice_id]);
 
   // Auto-download if ?download=true
@@ -108,6 +130,25 @@ export default function AdminInvoicePage() {
     }
   };
 
+  const openIncomeModal = () => {
+    const due = parseFloat(invoice?.total_due != null ? invoice.total_due : invoice?.total || 0);
+    setPaidAmount(due > 0 ? due.toString() : (invoice?.total || '0').toString());
+    setPaymentMethod("Bank Transfer");
+    setPaymentDate(new Date().toISOString().split('T')[0]);
+    setIncomeModalOpen(true);
+  };
+
+  useEffect(() => {
+    const handleCreateIncomeEvent = () => openIncomeModal();
+    const handleDownloadEvent = () => handleDownload();
+    window.addEventListener("invoice:create-income", handleCreateIncomeEvent);
+    window.addEventListener("invoice:download-pdf", handleDownloadEvent);
+    return () => {
+      window.removeEventListener("invoice:create-income", handleCreateIncomeEvent);
+      window.removeEventListener("invoice:download-pdf", handleDownloadEvent);
+    };
+  }, [invoice]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -135,11 +176,58 @@ export default function AdminInvoicePage() {
   const taxRate = parseFloat(invoice.tax_rate || 0);
   const taxAmount = subtotal * (taxRate / 100);
   const total = parseFloat(invoice.total || subtotal + taxAmount - discount);
-  const totalDue = parseFloat(invoice.total_due || total - advance);
 
-  const paymentSlips = Array.isArray(invoice.payment_slips) ? invoice.payment_slips : [];
-  const hasSlipRecords = paymentSlips.length > 0 || !!invoice.bank_slip;
-  const activeSlip = paymentSlips[activeSlipIndex] || (invoice.bank_slip ? { id: 'legacy', url: invoice.bank_slip, amount: totalDue, status: 'pending' } : null);
+  const paymentsList = Array.isArray(invoice.payments) ? invoice.payments : [];
+  const totalPayments = paymentsList
+    .filter((p: any) => !String(p.description || '').toLowerCase().startsWith('advance'))
+    .reduce((sum: number, p: any) => sum + (parseFloat(p.amount) || 0), 0);
+
+  const totalDue = Math.max(0, total - advance - totalPayments);
+
+  const rawSlips = Array.isArray(invoice.payment_slips) ? invoice.payment_slips : [];
+  const paymentSlips = [...rawSlips];
+
+  if (Array.isArray(invoice.payments)) {
+    for (const p of invoice.payments) {
+      if (p.receipt_url && !paymentSlips.some((s: any) => s.url === p.receipt_url)) {
+        paymentSlips.push({
+          id: `income-p-${p.id || Date.now()}`,
+          url: p.receipt_url,
+          amount: parseFloat(p.amount || 0),
+          status: 'approved',
+          uploaded_at: p.created_at || p.date || null,
+          review_note: p.description || 'Income Receipt'
+        });
+      }
+    }
+  }
+
+  if (invoice.bank_slip && !paymentSlips.some((s: any) => s.url === invoice.bank_slip)) {
+    paymentSlips.push({
+      id: 'legacy',
+      url: invoice.bank_slip,
+      amount: advance > 0 ? advance : total,
+      status: invoice.payment_status === 'on review' ? 'pending' : (invoice.payment_status === 'fully paid' || invoice.payment_status === 'advance-paid' ? 'approved' : 'pending'),
+      uploaded_at: invoice.date || null,
+      review_note: 'Bank Slip'
+    });
+  }
+
+  // Sort slips in ASCENDING order (oldest slip is index 0 -> Slip #1)
+  paymentSlips.sort((a: any, b: any) => {
+    const timeA = a.uploaded_at ? new Date(a.uploaded_at).getTime() : 0;
+    const timeB = b.uploaded_at ? new Date(b.uploaded_at).getTime() : 0;
+    return timeA - timeB;
+  });
+
+  const hasSlipRecords = paymentSlips.length > 0;
+
+  // Default active slip to newest (last item) if not set or out of bounds
+  const currentActiveIdx = activeSlipIndex >= 0 && activeSlipIndex < paymentSlips.length 
+    ? activeSlipIndex 
+    : (paymentSlips.length > 0 ? paymentSlips.length - 1 : 0);
+
+  const activeSlip = paymentSlips[currentActiveIdx] || null;
   const activeSlipUrl = activeSlip?.url || null;
   const activeSlipAmount = activeSlip?.amount ?? totalDue;
   const activeSlipIsImage = !!activeSlipUrl && (
@@ -150,14 +238,6 @@ export default function AdminInvoicePage() {
     activeSlipUrl.startsWith('data:application/pdf') ||
     activeSlipUrl.toLowerCase().endsWith('.pdf')
   );
-
-  const openIncomeModal = () => {
-    const due = parseFloat(invoice?.total_due != null ? invoice.total_due : invoice?.total || 0);
-    setPaidAmount(due > 0 ? due.toString() : (invoice?.total || '0').toString());
-    setPaymentMethod("Bank Transfer");
-    setPaymentDate(new Date().toISOString().split('T')[0]);
-    setIncomeModalOpen(true);
-  };
 
   const handleCreateIncomeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,47 +265,14 @@ export default function AdminInvoicePage() {
   return (
     <div className="space-y-6 pb-20">
 
-      {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <Link
-          href="/admin/invoices"
-          className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Invoices
-        </Link>
-
-        <div className="flex items-center gap-3">
-          {invoice.payment_status?.toLowerCase() !== 'fully paid' && invoice.payment_status?.toLowerCase() !== 'paid' && (
-            <button
-              onClick={openIncomeModal}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-3xl bg-green-600 hover:bg-green-500 text-white font-semibold transition-colors"
-            >
-              <DollarSign className="w-4 h-4" />
-              Create Income
-            </button>
-          )}
-
-          <button
-            onClick={handleDownload}
-            disabled={downloading}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            {downloading ? "Generating PDF..." : "Download PDF"}
-          </button>
-        </div>
-      </div>
-
       {/* Main Layout */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         <div className="flex-1 space-y-4 w-full">
 
           {/* Project Name */}
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-            <h1 className="text-2xl font-bold text-white mb-1">{invoice.project_name || "Untitled Project"}</h1>
-            <p className="text-gray-400 text-sm">Invoice #{invoice.invoice_id}</p>
-            <p className="text-gray-400 text-sm">{invoice.billing_address}</p>
+            <h2 className="text-xl font-bold text-white mb-1">{invoice.project_name || "Untitled Project"}</h2>
+            {invoice.billing_address && <p className="text-gray-400 text-sm">{invoice.billing_address}</p>}
             <p className="text-gray-400 text-sm mt-1 flex items-center gap-2">
               Client Email: <span className="text-white">{invoice.user_email}</span>
             </p>
@@ -328,6 +375,12 @@ export default function AdminInvoicePage() {
                     <span className="text-green-400">− {formatMoney(advance, invoice.currency)}</span>
                   </div>
                 )}
+                {totalPayments > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Payments</span>
+                    <span className="text-green-400">− {formatMoney(totalPayments, invoice.currency)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between pt-2 border-t border-white/10">
                   <span className="text-white font-semibold">Total Due</span>
                   <span className="text-white font-bold text-lg">{formatMoney(totalDue, invoice.currency)}</span>
@@ -376,30 +429,34 @@ export default function AdminInvoicePage() {
                     <h3 className="text-lg font-semibold text-white">Bank Transfer Slip</h3>
                     <p className="text-xs text-gray-400">
                       {paymentSlips.length > 1
-                        ? `Slip ${activeSlipIndex + 1} of ${paymentSlips.length}`
-                        : 'Uploaded by client for payment verification'}
+                        ? `Slip ${currentActiveIdx + 1} of ${paymentSlips.length}`
+                        : 'Uploaded for payment verification'}
                     </p>
                   </div>
                 </div>
 
                 {paymentSlips.length > 1 && (
-                  <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 p-1">
+                  <div className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-black/40 p-1">
                     <button
                       type="button"
-                      onClick={() => setActiveSlipIndex((value) => Math.max(0, value - 1))}
-                      className="rounded-xl px-3 py-1.5 text-sm font-semibold text-gray-300 transition hover:bg-white/10"
+                      disabled={currentActiveIdx === 0}
+                      onClick={() => setActiveSlipIndex(Math.max(0, currentActiveIdx - 1))}
+                      className="flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold text-gray-300 transition hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
                     >
-                      Prev
+                      <ChevronLeft className="w-4 h-4" />
+                      <span>Prev</span>
                     </button>
-                    <span className="px-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                      {activeSlipIndex + 1} / {paymentSlips.length}
+                    <span className="px-2 text-xs font-semibold uppercase tracking-[0.15em] text-gray-400">
+                      {currentActiveIdx + 1} / {paymentSlips.length}
                     </span>
                     <button
                       type="button"
-                      onClick={() => setActiveSlipIndex((value) => Math.min(paymentSlips.length - 1, value + 1))}
-                      className="rounded-xl px-3 py-1.5 text-sm font-semibold text-gray-300 transition hover:bg-white/10"
+                      disabled={currentActiveIdx === paymentSlips.length - 1}
+                      onClick={() => setActiveSlipIndex(Math.min(paymentSlips.length - 1, currentActiveIdx + 1))}
+                      className="flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold text-gray-300 transition hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
                     >
-                      Next
+                      <span>Next</span>
+                      <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
                 )}
@@ -407,7 +464,29 @@ export default function AdminInvoicePage() {
 
               <div className="flex flex-col lg:flex-row gap-6 mt-4">
                 <div className="lg:flex-[1.15] min-w-0">
-                  <div className="border border-white/10 rounded-2xl overflow-hidden bg-zinc-950/80 p-2 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
+                  <div className="relative border border-white/10 rounded-2xl overflow-hidden bg-zinc-950/80 p-2 shadow-[0_0_0_1px_rgba(255,255,255,0.03)] group">
+                    {paymentSlips.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          disabled={currentActiveIdx === 0}
+                          onClick={() => setActiveSlipIndex(Math.max(0, currentActiveIdx - 1))}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/70 hover:bg-black/90 text-white disabled:opacity-20 disabled:cursor-not-allowed transition-all border border-white/20 backdrop-blur-md shadow-xl z-20 cursor-pointer"
+                          title="Previous Slip"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={currentActiveIdx === paymentSlips.length - 1}
+                          onClick={() => setActiveSlipIndex(Math.min(paymentSlips.length - 1, currentActiveIdx + 1))}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/70 hover:bg-black/90 text-white disabled:opacity-20 disabled:cursor-not-allowed transition-all border border-white/20 backdrop-blur-md shadow-xl z-20 cursor-pointer"
+                          title="Next Slip"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </>
+                    )}
                     {activeSlipIsImage ? (
                       <img
                         src={activeSlipUrl!}
@@ -487,13 +566,7 @@ export default function AdminInvoicePage() {
                         <div className="flex items-center justify-between pt-3">
                           <span className="text-sm text-gray-400">Uploaded</span>
                           <span className="text-xs text-gray-300">
-                            {new Date(activeSlip.uploaded_at).toLocaleString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
+                            {formatDateTime(activeSlip.uploaded_at)}
                           </span>
                         </div>
                       )}
@@ -679,7 +752,7 @@ export default function AdminInvoicePage() {
                 <button
                   type="submit"
                   disabled={savingIncome}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white rounded-3xl text-sm font-semibold transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white rounded-3xl text-sm font-semibold transition-colors cursor-pointer"
                 >
                   {savingIncome && <Loader2 className="w-4 h-4 animate-spin" />}
                   Save Income

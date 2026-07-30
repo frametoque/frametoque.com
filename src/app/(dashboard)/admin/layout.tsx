@@ -45,7 +45,9 @@ import {
   Globe,
   RefreshCw,
   Server,
-  Settings
+  Settings,
+  DollarSign,
+  Download
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -157,12 +159,13 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isAnalytics = pathname === "/admin/analytics";
   const isBookings = pathname === "/admin/bookings";
   const isClients = pathname === "/admin/clients";
+  const isInvoiceDetail = pathname.startsWith("/admin/invoice/");
   const isServices = pathname === "/admin/services";
   const isPortfolio = pathname === "/admin/portfolio";
   const isDomains = pathname.startsWith("/admin/domains");
   const isAgreements = pathname.startsWith("/admin/agreements");
   const isHosting = pathname === "/admin/hosting";
-  const hideSelector = isServices || isPortfolio || isBookings || isDomains || isHosting;
+  const hideSelector = isServices || isPortfolio || isBookings || isDomains || isHosting || isInvoiceDetail;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [currentTime, setCurrentTime] = useState("");
@@ -197,6 +200,11 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path.startsWith("/admin/analytics")) return "Analytics";
     if (path.startsWith("/admin/bookings")) return "Bookings";
     if (path.startsWith("/admin/clients")) return "Clients";
+    if (path.startsWith("/admin/invoice/")) {
+      const parts = path.split("/");
+      const id = parts[parts.length - 1];
+      return id ? `Invoice #${id}` : "Invoice Details";
+    }
     if (path.startsWith("/admin/invoices")) return "Invoices";
     if (path.startsWith("/admin/quotations")) return "Quotations";
     if (path.startsWith("/admin/income")) return "Income";
@@ -216,6 +224,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
       const now = new Date();
       
       const timeStr = now.toLocaleTimeString("en-US", {
+        timeZone: "Asia/Colombo",
         hour: "numeric",
         minute: "2-digit",
         second: "2-digit",
@@ -223,6 +232,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
       });
       
       const dateStr = now.toLocaleDateString("en-US", {
+        timeZone: "Asia/Colombo",
         weekday: "short",
         month: "short",
         day: "numeric",
@@ -285,7 +295,26 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
           {hideSelector && (
             <>
               <span className="hidden sm:block w-[1px] h-5 bg-white/15" />
-              {isDomains ? (
+              {isInvoiceDetail ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new CustomEvent("invoice:create-income"))}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors active:scale-95 duration-200 cursor-pointer text-xs whitespace-nowrap"
+                  >
+                    <DollarSign className="w-4 h-4" />
+                    <span>Create Income</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new CustomEvent("invoice:download-pdf"))}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-brand-600 to-brand-700 hover:opacity-90 text-white rounded-3xl font-semibold transition-opacity active:scale-95 duration-200 cursor-pointer text-xs whitespace-nowrap"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download PDF</span>
+                  </button>
+                </div>
+              ) : isDomains ? (
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("domains:open-add"))}
                   className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"

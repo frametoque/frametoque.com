@@ -27,6 +27,8 @@ export async function GET(request) {
         date,
         subtotal,
         discount,
+        advance,
+        tax_rate,
         total,
         total_due,
         work_status,
@@ -39,31 +41,45 @@ export async function GET(request) {
       ORDER BY created_at DESC
     `;
     
-    console.log(`Found ${rows.length} invoices for user_email: ${user_email}`);
-    
-    const formattedRequests = rows.map(row => {
-      const subtotal = parseFloat((row as any).subtotal || 0);
-      const discount = parseFloat((row as any).discount || 0);
-      const finalTotal = subtotal - discount;
+    const nonAdvancePaymentsRows = await sql`
+      SELECT invoice_id, SUM(amount) as paid_sum
+      FROM public.admin_incomes
+      WHERE invoice_id IS NOT NULL AND LOWER(description) NOT LIKE 'advance:%' AND LOWER(description) NOT LIKE 'advance payment%'
+      GROUP BY invoice_id
+    `;
+    const paymentsMap: Record<string, number> = {};
+    nonAdvancePaymentsRows.forEach((p: any) => {
+      paymentsMap[p.invoice_id] = parseFloat(p.paid_sum || '0');
+    });
+
+    const formattedRequests = rows.map((row: any) => {
+      const subtotal = parseFloat(row.subtotal || 0);
+      const discount = parseFloat(row.discount || 0);
+      const advance = parseFloat(row.advance || 0);
+      const taxRate = parseFloat(row.tax_rate || 0);
+      const taxAmount = subtotal * (taxRate / 100);
+      const finalTotal = parseFloat(row.total != null ? row.total : (subtotal + taxAmount - discount));
+      const nonAdvanceVal = paymentsMap[row.invoice_id] || 0;
+      const calculatedTotalDue = Math.max(0, finalTotal - advance - nonAdvanceVal);
 
       return {
-        id: (row as any).invoice_id,
-        title: (row as any).project_name || 'Untitled Project',
-        request_id: (row as any).invoice_id,
-        invoice_number: (row as any).invoice_id,
-        submitted_at: (row as any).date ? new Date((row as any).date).toISOString() : ((row as any).created_at ? new Date((row as any).created_at).toISOString() : new Date().toISOString()),
-        status: (row as any).work_status || 'pending',
-        progress: (row as any).work_status === 'completed' ? 100 : (row as any).work_status === 'in progress' ? 50 : 10,
+        id: row.invoice_id,
+        title: row.project_name || 'Untitled Project',
+        request_id: row.invoice_id,
+        invoice_number: row.invoice_id,
+        submitted_at: row.date ? new Date(row.date).toISOString() : (row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString()),
+        status: row.work_status || 'pending',
+        progress: row.work_status === 'completed' ? 100 : row.work_status === 'in progress' ? 50 : 10,
         price: finalTotal,
-        type: (row as any).category,
+        type: row.category,
         description: null,
-        user_email: (row as any).user_email,
+        user_email: row.user_email,
         client_id: null,
-        created_at: (row as any).created_at ? new Date((row as any).created_at).toISOString() : new Date().toISOString(),
-        payment_status: (row as any).payment_status || 'unpaid',
-        total_due: (row as any).total_due ? parseFloat((row as any).total_due) : 0,
+        created_at: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
+        payment_status: calculatedTotalDue < 0.01 ? 'fully paid' : (row.payment_status || 'unpaid'),
+        total_due: calculatedTotalDue,
         total: finalTotal,
-        currency: (row as any).currency || 'LKR',
+        currency: row.currency || 'LKR',
       };
     });
 

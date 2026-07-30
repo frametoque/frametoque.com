@@ -28,7 +28,9 @@ import {
   PanelLeftOpen,
   Clock,
   Calendar,
-  Globe
+  Globe,
+  CreditCard,
+  Download
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -73,7 +75,12 @@ export default function DashboardLayout({ children }) {
 
   const getPageTitle = (path: string): string => {
     if (path === "/dashboard") return "Dashboard";
-    if (path.startsWith("/dashboard/invoices") || path.startsWith("/dashboard/invoice")) return "My Invoices";
+    if (path.startsWith("/dashboard/invoice/")) {
+      const parts = path.split("/");
+      const id = parts[parts.length - 1];
+      return id ? `Invoice #${id}` : "Invoice Details";
+    }
+    if (path.startsWith("/dashboard/invoices")) return "My Invoices";
     if (path.startsWith("/dashboard/domains")) return "My Domains";
     if (path.startsWith("/dashboard/quotations")) return "Quotations";
     if (path.startsWith("/dashboard/agreements")) return "Agreements";
@@ -444,12 +451,15 @@ const Header = ({
   currentDate: string;
   pageTitle: string;
 }) => {
+  const pathname = usePathname();
+  const isInvoiceDetail = pathname.startsWith("/dashboard/invoice/");
+
   return (
     <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/10 h-20 flex-shrink-0 flex items-center">
       <div className="w-full flex items-center justify-between px-4 sm:px-6 lg:px-8">
         
         {/* Left Side: Title & Mobile menu button */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 sm:gap-6">
           <button
             onClick={() => setMobileMenuOpen(true)}
             className="lg:hidden p-2 hover:bg-white/10 rounded-3xl"
@@ -461,6 +471,30 @@ const Header = ({
           <h1 className="text-xl font-bold text-white tracking-tight">
             {pageTitle}
           </h1>
+
+          {isInvoiceDetail && (
+            <>
+              <span className="hidden sm:block w-[1px] h-5 bg-white/15" />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("client-invoice:pay-now"))}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:opacity-90 text-white rounded-3xl font-semibold transition-all active:scale-95 duration-200 cursor-pointer text-xs whitespace-nowrap"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>Pay Now</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("client-invoice:download-pdf"))}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-brand-600 to-brand-700 hover:opacity-90 text-white rounded-3xl font-semibold transition-opacity active:scale-95 duration-200 cursor-pointer text-xs whitespace-nowrap"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download PDF</span>
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right Side: System Stats (Time & Date only) + Mobile profile */}

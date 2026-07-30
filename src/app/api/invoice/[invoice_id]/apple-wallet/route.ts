@@ -140,11 +140,20 @@ export async function POST(
     const invoice = result[0] as any;
 
     /* 3. Financial calculations */
+    const paymentsResult = await sql`
+      SELECT amount, description FROM public.admin_incomes WHERE invoice_id = ${invoice_id}
+    `;
+    const nonAdvancePayments = paymentsResult
+      .filter((p: any) => !String(p.description || '').toLowerCase().startsWith('advance'))
+      .reduce((sum: number, p: any) => sum + (parseFloat(p.amount) || 0), 0);
+
     const subtotal = parseFloat(invoice.subtotal ?? 0);
     const discount = parseFloat(invoice.discount ?? 0);
     const advance  = parseFloat(invoice.advance  ?? 0);
     const total    = parseFloat(invoice.total    ?? subtotal - discount);
-    const totalDue = parseFloat(invoice.total_due ?? total - advance);
+    const totalDue = invoice.total_due !== undefined && invoice.total_due !== null
+      ? parseFloat(invoice.total_due)
+      : Math.max(0, total - advance - nonAdvancePayments);
     const currency = invoice.currency ?? "LKR";
 
     /* 4. Parse P12 → extract PEM cert + PEM key */

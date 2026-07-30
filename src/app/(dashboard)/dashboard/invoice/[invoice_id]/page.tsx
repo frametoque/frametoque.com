@@ -31,7 +31,10 @@ const paymentStatusLabels = {
 
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
-  return new Date(dateString).toLocaleDateString("en-US", {
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return "N/A";
+  return d.toLocaleDateString("en-US", {
+    timeZone: "Asia/Colombo",
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -168,6 +171,17 @@ export default function InvoicePage() {
     }
   };
 
+  useEffect(() => {
+    const handlePayNowEvent = () => setIsPayModalOpen(true);
+    const handleDownloadEvent = () => handleDownload();
+    window.addEventListener("client-invoice:pay-now", handlePayNowEvent);
+    window.addEventListener("client-invoice:download-pdf", handleDownloadEvent);
+    return () => {
+      window.removeEventListener("client-invoice:pay-now", handlePayNowEvent);
+      window.removeEventListener("client-invoice:download-pdf", handleDownloadEvent);
+    };
+  }, [invoice]);
+
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
@@ -209,50 +223,16 @@ export default function InvoicePage() {
   const taxRate = parseFloat(invoice?.tax_rate || 0);
   const taxAmount = subtotal * (taxRate / 100);
   const total = parseFloat(invoice?.total || subtotal + taxAmount - discount);
-  const totalDue = parseFloat(invoice?.total_due || total - advance);
+
+  const paymentsList = Array.isArray(invoice?.payments) ? invoice.payments : [];
+  const totalPayments = paymentsList
+    .filter((p: any) => !String(p.description || '').toLowerCase().startsWith('advance'))
+    .reduce((sum: number, p: any) => sum + (parseFloat(p.amount) || 0), 0);
+
+  const totalDue = Math.max(0, total - advance - totalPayments);
 
   return (
     <div className="space-y-6">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between">
-        <Link
-          href="/dashboard/invoices"
-          className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Invoices
-        </Link>
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          {invoice?.payment_status === 'on review' && (
-            <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 px-5 py-4 text-amber-100 text-sm font-medium leading-snug">
-              Your bank transfer slip has been submitted and is currently under review. We will update this invoice once payment is confirmed.
-            </div>
-          )}
-
-          {totalDue > 0 && invoice?.payment_status !== 'fully paid' && invoice?.payment_status !== 'paid' && invoice?.payment_status !== 'on review' && (
-            <button
-              onClick={() => setIsPayModalOpen(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer"
-            >
-              <CreditCard className="w-4 h-4" />
-              Pay Now
-            </button>
-          )}
-          <button
-            onClick={handleDownload}
-            disabled={downloading}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
-          >
-            {downloading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
-            {downloading ? "Generating PDF..." : "Download PDF"}
-          </button>
-        </div>
-      </div>
 
       {/* Main Layout */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
@@ -260,10 +240,9 @@ export default function InvoicePage() {
         <div className="flex-1 space-y-4">
           {/* Project Name */}
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-            <h1 className="text-2xl font-bold text-white mb-1">
+            <h2 className="text-xl font-bold text-white mb-1">
               {invoice?.project_name || "Untitled Project"}
-            </h1>
-            <p className="text-gray-400 text-sm">Invoice #{invoice?.invoice_id}</p>
+            </h2>
           </div>
 
           {/* Details Grid */}
@@ -361,6 +340,15 @@ export default function InvoicePage() {
                   <span className="text-gray-400">Advance Paid</span>
                   <span className="text-green-400">
                     − {formatMoney(advance, invoice?.currency)}
+                  </span>
+                </div>
+              )}
+
+              {totalPayments > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Payments</span>
+                  <span className="text-green-400">
+                    − {formatMoney(totalPayments, invoice?.currency)}
                   </span>
                 </div>
               )}
