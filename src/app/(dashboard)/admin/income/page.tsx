@@ -87,7 +87,7 @@ export default function IncomePage() {
   const [convertingPdf, setConvertingPdf] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
   const [clients, setClients] = useState<any[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([ALL_CATEGORIES[0]]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [invoicesList, setInvoicesList] = useState<any[]>([]);
 
@@ -107,13 +107,21 @@ export default function IncomePage() {
   });
 
   const filteredInvoicesList = useMemo(() => {
+    const unpaidInvoices = invoicesList.filter((inv: any) => {
+      const status = (inv.status || '').toLowerCase();
+      return status !== 'paid' && status !== 'fully paid';
+    });
+
     if (!formData.clientId || formData.clientId === 'new') {
-      return invoicesList;
+      return unpaidInvoices;
     }
     const clientObj = clients.find((c: any) => c.id === formData.clientId);
-    if (!clientObj?.email) return invoicesList;
+    if (!clientObj?.email) return unpaidInvoices;
     const clientEmail = clientObj.email.toLowerCase();
-    return invoicesList.filter((inv: any) => inv.client_email?.toLowerCase() === clientEmail);
+    return unpaidInvoices.filter((inv: any) => {
+      const email = (inv.clientEmail || inv.client_email || '').toLowerCase();
+      return email === clientEmail;
+    });
   }, [invoicesList, formData.clientId, clients]);
 
   // --- Create Invoice from Income ---
@@ -172,7 +180,7 @@ export default function IncomePage() {
   const openNew = () => {
     setEditingId(null);
     setFormData({ date: new Date().toISOString().split('T')[0], amount: '', clientId: '', description: '', paymentMethod: 'Bank Transfer', invoiceId: '', receiptUrl: '' });
-    setSelectedCategories([ALL_CATEGORIES[0]]);
+    setSelectedCategories([]);
     setNewClientName(''); setNewClientEmail(''); setNewClientCompany(''); setNewClientPhone('');
     setReceiptFile(null);
     setIsModalOpen(true);

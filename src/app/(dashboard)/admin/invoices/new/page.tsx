@@ -15,7 +15,7 @@ export default function NewInvoicePage() {
   const [clients, setClients] = useState<any[]>([]);
   const [clientsLoading, setClientsLoading] = useState(true);
   const [showNewClientForm, setShowNewClientForm] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(["Web dev"]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [newClientData, setNewClientData] = useState({
     name: "", email: "", company: "", phone: "", address: "", legalName: ""

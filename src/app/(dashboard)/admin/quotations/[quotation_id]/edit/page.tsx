@@ -62,7 +62,7 @@ export default function EditQuotationPage() {
   const [lineItems, setLineItems] = useState([
     { id: 1, description: "", quantity: 1, rate: 0 },
   ]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(["Web dev"]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const ALL_CATEGORIES = ["Web dev", "Graphic design", "Video editing", "Photography", "Videography"];
   const categories = ALL_CATEGORIES;

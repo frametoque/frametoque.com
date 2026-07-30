@@ -658,6 +658,7 @@ export async function getInvoices() {
         created_at: r.created_at,
         client: r.client_name || r.client_email.split('@')[0] || 'Unknown',
         clientEmail: r.client_email || '',
+        client_email: r.client_email || '',
         legalName: r.legal_name || '',
         service: r.service,
         amount: finalAmount,
