@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, Image, CheckCircle2, ShieldCheck, XCircle, DollarSign, X, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, Image, CheckCircle2, ShieldCheck, XCircle, DollarSign, X, ChevronLeft, ChevronRight, Trash2, Upload, Image as ImageIcon, FileText as FileIcon } from "lucide-react";
 import Link from "next/link";
 import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
-import { getInvoiceByIdAdmin, approveBankSlip, declineBankSlip, undoApprovedBankSlipPayment, recordInvoicePayment, deleteIncome } from "../../actions/actions";
+import { getInvoiceByIdAdmin, approveBankSlip, declineBankSlip, undoApprovedBankSlipPayment, recordInvoicePayment, deleteIncome, adminUploadPaymentSlip } from "../../actions/actions";
 
 const workStatusStyles = {
   "in progress": "bg-brand-500/20 text-brand-400 border-brand-500/30",
@@ -80,7 +80,116 @@ export default function AdminInvoicePage() {
   const [paidAmount, setPaidAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isAdvance, setIsAdvance] = useState(false);
   const [savingIncome, setSavingIncome] = useState(false);
+
+  // Payment slip upload states
+  const [slipFile, setSlipFile] = useState<File | null>(null);
+  const [slipPreview, setSlipPreview] = useState<string | null>(null);
+  const [uploadingSlip, setUploadingSlip] = useState(false);
+  const [includeSlip, setIncludeSlip] = useState(false);
+  const [convertingPdf, setConvertingPdf] = useState(false);
+
+  const convertPdfToImage = async (file: File): Promise<File> => {
+    if (file.type !== "application/pdf") return file;
+
+    if (!(window as any).pdfjsLib) {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js";
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error("Failed to load PDF.js"));
+        document.head.appendChild(script);
+      });
+    }
+
+    const pdfjsLib = (window as any).pdfjsLib;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+
+    const arrayBuffer = await file.arrayBuffer();
+    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+    const pdf = await loadingTask.promise;
+    const page = await pdf.getPage(1);
+
+    const scale = 2.0;
+    const viewport = page.getViewport({ scale });
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Could not create canvas context");
+
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({ canvasContext: context, viewport }).promise;
+
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error("Failed to convert PDF canvas to blob"));
+          return;
+        }
+        const newFilename = file.name.replace(/\.[^/.]+$/, "") + ".png";
+        const convertedFile = new File([blob], newFilename, { type: "image/png" });
+        resolve(convertedFile);
+      }, "image/png");
+    });
+  };
+
+  const handleSlipFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      alert('Please select an image or PDF file');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    // Handle PDF conversion
+    if (file.type === "application/pdf") {
+      setConvertingPdf(true);
+      convertPdfToImage(file)
+        .then((convertedFile) => {
+          setSlipFile(convertedFile);
+          setIncludeSlip(true);
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setSlipPreview(reader.result as string);
+          };
+          reader.readAsDataURL(convertedFile);
+        })
+        .catch((err) => {
+          console.error(err);
+          alert("Failed to convert PDF to image. Please upload a standard image file.");
+          setSlipFile(null);
+          setSlipPreview(null);
+          setIncludeSlip(false);
+        })
+        .finally(() => {
+          setConvertingPdf(false);
+        });
+      return;
+    }
+
+    // Handle image files
+    setSlipFile(file);
+    setIncludeSlip(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSlipPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeSlipFile = () => {
+    setSlipFile(null);
+    setSlipPreview(null);
+    setIncludeSlip(false);
+  };
 
   useEffect(() => {
     if (!invoice_id) return;
@@ -136,6 +245,10 @@ export default function AdminInvoicePage() {
     setPaidAmount(due > 0 ? due.toString() : (invoice?.total || '0').toString());
     setPaymentMethod("Bank Transfer");
     setPaymentDate(new Date().toISOString().split('T')[0]);
+    setIsAdvance(false);
+    setSlipFile(null);
+    setSlipPreview(null);
+    setIncludeSlip(false);
     setIncomeModalOpen(true);
   };
 
@@ -296,13 +409,44 @@ export default function AdminInvoicePage() {
     if (!invoice) return;
     setSavingIncome(true);
     try {
+      // Step 1: Record the payment
       await recordInvoicePayment(
         invoice.invoice_id,
         parseFloat(paidAmount) || 0,
         paymentMethod,
         paymentDate,
-        false
+        isAdvance
       );
+
+      // Step 2: Upload slip if included (only for Bank Transfer)
+      if (includeSlip && slipFile && paymentMethod === "Bank Transfer") {
+        setUploadingSlip(true);
+        try {
+          // Convert file to base64
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(slipFile);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+          });
+
+          // Upload the slip (auto-approved)
+          const slipResult = await adminUploadPaymentSlip(
+            invoice.invoice_id,
+            base64,
+            parseFloat(paidAmount) || 0
+          );
+
+          if (!slipResult.success) {
+            console.warn("Failed to upload slip:", slipResult.error);
+          }
+        } catch (slipErr) {
+          console.warn("Failed to upload payment slip:", slipErr);
+        } finally {
+          setUploadingSlip(false);
+        }
+      }
+
       setIncomeModalOpen(false);
       const updated = await getInvoiceByIdAdmin(invoice_id as string);
       setInvoice(updated);
@@ -794,6 +938,75 @@ export default function AdminInvoicePage() {
                   <option value="PayPal" className="bg-black text-white">PayPal</option>
                   <option value="Cash" className="bg-black text-white">Cash</option>
                 </select>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 pb-2">
+                <input
+                  type="checkbox"
+                  id="isAdvance"
+                  checked={isAdvance}
+                  onChange={(e) => setIsAdvance(e.target.checked)}
+                  className="w-4 h-4 rounded border-white/10 bg-white/5 text-brand-600 focus:ring-brand-500 focus:ring-offset-black"
+                />
+                <label htmlFor="isAdvance" className="text-sm text-gray-300 font-medium select-none cursor-pointer">
+                  Payment is advance
+                </label>
+              </div>
+
+              {/* Payment Slip Upload Section */}
+              <div className="pt-2 border-t border-white/10">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm text-gray-300 font-medium flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Upload Payment Slip (Optional)
+                  </label>
+                  {includeSlip && (
+                    <button
+                      type="button"
+                      onClick={removeSlipFile}
+                      className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+
+                {convertingPdf ? (
+                  <div className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-brand-500/30 rounded-xl bg-brand-500/5">
+                    <Loader2 className="w-4 h-4 text-brand-400 animate-spin" />
+                    <span className="text-sm text-brand-400">Converting PDF to image...</span>
+                  </div>
+                ) : !includeSlip ? (
+                  <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:border-brand-500/50 hover:bg-brand-500/5 transition-all">
+                    <Upload className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-400">Click to upload slip image or PDF</span>
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={handleSlipFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                ) : slipPreview ? (
+                  <div className="relative rounded-xl overflow-hidden border border-white/10">
+                    <img src={slipPreview} alt="Slip preview" className="w-full h-40 object-cover" />
+                    <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 rounded-lg text-xs text-white flex items-center gap-1">
+                      <ImageIcon className="w-3 h-3" />
+                      {slipFile?.name}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl">
+                    <FileIcon className="w-5 h-5 text-brand-400" />
+                    <span className="text-sm text-gray-300 flex-1 truncate">{slipFile?.name}</span>
+                    <span className="text-xs text-gray-500">
+                      {slipFile ? (slipFile.size / 1024 / 1024).toFixed(2) + ' MB' : ''}
+                    </span>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-2">
+                  Max file size: 10MB. Supported: Images, PDF
+                </p>
               </div>
 
               <div className="flex gap-3 pt-4 border-t border-white/10 justify-end">
