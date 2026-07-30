@@ -34,6 +34,17 @@ export type AgreementData = {
 };
 
 
+function formatDateOnly(d: any): string {
+  if (!d) return '';
+  if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  const dateObj = d instanceof Date ? d : new Date(d);
+  if (isNaN(dateObj.getTime())) return '';
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export async function getAgreements(): Promise<AgreementData[]> {
   try {
     const rows = await sql`
@@ -47,11 +58,11 @@ export async function getAgreements(): Promise<AgreementData[]> {
       ui_payment: parseFloat(r.ui_payment || 0),
       final_payment: parseFloat(r.final_payment || 0),
       revision_rounds: parseInt(r.revision_rounds || 0),
-      agreement_date: r.agreement_date ? new Date(r.agreement_date).toISOString().split('T')[0] : '',
-      start_date: r.start_date ? new Date(r.start_date).toISOString().split('T')[0] : '',
-      delivery_date: r.delivery_date ? new Date(r.delivery_date).toISOString().split('T')[0] : '',
-      deadline: r.deadline ? new Date(r.deadline).toISOString().split('T')[0] : '',
-      client_sig_date: r.client_sig_date ? new Date(r.client_sig_date).toISOString().split('T')[0] : null,
+      agreement_date: formatDateOnly(r.agreement_date),
+      start_date: formatDateOnly(r.start_date),
+      delivery_date: formatDateOnly(r.delivery_date),
+      deadline: formatDateOnly(r.deadline),
+      client_sig_date: r.client_sig_date ? formatDateOnly(r.client_sig_date) : null,
     } as AgreementData));
   } catch (error) {
     console.error("Failed to get agreements:", error);
@@ -73,11 +84,11 @@ export async function getAgreementsByClient(email: string): Promise<AgreementDat
       ui_payment: parseFloat(r.ui_payment || 0),
       final_payment: parseFloat(r.final_payment || 0),
       revision_rounds: parseInt(r.revision_rounds || 0),
-      agreement_date: r.agreement_date ? new Date(r.agreement_date).toISOString().split('T')[0] : '',
-      start_date: r.start_date ? new Date(r.start_date).toISOString().split('T')[0] : '',
-      delivery_date: r.delivery_date ? new Date(r.delivery_date).toISOString().split('T')[0] : '',
-      deadline: r.deadline ? new Date(r.deadline).toISOString().split('T')[0] : '',
-      client_sig_date: r.client_sig_date ? new Date(r.client_sig_date).toISOString().split('T')[0] : null,
+      agreement_date: formatDateOnly(r.agreement_date),
+      start_date: formatDateOnly(r.start_date),
+      delivery_date: formatDateOnly(r.delivery_date),
+      deadline: formatDateOnly(r.deadline),
+      client_sig_date: r.client_sig_date ? formatDateOnly(r.client_sig_date) : null,
     } as AgreementData));
   } catch (error) {
     console.error("Failed to get client agreements:", error);
@@ -101,11 +112,11 @@ export async function getAgreementById(id: number): Promise<AgreementData | null
       ui_payment: parseFloat(r.ui_payment || 0),
       final_payment: parseFloat(r.final_payment || 0),
       revision_rounds: parseInt(r.revision_rounds || 0),
-      agreement_date: r.agreement_date ? new Date(r.agreement_date).toISOString().split('T')[0] : '',
-      start_date: r.start_date ? new Date(r.start_date).toISOString().split('T')[0] : '',
-      delivery_date: r.delivery_date ? new Date(r.delivery_date).toISOString().split('T')[0] : '',
-      deadline: r.deadline ? new Date(r.deadline).toISOString().split('T')[0] : '',
-      client_sig_date: r.client_sig_date ? new Date(r.client_sig_date).toISOString().split('T')[0] : null,
+      agreement_date: formatDateOnly(r.agreement_date),
+      start_date: formatDateOnly(r.start_date),
+      delivery_date: formatDateOnly(r.delivery_date),
+      deadline: formatDateOnly(r.deadline),
+      client_sig_date: r.client_sig_date ? formatDateOnly(r.client_sig_date) : null,
     } as AgreementData;
   } catch (error) {
     console.error("Failed to get agreement by ID:", error);

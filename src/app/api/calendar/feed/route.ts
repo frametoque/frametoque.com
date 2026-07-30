@@ -3,6 +3,7 @@ import sql from "@/lib/db";
 import { getSriLankaHolidays } from "@/app/(dashboard)/admin/actions/bookings";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function escapeICS(str: string): string {
   if (!str) return "";
@@ -41,7 +42,9 @@ export async function GET(request: NextRequest) {
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
       "X-WR-CALNAME:Ft. Calendar",
-      "X-WR-TIMEZONE:Asia/Colombo"
+      "X-WR-TIMEZONE:Asia/Colombo",
+      "X-PUBLISHED-TTL:PT15M",
+      "REFRESH-INTERVAL;VALUE=DURATION:PT15M"
     ];
 
     const nowStr = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
@@ -51,7 +54,15 @@ export async function GET(request: NextRequest) {
       const typeLabel = isTask ? 'Reminder' : 'Booking';
       const formattedTitle = `Ft. - ${b.title}`;
       
-      const dateVal = new Date(b.booking_date).toISOString().split('T')[0];
+      let dateVal = "";
+      if (b.booking_date instanceof Date) {
+        const y = b.booking_date.getFullYear();
+        const m = String(b.booking_date.getMonth() + 1).padStart(2, "0");
+        const d = String(b.booking_date.getDate()).padStart(2, "0");
+        dateVal = `${y}-${m}-${d}`;
+      } else {
+        dateVal = String(b.booking_date).split("T")[0];
+      }
       const startICS = formatDateToICS(dateVal, b.start_time);
       
       let endICS = "";

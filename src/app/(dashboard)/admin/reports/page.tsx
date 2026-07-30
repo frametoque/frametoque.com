@@ -263,19 +263,19 @@ export default function ReportsPage() {
             {/* Income Chart */}
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
               <h2 className="text-xl font-semibold mb-6">Income by Service</h2>
-              <div className="h-[300px] w-full">
+              <div style={{ height: Math.max(300, (data.incomeByService?.length || 0) * 45) }} className="w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.incomeByService} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
+                  <BarChart data={data.incomeByService} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                     <XAxis type="number" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `LKR ${value / 1000}k`} />
-                    <YAxis dataKey="name" type="category" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} width={80} />
+                    <YAxis dataKey="name" type="category" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} width={150} />
                     <Tooltip
                       cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                       contentStyle={{ backgroundColor: 'rgba(10,10,15,0.9)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px' }}
                       itemStyle={{ color: '#fff' }}
                       formatter={(value: any) => [formatLKR(value), 'Income']}
                     />
-                    <Bar dataKey="value" fill="#4ade80" radius={[0, 4, 4, 0]} barSize={24} />
+                    <Bar dataKey="value" fill="#4ade80" radius={[0, 4, 4, 0]} barSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -284,19 +284,19 @@ export default function ReportsPage() {
             {/* Expenses Chart */}
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
               <h2 className="text-xl font-semibold mb-6">Expenses Breakdown</h2>
-              <div className="h-[300px] w-full">
+              <div style={{ height: Math.max(300, (data.expensesBreakdown?.length || 0) * 45) }} className="w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.expensesBreakdown} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
+                  <BarChart data={data.expensesBreakdown} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                     <XAxis type="number" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `LKR ${value / 1000}k`} />
-                    <YAxis dataKey="name" type="category" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} width={80} />
+                    <YAxis dataKey="name" type="category" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} width={150} />
                     <Tooltip
                       cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                       contentStyle={{ backgroundColor: 'rgba(10,10,15,0.9)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px' }}
                       itemStyle={{ color: '#fff' }}
                       formatter={(value: any) => [formatLKR(value), 'Expense']}
                     />
-                    <Bar dataKey="value" fill="#f87171" radius={[0, 4, 4, 0]} barSize={24} />
+                    <Bar dataKey="value" fill="#f87171" radius={[0, 4, 4, 0]} barSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

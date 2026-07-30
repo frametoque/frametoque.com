@@ -32,112 +32,117 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
 
-  const incomes = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`;
-  const expenses = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`;
-  const unpaid = await sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status IN ('unpaid', 'pending', 'partially paid')`;
-  const invoiceAging = await sql`
-    SELECT 
-      payment_status as status,
-      SUM(total) as amount_sum,
-      COUNT(*) as count
-    FROM invoices
-    GROUP BY payment_status
-  `;
-  
+  const [
+    incomes,
+    expenses,
+    unpaid,
+    invoiceAging,
+    chartDataRaw,
+    recentInvoicesRaw,
+    recentQuotationsRaw,
+    recentTransactionsRaw,
+    incomeByYear,
+    expenseByYear,
+    expenseBreakdownRange,
+    incomeBreakdownRange
+  ] = await Promise.all([
+    sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
+    sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
+    sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status IN ('unpaid', 'pending', 'partially paid')`,
+    sql`
+      SELECT 
+        payment_status as status,
+        SUM(total) as amount_sum,
+        COUNT(*) as count
+      FROM invoices
+      GROUP BY payment_status
+    `,
+    sql`
+      SELECT 
+        TO_CHAR(date, 'Mon') as name,
+        EXTRACT(MONTH FROM date) as month_num,
+        EXTRACT(YEAR FROM date) as year_num,
+        SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income,
+        SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as expenses
+      FROM (
+        SELECT date, amount, 'income' as type FROM admin_incomes
+        UNION ALL
+        SELECT date, amount, 'expense' as type FROM admin_expenses
+      ) as combined
+      WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+      GROUP BY TO_CHAR(date, 'Mon'), EXTRACT(MONTH FROM date), EXTRACT(YEAR FROM date)
+      ORDER BY EXTRACT(YEAR FROM date), EXTRACT(MONTH FROM date)
+    `,
+    sql`
+      SELECT 
+        i.invoice_id as id, 
+        COALESCE(c.full_name, i.user_email) as client, 
+        COALESCE((SELECT description FROM invoice_items WHERE invoice_id = i.invoice_id LIMIT 1), 'Service') as service,
+        i.total as amount, 
+        i.payment_status as status
+      FROM invoices i
+      LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
+      WHERE i.date >= ${start}::timestamp AND i.date <= (${end} || ' 23:59:59.999')::timestamp
+      ORDER BY i.date DESC, i.created_at DESC
+      LIMIT 4
+    `,
+    sql`
+      SELECT q.id, COALESCE(q.description, 'Untitled') as project, COALESCE(c.full_name, 'Unknown') as client, q.amount as amount, q.status
+      FROM admin_quotations q
+      LEFT JOIN admin_clients c ON q.client_id = c.id
+      WHERE q.date >= ${start}::timestamp AND q.date <= (${end} || ' 23:59:59.999')::timestamp
+      ORDER BY q.date DESC, q.created_at DESC
+      LIMIT 4
+    `,
+    sql`
+      SELECT id, 'income' as type, description as name, date, created_at, amount FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+      UNION ALL
+      SELECT id, 'expense' as type, description as name, date, created_at, amount FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+      ORDER BY date DESC, created_at DESC
+      LIMIT 5
+    `,
+    sql`
+      SELECT 
+        EXTRACT(YEAR FROM date) as year,
+        SUM(amount) as total
+      FROM admin_incomes
+      WHERE EXTRACT(YEAR FROM date) IN (2025, 2026)
+      GROUP BY EXTRACT(YEAR FROM date)
+    `,
+    sql`
+      SELECT 
+        EXTRACT(YEAR FROM date) as year,
+        SUM(amount) as total
+      FROM admin_expenses
+      WHERE EXTRACT(YEAR FROM date) IN (2025, 2026)
+      GROUP BY EXTRACT(YEAR FROM date)
+    `,
+    sql`
+      SELECT 
+        category as name,
+        SUM(amount) as value
+      FROM admin_expenses
+      WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+      GROUP BY category
+      ORDER BY value DESC
+    `,
+    sql`
+      SELECT 
+        category as name,
+        SUM(amount) as value
+      FROM admin_incomes
+      WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+      GROUP BY category
+      ORDER BY value DESC
+    `
+  ]);
+
   const totalIncome = incomes[0]?.total ? parseFloat(incomes[0].total) : 0;
   const totalExpenses = expenses[0]?.total ? parseFloat(expenses[0].total) : 0;
   const netProfit = totalIncome - totalExpenses;
 
-  // Let's get monthly chart data within the range
-  const chartDataRaw = await sql`
-    SELECT 
-      TO_CHAR(date, 'Mon') as name,
-      EXTRACT(MONTH FROM date) as month_num,
-      EXTRACT(YEAR FROM date) as year_num,
-      SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income,
-      SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as expenses
-    FROM (
-      SELECT date, amount, 'income' as type FROM admin_incomes
-      UNION ALL
-      SELECT date, amount, 'expense' as type FROM admin_expenses
-    ) as combined
-    WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
-    GROUP BY TO_CHAR(date, 'Mon'), EXTRACT(MONTH FROM date), EXTRACT(YEAR FROM date)
-    ORDER BY EXTRACT(YEAR FROM date), EXTRACT(MONTH FROM date)
-  `;
-
-  const recentInvoicesRaw = await sql`
-    SELECT 
-      i.invoice_id as id, 
-      COALESCE(c.full_name, i.user_email) as client, 
-      COALESCE((SELECT description FROM invoice_items WHERE invoice_id = i.invoice_id LIMIT 1), 'Service') as service,
-      i.total as amount, 
-      i.payment_status as status
-    FROM invoices i
-    LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
-    WHERE i.date >= ${start}::timestamp AND i.date <= (${end} || ' 23:59:59.999')::timestamp
-    ORDER BY i.date DESC, i.created_at DESC
-    LIMIT 4
-  `;
-
-  const recentQuotationsRaw = await sql`
-    SELECT q.id, COALESCE(q.description, 'Untitled') as project, COALESCE(c.full_name, 'Unknown') as client, q.amount as amount, q.status
-    FROM admin_quotations q
-    LEFT JOIN admin_clients c ON q.client_id = c.id
-    WHERE q.date >= ${start}::timestamp AND q.date <= (${end} || ' 23:59:59.999')::timestamp
-    ORDER BY q.date DESC, q.created_at DESC
-    LIMIT 4
-  `;
-
-  const recentTransactionsRaw = await sql`
-    SELECT id, 'income' as type, description as name, date, created_at, amount FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
-    UNION ALL
-    SELECT id, 'expense' as type, description as name, date, created_at, amount FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
-    ORDER BY date DESC, created_at DESC
-    LIMIT 5
-  `;
-
-  // Fetch year-wise comparisons
-  const incomeByYear = await sql`
-    SELECT 
-      EXTRACT(YEAR FROM date) as year,
-      SUM(amount) as total
-    FROM admin_incomes
-    WHERE EXTRACT(YEAR FROM date) IN (2025, 2026)
-    GROUP BY EXTRACT(YEAR FROM date)
-  `;
-
-  const expenseByYear = await sql`
-    SELECT 
-      EXTRACT(YEAR FROM date) as year,
-      SUM(amount) as total
-    FROM admin_expenses
-    WHERE EXTRACT(YEAR FROM date) IN (2025, 2026)
-    GROUP BY EXTRACT(YEAR FROM date)
-  `;
-
-  const expenseBreakdownRange = await sql`
-    SELECT 
-      category as name,
-      SUM(amount) as value
-    FROM admin_expenses
-    WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
-    GROUP BY category
-    ORDER BY value DESC
-  `;
-
-  const incomeBreakdownRange = await sql`
-    SELECT 
-      category as name,
-      SUM(amount) as value
-    FROM admin_incomes
-    WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
-    GROUP BY category
-    ORDER BY value DESC
-  `;
-
-  const previousIncome = parseFloat(incomeByYear.find(r => Math.round(parseFloat(r.year)) === 2025)?.total || 0);
-  const currentIncome = parseFloat(incomeByYear.find(r => Math.round(parseFloat(r.year)) === 2026)?.total || 0);
+  const previousIncome = parseFloat(incomeByYear.find((r: any) => Math.round(parseFloat(r.year)) === 2025)?.total || 0);
+  const currentIncome = parseFloat(incomeByYear.find((r: any) => Math.round(parseFloat(r.year)) === 2026)?.total || 0);
 
   const previousExpense = parseFloat(expenseByYear.find(r => Math.round(parseFloat(r.year)) === 2025)?.total || 0);
   const currentExpense = parseFloat(expenseByYear.find(r => Math.round(parseFloat(r.year)) === 2026)?.total || 0);
@@ -555,11 +560,24 @@ export async function getScheduledExpenses() {
       FROM admin_scheduled_expenses
       ORDER BY next_due_date ASC
     `;
-    return rows.map((r: any) => ({
-      ...r,
-      amount: parseFloat(r.amount),
-      next_due_date: r.next_due_date ? new Date(r.next_due_date).toISOString().split('T')[0] : ''
-    }));
+    return rows.map((r: any) => {
+      let dueStr = '';
+      if (r.next_due_date) {
+        if (typeof r.next_due_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.next_due_date)) {
+          dueStr = r.next_due_date;
+        } else {
+          const dObj = new Date(r.next_due_date);
+          if (!isNaN(dObj.getTime())) {
+            dueStr = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}-${String(dObj.getDate()).padStart(2, '0')}`;
+          }
+        }
+      }
+      return {
+        ...r,
+        amount: parseFloat(r.amount),
+        next_due_date: dueStr
+      };
+    });
   } catch (error) {
     console.error("Failed to get scheduled expenses:", error);
     throw new Error("Failed to retrieve scheduled expenses.");
@@ -1089,13 +1107,12 @@ export async function getReports(startDate?: string, endDate?: string) {
 
   const serviceMap: Record<string, number> = {};
   for (const row of rawIncome) {
-    const services = (row.category || 'Other')
-      .split(',')
-      .map((s: string) => s.trim())
-      .filter(Boolean);
-    for (const service of services) {
-      serviceMap[service] = (serviceMap[service] || 0) + parseFloat(row.amount);
-    }
+    const rawCategory = (row.category || 'Other').trim();
+    // Format category string: e.g. "Photography, Videography" -> "Photography + Videography" or keep clean label
+    const categoryName = rawCategory
+      ? rawCategory.split(',').map((s: string) => s.trim()).filter(Boolean).join(' + ') || 'Other'
+      : 'Other';
+    serviceMap[categoryName] = (serviceMap[categoryName] || 0) + parseFloat(row.amount);
   }
   const incomeByService = Object.entries(serviceMap)
     .map(([name, value]) => ({ name, value }))
