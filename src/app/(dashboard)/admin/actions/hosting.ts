@@ -45,7 +45,9 @@ export async function getHostingOrders(): Promise<HostingOrder[]> {
   try {
     const rows = await sql`
       SELECT * FROM admin_hosting_orders
-      ORDER BY created_at DESC
+      ORDER BY 
+        COALESCE(expiry_date, purchase_date, created_at) DESC,
+        id DESC
     `;
 
     return rows.map((r: any) => ({

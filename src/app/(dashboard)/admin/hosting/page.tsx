@@ -486,7 +486,7 @@ export default function HostingPage() {
                 <th className="p-4 font-medium text-right">Selling Price / Retail</th>
                 <th className="p-4 font-medium text-right text-brand-400">Profit</th>
                 <th className="p-4 font-medium">Cycle</th>
-                <th className="p-4 font-medium">Expiry Date</th>
+                <th className="p-4 font-medium">Purchased / Expiry</th>
                 <th className="p-4 font-medium text-center">Status</th>
                 <th className="p-4 font-medium text-right">Actions</th>
               </tr>
@@ -509,6 +509,13 @@ export default function HostingPage() {
                 const renCostLkr = isUsd ? (o.renewal_cost || 0) * effectiveRate : (o.renewal_cost || 0);
                 const renPriceLkr = o.selling_price_currency === "USD" ? (o.renewal_price || 0) * effectiveRate : (o.renewal_price || 0);
                 const profitRen = renPriceLkr - renCostLkr;
+
+                const formattedPurchaseDate = o.purchase_date
+                  ? new Date(o.purchase_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                  : null;
+                const formattedExpiryDate = o.expiry_date
+                  ? new Date(o.expiry_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                  : null;
 
                 return (
                   <tr key={o.id} className="hover:bg-white/5 transition-colors border-t border-white/5">
@@ -575,16 +582,27 @@ export default function HostingPage() {
                       )}
                     </td>
                     <td className="p-4 text-gray-400 capitalize">{isFreeOrder ? 'Free' : o.billing_cycle}</td>
-                    <td className="p-4 text-gray-300">
-                      {isFreeOrder && !o.expiry_date ? (
-                        <span className="inline-flex px-2.5 py-0.5 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-full">
-                          Lifetime / Free
-                        </span>
-                      ) : o.expiry_date ? (
-                        new Date(o.expiry_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                      ) : (
-                        "—"
+                    <td className="p-4 text-gray-300 space-y-0.5">
+                      {formattedPurchaseDate && (
+                        <div className="text-xs text-gray-400 font-medium flex items-center gap-1">
+                          <span className="text-[10px] text-gray-500 uppercase font-semibold">Purchased:</span>
+                          <span>{formattedPurchaseDate}</span>
+                        </div>
                       )}
+                      <div>
+                        {isFreeOrder && !o.expiry_date ? (
+                          <span className="inline-flex px-2.5 py-0.5 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-full">
+                            Lifetime / Free
+                          </span>
+                        ) : formattedExpiryDate ? (
+                          <div className="text-sm text-white font-medium flex items-center gap-1">
+                            <span className="text-[10px] text-gray-400 uppercase font-semibold">Expires:</span>
+                            <span>{formattedExpiryDate}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-500">—</span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-4 text-center">
                       <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full border ${getStatusColor(o.status)}`}>

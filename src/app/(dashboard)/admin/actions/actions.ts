@@ -4,6 +4,7 @@ import sql from "@/lib/db";
 import { clerkClient } from "@clerk/nextjs/server";
 import { put, del } from '@vercel/blob';
 import { logSystemAction } from "@/lib/logger";
+import { getGravatarUrl } from "@/lib/gravatar";
 import { reactivateDomainAfterRenewalPayment } from "./domains-shared";
 
 export async function uploadReceipt(formData: FormData, type: 'income' | 'expenses'): Promise<string> {
@@ -940,6 +941,8 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
 
 // -- CLIENTS --
 export async function getClients() {
+  const clerk = await clerkClient();
+
   const rows = await sql`
     SELECT c.id,
            c.full_name as name,
@@ -958,22 +961,52 @@ export async function getClients() {
     ORDER BY c.id DESC
   `;
 
-  const clients = rows.map(r => {
-    return {
-      id: r.id,
-      name: r.name || r.email.split('@')[0],
-      email: r.email,
-      active: r.active,
-      company: r.company,
-      phone: r.phone,
-      address: r.address,
-      legalName: r.legal_name || "",
-      invoices: parseInt(r.invoices),
-      revenue: parseFloat(r.revenue),
-      incomeCount: parseInt(r.income_count),
-      projectCount: parseInt(r.project_count),
-    };
-  });
+  const clients = await Promise.all(
+    rows.map(async (r) => {
+      let imageUrl: string | null = null;
+      const clerkId = (r.clerk_id || "").trim();
+
+      if (clerkId) {
+        try {
+          const user = await clerk.users.getUser(clerkId);
+          if (user && user.imageUrl) {
+            imageUrl = user.imageUrl;
+          }
+        } catch (e) {
+          console.error("Failed to fetch clerk user for clerk_id:", clerkId, e);
+        }
+      }
+
+      if (!imageUrl && r.email) {
+        try {
+          const clerkUsersResponse = await clerk.users.getUserList({ emailAddress: [r.email.trim()], limit: 1 });
+          const user = clerkUsersResponse.data?.[0];
+          if (user && user.imageUrl) {
+            imageUrl = user.imageUrl;
+          }
+        } catch (e) {
+          // Ignore individual lookup errors
+        }
+      }
+
+      return {
+        id: r.id,
+        name: r.name || r.email.split('@')[0],
+        email: r.email,
+        clerkId: r.clerk_id || null,
+        active: r.active,
+        company: r.company,
+        phone: r.phone,
+        address: r.address,
+        legalName: r.legal_name || "",
+        imageUrl,
+        invoices: parseInt(r.invoices),
+        revenue: parseFloat(r.revenue),
+        incomeCount: parseInt(r.income_count),
+        projectCount: parseInt(r.project_count),
+      };
+    })
+  );
 
   return clients;
 }
@@ -1007,6 +1040,17 @@ export async function getClientById(clientId: string) {
       imageUrl = user.imageUrl;
     } catch (e) {
       console.error("Failed to fetch clerk user image for", c.clerk_id, e);
+    }
+  }
+
+  if (!imageUrl && c.email) {
+    try {
+      const clerkUsersResponse = await clerk.users.getUserList({ emailAddress: [c.email], limit: 1 });
+      if (clerkUsersResponse.data.length > 0 && clerkUsersResponse.data[0].imageUrl) {
+        imageUrl = clerkUsersResponse.data[0].imageUrl;
+      }
+    } catch (e) {
+      console.error("Failed to fetch clerk user by email for", c.email, e);
     }
   }
 

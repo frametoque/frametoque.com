@@ -13,6 +13,7 @@ import {
 } from "framer-motion";
 
 
+import ClientAvatar from "@/components/ClientAvatar";
 import {
   Menu,
   Search,
@@ -376,17 +377,13 @@ const Sidebar = ({
                 className="flex items-center gap-3 pl-[4px] pr-3 py-3 bg-transparent rounded-3xl mb-3 overflow-hidden w-full justify-start"
               >
                 <div className="flex-shrink-0 w-10 h-10">
-                  {isLoaded && user?.imageUrl ? (
-                    <img
-                      src={user.imageUrl}
-                      alt={user.fullName || "User"}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-brand-600 to-brand-700 flex items-center justify-center text-white font-semibold">
-                      {user?.firstName?.charAt(0) || "U"}
-                    </div>
-                  )}
+                  <ClientAvatar
+                    imageUrl={user?.imageUrl}
+                    email={user?.primaryEmailAddress?.emailAddress}
+                    name={user?.fullName || user?.firstName}
+                    className="w-10 h-10 rounded-full object-cover"
+                    fallbackClassName="w-10 h-10 rounded-full bg-gradient-to-r from-brand-600 to-brand-700 flex items-center justify-center text-white font-semibold"
+                  />
                 </div>
 
                 {desktopExpanded && user && (
@@ -513,15 +510,15 @@ const Header = ({
             <span className="font-medium">{currentDate || "Loading..."}</span>
           </div>
 
-          {isLoaded && user?.imageUrl && (
+          {isLoaded && (
             <Link href="/dashboard/settings" className="lg:hidden ml-2 shrink-0">
-              <div className="w-8 h-8 rounded-full overflow-hidden">
-                <img
-                  src={user.imageUrl}
-                  alt={user.fullName || "User"}
-                  className="w-full h-full object-cover rounded-full"
-                />
-              </div>
+              <ClientAvatar
+                imageUrl={user?.imageUrl}
+                email={user?.primaryEmailAddress?.emailAddress}
+                name={user?.fullName || user?.firstName}
+                className="w-8 h-8 rounded-full object-cover"
+                fallbackClassName="w-8 h-8 rounded-full bg-gradient-to-r from-brand-600 to-brand-700 flex items-center justify-center text-white text-xs font-semibold"
+              />
             </Link>
           )}
         </div>

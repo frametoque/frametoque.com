@@ -46,7 +46,8 @@ export default function DashboardHome() {
 
     const loadProfile = async () => {
       try {
-        const res = await fetch(`/api/users/get-profile?userId=${user.id}`, { cache: "no-store" });
+        const emailParam = encodeURIComponent(user.primaryEmailAddress?.emailAddress || "");
+        const res = await fetch(`/api/users/get-profile?userId=${user.id}&email=${emailParam}`, { cache: "no-store" });
         const json = await res.json();
 
         if (json.success) {

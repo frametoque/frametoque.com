@@ -15,8 +15,10 @@ export async function GET(request) {
       );
     }
 
-    // Fetch client profile from admin_clients using clerk_id
-    const rows = await sql`
+    const email = searchParams.get('email');
+
+    // Fetch client profile from admin_clients using clerk_id or matching email
+    let rows = await sql`
       SELECT
         clerk_id,
         email,
@@ -29,6 +31,31 @@ export async function GET(request) {
       WHERE clerk_id = ${clerkId}
       LIMIT 1
     `;
+
+    if (rows.length === 0 && email) {
+      rows = await sql`
+        SELECT
+          clerk_id,
+          email,
+          full_name,
+          phone,
+          company,
+          website,
+          address
+        FROM admin_clients
+        WHERE LOWER(email) = LOWER(${email})
+        LIMIT 1
+      `;
+
+      if (rows.length > 0) {
+        // Auto-link clerk_id to this client record
+        await sql`
+          UPDATE admin_clients
+          SET clerk_id = ${clerkId}, updated_at = NOW()
+          WHERE LOWER(email) = LOWER(${email}) AND (clerk_id IS NULL OR clerk_id = '')
+        `;
+      }
+    }
 
     const user = rows?.[0];
 

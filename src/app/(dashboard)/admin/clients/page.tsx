@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Search, Plus, Edit2, Trash2, X, Loader2, ChevronRight, Users, Crown, Sparkles, Clock } from "lucide-react";
 import Link from "next/link";
+import ClientAvatar from "@/components/ClientAvatar";
 import { getClients, createClient, updateClient, deleteClient } from "../actions/actions";
 
 const formatLKR = (amount: number) =>
@@ -267,13 +268,11 @@ export default function ClientsPage() {
                   <tr key={client.id} className="hover:bg-white/5 transition-colors group">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        {client.imageUrl ? (
-                          <img src={client.imageUrl} alt={client.name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
-                        ) : (
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                            {client.name.charAt(0)}
-                          </div>
-                        )}
+                        <ClientAvatar
+                          imageUrl={client.imageUrl}
+                          email={client.email}
+                          name={client.name}
+                        />
                         <div>
                           <p className="font-semibold text-white text-sm">{client.name}</p>
                           <p className="text-xs text-gray-400">{client.email}</p>
