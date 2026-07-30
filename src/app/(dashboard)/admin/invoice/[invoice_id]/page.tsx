@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, Image, CheckCircle2, ShieldCheck, XCircle, DollarSign, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, Image, CheckCircle2, ShieldCheck, XCircle, DollarSign, X, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
-import { getInvoiceByIdAdmin, approveBankSlip, declineBankSlip, undoApprovedBankSlipPayment, recordInvoicePayment } from "../../actions/actions";
+import { getInvoiceByIdAdmin, approveBankSlip, declineBankSlip, undoApprovedBankSlipPayment, recordInvoicePayment, deleteIncome } from "../../actions/actions";
 
 const workStatusStyles = {
   "in progress": "bg-brand-500/20 text-brand-400 border-brand-500/30",
@@ -72,6 +72,7 @@ export default function AdminInvoicePage() {
   const [approving, setApproving] = useState(false);
   const [declining, setDeclining] = useState(false);
   const [undoingApprovedPayment, setUndoingApprovedPayment] = useState(false);
+  const [deletingPaymentId, setDeletingPaymentId] = useState<number | null>(null);
   const [activeSlipIndex, setActiveSlipIndex] = useState(-1);
   const downloadTriggeredRef = useRef(false);
 
@@ -148,6 +149,57 @@ export default function AdminInvoicePage() {
       window.removeEventListener("invoice:download-pdf", handleDownloadEvent);
     };
   }, [invoice]);
+
+  const handleDeleteAndReversePayment = async (incomeId: number, amount: number) => {
+    if (!confirm(`Are you sure you want to delete and reverse this payment of ${formatMoney(amount, invoice?.currency)}? This will restore the due balance on the invoice.`)) {
+      return;
+    }
+    setDeletingPaymentId(incomeId);
+    try {
+      await deleteIncome(incomeId);
+      const updated = await getInvoiceByIdAdmin(invoice.invoice_id);
+      setInvoice(updated);
+      alert("Payment deleted and reversed successfully.");
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to reverse payment: " + (err?.message || String(err)));
+    } finally {
+      setDeletingPaymentId(null);
+    }
+  };
+
+  const handleDeleteAndReverseActiveSlip = async () => {
+    if (!activeSlip || !invoice) return;
+    if (!confirm('Are you sure you want to delete and reverse this payment slip? This will reverse the payment and restore the due balance on the invoice.')) {
+      return;
+    }
+    setUndoingApprovedPayment(true);
+    try {
+      const rawId = String(activeSlip.id);
+      if (rawId.startsWith('income-')) {
+        const parsed = parseInt(rawId.replace('income-p-', '').replace('income-', ''), 10);
+        if (!isNaN(parsed)) {
+          await deleteIncome(parsed);
+        }
+      } else {
+        const slipId = parseInt(rawId, 10);
+        if (!isNaN(slipId)) {
+          const res = await undoApprovedBankSlipPayment(invoice.invoice_id, slipId);
+          if (!res.success) {
+            throw new Error(res.error || 'Failed to undo payment');
+          }
+        }
+      }
+      const updated = await getInvoiceByIdAdmin(invoice.invoice_id);
+      setInvoice(updated);
+      alert('Payment slip deleted and reversed successfully.');
+    } catch (err: any) {
+      console.error(err);
+      alert('Error reversing payment slip: ' + (err?.message || String(err)));
+    } finally {
+      setUndoingApprovedPayment(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -402,7 +454,8 @@ export default function AdminInvoicePage() {
                       <th className="py-2">Date</th>
                       <th className="py-2">Amount</th>
                       <th className="py-2">Method</th>
-                      <th className="py-2 text-right">Description</th>
+                      <th className="py-2">Description</th>
+                      <th className="py-2 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -411,7 +464,25 @@ export default function AdminInvoicePage() {
                         <td className="py-3 font-medium text-white">{p.date}</td>
                         <td className="py-3 text-green-400 font-semibold">{formatMoney(p.amount, invoice.currency)}</td>
                         <td className="py-3">{p.method}</td>
-                        <td className="py-3 text-gray-400 text-right">{p.description}</td>
+                        <td className="py-3 text-gray-400">{p.description}</td>
+                        <td className="py-3 text-right">
+                          {p.id && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteAndReversePayment(p.id, p.amount)}
+                              disabled={deletingPaymentId === p.id}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl transition-all disabled:opacity-50 cursor-pointer"
+                              title="Delete & Reverse Payment"
+                            >
+                              {deletingPaymentId === p.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-3.5 h-3.5" />
+                              )}
+                              <span>Delete & Reverse</span>
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -645,30 +716,14 @@ export default function AdminInvoicePage() {
                         This slip has already been approved and applied to the invoice balance.
                       </div>
                       <button
-                        onClick={async () => {
-                          if (!confirm('Are you sure you want to undo the approval of this bank slip? This will reverse the payment and update the invoice balance.')) return;
-                          setUndoingApprovedPayment(true);
-                          try {
-                            const res = await undoApprovedBankSlipPayment(invoice.invoice_id, activeSlip.id);
-                            if (res.success) {
-                              alert('Approval undone. Payment reversed.');
-                              window.location.reload();
-                            } else {
-                              alert('Failed to undo approval: ' + res.error);
-                            }
-                          } catch (err) {
-                            alert('Error undoing approval');
-                          } finally {
-                            setUndoingApprovedPayment(false);
-                          }
-                        }}
+                        onClick={handleDeleteAndReverseActiveSlip}
                         disabled={undoingApprovedPayment}
-                        className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-400 transition hover:bg-amber-500/20 disabled:opacity-50"
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-400 transition hover:bg-red-500/20 disabled:opacity-50 cursor-pointer"
                       >
                         {undoingApprovedPayment ? (
-                          <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                          <><Loader2 className="w-4 h-4 animate-spin" /> Deleting & Reversing...</>
                         ) : (
-                          <><XCircle className="w-5 h-5" /> Undo Approval</>
+                          <><Trash2 className="w-5 h-5" /> Delete & Reverse Payment</>
                         )}
                       </button>
                     </div>
