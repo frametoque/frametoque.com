@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { FileText, CheckCircle, Clock, AlertCircle, Search, Eye, Edit2, Send, Download, Trash2, DollarSign, X, Loader2, Upload, Image as ImageIcon, FileText as FileIcon } from "lucide-react";
 import Link from "next/link";
 import { getInvoices, deleteInvoice, recordInvoicePayment, adminUploadPaymentSlip } from "../actions/actions";
+import AnimatedNumber from "../components/AnimatedNumber";
 
 const filters = ["All", "Fully Paid", "Partially Paid", "On Review", "Overdue", "Advance-Paid", "Unpaid"];
 
@@ -323,7 +324,9 @@ export default function InvoicesPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">{stat.label}</p>
-              <p className="text-2xl font-semibold">{stat.value}</p>
+              <p className="text-2xl font-semibold">
+                <AnimatedNumber value={stat.value} />
+              </p>
             </div>
           </div>
         ))}

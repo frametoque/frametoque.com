@@ -14,6 +14,7 @@ import { uploadProviderInvoice } from "../actions/domains";
 import {
   Server, Shield, HardDrive, Cpu, Cloud, Settings, Plus, Edit2, Trash2, X, FileText, Globe, Mail, Clock, Check, Search, AlertTriangle, TrendingUp, ChevronLeft, ChevronRight, Upload, Lock, RefreshCw
 } from "lucide-react";
+import AnimatedNumber from "../components/AnimatedNumber";
 
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" }).format(amount || 0);
@@ -415,7 +416,7 @@ export default function HostingPage() {
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-gray-400 font-medium block">Active Hosting</span>
-            <span className="text-3xl font-bold text-white">{activeCount}</span>
+            <span className="text-3xl font-bold text-white"><AnimatedNumber value={activeCount} /></span>
           </div>
           <div className="p-3 bg-green-400/10 rounded-2xl text-green-400">
             <Server className="w-6 h-6" />
@@ -425,7 +426,7 @@ export default function HostingPage() {
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-gray-400 font-medium block">Suspended Hosting</span>
-            <span className="text-3xl font-bold text-white">{suspendedCount}</span>
+            <span className="text-3xl font-bold text-white"><AnimatedNumber value={suspendedCount} /></span>
           </div>
           <div className="p-3 bg-red-400/10 rounded-2xl text-red-400">
             <AlertTriangle className="w-6 h-6" />
@@ -435,7 +436,7 @@ export default function HostingPage() {
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-gray-400 font-medium block">Est. Profit (LKR)</span>
-            <span className="text-2xl font-bold text-brand-400">{formatLKR(totalProfitLkr)}</span>
+            <span className="text-2xl font-bold text-brand-400"><AnimatedNumber value={formatLKR(totalProfitLkr)} /></span>
           </div>
           <div className="p-3 bg-brand-400/10 rounded-2xl text-brand-400">
             <TrendingUp className="w-6 h-6" />

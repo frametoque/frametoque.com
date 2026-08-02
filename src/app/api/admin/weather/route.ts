@@ -92,8 +92,8 @@ export async function GET() {
       }
 
       // Geocode the location
-      let lat = 6.9271;
-      let lon = 79.8612;
+      let lat: number | null = null;
+      let lon: number | null = null;
       try {
         const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(b.location)}&limit=1`;
         const photonRes = await fetch(photonUrl);
@@ -107,6 +107,11 @@ export async function GET() {
         }
       } catch (e) {
         console.error("Geocoding failed for:", b.location, e);
+      }
+
+      // If location could not be geocoded to coordinates, skip showing weather details
+      if (lat === null || lon === null) {
+        continue;
       }
 
       // Fetch forecast for date/coords
@@ -157,13 +162,15 @@ export async function GET() {
         console.error("Forecast failed for:", dateStr, e);
       }
 
-      bookingForecasts.push({
-        title: b.title,
-        location: b.location,
-        date: displayDate,
-        startTime: startTimeFormatted || null,
-        weather: forecast
-      });
+      if (forecast) {
+        bookingForecasts.push({
+          title: b.title,
+          location: b.location,
+          date: displayDate,
+          startTime: startTimeFormatted || null,
+          weather: forecast
+        });
+      }
     }
   } catch (err) {
     console.error("Failed to fetch booking weather predictions:", err);

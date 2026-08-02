@@ -6,6 +6,7 @@ import {
   getExpenses, createExpense, deleteExpense, updateExpense, uploadReceipt,
   getScheduledExpenses, deleteScheduledExpense
 } from "../actions/actions";
+import AnimatedNumber from "../components/AnimatedNumber";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
 const filters = ["All", "Software", "Equipment", "Freelancers", "Transport", "Domain", "Other"];
@@ -294,7 +295,9 @@ export default function ExpensesPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">{stat.label}</p>
-              <p className="text-2xl font-semibold">{stat.value}</p>
+              <p className="text-2xl font-semibold">
+                <AnimatedNumber value={stat.value} />
+              </p>
             </div>
           </div>
         ))}

@@ -13,6 +13,7 @@ import {
   deleteAgreement, 
   AgreementData 
 } from "../actions/agreements";
+import AnimatedNumber from "../components/AnimatedNumber";
 import WebDevAgreementPDF from "@/components/WebDevAgreementPDF";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
@@ -133,7 +134,9 @@ export default function AgreementsPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">{stat.label}</p>
-              <p className="text-2xl font-semibold">{stat.value}</p>
+              <p className="text-2xl font-semibold">
+                <AnimatedNumber value={stat.value} />
+              </p>
             </div>
           </div>
         ))}

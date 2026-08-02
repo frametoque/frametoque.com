@@ -5,6 +5,7 @@ import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2
 import Link from "next/link";
 import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice, getBankAccounts, getInvoices } from "../actions/actions";
 import CategoryPicker from "../components/CategoryPicker";
+import AnimatedNumber from "../components/AnimatedNumber";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
 const ALL_CATEGORIES = ["Web dev", "Graphic design", "Video editing", "Photography", "Videography", "Domain", "Other"];
@@ -417,7 +418,10 @@ export default function IncomePage() {
         {stats.map((stat, i) => (
           <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors">
             <div className={`p-4 rounded-2xl ${stat.bg}`}><stat.icon className={`w-6 h-6 ${stat.color}`} /></div>
-            <div><p className="text-gray-400 text-sm">{stat.label}</p><p className="text-2xl font-semibold">{stat.value}</p></div>
+            <div>
+              <p className="text-gray-400 text-sm">{stat.label}</p>
+              <p className="text-2xl font-semibold"><AnimatedNumber value={stat.value} /></p>
+            </div>
           </div>
         ))}
       </div>

@@ -5,6 +5,7 @@ import { Search, Plus, Edit2, Trash2, X, Loader2, ChevronRight, Users, Crown, Sp
 import Link from "next/link";
 import ClientAvatar from "@/components/ClientAvatar";
 import { getClients, createClient, updateClient, deleteClient } from "../actions/actions";
+import AnimatedNumber from "../components/AnimatedNumber";
 
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount || 0);
@@ -232,9 +233,13 @@ export default function ClientsPage() {
             </div>
             <div className="min-w-0">
               <p className="text-gray-400 text-sm">{stat.label}</p>
-              <p className="text-xl font-semibold truncate" title={stat.value}>{stat.value}</p>
+              <p className="text-xl font-semibold truncate" title={stat.value}>
+                <AnimatedNumber value={stat.value} />
+              </p>
               {stat.sub && (
-                <p className="text-xs text-gray-500 truncate mt-0.5" title={stat.sub}>{stat.sub}</p>
+                <p className="text-xs text-gray-500 truncate mt-0.5" title={stat.sub}>
+                  <AnimatedNumber value={stat.sub} />
+                </p>
               )}
             </div>
           </div>

@@ -11,6 +11,7 @@ import {
   getBankAccounts,
   getQuotationById
 } from "../actions/actions";
+import AnimatedNumber from "../components/AnimatedNumber";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
 const filters = ["All", "Web dev", "Graphic design", "Video editing", "Photography", "Videography"];
@@ -228,7 +229,9 @@ const handleDelete = async (id: number) => {
             </div>
             <div>
               <p className="text-gray-400 text-sm">{stat.label}</p>
-              <p className="text-2xl font-semibold">{stat.value}</p>
+              <p className="text-2xl font-semibold">
+                <AnimatedNumber value={stat.value} />
+              </p>
             </div>
           </div>
         ))}

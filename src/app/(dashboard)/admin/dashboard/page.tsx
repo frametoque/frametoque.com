@@ -6,6 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { getDashboardData } from "../actions/actions";
 import { getAnalyticsData } from "../actions/analytics";
 import { getCalendarEvents } from "../actions/bookings";
+import AnimatedNumber from "../components/AnimatedNumber";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
 const formatLKR = (amount: number) => {
@@ -26,6 +27,7 @@ export default function DashboardPage() {
   const { startDate, endDate } = useAdminDateRange();
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       setLoading(true);
       try {
@@ -35,25 +37,42 @@ export default function DashboardPage() {
           getCalendarEvents().catch(() => []),
           fetch("/api/admin/weather").then(r => r.ok ? r.json() : null).catch(() => null),
         ]);
+        if (cancelled) return;
         setData(res);
         setAnalytics(analyticsRes);
         if (weatherRes && weatherRes.bookingForecasts) {
           setBookingForecasts(weatherRes.bookingForecasts);
         }
 
-        const todayStr = new Date().toISOString().split('T')[0];
+        const now = new Date();
         const upcoming = eventsRes
-          .filter((e: any) => e.type === 'booking' && e.date >= todayStr && e.status !== 'cancelled')
-          .sort((a: any, b: any) => a.date.localeCompare(b.date))
+          .filter((e: any) => {
+            if (e.type !== 'booking' || e.status === 'cancelled') return false;
+            // Parse event start date and time
+            const eventDateTime = new Date(`${e.date}T${e.time || '00:00'}:00`);
+            // If start_time was provided, filter out events whose start time has passed.
+            // If no start_time, keep the event until the end of that day (23:59:59).
+            if (e.time) {
+              return eventDateTime >= now;
+            }
+            const endOfDay = new Date(`${e.date}T23:59:59`);
+            return endOfDay >= now;
+          })
+          .sort((a: any, b: any) => {
+            const dateA = `${a.date}T${a.time || '00:00'}:00`;
+            const dateB = `${b.date}T${b.time || '00:00'}:00`;
+            return dateA.localeCompare(dateB);
+          })
           .slice(0, 5);
         setUpcomingEvents(upcoming);
       } catch (e) {
         console.error("Failed to load dashboard data", e);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     load();
+    return () => { cancelled = true; };
   }, [startDate, endDate]);
 
   if (loading || !data) {
@@ -132,7 +151,9 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">{stat.label}</p>
-              <p className="text-2xl font-semibold">{stat.value}</p>
+              <p className="text-2xl font-semibold">
+                <AnimatedNumber value={stat.value} />
+              </p>
             </div>
           </div>
         ))}
@@ -148,7 +169,9 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-gray-400 text-sm">{stat.label}</p>
-                <p className="text-2xl font-semibold">{stat.value}</p>
+                <p className="text-2xl font-semibold">
+                  <AnimatedNumber value={stat.value} />
+                </p>
               </div>
             </div>
           ))}
@@ -199,9 +222,9 @@ export default function DashboardPage() {
               }
 
               // Find matching weather forecast
-              const matchForecast = bookingForecasts.find(
+              const matchForecast = ev.location ? bookingForecasts.find(
                 (bf: any) => bf.title === ev.title && bf.location === ev.location
-              );
+              ) : null;
 
               return (
                 <div key={ev.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">

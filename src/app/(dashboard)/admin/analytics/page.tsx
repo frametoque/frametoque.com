@@ -19,6 +19,7 @@ import {
   getCityCountryCode
 } from "@/app/(dashboard)/admin/actions/analyticsUtils";
 import { useAnalyticsDateRange } from "../context/AnalyticsDateRangeContext";
+import AnimatedNumber from "../components/AnimatedNumber";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -60,16 +61,7 @@ const CHART_ZOOM_LEVELS = [
   { key: "time",  label: "Time" },   // 1 point per hour
 ] as const;
 
-// ── Animated counter ──────────────────────────────────────────────────────────
-function AnimatedNumber({ value, format }: { value: number; format?: (n: number) => string }) {
-  const motionVal = useMotionValue(0);
-  const spring    = useSpring(motionVal, { stiffness: 60, damping: 18 });
-  const display   = useTransform(spring, (v) =>
-    format ? format(Math.round(v)) : Math.round(v).toLocaleString()
-  );
-  useEffect(() => { motionVal.set(value); }, [value, motionVal]);
-  return <motion.span>{display}</motion.span>;
-}
+
 
 // ── Tab bar ───────────────────────────────────────────────────────────────────
 function Tabs({ tabs, active, onChange }: {

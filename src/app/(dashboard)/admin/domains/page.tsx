@@ -38,6 +38,7 @@ import {
   ChevronRight,
   Upload,
 } from "lucide-react";
+import AnimatedNumber from "../components/AnimatedNumber";
 
 // ---------------------------------------------------------------------------
 // Formatters
@@ -978,7 +979,7 @@ export default function AdminOrdersPage() {
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-gray-400 font-medium block">Active Domains</span>
-            <span className="text-3xl font-bold text-white">{activeCount}</span>
+            <span className="text-3xl font-bold text-white"><AnimatedNumber value={activeCount} /></span>
           </div>
           <div className="p-3 bg-green-400/10 rounded-2xl text-green-400">
             <Globe className="w-6 h-6" />
@@ -989,7 +990,7 @@ export default function AdminOrdersPage() {
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-gray-400 font-medium block">Expired Domains</span>
-            <span className="text-3xl font-bold text-white">{expiredCount}</span>
+            <span className="text-3xl font-bold text-white"><AnimatedNumber value={expiredCount} /></span>
           </div>
           <div className="p-3 bg-red-400/10 rounded-2xl text-red-400">
             <AlertTriangle className="w-6 h-6" />
@@ -1000,7 +1001,7 @@ export default function AdminOrdersPage() {
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-gray-400 font-medium block">Pending Orders</span>
-            <span className="text-3xl font-bold text-white">{pendingCount}</span>
+            <span className="text-3xl font-bold text-white"><AnimatedNumber value={pendingCount} /></span>
           </div>
           <div className="p-3 bg-amber-400/10 rounded-2xl text-amber-400">
             <Clock className="w-6 h-6" />
@@ -1011,7 +1012,7 @@ export default function AdminOrdersPage() {
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs text-gray-400 font-medium block">Total profit (LKR)</span>
-            <span className="text-2xl font-bold text-brand-400">{formatLKR(totalProfitLkr)}</span>
+            <span className="text-2xl font-bold text-brand-400"><AnimatedNumber value={formatLKR(totalProfitLkr)} /></span>
           </div>
           <div className="p-3 bg-brand-400/10 rounded-2xl text-brand-400">
             <TrendingUp className="w-6 h-6" />
