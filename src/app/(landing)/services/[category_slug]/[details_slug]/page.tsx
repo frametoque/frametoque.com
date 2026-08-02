@@ -8,6 +8,15 @@ export const dynamic = "force-dynamic";
 // All valid category slugs
 const VALID_CATEGORIES = Object.keys(TABLE_MAP);
 
+function formatImageUrl(imagePath?: string): string {
+  if (!imagePath) return "https://frametoque.online/services/eventpulse.png";
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    return imagePath;
+  }
+  const cleanPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
+  return `https://frametoque.online${cleanPath}`;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -24,19 +33,22 @@ export async function generateMetadata({
     };
   }
 
+  const imageUrl = formatImageUrl(meta.heroImage);
+  const description = meta.description || "Explore our premium digital services at Frametoque.";
+
   return {
     title: `${meta.title} | Frametoque`,
-    description: meta.description,
+    description,
     openGraph: {
       title: `${meta.title} | Frametoque`,
-      description: meta.description,
+      description,
       url: `https://frametoque.online/services/${category_slug}/${details_slug}`,
       siteName: "Frametoque",
       images: [
         {
-          url: `https://frametoque.online${meta.heroImage}`,
-          width: 1200,
-          height: 630,
+          url: imageUrl,
+          width: 1601,
+          height: 1084,
           alt: meta.title,
         },
       ],
@@ -45,8 +57,8 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title: `${meta.title} | Frametoque`,
-      description: meta.description,
-      images: [`https://frametoque.online${meta.heroImage}`],
+      description,
+      images: [imageUrl],
     },
   };
 }
@@ -68,13 +80,15 @@ export default async function ServicePage({
     notFound();
   }
 
+  const imageUrl = formatImageUrl(service.hero_image);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Service",
     name: service.title,
     description: service.description,
     url: `https://frametoque.online/services/${category_slug}/${details_slug}`,
-    image: `https://frametoque.online${service.hero_image}`,
+    image: imageUrl,
     provider: {
       "@type": "LocalBusiness",
       name: "Frametoque",

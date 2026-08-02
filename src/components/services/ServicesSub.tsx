@@ -148,7 +148,7 @@ export default function ServicesSub({ categorySlug }: Props) {
               key={i}
               className="bg-gray-900/50 border border-slate-800 rounded-2xl overflow-hidden animate-pulse"
             >
-              <div className="aspect-[4/3] bg-slate-800" />
+              <div className="aspect-[1601/1084] bg-slate-800" />
               <div className="p-6 space-y-3">
                 <div className="h-6 bg-slate-800 rounded w-3/4" />
                 <div className="h-4 bg-slate-800 rounded w-full" />
@@ -177,7 +177,7 @@ export default function ServicesSub({ categorySlug }: Props) {
             variants={card}
             className="group bg-gray-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 flex flex-col"
           >
-            <motion.div className="relative aspect-[4/3] overflow-hidden">
+            <motion.div className="relative aspect-[1601/1084] overflow-hidden">
               <Image
                 src={cat.img || "/services/eventpulse.png"}
                 alt={cat.title}
@@ -219,7 +219,7 @@ export default function ServicesSub({ categorySlug }: Props) {
           variants={card}
           className="group bg-gray-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-brand-500 transition-all duration-300 flex flex-col"
         >
-          <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-brand-500/10 to-purple-500/10">
+          <div className="relative aspect-[1601/1084] overflow-hidden bg-gradient-to-br from-brand-500/10 to-purple-500/10">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center p-8">
                 <div className="text-5xl mb-4">✨</div>

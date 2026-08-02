@@ -233,7 +233,7 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
                 <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-1">
                   <div className="absolute -top-4 -right-4 w-24 h-24 bg-brand-500/20 rounded-full blur-xl" />
                   <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-brand-500/20 rounded-full blur-xl" />
-                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden">
+                  <div className="relative aspect-[1601/1084] rounded-xl overflow-hidden">
                     <Image
                       src={data.hero_image || "/services/eventpulse.png"}
                       alt={data.title}
