@@ -59,6 +59,7 @@ export async function generateMetadata({
       title: `${meta.title} | Frametoque`,
       description,
       images: [imageUrl],
+      site: "@Frametoque",
     },
   };
 }
