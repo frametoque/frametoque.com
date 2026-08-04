@@ -878,7 +878,7 @@ export default function BookingsAdminPage() {
                 </a>
 
                 <a
-                  href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(`${calendarUrl}?noHolidays=${!includeHolidays}`)}`}
+                  href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(`${calendarUrl ? calendarUrl.replace(/^https?:/, "webcal:") : ""}?noHolidays=${!includeHolidays}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-bold text-xs transition-colors text-center cursor-pointer"
