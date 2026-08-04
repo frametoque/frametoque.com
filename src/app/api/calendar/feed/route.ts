@@ -17,42 +17,36 @@ function escapeICS(str: string): string {
 
 function formatDateOnly(d: any): string {
   if (!d) return "";
-  let str = "";
   if (d instanceof Date) {
-    // Format YYYY-MM-DD using local time or ISO string date part if available
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    str = `${y}-${m}-${day}`;
-  } else {
-    str = String(d).split("T")[0];
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    return `${y}${m}${day}`;
   }
-  return str.replace(/-/g, "");
+  const dateStr = String(d).split("T")[0];
+  return dateStr.replace(/-/g, "");
 }
 
 function getNextDayDateOnly(d: any): string {
-  let dateObj: Date;
+  if (!d) return "";
+  let dateStr = "";
   if (d instanceof Date) {
-    dateObj = new Date(d.getTime());
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    dateStr = `${y}-${m}-${day}`;
   } else {
-    const parts = String(d).split("T")[0].split("-");
-    if (parts.length === 3) {
-      dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-    } else {
-      dateObj = new Date(String(d));
-    }
+    dateStr = String(d).split("T")[0];
   }
-  if (isNaN(dateObj.getTime())) {
-    dateObj = new Date();
-  }
-  dateObj.setDate(dateObj.getDate() + 1);
-  const y = dateObj.getFullYear();
-  const m = String(dateObj.getMonth() + 1).padStart(2, "0");
-  const day = String(dateObj.getDate()).padStart(2, "0");
-  return `${y}${m}${day}`;
+  const [y, m, day] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, (m || 1) - 1, (day || 1) + 1));
+  const resY = dt.getUTCFullYear();
+  const resM = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const resDay = String(dt.getUTCDate()).padStart(2, "0");
+  return `${resY}${resM}${resDay}`;
 }
 
-function formatTimeICS(dateStr: string, timeStr?: string | null): string {
+function formatTimeICS(dateStr: any, timeStr?: string | null): string {
   const cleanDate = formatDateOnly(dateStr);
   if (!timeStr) return cleanDate;
   const cleanTime = timeStr.replace(/:/g, "").substring(0, 4).padEnd(4, "0");
