@@ -959,7 +959,7 @@ export default function IncomePage() {
                 {viewingReceipt.invoice && (
                   <div>
                     <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Linked Invoice</p>
-                    <Link href={`/admin/invoices/${viewingReceipt.invoice}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500/10 text-sm font-medium text-brand-400 hover:bg-brand-500/20 transition-colors">
+                    <Link href={`/admin/invoice/${viewingReceipt.invoice}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500/10 text-sm font-medium text-brand-400 hover:bg-brand-500/20 transition-colors">
                       <FileText className="w-4 h-4" />{viewingReceipt.invoice}
                     </Link>
                   </div>
@@ -967,7 +967,24 @@ export default function IncomePage() {
               </div>
             </div>
             <div className="w-full md:w-2/3 bg-black/50 flex items-center justify-center p-6 min-h-[300px] overflow-hidden">
-              <img src={viewingReceipt.receiptUrl} alt="Receipt" className="max-w-full max-h-full object-contain rounded-xl shadow-lg border border-white/5" />
+              {viewingReceipt.receiptUrl?.toLowerCase().includes('.pdf') || viewingReceipt.receiptUrl?.startsWith('data:application/pdf') ? (
+                <div className="w-full h-full min-h-[450px] rounded-xl overflow-hidden">
+                  <object
+                    data={viewingReceipt.receiptUrl}
+                    type="application/pdf"
+                    className="w-full h-full min-h-[450px] rounded-xl"
+                  >
+                    <div className="p-6 text-center text-gray-300">
+                      <p className="mb-2">PDF preview unavailable.</p>
+                      <a href={viewingReceipt.receiptUrl} target="_blank" rel="noopener noreferrer" className="text-brand-400 underline">
+                        Open PDF in new tab
+                      </a>
+                    </div>
+                  </object>
+                </div>
+              ) : (
+                <img src={viewingReceipt.receiptUrl} alt="Receipt" className="max-w-full max-h-full object-contain rounded-xl shadow-lg border border-white/5" />
+              )}
             </div>
           </div>
         </div>

@@ -107,7 +107,7 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
         EXTRACT(YEAR FROM date) as year,
         SUM(amount) as total
       FROM admin_incomes
-      WHERE EXTRACT(YEAR FROM date) IN (2025, 2026)
+      WHERE EXTRACT(YEAR FROM date) IN (EXTRACT(YEAR FROM CURRENT_DATE), EXTRACT(YEAR FROM CURRENT_DATE) - 1)
       GROUP BY EXTRACT(YEAR FROM date)
     `,
     sql`
@@ -115,7 +115,7 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
         EXTRACT(YEAR FROM date) as year,
         SUM(amount) as total
       FROM admin_expenses
-      WHERE EXTRACT(YEAR FROM date) IN (2025, 2026)
+      WHERE EXTRACT(YEAR FROM date) IN (EXTRACT(YEAR FROM CURRENT_DATE), EXTRACT(YEAR FROM CURRENT_DATE) - 1)
       GROUP BY EXTRACT(YEAR FROM date)
     `,
     sql`
@@ -142,11 +142,14 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
   const totalExpenses = expenses[0]?.total ? parseFloat(expenses[0].total) : 0;
   const netProfit = totalIncome - totalExpenses;
 
-  const previousIncome = parseFloat(incomeByYear.find((r: any) => Math.round(parseFloat(r.year)) === 2025)?.total || 0);
-  const currentIncome = parseFloat(incomeByYear.find((r: any) => Math.round(parseFloat(r.year)) === 2026)?.total || 0);
+  const currentYear = new Date().getFullYear();
+  const previousYear = currentYear - 1;
 
-  const previousExpense = parseFloat(expenseByYear.find(r => Math.round(parseFloat(r.year)) === 2025)?.total || 0);
-  const currentExpense = parseFloat(expenseByYear.find(r => Math.round(parseFloat(r.year)) === 2026)?.total || 0);
+  const previousIncome = parseFloat(incomeByYear.find((r: any) => Math.round(parseFloat(r.year)) === previousYear)?.total || 0);
+  const currentIncome = parseFloat(incomeByYear.find((r: any) => Math.round(parseFloat(r.year)) === currentYear)?.total || 0);
+
+  const previousExpense = parseFloat(expenseByYear.find((r: any) => Math.round(parseFloat(r.year)) === previousYear)?.total || 0);
+  const currentExpense = parseFloat(expenseByYear.find((r: any) => Math.round(parseFloat(r.year)) === currentYear)?.total || 0);
 
   const previousNet = previousIncome - previousExpense;
   const currentNet = currentIncome - currentExpense;
@@ -234,22 +237,29 @@ function getCutoffDate(range: string) {
 export async function getIncomes(startDate?: string, endDate?: string) {
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
-  const statsThisMonth = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date)`;
-  const statsLastMonth = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`;
-  const statsYtd = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('year', date) = date_trunc('year', current_date)`;
 
-  const rows = await sql`
-    SELECT 
-      i.id, i.date, TO_CHAR(i.date, 'YYYY-MM-DD') as "rawDate", i.amount, c.full_name as client, i.client_id as "clientId", 
-      i.description as desc, i.category, i.invoice_id as invoice, i.receipt_url as "receiptUrl",
-      CASE WHEN inv.invoice_id IS NOT NULL THEN true ELSE false END as "hasValidInvoice",
-      i.created_at
-    FROM admin_incomes i
-    LEFT JOIN admin_clients c ON i.client_id = c.id
-    LEFT JOIN invoices inv ON i.invoice_id = inv.invoice_id
-    WHERE i.date >= ${start}::timestamp AND i.date <= (${end} || ' 23:59:59.999')::timestamp
-    ORDER BY i.date DESC, i.created_at DESC, i.id DESC
-  `;
+  const [statsThisMonth, statsLastMonth, statsYtd, rows] = await Promise.all([
+    sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date)`,
+    sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`,
+    sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('year', date) = date_trunc('year', current_date)`,
+    sql`
+      SELECT 
+        i.id, i.date, TO_CHAR(i.date, 'YYYY-MM-DD') as "rawDate", i.amount, c.full_name as client, i.client_id as "clientId", 
+        i.description as desc, i.category, i.invoice_id as invoice, 
+        COALESCE(
+          i.receipt_url,
+          (SELECT slip_url FROM invoice_payment_slips ips WHERE ips.invoice_id = i.invoice_id ORDER BY ips.id DESC LIMIT 1),
+          inv.bank_slip
+        ) as "receiptUrl",
+        CASE WHEN inv.invoice_id IS NOT NULL THEN true ELSE false END as "hasValidInvoice",
+        i.created_at
+      FROM admin_incomes i
+      LEFT JOIN admin_clients c ON i.client_id = c.id
+      LEFT JOIN invoices inv ON i.invoice_id = inv.invoice_id
+      WHERE i.date >= ${start}::timestamp AND i.date <= (${end} || ' 23:59:59.999')::timestamp
+      ORDER BY i.date DESC, i.created_at DESC, i.id DESC
+    `
+  ]);
 
   return {
     thisMonth: parseFloat(statsThisMonth[0]?.total || 0),
@@ -460,16 +470,18 @@ export async function getExpenses(startDate?: string, endDate?: string) {
   await processRecurringExpenses();
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
-  const statsThisMonth = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date)`;
-  const statsLastMonth = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`;
-  const statsYtd = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('year', date) = date_trunc('year', current_date)`;
 
-  const rows = await sql`
-    SELECT id, date, TO_CHAR(date, 'YYYY-MM-DD') as "rawDate", amount, description as desc, category, payment_method as "paidVia", receipt_url as "receiptUrl", created_at
-    FROM admin_expenses
-    WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
-    ORDER BY date DESC, created_at DESC, id DESC
-  `;
+  const [statsThisMonth, statsLastMonth, statsYtd, rows] = await Promise.all([
+    sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date)`,
+    sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`,
+    sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('year', date) = date_trunc('year', current_date)`,
+    sql`
+      SELECT id, date, TO_CHAR(date, 'YYYY-MM-DD') as "rawDate", amount, description as desc, category, payment_method as "paidVia", receipt_url as "receiptUrl", created_at
+      FROM admin_expenses
+      WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+      ORDER BY date DESC, created_at DESC, id DESC
+    `
+  ]);
 
   return {
     thisMonth: parseFloat(statsThisMonth[0]?.total || 0),
@@ -675,21 +687,21 @@ export async function payScheduledExpense(id: number) {
 
 // -- INVOICES --
 export async function getInvoices() {
-  const totalIssuedCount = await sql`SELECT COUNT(*) as count FROM invoices`;
-
-  const rows = await sql`
-    SELECT i.invoice_id as id, i.user_email as client_email, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.advance, i.tax_rate, i.total_due, i.date as due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at
-    FROM invoices i
-    LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
-    ORDER BY i.date DESC, i.created_at DESC
-  `;
-
-  const nonAdvancePaymentsRows = await sql`
-    SELECT invoice_id, SUM(amount) as paid_sum
-    FROM admin_incomes
-    WHERE invoice_id IS NOT NULL AND LOWER(description) NOT LIKE 'advance:%' AND LOWER(description) NOT LIKE 'advance payment%'
-    GROUP BY invoice_id
-  `;
+  const [totalIssuedCount, rows, nonAdvancePaymentsRows] = await Promise.all([
+    sql`SELECT COUNT(*) as count FROM invoices`,
+    sql`
+      SELECT i.invoice_id as id, i.user_email as client_email, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.advance, i.tax_rate, i.total_due, i.date as due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at
+      FROM invoices i
+      LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
+      ORDER BY i.date DESC, i.created_at DESC
+    `,
+    sql`
+      SELECT invoice_id, SUM(amount) as paid_sum
+      FROM admin_incomes
+      WHERE invoice_id IS NOT NULL AND LOWER(description) NOT LIKE 'advance:%' AND LOWER(description) NOT LIKE 'advance payment%'
+      GROUP BY invoice_id
+    `
+  ]);
   const paymentsMap: Record<string, number> = {};
   nonAdvancePaymentsRows.forEach((p: any) => {
     paymentsMap[p.invoice_id] = parseFloat(p.paid_sum || '0');
@@ -1251,24 +1263,38 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
 export async function getReports(startDate?: string, endDate?: string) {
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
-  const incomeStats = await sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`;
-  const expenseStats = await sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`;
-  
+
+  const [incomeStats, expenseStats, rawIncome, expensesBreakdown, journalEntriesRaw] = await Promise.all([
+    sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
+    sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
+    sql`
+      SELECT category, amount
+      FROM admin_incomes
+      WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+    `,
+    sql`
+      SELECT category as name, SUM(amount) as value
+      FROM admin_expenses
+      WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+      GROUP BY category
+      ORDER BY value DESC
+    `,
+    sql`
+      SELECT id, 'income' as type, description, date, created_at, amount, category, payment_method, invoice_id FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+      UNION ALL
+      SELECT id, 'expense' as type, description, date, created_at, amount, category, payment_method, NULL as invoice_id FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+      ORDER BY date DESC, created_at DESC
+    `
+  ]);
+
   const annualRevenue = parseFloat(incomeStats[0]?.total || 0);
   const annualExpenses = parseFloat(expenseStats[0]?.total || 0);
   const netProfit = annualRevenue - annualExpenses;
   const profitMargin = annualRevenue > 0 ? ((netProfit / annualRevenue) * 100).toFixed(1) : '0.0';
 
-  const rawIncome = await sql`
-    SELECT category, amount
-    FROM admin_incomes
-    WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
-  `;
-
   const serviceMap: Record<string, number> = {};
   for (const row of rawIncome) {
     const rawCategory = (row.category || 'Other').trim();
-    // Format category string: e.g. "Photography, Videography" -> "Photography + Videography" or keep clean label
     const categoryName = rawCategory
       ? rawCategory.split(',').map((s: string) => s.trim()).filter(Boolean).join(' + ') || 'Other'
       : 'Other';
@@ -1277,21 +1303,6 @@ export async function getReports(startDate?: string, endDate?: string) {
   const incomeByService = Object.entries(serviceMap)
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
-
-  const expensesBreakdown = await sql`
-    SELECT category as name, SUM(amount) as value
-    FROM admin_expenses
-    WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
-    GROUP BY category
-    ORDER BY value DESC
-  `;
-
-  const journalEntriesRaw = await sql`
-    SELECT id, 'income' as type, description, date, created_at, amount, category, payment_method, invoice_id FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
-    UNION ALL
-    SELECT id, 'expense' as type, description, date, created_at, amount, category, payment_method, NULL as invoice_id FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
-    ORDER BY date DESC, created_at DESC
-  `;
 
   const journalEntries = journalEntriesRaw.map((r: any) => ({
     id: `${r.type}-${r.id}`,
@@ -1810,6 +1821,12 @@ export async function submitBankSlip(invoiceId: string, slipBase64: string, amou
       WHERE invoice_id = ${invoiceId}
     `;
 
+    await sql`
+      UPDATE admin_incomes
+      SET receipt_url = ${bankSlipUrl}
+      WHERE invoice_id = ${invoiceId} AND receipt_url IS NULL
+    `;
+
     await logSystemAction(`Bank slip uploaded for invoice ${invoiceId}. Status changed to on review.`);
     return { success: true };
   } catch (err: any) {
@@ -2045,6 +2062,12 @@ export async function adminUploadPaymentSlip(invoiceId: string, slipBase64: stri
     await sql`
       INSERT INTO invoice_payment_slips (invoice_id, slip_url, amount, status, reviewed_at, review_note)
       VALUES (${invoiceId}, ${slipUrl}, ${amount}, 'approved', CURRENT_TIMESTAMP, 'Added by admin')
+    `;
+
+    await sql`
+      UPDATE admin_incomes
+      SET receipt_url = ${slipUrl}
+      WHERE invoice_id = ${invoiceId} AND receipt_url IS NULL
     `;
 
     await logSystemAction(`Admin uploaded and auto-approved payment slip for invoice ${invoiceId}: $${amount}`);

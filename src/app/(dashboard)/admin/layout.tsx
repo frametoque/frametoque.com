@@ -199,13 +199,18 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path === "/admin" || path === "/admin/dashboard") return "Dashboard";
     if (path.startsWith("/admin/analytics")) return "Analytics";
     if (path.startsWith("/admin/bookings")) return "Bookings";
-    if (path.startsWith("/admin/clients")) return "Clients";
+    if (path === "/admin/clients") return "Clients";
+    if (path.startsWith("/admin/clients/")) return "Client Details";
     if (path.startsWith("/admin/invoice/")) {
       const parts = path.split("/");
       const id = parts[parts.length - 1];
       return id ? `Invoice #${id}` : "Invoice Details";
     }
+    if (path === "/admin/invoices/new") return "New Invoice";
+    if (path.startsWith("/admin/invoices/") && path.endsWith("/edit")) return "Edit Invoice";
     if (path.startsWith("/admin/invoices")) return "Invoices";
+    if (path === "/admin/quotations/new") return "New Quotation";
+    if (path.startsWith("/admin/quotations/") && path.endsWith("/edit")) return "Edit Quotation";
     if (path.startsWith("/admin/quotations")) return "Quotations";
     if (path.startsWith("/admin/income")) return "Income";
     if (path.startsWith("/admin/expenses")) return "Expenses";
@@ -213,11 +218,18 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path.startsWith("/admin/portfolio")) return "Portfolio";
     if (path.startsWith("/admin/services")) return "Services";
     if (path.startsWith("/admin/settings")) return "Settings";
+    if (path === "/admin/agreements/new") return "New Agreement";
+    if (path.startsWith("/admin/agreements/") && path.endsWith("/edit")) return "Edit Agreement";
     if (path.startsWith("/admin/agreements")) return "Agreements";
     if (path.startsWith("/admin/domains")) return "Domains";
     if (path.startsWith("/admin/hosting")) return "Hosting";
     return "Admin";
   };
+
+  useEffect(() => {
+    const pageTitle = getPageTitle(pathname);
+    document.title = `${pageTitle} | Frametoque`;
+  }, [pathname]);
 
   useEffect(() => {
     const updateDateTime = () => {
