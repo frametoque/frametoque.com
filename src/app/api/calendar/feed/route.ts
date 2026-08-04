@@ -92,11 +92,14 @@ export async function GET(request: NextRequest) {
     let icsContent = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Ft Online//Calendar Feed//EN",
+      "PRODID:-//Frametoque//Calendar Feed//EN",
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
-      "X-WR-CALNAME:Ft. Calendar",
+      "X-WR-CALNAME:Frametoque",
+      "X-WR-CALDESC:Frametoque Bookings & Reminders Feed",
       "X-WR-TIMEZONE:Asia/Colombo",
+      "X-APPLE-CALENDAR-COLOR:#169FE4",
+      "X-WR-CALCOLOR:#169FE4",
       "X-PUBLISHED-TTL:PT15M",
       "REFRESH-INTERVAL;VALUE=DURATION:PT15M",
       "BEGIN:VTIMEZONE",
@@ -105,7 +108,7 @@ export async function GET(request: NextRequest) {
       "BEGIN:STANDARD",
       "TZOFFSETFROM:+0530",
       "TZOFFSETTO:+0530",
-      "TZNAME:MMT",
+      "TZNAME:IST",
       "DTSTART:19700101T000000",
       "END:STANDARD",
       "END:VTIMEZONE"
@@ -120,8 +123,14 @@ export async function GET(request: NextRequest) {
       const formattedTitle = `Ft. - ${b.title}`;
       const isAllDay = !b.start_time;
 
-      const uid = `booking-${b.id}@ft.online`;
-      const description = `Type: ${typeLabel}\\nStatus: ${b.status}${b.description ? `\\nNote: ${b.description}` : ""}${isTask ? "" : `\\nClient: ${b.customer_name}`}${b.customer_phone ? `\\nPhone: ${b.customer_phone}` : ""}`;
+      const uid = `booking-${b.id}@frametoque.online`;
+      const descriptionLines = [
+        `Type: ${typeLabel}`,
+        `Status: ${b.status}`,
+        b.description ? `Note: ${b.description}` : "",
+        !isTask && b.customer_name ? `Client: ${b.customer_name}` : "",
+        b.customer_phone ? `Phone: ${b.customer_phone}` : ""
+      ].filter(Boolean).join("\n");
 
       icsContent.push("BEGIN:VEVENT");
       icsContent.push(`UID:${uid}`);
@@ -147,7 +156,7 @@ export async function GET(request: NextRequest) {
       }
 
       icsContent.push(`SUMMARY:${escapeICS(formattedTitle)}`);
-      icsContent.push(`DESCRIPTION:${escapeICS(description)}`);
+      icsContent.push(`DESCRIPTION:${escapeICS(descriptionLines)}`);
       if (b.location) {
         icsContent.push(`LOCATION:${escapeICS(b.location)}`);
       }
