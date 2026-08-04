@@ -19,9 +19,10 @@ function formatDateOnly(d: any): string {
   if (!d) return "";
   let str = "";
   if (d instanceof Date) {
-    const y = d.getUTCFullYear();
-    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-    const day = String(d.getUTCDate()).padStart(2, "0");
+    // Format YYYY-MM-DD using local time or ISO string date part if available
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
     str = `${y}-${m}-${day}`;
   } else {
     str = String(d).split("T")[0];
@@ -34,15 +35,20 @@ function getNextDayDateOnly(d: any): string {
   if (d instanceof Date) {
     dateObj = new Date(d.getTime());
   } else {
-    dateObj = new Date(String(d).split("T")[0] + "T00:00:00Z");
+    const parts = String(d).split("T")[0].split("-");
+    if (parts.length === 3) {
+      dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    } else {
+      dateObj = new Date(String(d));
+    }
   }
   if (isNaN(dateObj.getTime())) {
     dateObj = new Date();
   }
-  dateObj.setUTCDate(dateObj.getUTCDate() + 1);
-  const y = dateObj.getUTCFullYear();
-  const m = String(dateObj.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(dateObj.getUTCDate()).padStart(2, "0");
+  dateObj.setDate(dateObj.getDate() + 1);
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const day = String(dateObj.getDate()).padStart(2, "0");
   return `${y}${m}${day}`;
 }
 
@@ -128,7 +134,6 @@ export async function GET(request: NextRequest) {
         `Type: ${typeLabel}`,
         `Status: ${b.status}`,
         b.description ? `Note: ${b.description}` : "",
-        !isTask && b.customer_name ? `Client: ${b.customer_name}` : "",
         b.customer_phone ? `Phone: ${b.customer_phone}` : ""
       ].filter(Boolean).join("\n");
 
