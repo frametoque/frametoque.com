@@ -132,9 +132,13 @@ export async function GET(request: NextRequest) {
         b.customer_phone ? `Phone: ${b.customer_phone}` : ""
       ].filter(Boolean).join("\n");
 
+      const eventLastMod = b.created_at ? new Date(b.created_at).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z" : nowStr;
+
       icsContent.push("BEGIN:VEVENT");
       icsContent.push(`UID:${uid}`);
-      icsContent.push(`DTSTAMP:${nowStr}`);
+      icsContent.push(`DTSTAMP:${eventLastMod}`);
+      icsContent.push(`LAST-MODIFIED:${eventLastMod}`);
+      icsContent.push("SEQUENCE:0");
 
       if (isAllDay) {
         const startDateOnly = formatDateOnly(b.booking_date);
