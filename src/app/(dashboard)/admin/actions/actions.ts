@@ -78,7 +78,7 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
       SELECT 
         i.invoice_id as id, 
         COALESCE(c.full_name, i.user_email) as client, 
-        COALESCE((SELECT description FROM invoice_items WHERE invoice_id = i.invoice_id LIMIT 1), 'Service') as service,
+        COALESCE(NULLIF(i.project_name, ''), (SELECT description FROM invoice_items WHERE invoice_id = i.invoice_id LIMIT 1), 'Project') as service,
         i.total as amount, 
         i.payment_status as status
       FROM invoices i
