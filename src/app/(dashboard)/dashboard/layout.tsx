@@ -31,7 +31,8 @@ import {
   Calendar,
   Globe,
   CreditCard,
-  Download
+  Download,
+  Cloud
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -83,6 +84,7 @@ export default function DashboardLayout({ children }) {
     }
     if (path.startsWith("/dashboard/invoices")) return "My Invoices";
     if (path.startsWith("/dashboard/domains")) return "My Domains";
+    if (path.startsWith("/dashboard/saas")) return "My SaaS";
     if (path.startsWith("/dashboard/quotations")) return "Quotations";
     if (path.startsWith("/dashboard/agreements")) return "Agreements";
     if (path.startsWith("/dashboard/settings")) return "Settings";
@@ -220,6 +222,7 @@ const Sidebar = ({
     { name: "Quotations",  href: "/dashboard/quotations",  icon: NotepadTextDashed },
     { name: "Agreements",  href: "/dashboard/agreements",  icon: FilePenLine },
     { name: "Domains",  href: "/dashboard/domains",     icon: Globe },
+    { name: "SaaS",     href: "/dashboard/saas",        icon: Cloud },
     { name: "Settings",    href: "/dashboard/settings",    icon: Settings },
   ];
 

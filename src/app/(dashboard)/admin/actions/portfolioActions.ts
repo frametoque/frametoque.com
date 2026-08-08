@@ -452,14 +452,6 @@ export async function createBatchPortfolioPhotos(
   if (!photos || photos.length === 0) return;
   const cleanEvent = eventName.trim();
 
-  // Ensure file_hash & original_filename columns exist in database schema
-  try {
-    await sql.query(`ALTER TABLE work_photography_photos ADD COLUMN IF NOT EXISTS file_hash TEXT`);
-    await sql.query(`ALTER TABLE work_photography_photos ADD COLUMN IF NOT EXISTS original_filename TEXT`);
-  } catch (e) {
-    // Ignore if columns already exist
-  }
-
   // 1. Shift event sort orders
   await sql.query(`UPDATE work_photography_events SET sort_order = sort_order + 1`);
   

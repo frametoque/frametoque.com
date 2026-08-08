@@ -47,7 +47,8 @@ import {
   Server,
   Settings,
   DollarSign,
-  Download
+  Download,
+  Cloud
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -163,9 +164,11 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isServices = pathname === "/admin/services";
   const isPortfolio = pathname === "/admin/portfolio";
   const isDomains = pathname.startsWith("/admin/domains");
+  const isSaas = pathname === "/admin/saas";
+  const isSaasDetail = pathname.startsWith("/admin/saas/");
   const isAgreements = pathname.startsWith("/admin/agreements");
   const isHosting = pathname === "/admin/hosting";
-  const hideSelector = isServices || isPortfolio || isBookings || isDomains || isHosting || isInvoiceDetail;
+  const hideSelector = isServices || isPortfolio || isBookings || isDomains || isSaas || isSaasDetail || isHosting || isInvoiceDetail;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [currentTime, setCurrentTime] = useState("");
@@ -177,6 +180,29 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isReports = pathname === "/admin/reports";
   const [reportsActiveTab, setReportsActiveTab] = useState("overview");
   const [reportsFormattedDate, setReportsFormattedDate] = useState("");
+  const [dynamicTitle, setDynamicTitle] = useState("");
+  const [saasActionState, setSaasActionState] = useState({ show: false, loading: false });
+
+  useEffect(() => {
+    const handleUpdateTitle = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      setDynamicTitle(customEvent.detail);
+    };
+    const handleSaasActionState = (e: Event) => {
+      const customEvent = e as CustomEvent<{ show: boolean, loading: boolean }>;
+      setSaasActionState(customEvent.detail);
+    };
+    window.addEventListener("update-title", handleUpdateTitle);
+    window.addEventListener("saas:action-state", handleSaasActionState);
+    return () => {
+      window.removeEventListener("update-title", handleUpdateTitle);
+      window.removeEventListener("saas:action-state", handleSaasActionState);
+    };
+  }, []);
+
+  useEffect(() => {
+    setDynamicTitle("");
+  }, [pathname]);
 
   useEffect(() => {
     const handleTabChange = (e: Event) => {
@@ -222,6 +248,8 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path.startsWith("/admin/agreements/") && path.endsWith("/edit")) return "Edit Agreement";
     if (path.startsWith("/admin/agreements")) return "Agreements";
     if (path.startsWith("/admin/domains")) return "Domains";
+    if (path === "/admin/saas") return "SaaS";
+    if (path.startsWith("/admin/saas/")) return "SaaS Details";
     if (path.startsWith("/admin/hosting")) return "Hosting";
     return "Admin";
   };
@@ -300,7 +328,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
 
           {/* Page Title */}
           <h1 className="text-xl font-bold text-white tracking-tight">
-            {getPageTitle(pathname)}
+            {dynamicTitle || getPageTitle(pathname)}
           </h1>
 
           {/* View Page button / Refresh button */}
@@ -333,6 +361,23 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add New</span>
+                </button>
+              ) : isSaas ? (
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("saas:open-add"))}
+                  className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Project</span>
+                </button>
+              ) : isSaasDetail && saasActionState.show ? (
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("saas:create-invoice"))}
+                  disabled={saasActionState.loading}
+                  className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm disabled:opacity-50"
+                >
+                  {saasActionState.loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                  <span>Create Invoice</span>
                 </button>
               ) : isHosting ? (
                 <button
@@ -634,7 +679,8 @@ const Sidebar = ({
     { name: "Clients", href: "/admin/clients", icon: Users },
     { name: "Reports", href: "/admin/reports", icon: BarChart3, divider: true },
     { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
-    { name: "Domains", href: "/admin/domains", icon: Globe, divider: true },
+    { name: "SaaS", href: "/admin/saas", icon: Cloud, divider: true },
+    { name: "Domains", href: "/admin/domains", icon: Globe },
     { name: "Hosting", href: "/admin/hosting", icon: Server },
     { name: "Services", href: "/admin/services", icon: Briefcase },
     { name: "Portfolio", href: "/admin/portfolio", icon: Layers },
@@ -796,41 +842,29 @@ const Sidebar = ({
           </nav>
 
           {/* User section */}
-          <div className="p-4 border-t border-white/10">
-            <Link href="/admin/settings">
+          <div className="p-4 border-t border-white/10 flex items-center justify-between gap-2">
+            <Link href="/admin/settings" className="flex-1 min-w-0">
               <div
-                className={`flex items-center gap-3 pl-[14px] pr-3 py-2.5 rounded-3xl mb-2.5 overflow-hidden w-full justify-start transition-colors duration-150
+                className={`flex items-center gap-3 py-2.5 px-3 rounded-2xl w-full transition-colors duration-150
                   ${isSettingsActive
-                    ? "bg-white text-black font-semibold"
-                    : "text-gray-300 hover:bg-white/5"
+                    ? "text-brand-400 font-semibold"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
                   }`}
               >
-                <span className="flex-shrink-0">
-                  <Settings className="w-5 h-5" />
-                </span>
-
+                <Settings className="w-5 h-5 flex-shrink-0" />
                 {desktopExpanded && (
-                  <span className="hidden lg:block overflow-hidden whitespace-nowrap text-sm">
-                    Settings
-                  </span>
+                  <span className="hidden lg:block text-sm truncate">Settings</span>
                 )}
-                {/* Always visible on mobile */}
-                <span className="lg:hidden text-sm">Settings</span>
+                <span className="lg:hidden text-sm truncate">Settings</span>
               </div>
             </Link>
 
             <SignOutButton redirectUrl="/login">
               <button
-                className="flex items-center gap-3 pl-[14px] pr-3 py-2.5 w-full text-gray-300 hover:text-red-400 rounded-3xl overflow-hidden justify-start transition-colors hover:bg-red-500/10"
+                className="flex items-center justify-center p-2.5 text-gray-400 hover:text-red-400 rounded-xl transition-colors hover:bg-red-500/10 flex-shrink-0"
+                title="Logout"
               >
-                <LogOut className="w-5 h-5 flex-shrink-0" />
-
-                {desktopExpanded && (
-                  <span className="hidden lg:block overflow-hidden whitespace-nowrap text-sm">
-                    Logout
-                  </span>
-                )}
-                <span className="lg:hidden">Logout</span>
+                <LogOut className="w-5 h-5" />
               </button>
             </SignOutButton>
           </div>

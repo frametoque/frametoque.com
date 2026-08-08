@@ -28,20 +28,7 @@ export interface HostingOrder {
   vercel_email?: string | null;
 }
 
-let _hostingTableMigrated = false;
-async function ensureHostingTable() {
-  if (_hostingTableMigrated) return;
-  try {
-    await sql`ALTER TABLE admin_hosting_orders ADD COLUMN IF NOT EXISTS vercel_email VARCHAR(255)`;
-    await sql`ALTER TABLE admin_hosting_orders ADD COLUMN IF NOT EXISTS is_free BOOLEAN DEFAULT FALSE`;
-    _hostingTableMigrated = true;
-  } catch (err) {
-    console.error("Migration: failed to alter admin_hosting_orders table", err);
-  }
-}
-
 export async function getHostingOrders(): Promise<HostingOrder[]> {
-  await ensureHostingTable();
   try {
     const rows = await sql`
       SELECT * FROM admin_hosting_orders
@@ -79,7 +66,6 @@ export async function getHostingOrders(): Promise<HostingOrder[]> {
 export async function addHostingOrder(
   order: Omit<HostingOrder, "id" | "created_at">
 ): Promise<{ success: boolean; error?: string }> {
-  await ensureHostingTable();
   try {
     const purchaseDate = order.purchase_date ? order.purchase_date.split("T")[0] : null;
     const expiryDate = order.expiry_date ? order.expiry_date.split("T")[0] : null;
@@ -109,7 +95,6 @@ export async function updateHostingOrder(
   id: number,
   order: Partial<HostingOrder>
 ): Promise<{ success: boolean; error?: string }> {
-  await ensureHostingTable();
   try {
     const purchaseDate = order.purchase_date ? order.purchase_date.split("T")[0] : null;
     const expiryDate = order.expiry_date ? order.expiry_date.split("T")[0] : null;
@@ -192,9 +177,6 @@ export async function addHostingRenewalInvoiceUrl(
   note?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    try {
-      await sql`ALTER TABLE admin_hosting_orders ADD COLUMN IF NOT EXISTS renewal_invoices JSONB NOT NULL DEFAULT '[]'`;
-    } catch (e) {}
 
     const entry = JSON.stringify({ url, note: note || '', date: new Date().toISOString() });
     await sql`

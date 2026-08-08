@@ -79,49 +79,6 @@ type CreateInvoiceResult =
 // Schema migrations  (run once per server process, cached with a module flag)
 // ---------------------------------------------------------------------------
 
-let _domainTableMigrated = false;
-let _renewalTableMigrated = false;
-
-export async function ensureDomainOrdersTable() {
-  if (_domainTableMigrated) return;
-  try {
-    try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS renewal_cost NUMERIC(12, 2)`; } catch(e){}
-    try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS renewal_price NUMERIC(12, 2)`; } catch(e){}
-    try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS registrar VARCHAR(100) DEFAULT 'Internet.bs'`; } catch(e){}
-    try { await sql`ALTER TABLE admin_domain_orders ALTER COLUMN expiry_date DROP NOT NULL`; } catch(e){}
-    try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS activation_lkr_rate NUMERIC(10, 4)`; } catch(e){}
-    try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS activation_lkr_price NUMERIC(12, 2)`; } catch(e){}
-    try { await sql`ALTER TABLE admin_domain_orders ADD COLUMN IF NOT EXISTS activation_lkr_cost NUMERIC(12, 2)`; } catch(e){}
-    _domainTableMigrated = true;
-  } catch (err: any) {
-    console.error("Migration: failed to alter admin_domain_orders table", err);
-  }
-}
-
-export async function ensureDomainRenewalHistoryTable() {
-  if (_renewalTableMigrated) return;
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS domain_renewal_history (
-        id               SERIAL PRIMARY KEY,
-        domain_order_id  INTEGER NOT NULL,
-        domain_name      VARCHAR(255) NOT NULL,
-        client_email     VARCHAR(255) NOT NULL,
-        invoice_id       VARCHAR(100) NOT NULL,
-        renewal_date     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        usd_price        NUMERIC(12, 2) NOT NULL,
-        lkr_price        NUMERIC(12, 2) NOT NULL,
-        lkr_rate         NUMERIC(10, 4) NOT NULL,
-        status           VARCHAR(50) NOT NULL DEFAULT 'unpaid'
-      )
-    `;
-    try { await sql`ALTER TABLE domain_renewal_history ADD COLUMN IF NOT EXISTS renewal_invoice_url TEXT`; } catch(e){}
-    _renewalTableMigrated = true;
-  } catch (err: any) {
-    console.error("Migration: failed to create domain_renewal_history table", err);
-  }
-}
-
 export async function uploadRenewalInvoiceForDomain(formData: FormData): Promise<string> {
   const file = formData.get('file') as File;
   if (!file) throw new Error('No file uploaded');
@@ -141,7 +98,7 @@ export async function setDomainRenewalInvoiceUrl(
   url: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await ensureDomainRenewalHistoryTable();
+    // No migration check needed
     await sql`UPDATE domain_renewal_history SET renewal_invoice_url = ${url} WHERE id = ${renewalId}`;
     return { success: true };
   } catch (err: any) {
@@ -185,8 +142,6 @@ function countsTowardProfit(o: DomainOrder): boolean {
 // ---------------------------------------------------------------------------
 
 export async function getDomainOrders(): Promise<DomainOrder[]> {
-  // Run migrations in parallel — both are idempotent ALTER TABLE / CREATE IF NOT EXISTS
-  await Promise.all([ensureDomainOrdersTable(), ensureDomainRenewalHistoryTable()]);
   try {
     // Batch-expire all overdue active domains in a single SQL statement
     const now = new Date().toISOString();
@@ -226,7 +181,6 @@ export async function getDomainOrders(): Promise<DomainOrder[]> {
 }
 
 export async function getDomainRenewalHistory(domainOrderId: number): Promise<DomainRenewalHistoryRow[]> {
-  await ensureDomainRenewalHistoryTable();
   try {
     const rows = await sql`
       SELECT h.*, i.payment_status
@@ -297,7 +251,6 @@ export async function getDomainRenewalHistory(domainOrderId: number): Promise<Do
 }
 
 export async function getAllRenewalHistory(): Promise<DomainRenewalHistoryRow[]> {
-  await ensureDomainRenewalHistoryTable();
   try {
     const rows = await sql`
       SELECT h.*, i.payment_status
@@ -329,7 +282,6 @@ export async function getAllRenewalHistory(): Promise<DomainRenewalHistoryRow[]>
 export async function addDomainOrder(
   order: Omit<DomainOrder, "id" | "created_at" | "purchase_date">
 ): Promise<SimpleActionResult> {
-  await ensureDomainOrdersTable();
   try {
     await sql`
       INSERT INTO admin_domain_orders (
@@ -357,8 +309,6 @@ type DomainExpiryResult =
   | { success: true; invoiceId: string | null; skippedInvoice?: boolean; alreadyExists?: boolean };
 
 export async function createDomainRenewalInvoice(id: number, currency: "USD" | "LKR" = "USD"): Promise<DomainExpiryResult> {
-  await ensureDomainOrdersTable();
-  await ensureDomainRenewalHistoryTable();
   try {
     const orders = await sql`SELECT * FROM admin_domain_orders WHERE id = ${id}`;
     if (orders.length === 0) return { success: false, error: "Order not found" };
@@ -628,8 +578,6 @@ export async function createDomainInvoice(
   id: number,
   currency: 'USD' | 'LKR'
 ): Promise<CreateInvoiceResult> {
-  await ensureDomainOrdersTable();
-  await ensureDomainRenewalHistoryTable();
   try {
     // 1. Fetch domain order details
     const orders = await sql`SELECT * FROM admin_domain_orders WHERE id = ${id}`;
@@ -696,8 +644,6 @@ export async function createDomainInvoice(
 }
 
 export async function renewExpiredDomain(id: number): Promise<CreateInvoiceResult> {
-  await ensureDomainOrdersTable();
-  await ensureDomainRenewalHistoryTable();
   try {
     const orders = await sql`SELECT * FROM admin_domain_orders WHERE id = ${id}`;
     if (orders.length === 0) return { success: false, error: "Order not found" };

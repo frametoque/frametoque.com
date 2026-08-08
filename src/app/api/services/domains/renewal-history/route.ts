@@ -13,23 +13,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "user_email is required" }, { status: 400 });
     }
 
-    // Ensure table exists
-    try {
-      await sql`
-        CREATE TABLE IF NOT EXISTS domain_renewal_history (
-          id               SERIAL PRIMARY KEY,
-          domain_order_id  INTEGER NOT NULL,
-          domain_name      VARCHAR(255) NOT NULL,
-          client_email     VARCHAR(255) NOT NULL,
-          invoice_id       VARCHAR(100) NOT NULL,
-          renewal_date     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          usd_price        NUMERIC(12, 2) NOT NULL,
-          lkr_price        NUMERIC(12, 2) NOT NULL,
-          lkr_rate         NUMERIC(10, 4) NOT NULL,
-          status           VARCHAR(50) NOT NULL DEFAULT 'unpaid'
-        )
-      `;
-    } catch (e) { /* already exists */ }
+
 
     let rows;
     if (domainId) {

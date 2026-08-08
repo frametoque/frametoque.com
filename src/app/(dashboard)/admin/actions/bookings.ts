@@ -31,30 +31,7 @@ export type BookingData = {
   updated_at?: string;
 };
 
-async function ensureBookingsTable() {
-  try {
-    // Add client_id column if it doesn't exist
-    await sql`
-      ALTER TABLE admin_bookings 
-      ADD COLUMN IF NOT EXISTS client_id VARCHAR(255) REFERENCES admin_clients(id) ON DELETE SET NULL
-    `;
-    // Add location column if it doesn't exist
-    await sql`
-      ALTER TABLE admin_bookings 
-      ADD COLUMN IF NOT EXISTS location VARCHAR(255)
-    `;
-    // Add event_type column if it doesn't exist
-    await sql`
-      ALTER TABLE admin_bookings 
-      ADD COLUMN IF NOT EXISTS event_type VARCHAR(50) DEFAULT 'booking'
-    `;
-  } catch (err) {
-    console.error("Migration: failed to create/alter admin_bookings table", err);
-  }
-}
-
 export async function getBookings(): Promise<BookingData[]> {
-  await ensureBookingsTable();
   try {
     const rows = await sql`
       SELECT * FROM admin_bookings
@@ -76,7 +53,6 @@ export async function getBookings(): Promise<BookingData[]> {
 }
 
 export async function createBooking(data: BookingData): Promise<number> {
-  await ensureBookingsTable();
   try {
     const result = await sql`
       INSERT INTO admin_bookings (
@@ -107,8 +83,7 @@ export async function createBooking(data: BookingData): Promise<number> {
   }
 }
 
-export async function updateBooking(id: number, data: BookingData): Promise<void> {
-  await ensureBookingsTable();
+export async function updateBooking(id: number, data: BookingData): Promise<boolean> {
   try {
     await sql`
       UPDATE admin_bookings
@@ -129,18 +104,19 @@ export async function updateBooking(id: number, data: BookingData): Promise<void
         updated_at = now()
       WHERE id = ${id}
     `;
+    return true;
   } catch (error) {
     console.error("Failed to update booking:", error);
     throw new Error("Failed to update booking.");
   }
 }
 
-export async function deleteBooking(id: number): Promise<void> {
-  await ensureBookingsTable();
+export async function deleteBooking(id: number): Promise<boolean> {
   try {
     await sql`
       DELETE FROM admin_bookings WHERE id = ${id}
     `;
+    return true;
   } catch (error) {
     console.error("Failed to delete booking:", error);
     throw new Error("Failed to delete booking.");
@@ -162,7 +138,6 @@ export type CalendarEvent = {
 };
 
 export async function getCalendarEvents(): Promise<CalendarEvent[]> {
-  await ensureBookingsTable();
   const events: CalendarEvent[] = [];
 
   // 1. Fetch Bookings
