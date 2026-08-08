@@ -5,7 +5,6 @@ import { useUser } from "@clerk/nextjs";
 import { Cloud, Clock, Check, Search, RefreshCw, Mail, DollarSign } from "lucide-react";
 import { SaaSOrder, getClientSaaSOrders } from "../../admin/actions/saas";
 
-const formatUSD = (amount: number) => `$${amount.toFixed(2)}`;
 
 export default function ClientSaaSPage() {
   const { user, isLoaded: isUserLoaded } = useUser();
@@ -64,22 +63,16 @@ export default function ClientSaaSPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 lg:space-y-10 lg:pt-8 animate-fade-in pb-20">
+    <div className="space-y-8 pb-10">
       
       {/* Header */}
-      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#0c0c0e] to-black border border-white/5 p-8 sm:p-10">
-        <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
-          <Cloud className="w-64 h-64 text-brand-500" />
-        </div>
-        <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold mb-6">
-            <Cloud className="w-4 h-4" />
-            Software as a Service
-          </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight mb-4 leading-tight">
-            My <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">SaaS</span> Subscriptions
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2">
+            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">SaaS</span>
+            <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">&nbsp;Subscriptions</span>
           </h1>
-          <p className="text-gray-400 text-lg leading-relaxed">
+          <p className="text-gray-400 text-lg max-w-2xl">
             Manage your active SaaS products, view next billing dates, and access linked invoices.
           </p>
         </div>
@@ -125,73 +118,97 @@ export default function ClientSaaSPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredOrders.map((o) => (
-              <div
-                key={o.id}
-                className="group relative bg-[#0c0c0e] border border-white/10 rounded-3xl overflow-hidden hover:border-brand-500/50 transition-all duration-300 hover:shadow-[0_0_30px_-5px_rgba(var(--brand-500-rgb),0.2)]"
-              >
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/10 flex items-center justify-center border border-brand-500/20">
-                        <Cloud className="w-5 h-5 text-brand-400" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-white text-lg truncate max-w-[150px]" title={o.product_name}>
-                          {o.product_name}
-                        </h3>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                          <span className="capitalize">{o.billing_cycle}</span>
+          <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-gray-400 text-sm bg-white/[0.02]">
+                    <th className="p-5 font-medium">Product</th>
+                    <th className="p-5 font-medium text-right">Price</th>
+                    <th className="p-5 font-medium">Next Billing</th>
+                    <th className="p-5 font-medium text-center">Status</th>
+                    <th className="p-5 font-medium text-right">Invoice & Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.map((o) => (
+                    <tr key={o.id} className="hover:bg-white/5 transition-colors border-t border-white/5">
+                      {/* Product Name */}
+                      <td className="p-5">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-brand-400/10 text-brand-400">
+                            <Cloud className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <span className="font-bold text-white text-base block">{o.product_name}</span>
+                            <span className="text-[10px] text-gray-500 capitalize">
+                              {o.billing_cycle}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                    <span
-                      className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${
-                        o.status === "active"
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                          : o.status === "pending"
-                          ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                          : "bg-red-500/10 text-red-400 border-red-500/20"
-                      }`}
-                    >
-                      {o.status}
-                    </span>
-                  </div>
+                      </td>
 
-                  <div className="space-y-4 pt-4 border-t border-white/5">
-                    <div className="flex justify-between items-end">
-                      <div className="text-gray-400 text-sm">Price</div>
-                      <div className="text-lg font-bold text-white">
-                        {formatUSD(o.price)}
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center bg-white/5 rounded-xl p-3">
-                      <div className="flex items-center gap-2 text-gray-400 text-sm">
-                        <Clock className="w-4 h-4" />
-                        Next Billing
-                      </div>
-                      <div className="font-medium text-white text-sm">
-                        {o.billing_date ? new Date(o.billing_date).toLocaleDateString() : "N/A"}
-                      </div>
-                    </div>
+                      {/* Price */}
+                      <td className="p-5 text-right">
+                        <div className="text-white font-semibold whitespace-nowrap">
+                          LKR {o.price.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                          <span className="text-gray-400 text-xs font-normal">/{o.billing_cycle}</span>
+                        </div>
+                      </td>
 
-                    {o.invoice_id && (
-                      <div className="pt-2">
-                        <a 
-                          href={`/dashboard/invoice/${o.invoice_id.replace('INV-', '')}`}
-                          className="flex items-center justify-center gap-2 w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-semibold transition-colors"
+                      {/* Next Billing */}
+                      <td className="p-5 text-gray-300">
+                        {o.billing_date ? (
+                          <div>
+                            {new Date(o.billing_date).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 italic text-xs">N/A</span>
+                        )}
+                      </td>
+
+                      {/* Status */}
+                      <td className="p-5 text-center">
+                        <span
+                          className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border uppercase tracking-wider ${
+                            o.status === "active"
+                              ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                              : o.status === "pending"
+                              ? "text-amber-400 bg-amber-400/10 border-amber-400/20"
+                              : "text-red-400 bg-red-400/10 border-red-400/20"
+                          }`}
                         >
-                          <DollarSign className="w-4 h-4" />
-                          Pay Invoice {o.invoice_id}
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+                          {o.status}
+                        </span>
+                      </td>
+
+                      {/* Invoice & Actions */}
+                      <td className="p-5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {o.invoice_id && o.invoice_id !== "null" && o.invoice_id.trim() !== "" && o.payment_status ? (
+                            <a
+                              href={`/dashboard/invoice/${o.invoice_id.replace('INV-', '')}`}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-3xl hover:opacity-95 transition-opacity text-xs cursor-pointer shadow-lg shadow-blue-500/10"
+                            >
+                              <DollarSign className="w-3.5 h-3.5" />
+                              Pay {o.invoice_id}
+                            </a>
+                          ) : (
+                            <span className="text-gray-500 italic text-xs flex items-center gap-1.5 bg-white/5 border border-white/5 py-1 px-3 rounded-full">
+                              No Invoice
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

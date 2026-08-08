@@ -54,14 +54,16 @@ export async function getSaaSOrderById(id: number): Promise<SaaSOrder | null> {
   }
 }
 
-export async function getClientSaaSOrders(email: string): Promise<SaaSOrder[]> {
+export async function getClientSaaSOrders(email: string): Promise<any[]> {
   try {
     const rows = await sql`
-      SELECT * FROM admin_saas_orders
-      WHERE client_email = ${email}
+      SELECT o.*, i.payment_status, i.total_due, i.currency
+      FROM admin_saas_orders o
+      LEFT JOIN invoices i ON o.invoice_id = i.invoice_id
+      WHERE o.client_email = ${email}
       ORDER BY 
-        COALESCE(billing_date, created_at) DESC,
-        id DESC
+        COALESCE(o.billing_date, o.created_at) DESC,
+        o.id DESC
     `;
 
     return rows.map((r: any) => ({
@@ -73,6 +75,9 @@ export async function getClientSaaSOrders(email: string): Promise<SaaSOrder[]> {
       invoice_id: r.invoice_id || null,
       system_url: r.system_url || null,
       demo_url: r.demo_url || null,
+      payment_status: r.payment_status || null,
+      total_due: r.total_due || null,
+      currency: r.currency || null,
     }));
   } catch (error) {
     console.error("Failed to get client SaaS orders:", error);
