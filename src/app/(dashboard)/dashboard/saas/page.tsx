@@ -5,10 +5,15 @@ import { useUser } from "@clerk/nextjs";
 import { Cloud, Clock, Check, Search, RefreshCw, Mail, DollarSign } from "lucide-react";
 import { SaaSOrder, getClientSaaSOrders } from "../../admin/actions/saas";
 
+export type ClientSaaSOrder = SaaSOrder & {
+  payment_status?: string | null;
+  total_due?: number | null;
+  currency?: string | null;
+};
 
 export default function ClientSaaSPage() {
   const { user, isLoaded: isUserLoaded } = useUser();
-  const [orders, setOrders] = useState<SaaSOrder[]>([]);
+  const [orders, setOrders] = useState<ClientSaaSOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
