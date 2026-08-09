@@ -7,6 +7,7 @@ const TABLE_MAP: Record<string, string> = {
   "graphic-design": "services_graphic",
   "video-editing":  "services_videoedit",
   "photo-video":    "services_photovideo",
+  "saas-products":  "services_saas",
 };
 
 const CATEGORY_MAP: Record<string, string> = {
@@ -14,6 +15,7 @@ const CATEGORY_MAP: Record<string, string> = {
   "graphic-design": "Graphic Design",
   "video-editing":  "Video Editing",
   "photo-video":    "Photography & Videography",
+  "saas-products":  "SaaS Products",
 };
 
 export type ServiceRow = {
@@ -28,6 +30,9 @@ export type ServiceRow = {
   process: ProcessStep[];
   technologies: string[];
   category: string;
+  monthly_price?: string;
+  yearly_price?: string;
+  demo_url?: string;
 };
 
 export type Feature = {
@@ -40,6 +45,7 @@ export type Package = {
   tier: string;
   description: string;
   price: string;
+  price_yearly?: string;
   popular: boolean;
   duration: string;
   cta: string;

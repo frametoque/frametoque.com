@@ -33,8 +33,8 @@ export async function createService(categorySlug: string, data: any) {
   await sql.query(`UPDATE ${table} SET sort_order = sort_order + 1`);
 
   await sql.query(
-    `INSERT INTO ${table} (service_id, title, description, overview, hero_image, features, packages, process, technologies, created_at, updated_at, sort_order)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), 1)`,
+    `INSERT INTO ${table} (service_id, title, description, overview, hero_image, features, packages, process, technologies, created_at, updated_at, sort_order, monthly_price, yearly_price, demo_url)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), 1, $10, $11, $12)`,
     [
       data.service_id,
       data.title,
@@ -44,7 +44,10 @@ export async function createService(categorySlug: string, data: any) {
       JSON.stringify(data.features),
       JSON.stringify(data.packages),
       JSON.stringify(data.process),
-      JSON.stringify(data.technologies)
+      JSON.stringify(data.technologies),
+      data.monthly_price || null,
+      data.yearly_price || null,
+      data.demo_url || null
     ]
   );
 }
@@ -61,8 +64,9 @@ export async function updateService(categorySlug: string, id: number, data: any)
   await sql.query(
     `UPDATE ${table}
      SET service_id = $1, title = $2, description = $3, overview = $4, hero_image = $5,
-         features = $6, packages = $7, process = $8, technologies = $9, updated_at = NOW()
-     WHERE id = $10`,
+         features = $6, packages = $7, process = $8, technologies = $9, updated_at = NOW(),
+         monthly_price = $10, yearly_price = $11, demo_url = $12
+     WHERE id = $13`,
     [
       data.service_id,
       data.title,
@@ -73,6 +77,9 @@ export async function updateService(categorySlug: string, id: number, data: any)
       JSON.stringify(data.packages),
       JSON.stringify(data.process),
       JSON.stringify(data.technologies),
+      data.monthly_price || null,
+      data.yearly_price || null,
+      data.demo_url || null,
       id
     ]
   );

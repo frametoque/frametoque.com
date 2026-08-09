@@ -165,21 +165,23 @@ export function WebProjectPopup({
               {site.description}
             </p>
 
-            <div className="mb-8">
-              <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4">
-                Technologies
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {site.techs.map((tech) => (
-                  <span
-                    key={tech}
-                    className="px-3 py-1.5 rounded-md bg-white/5 border border-white/5 text-white/80 text-[12px] font-medium hover:bg-white/10 hover:border-white/10 transition-all duration-300 shadow-sm"
-                  >
-                    {tech}
-                  </span>
-                ))}
+            {site.techs && site.techs.filter(t => t.trim().length > 0).length > 0 && (
+              <div className="mb-8">
+                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4">
+                  Technologies
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {site.techs.filter(t => t.trim().length > 0).map((tech) => (
+                    <span
+                      key={tech}
+                      className="px-3 py-1.5 rounded-md bg-white/5 border border-white/5 text-white/80 text-[12px] font-medium hover:bg-white/10 hover:border-white/10 transition-all duration-300 shadow-sm"
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <motion.a

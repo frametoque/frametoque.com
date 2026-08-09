@@ -47,6 +47,7 @@ const CATEGORIES = [
   { slug: "graphic-design", name: "Graphic Design" },
   { slug: "video-editing", name: "Video Editing" },
   { slug: "web-dev", name: "Web Development" },
+  { slug: "saas-products", name: "SaaS Products" },
 ];
 
 // Available icons for features
@@ -89,11 +90,15 @@ const defaultServiceForm = {
     tier: string;
     description: string;
     price: string;
+    price_yearly?: string;
     popular: boolean;
     duration: string;
     cta: string;
     features: string[];
-  }[]
+  }[],
+  monthly_price: "",
+  yearly_price: "",
+  demo_url: ""
 };
 
 export default function ServicesAdminPage() {
@@ -312,6 +317,7 @@ export default function ServicesAdminPage() {
           tier: "",
           description: "",
           price: "",
+          price_yearly: "",
           popular: false,
           duration: "",
           cta: "Order Now",
@@ -381,7 +387,10 @@ export default function ServicesAdminPage() {
       technologies: Array.isArray(service.technologies) ? service.technologies : [],
       features: Array.isArray(service.features) ? service.features : [],
       process: Array.isArray(service.process) ? service.process : [],
-      packages: Array.isArray(service.packages) ? service.packages : []
+      packages: Array.isArray(service.packages) ? service.packages : [],
+      monthly_price: service.monthly_price || "",
+      yearly_price: service.yearly_price || "",
+      demo_url: service.demo_url || ""
     });
     setFormTab("general");
     setIsModalOpen(true);
@@ -734,6 +743,24 @@ export default function ServicesAdminPage() {
                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors resize-none"
                       />
                     </div>
+                    {activeCategory === "saas-products" && (
+                      <>
+
+                        <div>
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                            Demo URL
+                          </label>
+                          <input
+                            type="text"
+                            name="demo_url"
+                            value={formData.demo_url}
+                            onChange={handleTextChange}
+                            placeholder="https://demo.example.com"
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors"
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div className="space-y-4">
@@ -804,18 +831,20 @@ export default function ServicesAdminPage() {
                     </div>
 
                     {/* Technologies list */}
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                        Technologies (comma separated)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.technologies.join(", ")}
-                        onChange={handleTechChange}
-                        placeholder="e.g. Next.js, TailwindCSS, React, PostgreSQL"
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors"
-                      />
-                    </div>
+                    {activeCategory !== "saas-products" && (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                          Technologies (comma separated)
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.technologies.join(", ")}
+                          onChange={handleTechChange}
+                          placeholder="e.g. Next.js, TailwindCSS, React, PostgreSQL"
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1018,7 +1047,7 @@ export default function ServicesAdminPage() {
                           </button>
 
                           {/* Inputs Row 1 */}
-                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
                             <div>
                               <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Tier Name</label>
                               <input
@@ -1030,7 +1059,7 @@ export default function ServicesAdminPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Price (LKR text)</label>
+                              <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Price /mo</label>
                               <input
                                 type="text"
                                 value={pkg.price}
@@ -1040,12 +1069,22 @@ export default function ServicesAdminPage() {
                               />
                             </div>
                             <div>
+                              <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Yearly Price (Opt)</label>
+                              <input
+                                type="text"
+                                value={pkg.price_yearly || ""}
+                                onChange={(e) => updatePackage(idx, "price_yearly", e.target.value)}
+                                placeholder="e.g. 300,000"
+                                className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500"
+                              />
+                            </div>
+                            <div>
                               <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Duration</label>
                               <input
                                 type="text"
                                 value={pkg.duration}
                                 onChange={(e) => updatePackage(idx, "duration", e.target.value)}
-                                placeholder="e.g. 2-3 weeks"
+                                placeholder="e.g. /mo"
                                 className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500"
                               />
                             </div>

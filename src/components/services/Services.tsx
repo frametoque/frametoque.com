@@ -15,6 +15,7 @@ const TABS = [
   { label: "Graphic Design", value: "graphic-design" },
   { label: "Video Editing", value: "video-editing" },
   { label: "Web Development", value: "web-dev" },
+  { label: "SaaS Products", value: "saas-products" },
 ];
 
 function getHeroForTab(tab: string): string {
@@ -23,6 +24,7 @@ function getHeroForTab(tab: string): string {
     case "graphic-design": return "/projects/graphic-design-cover.jpg";
     case "video-editing":  return "/projects/vid-edit-cover.jpg";
     case "web-dev":        return "/projects/web-dev-cover.jpg";
+    case "saas-products":  return "/projects/web-dev-cover.jpg";
     default:               return "/projects/vid-edit-cover.jpg";
   }
 }

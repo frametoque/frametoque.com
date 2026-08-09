@@ -14,6 +14,7 @@ export const GET = async () => {
     "graphic-design",
     "video-editing",
     "photo-video",
+    "saas-products",
   ];
 
   const projectCategories = [
@@ -52,6 +53,8 @@ export const GET = async () => {
     { id: "promotional-design", category: "graphic-design" },
     { id: "stationery-design", category: "graphic-design" },
     { id: "webgraphic", category: "graphic-design" },
+
+    { id: "accounting-inventory-system", category: "saas-products" },
   ];
 
   type UrlEntry = {

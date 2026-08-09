@@ -9,6 +9,7 @@ const titles: Record<string, string> = {
   "video-editing": "Video Editing Services",
   "web-dev": "Web Development Services",
   "domain": "Domain Registration Services",
+  "saas-products": "SaaS Products",
 };
 
 const VALID_SLUGS = Object.keys(titles);

@@ -11,6 +11,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import type { ServiceRow, Package } from "@/lib/services";
 import { useCart } from "@/context/CartContext";
+import { ServiceDemoPopup } from "./ServiceDemoPopup";
 
 const protectImage = (e: React.SyntheticEvent) => e.preventDefault();
 
@@ -56,6 +57,7 @@ const convertPricesToUSD = async (packages: Package[]): Promise<Package[]> => {
     return packages.map((pkg) => ({
       ...pkg,
       price: (parsePrice(pkg.price) * rate).toFixed(2),
+      ...(pkg.price_yearly && { price_yearly: (parsePrice(pkg.price_yearly) * rate).toFixed(2) })
     }));
   } catch {
     return packages;
@@ -75,6 +77,8 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
   const [addedIndexes, setAddedIndexes] = useState<Record<number, boolean>>({});
+  const [isDemoOpen, setIsDemoOpen] = useState(false);
+  const [isYearly, setIsYearly] = useState(false);
 
   useEffect(() => {
     function handleScroll() {
@@ -136,8 +140,8 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
       categorySlug: categorySlug,
       categoryName: data?.category || "",
       tier: pkg.tier,
-      price: origPkg.price,
-      duration: pkg.duration,
+      price: isYearly && origPkg.price_yearly ? origPkg.price_yearly : origPkg.price,
+      duration: isYearly && origPkg.price_yearly ? "/yr" : pkg.duration,
     });
     setAddedIndexes((prev) => ({ ...prev, [idx]: true }));
     setTimeout(() => {
@@ -146,6 +150,7 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
   };
 
   const displayPackages = convertedPackages.length > 0 ? convertedPackages : originalPackages;
+  const hasYearlyPackages = displayPackages.some(p => p.price_yearly);
 
   if (loading) {
     return (
@@ -206,24 +211,38 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
                   {data.description}
                 </p>
 
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <p className="text-lg text-brand-300">{data.overview}</p>
 
-                  <div className="flex flex-wrap gap-4">
-                    <Link
-                      href="/contact"
-                      className="inline-flex items-center px-8 py-4 rounded-3xl bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 transition-all duration-300 font-semibold text-sm group"
-                    >
-                      Custom Quote
-                      <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </Link>
 
-                    <Link
-                      href="#packages"
-                      className="inline-flex items-center px-8 py-4 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 font-semibold text-sm"
-                    >
-                      View Packages
-                    </Link>
+
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    {data.demo_url ? (
+                      <button
+                        onClick={() => setIsDemoOpen(true)}
+                        className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 transition-all duration-300 font-semibold text-sm group cursor-pointer"
+                      >
+                        View Demo
+                        <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      </button>
+                    ) : (
+                      <Link
+                        href="/contact"
+                        className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 transition-all duration-300 font-semibold text-sm group"
+                      >
+                        Custom Quote
+                        <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    )}
+
+                    {displayPackages.length > 0 && (
+                      <Link
+                        href="#packages"
+                        className="inline-flex items-center px-6 py-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 font-semibold text-sm"
+                      >
+                        View Packages
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
@@ -258,9 +277,32 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 Tailored <span className="text-brand-400">Packages</span>
               </h2>
-              <p className="text-gray-400 max-w-2xl mx-auto">
+              <p className="text-gray-400 max-w-2xl mx-auto mb-8">
                 Choose the perfect package for your business needs. All packages include our premium design and development standards.
               </p>
+
+              {hasYearlyPackages && (
+                <div className="flex justify-center">
+                  <div className="bg-gray-900/80 p-1.5 rounded-full inline-flex border border-slate-800">
+                    <button
+                      onClick={() => setIsYearly(false)}
+                      className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                        !isYearly ? "bg-brand-500 text-white shadow-lg" : "text-gray-400 hover:text-white"
+                      }`}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      onClick={() => setIsYearly(true)}
+                      className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                        isYearly ? "bg-brand-500 text-white shadow-lg" : "text-gray-400 hover:text-white"
+                      }`}
+                    >
+                      Yearly <span className="bg-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded-full">Free setup</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="max-w-6xl mx-auto">
@@ -289,11 +331,13 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
 
                       <div className="flex items-baseline justify-center gap-2 mb-2">
                         <span className="text-5xl font-bold bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">
-                          {formatPrice(pkg.price, currency)}
+                          {isYearly && pkg.price_yearly ? formatPrice(pkg.price_yearly, currency) : formatPrice(pkg.price, currency)}
                         </span>
                         <span className="text-gray-400">{currency}</span>
                       </div>
-                      <div className="text-sm text-gray-400">{pkg.duration}</div>
+                      <div className="text-sm text-gray-400">
+                        {isYearly && pkg.price_yearly ? "/yr" : pkg.duration}
+                      </div>
                     </div>
 
                     <ul className="space-y-3 mb-8 flex-grow">
@@ -331,24 +375,26 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
         </section>
 
         {/* Features */}
-        <section className="py-16 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {data.features?.map((feature, index) => (
-                <div
-                  key={index}
-                  className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 hover:border-brand-500/50 transition-all duration-300"
-                >
-                  <div className="inline-flex p-3 rounded-xl bg-brand-500/10 border border-brand-500/20 mb-4">
-                    {getIconComponent(feature.icon)}
+        {data.features && data.features.length > 0 && (
+          <section className="py-16 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {data.features.map((feature, index) => (
+                  <div
+                    key={index}
+                    className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 hover:border-brand-500/50 transition-all duration-300"
+                  >
+                    <div className="inline-flex p-3 rounded-xl bg-brand-500/10 border border-brand-500/20 mb-4">
+                      {getIconComponent(feature.icon)}
+                    </div>
+                    <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                    <p className="text-gray-400">{feature.description}</p>
                   </div>
-                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                  <p className="text-gray-400">{feature.description}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Process */}
         <section className="py-16 px-4 sm:px-6 lg:px-8">
@@ -398,133 +444,137 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
         </section>
 
         {/* Tech Stack */}
-        <section className="py-16 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                Our <span className="text-brand-400">Tech Stack</span>
-              </h2>
-              <p className="text-gray-400 max-w-2xl mx-auto">
-                We use modern, reliable technologies to build fast, scalable, and secure web solutions.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-3">
-              {data.technologies?.map((tech, index) => (
-                <div
-                  key={index}
-                  className="px-6 py-3 rounded-full bg-gray-900/50 border border-slate-800 hover:border-brand-500/50 hover:bg-gray-500/10 transition-all duration-300"
-                >
-                  <span className="text-gray-300 font-medium">{tech}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Success Framework */}
-        <section className="py-16 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                Our <span className="text-brand-400">Success Framework</span>
-              </h2>
-              <p className="text-gray-400 max-w-2xl mx-auto">
-                A proven methodology that ensures your project delivers real business value and measurable results.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-              <div className="bg-gradient-to-br from-gray-900/50 to-gray-900/20 border border-slate-800 rounded-2xl p-8">
-                <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/20 border border-brand-500/30 flex items-center justify-center mr-4">
-                    <span className="text-2xl">🎯</span>
-                  </div>
-                  <h3 className="text-2xl font-bold">Strategic Approach</h3>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { title: "Goal-Oriented Planning", desc: "Every project starts with clear business objectives and measurable KPIs" },
-                    { title: "Market Analysis", desc: "Understanding your competitive landscape and target audience" },
-                    { title: "ROI-Focused Solutions", desc: "Solutions designed to maximize return on your investment" },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-start space-x-3">
-                      <Check className="w-5 h-5 text-brand-400 flex-shrink-0 mt-1" />
-                      <div>
-                        <h4 className="font-semibold mb-1">{item.title}</h4>
-                        <p className="text-gray-400 text-sm">{item.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-slate-900/50 to-brand-900/20 border border-slate-800 rounded-2xl p-8">
-                <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/20 border border-brand-500/30 flex items-center justify-center mr-4">
-                    <span className="text-2xl">🤝</span>
-                  </div>
-                  <h3 className="text-2xl font-bold">Collaborative Partnership</h3>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { title: "Transparent Communication", desc: "Regular updates, clear milestones, and open feedback loops" },
-                    { title: "Your Vision, Our Expertise", desc: "We blend your business insights with our technical expertise" },
-                    { title: "Flexible Collaboration", desc: "Adapt to your preferred communication and decision-making style" },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-start space-x-3">
-                      <Check className="w-5 h-5 text-brand-400 flex-shrink-0 mt-1" />
-                      <div>
-                        <h4 className="font-semibold mb-1">{item.title}</h4>
-                        <p className="text-gray-400 text-sm">{item.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[
-                { value: "95%", label: "Client Satisfaction Rate" },
-                { value: "40%+", label: "Average Performance Improvement" },
-                { value: "100%", label: "On-Time Delivery" },
-                { value: "24/7", label: "Post-Launch Support" },
-              ].map((stat, i) => (
-                <div key={i} className="bg-gray-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 text-center">
-                  <div className="text-3xl font-bold bg-gradient-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent mb-2">
-                    {stat.value}
-                  </div>
-                  <p className="text-gray-400 text-sm">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-12 bg-gradient-to-br from-gray-900/50 to-gray-800/20 border border-slate-800 rounded-2xl p-8">
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-4">Why Clients Trust Us</h3>
+        {categorySlug !== "saas-products" && (
+          <section className="py-16 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+                  Our <span className="text-brand-400">Tech Stack</span>
+                </h2>
                 <p className="text-gray-400 max-w-2xl mx-auto">
-                  Beyond technical skills, we build relationships based on trust, reliability, and shared success.
+                  We use modern, reliable technologies to build fast, scalable, and secure web solutions.
                 </p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[
-                  { icon: <Shield className="w-8 h-8 text-brand-400" />, title: "Commitment to Quality", desc: "Rigorous quality assurance at every project stage" },
-                  { icon: <Clock className="w-8 h-8 text-brand-400" />, title: "Timely Delivery", desc: "Respect for deadlines without compromising quality" },
-                  { icon: <Users className="w-8 h-8 text-brand-400" />, title: "Long-term Partnership", desc: "Ongoing support and guidance beyond project completion" },
-                ].map((item, i) => (
-                  <div key={i} className="text-center p-4">
-                    <div className="w-16 h-16 rounded-full bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mx-auto mb-4">
-                      {item.icon}
-                    </div>
-                    <h4 className="font-semibold mb-2">{item.title}</h4>
-                    <p className="text-gray-400 text-sm">{item.desc}</p>
+
+              <div className="flex flex-wrap justify-center gap-3">
+                {data.technologies?.map((tech, index) => (
+                  <div
+                    key={index}
+                    className="px-6 py-3 rounded-full bg-gray-900/50 border border-slate-800 hover:border-brand-500/50 hover:bg-gray-500/10 transition-all duration-300"
+                  >
+                    <span className="text-gray-300 font-medium">{tech}</span>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
+
+        {/* Success Framework */}
+        {categorySlug !== "saas-products" && (
+          <section className="py-16 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+                  Our <span className="text-brand-400">Success Framework</span>
+                </h2>
+                <p className="text-gray-400 max-w-2xl mx-auto">
+                  A proven methodology that ensures your project delivers real business value and measurable results.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div className="bg-gradient-to-br from-gray-900/50 to-gray-900/20 border border-slate-800 rounded-2xl p-8">
+                  <div className="flex items-center mb-6">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/20 border border-brand-500/30 flex items-center justify-center mr-4">
+                      <span className="text-2xl">🎯</span>
+                    </div>
+                    <h3 className="text-2xl font-bold">Strategic Approach</h3>
+                  </div>
+                  <div className="space-y-4">
+                    {[
+                      { title: "Goal-Oriented Planning", desc: "Every project starts with clear business objectives and measurable KPIs" },
+                      { title: "Market Analysis", desc: "Understanding your competitive landscape and target audience" },
+                      { title: "ROI-Focused Solutions", desc: "Solutions designed to maximize return on your investment" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-brand-400 flex-shrink-0 mt-1" />
+                        <div>
+                          <h4 className="font-semibold mb-1">{item.title}</h4>
+                          <p className="text-gray-400 text-sm">{item.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-slate-900/50 to-brand-900/20 border border-slate-800 rounded-2xl p-8">
+                  <div className="flex items-center mb-6">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/20 border border-brand-500/30 flex items-center justify-center mr-4">
+                      <span className="text-2xl">🤝</span>
+                    </div>
+                    <h3 className="text-2xl font-bold">Collaborative Partnership</h3>
+                  </div>
+                  <div className="space-y-4">
+                    {[
+                      { title: "Transparent Communication", desc: "Regular updates, clear milestones, and open feedback loops" },
+                      { title: "Your Vision, Our Expertise", desc: "We blend your business insights with our technical expertise" },
+                      { title: "Flexible Collaboration", desc: "Adapt to your preferred communication and decision-making style" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-brand-400 flex-shrink-0 mt-1" />
+                        <div>
+                          <h4 className="font-semibold mb-1">{item.title}</h4>
+                          <p className="text-gray-400 text-sm">{item.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {[
+                  { value: "95%", label: "Client Satisfaction Rate" },
+                  { value: "40%+", label: "Average Performance Improvement" },
+                  { value: "100%", label: "On-Time Delivery" },
+                  { value: "24/7", label: "Post-Launch Support" },
+                ].map((stat, i) => (
+                  <div key={i} className="bg-gray-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 text-center">
+                    <div className="text-3xl font-bold bg-gradient-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent mb-2">
+                      {stat.value}
+                    </div>
+                    <p className="text-gray-400 text-sm">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-12 bg-gradient-to-br from-gray-900/50 to-gray-800/20 border border-slate-800 rounded-2xl p-8">
+                <div className="text-center mb-8">
+                  <h3 className="text-2xl font-bold mb-4">Why Clients Trust Us</h3>
+                  <p className="text-gray-400 max-w-2xl mx-auto">
+                    Beyond technical skills, we build relationships based on trust, reliability, and shared success.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[
+                    { icon: <Shield className="w-8 h-8 text-brand-400" />, title: "Commitment to Quality", desc: "Rigorous quality assurance at every project stage" },
+                    { icon: <Clock className="w-8 h-8 text-brand-400" />, title: "Timely Delivery", desc: "Respect for deadlines without compromising quality" },
+                    { icon: <Users className="w-8 h-8 text-brand-400" />, title: "Long-term Partnership", desc: "Ongoing support and guidance beyond project completion" },
+                  ].map((item, i) => (
+                    <div key={i} className="text-center p-4">
+                      <div className="w-16 h-16 rounded-full bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mx-auto mb-4">
+                        {item.icon}
+                      </div>
+                      <h4 className="font-semibold mb-2">{item.title}</h4>
+                      <p className="text-gray-400 text-sm">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* CTA */}
         <section className="py-16 bg-gray-900 text-white">
@@ -561,6 +611,19 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
       </div>
 
       <Footer />
+
+      {isDemoOpen && (
+        <ServiceDemoPopup
+          site={{
+            title: data.title,
+            description: data.description || data.overview || "",
+            techs: data.technologies || [],
+            url: data.demo_url || "",
+            domain: "",
+          }}
+          onClose={() => setIsDemoOpen(false)}
+        />
+      )}
     </main>
   );
 }
