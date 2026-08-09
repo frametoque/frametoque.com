@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import PayModal from "@/components/PayModal";
 import DomainSearch from "@/components/services/DomainSearch";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 
 interface ClientDomain {
   id: number;
@@ -368,20 +369,16 @@ export default function ClientDomainsPage() {
             </span>
           </div>
 
-          <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-            <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-white/10 text-gray-400 text-sm bg-white/[0.02]">
-                    <th className="p-5 font-medium">Domain</th>
-                    <th className="p-5 font-medium text-right">Registration Price</th>
-                    <th className="p-5 font-medium text-right">Renewal Price</th>
-                    <th className="p-5 font-medium">Expiry Date</th>
-                    <th className="p-5 font-medium text-center">Status</th>
-                    <th className="p-5 font-medium text-right">Invoice & Action</th>
-                  </tr>
-                </thead>
-                <tbody>
+          <Table>
+            <TableHeader>
+              <TableHead>Domain</TableHead>
+              <TableHead className="text-right">Registration Price</TableHead>
+              <TableHead className="text-right">Renewal Price</TableHead>
+              <TableHead>Expiry Date</TableHead>
+              <TableHead className="text-center">Status</TableHead>
+              <TableHead className="text-right">Invoice & Action</TableHead>
+            </TableHeader>
+            <TableBody>
                   {domains.map((d) => {
                     const reg = getRegPriceDisplay(d);
                     const renew = getRenewalPriceDisplay(d);
@@ -394,9 +391,9 @@ export default function ClientDomainsPage() {
 
                     return (
                       <React.Fragment key={d.id}>
-                        <tr className={`hover:bg-white/5 transition-colors border-t border-white/5 ${isHistoryOpen ? "bg-white/[0.02]" : ""}`}>
+                        <TableRow className={isHistoryOpen ? "bg-white/5" : ""}>
                           {/* Domain Name */}
-                          <td className="p-5">
+                          <TableCell>
                             <div className="flex items-center gap-3">
                               <div className="p-2 rounded-xl bg-brand-400/10 text-brand-400">
                                 <Globe className="w-5 h-5" />
@@ -408,10 +405,10 @@ export default function ClientDomainsPage() {
                                 </span>
                               </div>
                             </div>
-                          </td>
+                          </TableCell>
 
                           {/* Registration Price — fixed LKR after activation */}
-                          <td className="p-5 text-right">
+                          <TableCell className="text-right">
                             <div className="text-white font-semibold">
                               {formatLKR(reg.lkrValue)}
                               <span className="text-xs font-normal ml-1 text-gray-500">
@@ -419,10 +416,10 @@ export default function ClientDomainsPage() {
                                 <span className={`text-[9px] ml-0.5 ${reg.isFixed ? "text-amber-300/80" : "text-gray-600"}`}> @{Math.round(reg.rate)}</span>)
                               </span>
                             </div>
-                          </td>
+                          </TableCell>
 
                           {/* Renewal Price — always live */}
-                          <td className="p-5 text-right">
+                          <TableCell className="text-right">
                             <div className="text-gray-300 font-medium">
                               {formatLKR(renew.lkrValue)}
                               <span className="text-xs font-normal ml-1 text-gray-500">
@@ -430,10 +427,10 @@ export default function ClientDomainsPage() {
                                 <span className="text-gray-600 text-[9px] ml-0.5"> @{Math.round(lkrRate)}</span>)
                               </span>
                             </div>
-                          </td>
+                          </TableCell>
 
                           {/* Expiry */}
-                          <td className="p-5 text-gray-300">
+                          <TableCell className="text-gray-300">
                             {d.expiry_date ? (
                               <div>
                                 <div>
@@ -453,17 +450,17 @@ export default function ClientDomainsPage() {
                             ) : (
                               <span className="text-gray-500 italic text-xs">Pending Activation</span>
                             )}
-                          </td>
+                          </TableCell>
 
                           {/* Status */}
-                          <td className="p-5 text-center">
+                          <TableCell className="text-center">
                             <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusColor(d.status)}`}>
                               {d.status}
                             </span>
-                          </td>
+                          </TableCell>
 
-                          {/* Invoice & Actions */}
-                          <td className="p-5 text-right">
+                          {/* Action */}
+                          <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2 flex-wrap">
                               {d.invoice_id ? (
                                 <>
@@ -544,24 +541,22 @@ export default function ClientDomainsPage() {
                                 </button>
                               )}
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
 
                         {/* Inline renewal history panel */}
                         {isHistoryOpen && (
-                          <tr>
-                            <td colSpan={6} className="p-0">
+                          <TableRow className="bg-white/5">
+                            <TableCell colSpan={6} className="!p-0 border-t border-white/5">
                               <RenewalHistoryPanel domainId={d.id} userEmail={userEmail} />
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         )}
                       </React.Fragment>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+            </TableBody>
+          </Table>
         </>
       ) : (
         <div />

@@ -19,7 +19,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import AnimatedNumber from "../components/AnimatedNumber";
-
+import { StatCard } from "@/components/ui/StatCard";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
+import { PageHeader } from "@/components/ui/PageHeader";
 const formatLKR = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "LKR" }).format(amount);
 
 export default function SaaSPage() {
@@ -307,7 +309,7 @@ export default function SaaSPage() {
     return (
       <div className="space-y-6 pb-10 mt-2">
         {/* Skeleton Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
           {[1, 2, 3, 4].map((idx) => (
             <div key={idx} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center justify-between h-[104px] animate-pulse">
               <div className="space-y-2.5">
@@ -377,152 +379,99 @@ export default function SaaSPage() {
   return (
     <div className="space-y-6 pb-10 mt-2">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Active Subscriptions Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium block">Active Subscriptions</span>
-            <span className="text-3xl font-bold text-white"><AnimatedNumber value={activeCount} /></span>
-          </div>
-          <div className="p-3 bg-green-400/10 rounded-2xl text-green-400">
-            <Cloud className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Cancelled Subscriptions Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium block">Cancelled Subscriptions</span>
-            <span className="text-3xl font-bold text-white"><AnimatedNumber value={cancelledCount} /></span>
-          </div>
-          <div className="p-3 bg-red-400/10 rounded-2xl text-red-400">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Pending Orders Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium block">Pending Orders</span>
-            <span className="text-3xl font-bold text-white"><AnimatedNumber value={pendingCount} /></span>
-          </div>
-          <div className="p-3 bg-amber-400/10 rounded-2xl text-amber-400">
-            <Clock className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Total Revenue Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium block">Total SaaS Revenue So Far</span>
-            <span className="text-2xl font-bold text-brand-400">{formatLKR(revenueSoFar)}</span>
-          </div>
-          <div className="p-3 bg-brand-400/10 rounded-2xl text-brand-400">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          title="Active Subscriptions" 
+          value={<AnimatedNumber value={activeCount} />} 
+          icon={<Cloud className="w-6 h-6" />} 
+          iconBgColor="bg-green-400/10" 
+          iconTextColor="text-green-400" 
+        />
+        <StatCard 
+          title="Cancelled Subscriptions" 
+          value={<AnimatedNumber value={cancelledCount} />} 
+          icon={<AlertTriangle className="w-6 h-6" />} 
+          iconBgColor="bg-red-400/10" 
+          iconTextColor="text-red-400" 
+        />
+        <StatCard 
+          title="Pending Orders" 
+          value={<AnimatedNumber value={pendingCount} />} 
+          icon={<Clock className="w-6 h-6" />} 
+          iconBgColor="bg-amber-400/10" 
+          iconTextColor="text-amber-400" 
+        />
+        <StatCard 
+          title="Total SaaS Revenue So Far" 
+          value={formatLKR(revenueSoFar)} 
+          icon={<TrendingUp className="w-6 h-6" />} 
+          iconBgColor="bg-brand-400/10" 
+          iconTextColor="text-brand-400" 
+        />
       </div>
 
       {/* Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-          {/* Search */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-full pl-11 pr-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm text-white"
-            />
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-wrap gap-2">
-            {["All", "Pending", "Active", "Cancelled"].map((f) => (
-              <button
-                key={f}
-                onClick={() => setActiveFilter(f)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-                  activeFilter === f
-                    ? "bg-white text-black"
-                    : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-
-          {/* Product Filter */}
-          <select 
-            value={productFilter} 
-            onChange={(e) => setProductFilter(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm text-white min-w-[150px]"
-          >
-            <option value="All" className="bg-black text-white">All Products</option>
-            {products.map(p => (
-              <option key={p} value={p} className="bg-black text-white">{p}</option>
-            ))}
-          </select>
-        </div>
-        
-        {/* Mobile/Inline Add Button */}
-        <div className="flex items-center gap-2 self-end lg:self-auto">
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex lg:hidden xl:flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-full font-medium transition-colors cursor-pointer text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Project</span>
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search products..."
+        filters={["All", "Pending", "Active", "Cancelled"]}
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+        primaryActionLabel="Add Project"
+        onPrimaryAction={() => setIsAddModalOpen(true)}
+      >
+        <select 
+          value={productFilter} 
+          onChange={(e) => setProductFilter(e.target.value)}
+          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm text-white min-w-[150px]"
+        >
+          <option value="All" className="bg-black text-white">All Products</option>
+          {products.map(p => (
+            <option key={p} value={p} className="bg-black text-white">{p}</option>
+          ))}
+        </select>
+      </PageHeader>
 
       {/* Main Table */}
-      <div className="bg-[#0c0c0e] border border-white/10 rounded-3xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-white/5 text-gray-400">
-              <tr>
-                <th className="px-6 py-4 font-medium">Client</th>
-                <th className="px-6 py-4 font-medium">Project / URL</th>
-                <th className="px-6 py-4 font-medium">Price (LKR)</th>
-                <th className="px-6 py-4 font-medium">Cycle</th>
-                <th className="px-6 py-4 font-medium">Billing Date</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {filteredOrders.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                    No SaaS projects found.
-                  </td>
-                </tr>
-              ) : (
-                filteredOrders.map((o) => {
-                  const pastInvoices = saasInvoices.filter(i => 
-                    i.user_email === o.client_email && 
-                    i.project_name.includes(o.product_name)
-                  );
-                  
-                  const hasInvoiceForCurrentCycle = pastInvoices.some((inv: any) => {
-                    const invDate = new Date(inv.date);
-                    const now = new Date();
-                    if (o.billing_cycle === 'yearly') {
-                      return invDate.getFullYear() === now.getFullYear();
-                    } else {
-                      return invDate.getMonth() === now.getMonth() && invDate.getFullYear() === now.getFullYear();
-                    }
-                  });
+      <Table>
+        <TableHeader>
+          <TableHead>Client</TableHead>
+          <TableHead>Project / URL</TableHead>
+          <TableHead>Price (LKR)</TableHead>
+          <TableHead>Cycle</TableHead>
+          <TableHead>Billing Date</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableHeader>
+        <TableBody>
+          {filteredOrders.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+                No SaaS projects found.
+              </TableCell>
+            </TableRow>
+          ) : (
+            filteredOrders.map((o) => {
+              const pastInvoices = saasInvoices.filter(i => 
+                i.user_email === o.client_email && 
+                i.project_name.includes(o.product_name)
+              );
+              
+              const hasInvoiceForCurrentCycle = pastInvoices.some((inv: any) => {
+                const invDate = new Date(inv.date);
+                const now = new Date();
+                if (o.billing_cycle === 'yearly') {
+                  return invDate.getFullYear() === now.getFullYear();
+                } else {
+                  return invDate.getMonth() === now.getMonth() && invDate.getFullYear() === now.getFullYear();
+                }
+              });
 
-                  return (
-                  <React.Fragment key={o.id}>
-                  <tr className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-6 py-4">
+              return (
+                <React.Fragment key={o.id}>
+                  <TableRow>
+                    <TableCell>
                       {(() => {
                         const clientObj = clients.find(c => c.email.toLowerCase() === o.client_email.toLowerCase());
                         const clientName = clientObj ? clientObj.name : "Unknown Client";
@@ -536,8 +485,8 @@ export default function SaaSPage() {
                           </>
                         );
                       })()}
-                    </td>
-                    <td className="px-6 py-4">
+                    </TableCell>
+                    <TableCell>
                       <div className="font-medium text-white">{o.product_name}</div>
                       {o.system_url && (
                         <a href={o.system_url.startsWith('http') ? o.system_url : `https://${o.system_url}`} target="_blank" rel="noreferrer" className="text-xs text-brand-400 mt-1 flex items-center gap-1 hover:underline">
@@ -549,20 +498,20 @@ export default function SaaSPage() {
                           Demo: {o.demo_url}
                         </a>
                       )}
-                    </td>
-                    <td className="px-6 py-4 font-medium text-white">
+                    </TableCell>
+                    <TableCell className="font-medium text-white">
                       {formatLKR(o.price)}
-                    </td>
-                    <td className="px-6 py-4">
+                    </TableCell>
+                    <TableCell>
                       <span className="capitalize text-gray-300">{o.billing_cycle}</span>
-                    </td>
-                    <td className="px-6 py-4">
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-1.5 text-gray-300">
                         <Clock className="w-3.5 h-3.5 text-gray-500" />
                         {formatBillingDate(o.billing_date, o.billing_cycle)}
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
+                    </TableCell>
+                    <TableCell>
                       <span
                         className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${
                           o.status === "active"
@@ -574,8 +523,8 @@ export default function SaaSPage() {
                       >
                         {o.status.toUpperCase()}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
+                    </TableCell>
+                    <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/admin/saas/${o.id}`}
@@ -622,8 +571,8 @@ export default function SaaSPage() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                   
                   {/* Expanded Payment History Row */}
                   {expandedRow === o.id && (
@@ -674,14 +623,12 @@ export default function SaaSPage() {
                       </td>
                     </tr>
                   )}
-                  </React.Fragment>
-                );
-              })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </React.Fragment>
+              );
+            })
+          )}
+        </TableBody>
+      </Table>
 
       {/* Add Modal */}
       {isAddModalOpen && (

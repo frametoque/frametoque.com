@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { Cloud, Clock, Check, Search, RefreshCw, Mail, DollarSign } from "lucide-react";
 import { SaaSOrder, getClientSaaSOrders } from "../../admin/actions/saas";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 
 export type ClientSaaSOrder = SaaSOrder & {
   payment_status?: string | null;
@@ -123,27 +124,20 @@ export default function ClientSaaSPage() {
             </p>
           </div>
         ) : (
-          <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-            <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-white/10 text-gray-400 text-sm bg-white/[0.02]">
-                    <th className="p-5 font-medium">Product</th>
-                    <th className="p-5 font-medium text-right">Price</th>
-                    <th className="p-5 font-medium">Next Billing</th>
-                    <th className="p-5 font-medium text-center">Status</th>
-                    <th className="p-5 font-medium text-right">Invoice & Action</th>
-                  </tr>
-                </thead>
-                <tbody>
+          <Table>
+            <TableHeader>
+              <TableHead>Product</TableHead>
+              <TableHead className="text-right">Price</TableHead>
+              <TableHead>Next Billing</TableHead>
+              <TableHead className="text-center">Status</TableHead>
+              <TableHead className="text-right">Invoice & Action</TableHead>
+            </TableHeader>
+            <TableBody>
                   {filteredOrders.map((o) => (
-                    <tr key={o.id} className="hover:bg-white/5 transition-colors border-t border-white/5">
+                    <TableRow key={o.id}>
                       {/* Product Name */}
-                      <td className="p-5">
+                      <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-brand-400/10 text-brand-400">
-                            <Cloud className="w-5 h-5" />
-                          </div>
                           <div>
                             <span className="font-bold text-white text-base block">{o.product_name}</span>
                             <span className="text-[10px] text-gray-500 capitalize">
@@ -151,18 +145,18 @@ export default function ClientSaaSPage() {
                             </span>
                           </div>
                         </div>
-                      </td>
+                      </TableCell>
 
                       {/* Price */}
-                      <td className="p-5 text-right">
+                      <TableCell className="text-right">
                         <div className="text-white font-semibold whitespace-nowrap">
                           LKR {o.price.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                           <span className="text-gray-400 text-xs font-normal">/{o.billing_cycle}</span>
                         </div>
-                      </td>
+                      </TableCell>
 
                       {/* Next Billing */}
-                      <td className="p-5 text-gray-300">
+                      <TableCell className="text-gray-300">
                         {o.billing_date ? (
                           <div>
                             {new Date(o.billing_date).toLocaleDateString("en-US", {
@@ -174,10 +168,10 @@ export default function ClientSaaSPage() {
                         ) : (
                           <span className="text-gray-500 italic text-xs">N/A</span>
                         )}
-                      </td>
+                      </TableCell>
 
                       {/* Status */}
-                      <td className="p-5 text-center">
+                      <TableCell className="text-center">
                         <span
                           className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border uppercase tracking-wider ${
                             o.status === "active"
@@ -189,10 +183,10 @@ export default function ClientSaaSPage() {
                         >
                           {o.status}
                         </span>
-                      </td>
+                      </TableCell>
 
                       {/* Invoice & Actions */}
-                      <td className="p-5 text-right">
+                      <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           {o.invoice_id && o.invoice_id !== "null" && o.invoice_id.trim() !== "" && o.payment_status ? (
                             <a
@@ -203,18 +197,14 @@ export default function ClientSaaSPage() {
                               Pay {o.invoice_id}
                             </a>
                           ) : (
-                            <span className="text-gray-500 italic text-xs flex items-center gap-1.5 bg-white/5 border border-white/5 py-1 px-3 rounded-full">
-                              No Invoice
-                            </span>
+                            <span className="text-gray-500 italic text-xs mr-2">No Invoice</span>
                           )}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                      </TableCell>
+                    </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </div>
     </div>

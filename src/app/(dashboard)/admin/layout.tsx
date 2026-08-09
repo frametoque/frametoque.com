@@ -677,11 +677,11 @@ const Sidebar = ({
     { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
     { name: "Bookings", href: "/admin/bookings", icon: Calendar },
     { name: "Clients", href: "/admin/clients", icon: Users },
-    { name: "Reports", href: "/admin/reports", icon: BarChart3, divider: true },
-    { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
     { name: "SaaS", href: "/admin/saas", icon: Cloud, divider: true },
     { name: "Domains", href: "/admin/domains", icon: Globe },
     { name: "Hosting", href: "/admin/hosting", icon: Server },
+    { name: "Reports", href: "/admin/reports", icon: BarChart3, divider: true },
+    { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
     { name: "Services", href: "/admin/services", icon: Briefcase },
     { name: "Portfolio", href: "/admin/portfolio", icon: Layers },
   ];

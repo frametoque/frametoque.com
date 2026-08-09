@@ -15,7 +15,9 @@ import {
   Server, Shield, HardDrive, Cpu, Cloud, Settings, Plus, Edit2, Trash2, X, FileText, Globe, Mail, Clock, Check, Search, AlertTriangle, TrendingUp, ChevronLeft, ChevronRight, Upload, Lock, RefreshCw
 } from "lucide-react";
 import AnimatedNumber from "../components/AnimatedNumber";
-
+import { StatCard } from "@/components/ui/StatCard";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
+import { PageHeader } from "@/components/ui/PageHeader";
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" }).format(amount || 0);
 
@@ -392,7 +394,7 @@ export default function HostingPage() {
     return (
       <div className="space-y-6 pb-10 mt-2">
         {/* Skeleton Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
           {[1, 2, 3].map((idx) => (
             <div key={idx} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center justify-between h-[104px]">
               <div className="space-y-2.5">
@@ -412,88 +414,55 @@ export default function HostingPage() {
   return (
     <div className="space-y-6 pb-10 mt-2">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium block">Active Hosting</span>
-            <span className="text-3xl font-bold text-white"><AnimatedNumber value={activeCount} /></span>
-          </div>
-          <div className="p-3 bg-green-400/10 rounded-2xl text-green-400">
-            <Server className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium block">Suspended Hosting</span>
-            <span className="text-3xl font-bold text-white"><AnimatedNumber value={suspendedCount} /></span>
-          </div>
-          <div className="p-3 bg-red-400/10 rounded-2xl text-red-400">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium block">Est. Profit (LKR)</span>
-            <span className="text-2xl font-bold text-brand-400"><AnimatedNumber value={formatLKR(totalProfitLkr)} /></span>
-          </div>
-          <div className="p-3 bg-brand-400/10 rounded-2xl text-brand-400">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <StatCard 
+          title="Active Hosting" 
+          value={<AnimatedNumber value={activeCount} />} 
+          icon={<Server className="w-6 h-6" />} 
+          iconBgColor="bg-green-400/10" 
+          iconTextColor="text-green-400" 
+        />
+        <StatCard 
+          title="Suspended Hosting" 
+          value={<AnimatedNumber value={suspendedCount} />} 
+          icon={<AlertTriangle className="w-6 h-6" />} 
+          iconBgColor="bg-red-400/10" 
+          iconTextColor="text-red-400" 
+        />
+        <StatCard 
+          title="Est. Profit (LKR)" 
+          value={<AnimatedNumber value={formatLKR(totalProfitLkr)} />} 
+          icon={<TrendingUp className="w-6 h-6" />} 
+          iconBgColor="bg-brand-400/10" 
+          iconTextColor="text-brand-400" 
+        />
       </div>
 
       {/* Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search domain or client..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-full pl-11 pr-4 py-2 text-sm text-white placeholder-gray-500 outline-none focus:border-brand-500 transition-colors"
-            />
-          </div>
-          <div className="flex bg-white/5 border border-white/10 rounded-full p-1 self-start sm:self-auto">
-            {["All", "Active", "Suspended"].map((filter) => (
-              <button
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  activeFilter === filter
-                    ? "bg-white text-black shadow-sm"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search domain or client..."
+        filters={["All", "Active", "Suspended"]}
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+      />
 
       {/* Table */}
-      <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
-        <div className="overflow-x-auto w-full">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-white/10 text-gray-400 bg-white/[0.02] text-xs font-semibold uppercase tracking-wider">
-                <th className="p-4 font-medium">Domain & Client</th>
-                <th className="p-4 font-medium">Provider</th>
-                <th className="p-4 font-medium text-right">Setup Cost / Retail</th>
-                <th className="p-4 font-medium text-right">Selling Price / Retail</th>
-                <th className="p-4 font-medium text-right text-brand-400">Profit</th>
-                <th className="p-4 font-medium">Cycle</th>
-                <th className="p-4 font-medium">Purchased / Expiry</th>
-                <th className="p-4 font-medium text-center">Status</th>
-                <th className="p-4 font-medium text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map((o) => {
+      <Table>
+        <TableHeader>
+          <TableHead>Domain & Client</TableHead>
+          <TableHead>Provider</TableHead>
+          <TableHead className="text-right">Setup Cost / Retail</TableHead>
+          <TableHead className="text-right">Selling Price / Retail</TableHead>
+          <TableHead className="text-right text-brand-400">Profit</TableHead>
+          <TableHead>Cycle</TableHead>
+          <TableHead>Purchased / Expiry</TableHead>
+          <TableHead className="text-center">Status</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableHeader>
+        <TableBody>
+          {filteredOrders.map((o) => {
                 const isUsd = o.actual_price_currency === "USD";
                 const lockedRate = o.activation_lkr_rate ?? null;
                 const effectiveRate = lockedRate != null ? lockedRate : lkrRate;
@@ -519,8 +488,8 @@ export default function HostingPage() {
                   : null;
 
                 return (
-                  <tr key={o.id} className="hover:bg-white/5 transition-colors border-t border-white/5">
-                    <td className="p-4">
+                  <TableRow key={o.id}>
+                    <TableCell>
                       <div className="font-semibold text-white flex items-center gap-1.5 flex-wrap">
                         <Globe className="w-4 h-4 text-brand-400" />
                         {o.domain_name}
@@ -535,16 +504,16 @@ export default function HostingPage() {
                           <span>Vercel: {o.vercel_email}</span>
                         </div>
                       )}
-                    </td>
-                    <td className="p-4 text-gray-300 font-medium">
+                    </TableCell>
+                    <TableCell className="text-gray-300 font-medium">
                       {o.hosting_provider}
                       {isFreeOrder && (
                         <span className="ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                           FREE
                         </span>
                       )}
-                    </td>
-                    <td className="p-4 text-right space-y-1">
+                    </TableCell>
+                    <TableCell className="text-right space-y-1">
                       {isFreeOrder ? (
                         <div className="text-sm text-gray-400 font-medium">Free ($0.00)</div>
                       ) : isUsd ? (
@@ -559,8 +528,8 @@ export default function HostingPage() {
                           ) : formatLKR(o.renewal_cost || 0)}
                         </div>
                       )}
-                    </td>
-                    <td className="p-4 text-right text-white space-y-1">
+                    </TableCell>
+                    <TableCell className="text-right text-white space-y-1">
                       {isFreeOrder ? (
                         <div className="text-sm text-gray-400 font-medium">Free</div>
                       ) : (
@@ -569,8 +538,8 @@ export default function HostingPage() {
                           <div className="text-xs text-gray-500 font-normal">Ren: {formatLKR(o.renewal_price || 0)}</div>
                         </>
                       )}
-                    </td>
-                    <td className="p-4 text-right font-semibold text-brand-400 space-y-1">
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-brand-400 space-y-1">
                       {isFreeOrder ? (
                         <div className="text-xs text-gray-500 font-normal">—</div>
                       ) : (
@@ -581,9 +550,9 @@ export default function HostingPage() {
                           <div className="text-xs text-gray-500 font-normal">Ren: {formatLKR(profitRen)}</div>
                         </>
                       )}
-                    </td>
-                    <td className="p-4 text-gray-400 capitalize">{isFreeOrder ? 'Free' : o.billing_cycle}</td>
-                    <td className="p-4 text-gray-300 space-y-0.5">
+                    </TableCell>
+                    <TableCell className="text-gray-400 capitalize">{isFreeOrder ? 'Free' : o.billing_cycle}</TableCell>
+                    <TableCell className="text-gray-300 space-y-0.5">
                       {formattedPurchaseDate && (
                         <div className="text-xs text-gray-400 font-medium flex items-center gap-1">
                           <span className="text-[10px] text-gray-500 uppercase font-semibold">Purchased:</span>
@@ -604,13 +573,13 @@ export default function HostingPage() {
                           <span className="text-xs text-gray-500">—</span>
                         )}
                       </div>
-                    </td>
-                    <td className="p-4 text-center">
+                    </TableCell>
+                    <TableCell className="text-center">
                       <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full border ${getStatusColor(o.status)}`}>
                         {o.status}
                       </span>
-                    </td>
-                    <td className="p-4 text-right">
+                    </TableCell>
+                    <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         {o.provider_invoice_url && (
                           <button
@@ -634,14 +603,12 @@ export default function HostingPage() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        </TableBody>
+      </Table>
 
       {/* Add Modal */}
       {isAddModalOpen && (

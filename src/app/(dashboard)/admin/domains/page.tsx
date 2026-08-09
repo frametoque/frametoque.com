@@ -39,6 +39,9 @@ import {
   Upload,
 } from "lucide-react";
 import AnimatedNumber from "../components/AnimatedNumber";
+import { StatCard } from "@/components/ui/StatCard";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 // ---------------------------------------------------------------------------
 // Formatters
@@ -891,7 +894,7 @@ export default function AdminOrdersPage() {
     return (
       <div className="space-y-6 pb-10 mt-2">
         {/* Skeleton Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((idx) => (
             <div key={idx} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center justify-between h-[104px] animate-pulse">
               <div className="space-y-2.5">
@@ -974,86 +977,52 @@ export default function AdminOrdersPage() {
     <div className="space-y-6 pb-10 mt-2">
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Active Domains Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium block">Active Domains</span>
-            <span className="text-3xl font-bold text-white"><AnimatedNumber value={activeCount} /></span>
-          </div>
-          <div className="p-3 bg-green-400/10 rounded-2xl text-green-400">
-            <Globe className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Expired Domains Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium block">Expired Domains</span>
-            <span className="text-3xl font-bold text-white"><AnimatedNumber value={expiredCount} /></span>
-          </div>
-          <div className="p-3 bg-red-400/10 rounded-2xl text-red-400">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Pending Domains Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium block">Pending Orders</span>
-            <span className="text-3xl font-bold text-white"><AnimatedNumber value={pendingCount} /></span>
-          </div>
-          <div className="p-3 bg-amber-400/10 rounded-2xl text-amber-400">
-            <Clock className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Total Profit Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs text-gray-400 font-medium block">Total profit (LKR)</span>
-            <span className="text-2xl font-bold text-brand-400"><AnimatedNumber value={formatLKR(totalProfitLkr)} /></span>
-          </div>
-          <div className="p-3 bg-brand-400/10 rounded-2xl text-brand-400">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          title="Active Domains" 
+          value={<AnimatedNumber value={activeCount} />} 
+          icon={<Globe className="w-6 h-6" />} 
+          iconBgColor="bg-green-400/10" 
+          iconTextColor="text-green-400" 
+        />
+        <StatCard 
+          title="Expired Domains" 
+          value={<AnimatedNumber value={expiredCount} />} 
+          icon={<AlertTriangle className="w-6 h-6" />} 
+          iconBgColor="bg-red-400/10" 
+          iconTextColor="text-red-400" 
+        />
+        <StatCard 
+          title="Pending Orders" 
+          value={<AnimatedNumber value={pendingCount} />} 
+          icon={<Clock className="w-6 h-6" />} 
+          iconBgColor="bg-amber-400/10" 
+          iconTextColor="text-amber-400" 
+        />
+        <StatCard 
+          title="Total profit (LKR)" 
+          value={<AnimatedNumber value={formatLKR(totalProfitLkr)} />} 
+          icon={<TrendingUp className="w-6 h-6" />} 
+          iconBgColor="bg-brand-400/10" 
+          iconTextColor="text-brand-400" 
+        />
       </div>
 
       {/* Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-          {/* Search */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search domains..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-full pl-11 pr-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm text-white"
-            />
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-wrap gap-2">
-            {["All", "Pending", "Active", "Expired"].map((f) => (
-              <button
-                key={f}
-                onClick={() => setActiveFilter(f)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-                  activeFilter === f
-                    ? "bg-white text-black"
-                    : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
+        <div className="flex-1">
+          <PageHeader
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search domains..."
+            filters={["All", "Pending", "Active", "Expired"]}
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            primaryActionLabel="Add Domain"
+            onPrimaryAction={() => setIsAddModalOpen(true)}
+          />
         </div>
-
-        <span className="text-gray-400 text-xs font-medium self-end lg:self-auto">
+        <span className="text-gray-400 text-xs font-medium self-end lg:self-auto mb-2">
           Today's rate (1 USD = {lkrRate.toFixed(2)} LKR)
         </span>
       </div>
@@ -1061,28 +1030,26 @@ export default function AdminOrdersPage() {
     
 
       {/* Table */}
-      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden">
-        <div className="overflow-x-auto w-full">
+      <Table>
+        <TableHeader>
+          <TableHead>Domain & Client</TableHead>
+          <TableHead className="text-right">Cost Price (Reg / Ren)</TableHead>
+          <TableHead className="text-right">Selling Price (Reg / Ren)</TableHead>
+          <TableHead className="text-right text-brand-400">Profit (Reg / Ren)</TableHead>
+          <TableHead>Expiry Date</TableHead>
+          <TableHead className="text-center">Status</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableHeader>
+        <TableBody>
           {filteredOrders.length === 0 ? (
-            <div className="py-20 text-center text-gray-500 text-sm font-medium">
-              No domain registrations found matching search criteria.
-            </div>
+            <TableRow>
+              <TableCell colSpan={7} className="text-center text-gray-500 py-20 font-medium">
+                No domain registrations found matching search criteria.
+              </TableCell>
+            </TableRow>
           ) : (
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-white/10 text-gray-400 text-sm bg-white/[0.02]">
-                  <th className="p-4 font-medium">Domain & Client</th>
-                  <th className="p-4 font-medium text-right">Cost Price (Reg / Ren)</th>
-                  <th className="p-4 font-medium text-right">Selling Price (Reg / Ren)</th>
-                  <th className="p-4 font-medium text-right text-brand-400">Profit (Reg / Ren)</th>
-                  <th className="p-4 font-medium">Expiry Date</th>
-                  <th className="p-4 font-medium text-center">Status</th>
-                  <th className="p-4 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrders.map((o) => {
-                  const daysToExpiry = Math.ceil(
+            filteredOrders.map((o) => {
+              const daysToExpiry = Math.ceil(
                     (new Date(o.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
                   );
                   const isExpiringSoon = daysToExpiry > 0 && daysToExpiry <= 30;
@@ -1112,8 +1079,8 @@ export default function AdminOrdersPage() {
 
                   return (
                     <React.Fragment key={o.id}>
-                      <tr className={`hover:bg-white/5 transition-colors border-t border-white/5 ${isHistoryOpen ? "bg-white/[0.02]" : ""}`}>
-                        <td className="p-4">
+                      <TableRow className={isHistoryOpen ? "bg-white/[0.02]" : ""}>
+                        <TableCell>
                           <div className="font-semibold text-white flex items-center gap-1.5 flex-wrap">
                             <Globe className="w-4 h-4 text-brand-400" />
                             {o.domain_name}
@@ -1129,10 +1096,10 @@ export default function AdminOrdersPage() {
                             <Clock className="w-3 h-3 text-gray-500 shrink-0" />
                             <span>Ordered: {o.created_at ? new Date(o.created_at).toLocaleDateString() : (o.purchase_date ? new Date(o.purchase_date).toLocaleDateString() : 'N/A')}</span>
                           </div>
-                        </td>
+                        </TableCell>
 
                         {/* Cost Price (Reg / Ren) */}
-                        <td className="p-4 text-right text-sm space-y-1">
+                        <TableCell className="text-right text-sm space-y-1">
                           <RegPricePair
                             usd={o.actual_price}
                             lockedLkr={lockedRegCostLkr}
@@ -1142,10 +1109,10 @@ export default function AdminOrdersPage() {
                             dimmed
                           />
                           <RenewalPricePair usd={renewCost} liveRate={lkrRate} dimmed />
-                        </td>
+                        </TableCell>
 
                         {/* Selling Price (Reg / Ren) */}
-                        <td className="p-4 text-right text-sm space-y-1">
+                        <TableCell className="text-right text-sm space-y-1">
                           <RegPricePair
                             usd={o.selling_price}
                             lockedLkr={lockedRegPriceLkr}
@@ -1154,10 +1121,10 @@ export default function AdminOrdersPage() {
                             isActivated={isActivated}
                           />
                           <RenewalPricePair usd={renewPrice} liveRate={lkrRate} />
-                        </td>
+                        </TableCell>
 
                         {/* Profit (Reg / Ren) */}
-                        <td className="p-4 text-right font-semibold text-brand-400 space-y-1">
+                        <TableCell className="text-right font-semibold text-brand-400 space-y-1">
                           <div>
                             {formatUSD(regProfit)}
                             <span className={`text-[10px] ml-1 font-normal ${isActivated && lockedRate != null ? "text-amber-300/80" : "text-gray-500"}`}>
@@ -1170,10 +1137,10 @@ export default function AdminOrdersPage() {
                               ({formatLKR(renewProfit * lkrRate)})
                             </span>
                           </div>
-                        </td>
+                        </TableCell>
 
                         {/* Expiry */}
-                        <td className="p-4">
+                        <TableCell>
                           {o.status.toLowerCase() === "pending" || !o.expiry_date ? (
                             <span className="text-gray-500 font-medium text-xs">Not Active Yet</span>
                           ) : (
@@ -1193,17 +1160,17 @@ export default function AdminOrdersPage() {
                               )}
                             </>
                           )}
-                        </td>
+                        </TableCell>
 
                         {/* Status */}
-                        <td className="p-4 text-center">
+                        <TableCell className="text-center">
                           <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full border ${getStatusColor(o.status)}`}>
                             {o.status}
                           </span>
-                        </td>
+                        </TableCell>
 
                         {/* Actions */}
-                        <td className="p-4">
+                        <TableCell>
                           <div className="flex items-center justify-end gap-1">
                             {o.status === "pending" && (
                               <>
@@ -1307,13 +1274,13 @@ export default function AdminOrdersPage() {
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
 
                       {/* Inline renewal history panel */}
                       {isHistoryOpen && (
-                        <tr>
-                          <td colSpan={8} className="p-0">
+                        <tr className="bg-white/[0.01]">
+                          <td colSpan={7} className="p-0 border-t border-white/5">
                             <RenewalHistoryPanel
                               history={historyRows}
                               loading={isHistoryLoading}
@@ -1333,12 +1300,10 @@ export default function AdminOrdersPage() {
                       )}
                     </React.Fragment>
                   );
-                })}
-              </tbody>
-            </table>
+                })
           )}
-        </div>
-      </div>
+        </TableBody>
+      </Table>
 
       {/* Edit Modal */}
       {editModalOpen && selectedOrder && (
