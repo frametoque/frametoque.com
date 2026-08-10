@@ -221,7 +221,7 @@ const Sidebar = ({
     { name: "Invoices", href: "/dashboard/invoices",    icon: ClipboardList },
     { name: "Quotations",  href: "/dashboard/quotations",  icon: NotepadTextDashed },
     { name: "Agreements",  href: "/dashboard/agreements",  icon: FilePenLine },
-    { name: "SaaS",     href: "/dashboard/saas",        icon: Cloud },
+    // { name: "SaaS",     href: "/dashboard/saas",        icon: Cloud },
     { name: "Domains",  href: "/dashboard/domains",     icon: Globe },
     { name: "Settings",    href: "/dashboard/settings",    icon: Settings },
   ];

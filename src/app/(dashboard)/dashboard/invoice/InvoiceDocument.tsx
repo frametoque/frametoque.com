@@ -211,9 +211,12 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
     });
 
     // Price
-    const priceText = item.price
-      ? `${currency === "LKR" ? "Rs." : currency} ${item.price}`
-      : "-";
+    let priceText = "-";
+    if (item.price) {
+      const formattedPrice = `${currency === "LKR" ? "Rs." : currency} ${item.price}`;
+      const qty = Number(item.quantity || item.qty) || 1;
+      priceText = `${qty} x ${formattedPrice}`;
+    }
     drawTextAligned(priceText, 1525, rowTop, 37, helvetica, "#222222", "center", 439);
 
     // Total

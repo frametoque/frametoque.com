@@ -193,9 +193,12 @@ export async function generateQuotationPDF(quotation: any) {
 
     // Price
     const priceVal = item.rate || item.price || 0;
-    const priceText = priceVal
-      ? `${currency === "LKR" ? "Rs." : currency} ${parseFloat(priceVal).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
-      : "-";
+    let priceText = "-";
+    if (priceVal) {
+      const formattedPrice = `${currency === "LKR" ? "Rs." : currency} ${parseFloat(priceVal).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+      const qty = Number(item.quantity || item.qty) || 1;
+      priceText = `${qty} x ${formattedPrice}`;
+    }
     drawTextAligned(priceText, 1525, rowTop, 37, helvetica, "#222222", "center", 439);
 
     // Total
