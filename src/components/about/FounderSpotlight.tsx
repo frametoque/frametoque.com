@@ -21,8 +21,8 @@ interface Founder {
 const founders: Founder[] = [
   {
     name: "Kavinu Pasandul",
-    role: "Founder & Owner",
-    expertise: "Founder & Owner",
+    role: "Co-Founder & Chief Executive Officer",
+    expertise: "Co-Founder & Chief Executive Officer",
     description: "Leading the vision at Frametoque, ensuring every project tells a compelling story through high-quality cinematography.",
     social: {
       linkedin: "https://www.linkedin.com/in/kavinudigitalworks/",
@@ -32,8 +32,8 @@ const founders: Founder[] = [
   },
   {
     name: "Tharul Bandara",
-    role: "Founder & Owner",
-    expertise: "Founder & Owner",
+    role: "Co-Founder & Chief Executive Officer",
+    expertise: "Co-Founder & Chief Executive Officer",
     description: "Focusing on brand identity and UI/UX design, ensures that Frametoque's visual storytelling is both impactful and memorable.",
     social: {
       linkedin: "https://linkedin.com/in/",

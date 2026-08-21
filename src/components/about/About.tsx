@@ -21,7 +21,8 @@ export default function AboutUs() {
   const teamMembers = [
         {
       name: "Kavinu Pasandul",
-      role: "Cinematographer | Video Editor",
+      role: "Co-Founder & Chief Executive Officer",
+      workingRole: "Cinematographer & Video Editor",
       expertise: "Creative storytelling & Visual Excellence",
       image: "/images/team/kavinu.jpg",
       social: {
@@ -33,7 +34,8 @@ export default function AboutUs() {
     },
     {
       name: "Tharul Bandara",
-      role: "Video Editor | Graphic Designer",
+      role: "Co-Founder & Chief Executive Officer",
+      workingRole: "Video Editor & Graphic Designer",
       expertise: "Brand identity & UI/UX design",
       image: "/images/team/tharul.jpg",
       social: {
@@ -46,7 +48,8 @@ export default function AboutUs() {
     },
     {
       name: "Nelitha Priyawansha",
-      role: "Video Editor | Developer",
+      role: "Chief Technology Officer",
+      workingRole: "Video Editor & Web Developer",
       expertise: "Frontend & Backend development",
       image: "/images/team/nelitha.jpg",
       social: {
@@ -57,8 +60,9 @@ export default function AboutUs() {
       }
     },
     {
-      name: "Sadaka Wijerathna",
-      role: "Developer",
+      name: "Sadaka Parami",
+      role: "Head of Engineering",
+      workingRole: "Web Developer",
       expertise: "Frontend development",
       image: "/images/team/sadaka.jpg",
       social: {
@@ -70,7 +74,8 @@ export default function AboutUs() {
     },
     {
       name: "Dasindu Nimnal",
-      role: "Photographer",
+      role: "Head of Media",
+      workingRole: "Photographer",
       expertise: "Portrait & Commercial photography",
       image: "/images/team/dasindu.jpg",
       social: {

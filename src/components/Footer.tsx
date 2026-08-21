@@ -68,26 +68,38 @@ export default function Footer() {
                 className="w-32 h-auto sm:w-48"
               />
             </div>
-            <p className="text-gray-400 mb-4 sm:mb-6 max-w-xs mx-auto sm:mx-0 text-sm sm:text-base">
+            <p className="text-gray-400 mb-4 sm:mb-6 max-w-sm mx-auto sm:mx-0 text-sm sm:text-base">
               <Link
                 href="https://share.google/8O9paXxs7VBKoAZlR"
                 aria-label="Google Maps"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-brand-400 transition inline-flex items-center min-h-[48px] min-w-[48px] py-3 px-2"
+                className="hover:text-brand-400 transition inline-block py-2"
               >
                 Piliyandala, Sri Lanka{" "}
               </Link>
               <br />
-              <Link
-                href="tel:+94702771361"
-                aria-label="Telephone"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-brand-400 transition inline-flex items-center min-h-[48px] min-w-[48px] py-3 px-2"
-              >
-                +94 70 277 1361
-              </Link>
+              <span className="whitespace-nowrap">
+                <Link
+                  href="tel:+94702771361"
+                  aria-label="Telephone"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-brand-400 transition inline-block py-2"
+                >
+                  +94 70 277 1361
+                </Link>
+                <span className="mx-2 text-gray-600">|</span>
+                <Link
+                  href="tel:+94778609356"
+                  aria-label="Telephone"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-brand-400 transition inline-block py-2"
+                >
+                  +94 77 860 9356
+                </Link>
+              </span>
             </p>
             <div className="flex justify-center space-x-2">
               {[

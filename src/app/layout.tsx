@@ -116,6 +116,53 @@ export default function RootLayout({ children }) {
                 "https://instagram.com/frame.toque",
                 "https://linkedin.com/company/frametoque",
               ],
+              founder: [
+                {
+                  "@type": "Person",
+                  name: "Kavinu Pasandul",
+                  jobTitle: "Co-Founder & Chief Executive Officer",
+                  sameAs: [
+                    "https://www.linkedin.com/in/kavinudigitalworks/",
+                    "https://www.instagram.com/skingod.frrr/"
+                  ]
+                },
+                {
+                  "@type": "Person",
+                  name: "Tharul Bandara",
+                  jobTitle: "Co-Founder & Chief Executive Officer",
+                  sameAs: [
+                    "https://www.instagram.com/bandara.tharul/"
+                  ]
+                }
+              ],
+              employee: [
+                {
+                  "@type": "Person",
+                  name: "Nelitha Priyawansha",
+                  jobTitle: "Chief Technology Officer",
+                  sameAs: [
+                    "https://linkedin.com/in/itsnelitha",
+                    "https://github.com/itsnelitha"
+                  ]
+                },
+                {
+                  "@type": "Person",
+                  name: "Sadaka Parami",
+                  jobTitle: "Head of Engineering",
+                  sameAs: [
+                    "https://github.com/Sadaka-Wijerathna",
+                    "https://www.instagram.com/sadaka.wijerathna/"
+                  ]
+                },
+                {
+                  "@type": "Person",
+                  name: "Dasindu Nimnal",
+                  jobTitle: "Head of Media",
+                  sameAs: [
+                    "https://www.instagram.com/dazuu.jay/"
+                  ]
+                }
+              ]
             }),
           }}
         />

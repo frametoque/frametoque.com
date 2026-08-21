@@ -27,6 +27,7 @@ export default function CartClient() {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [targetWa, setTargetWa] = useState("94702771361");
 
   // Quotation form state
   const [quoteName, setQuoteName] = useState("");
@@ -97,7 +98,7 @@ export default function CartClient() {
       )
       .join("\n\n");
     const messageText = `Hi FrameToque Team,\n\nI'd like to book the following service package(s):\n\n${packagesText}\n\nTotal Cart Value: ${getDisplaySubtotal()} ${currency}\n\nClient Details:\n- Name: ${name}\n- Email: ${email}\n- Phone/WhatsApp: ${phone}\n\n${notes ? `Additional Notes:\n${notes}` : ""}\n\nThank you!`;
-    const waUrl = `https://wa.me/94702771361?text=${encodeURIComponent(messageText)}`;
+    const waUrl = `https://wa.me/${targetWa}?text=${encodeURIComponent(messageText)}`;
 
     // Auto-save a quotation record in DB for every order placed via WhatsApp
     // (forceInsert skips duplicate checks — this is a background save, not user-initiated)
@@ -426,6 +427,19 @@ if (success) {
                   <div className="space-y-1">
                     <label htmlFor="client-notes" className="text-xs font-semibold text-slate-300">Additional Requirements / Notes</label>
                     <textarea id="client-notes" rows={3} placeholder="Specify customized requests or instructions..." value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full bg-black/40 border border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 rounded-xl px-4 py-3 text-sm outline-none transition-all resize-none" />
+                  </div>
+                  <div className="space-y-1 pb-2">
+                    <label className="text-xs font-semibold text-slate-300">Send order to:</label>
+                    <div className="flex flex-col sm:flex-row gap-4 pt-1">
+                      <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
+                        <input type="radio" name="targetWa" value="94702771361" checked={targetWa === "94702771361"} onChange={(e) => setTargetWa(e.target.value)} className="accent-brand-500" />
+                        +94 70 277 1361
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
+                        <input type="radio" name="targetWa" value="94778609356" checked={targetWa === "94778609356"} onChange={(e) => setTargetWa(e.target.value)} className="accent-brand-500" />
+                        +94 77 860 9356
+                      </label>
+                    </div>
                   </div>
                   <button type="submit" disabled={submitting} className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 transition-all duration-300 font-bold text-sm flex items-center justify-center gap-2 text-white shadow-lg shadow-brand-500/20 active:scale-95 disabled:opacity-50 disabled:scale-100">
                     {submitting ? (

@@ -152,10 +152,10 @@ export default function ContactPage() {
               </h2>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Link
                 href="mailto:info@frametoque.online"
-                className="flex items-center gap-4 flex-1 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group"
+                className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group"
               >
                 <div className="p-2 rounded-xl bg-brand-500/10 group-hover:bg-brand-500/20 transition-colors">
                   <Mail className="w-5 h-5 text-brand-400" />
@@ -173,17 +173,35 @@ export default function ContactPage() {
               <Link
                 href="https://wa.me/94702771361"
                 target="_blank"
-                className="flex items-center gap-4 flex-1 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group"
+                className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group"
               >
                 <div className="p-2 rounded-xl bg-brand-500/10 group-hover:bg-brand-500/20 transition-colors">
                   <WhatsApp className="text-brand-400" />
                 </div>
                 <div>
                   <p className="text-xs text-slate-400 mb-0.5 uppercase tracking-wider">
-                    WhatsApp
+                    WhatsApp (Primary)
                   </p>
                   <p className="text-sm text-slate-200 group-hover:text-brand-400 transition-colors">
                     +94 70 277 1361
+                  </p>
+                </div>
+              </Link>
+
+              <Link
+                href="https://wa.me/94778609356"
+                target="_blank"
+                className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group"
+              >
+                <div className="p-2 rounded-xl bg-brand-500/10 group-hover:bg-brand-500/20 transition-colors">
+                  <WhatsApp className="text-brand-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 mb-0.5 uppercase tracking-wider">
+                    WhatsApp (Secondary)
+                  </p>
+                  <p className="text-sm text-slate-200 group-hover:text-brand-400 transition-colors">
+                    +94 77 860 9356
                   </p>
                 </div>
               </Link>
