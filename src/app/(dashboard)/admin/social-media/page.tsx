@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { initSocialTables, getSocialPosts, deletePlatformPost, finalizeDelete, getSocialPostById } from "../actions/social-media";
+import { getSocialPosts, deletePlatformPost, finalizeDelete, getSocialPostById } from "../actions/social-media";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import SocialViews from "./components/SocialViews";
 
@@ -61,7 +61,7 @@ export default function SocialMediaPage() {
 
   const loadData = async () => {
     setLoading(true);
-    await initSocialTables();
+
     const fetchedPosts = await getSocialPosts();
     setPosts(fetchedPosts);
     setLoading(false);

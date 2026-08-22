@@ -18,19 +18,7 @@ export interface SocialPost {
   created_at: Date;
 }
 
-export async function initSocialTables() {
-  await sql`CREATE TABLE IF NOT EXISTS social_posts (
-    id SERIAL PRIMARY KEY,
-    platforms JSONB NOT NULL,
-    default_caption TEXT NOT NULL,
-    custom_captions JSONB,
-    media_urls JSONB,
-    scheduled_time TIMESTAMPTZ,
-    status VARCHAR(50) DEFAULT 'draft',
-    platform_post_ids JSONB,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-  )`;
-}
+
 
 export async function uploadSocialMedia(formData: FormData) {
   const file = formData.get("file") as File;
