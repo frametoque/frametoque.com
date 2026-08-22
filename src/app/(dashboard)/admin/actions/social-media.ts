@@ -159,15 +159,89 @@ export async function publishToPlatform(postId: number, platform: string) {
     
     if (platform === 'tiktok') {
         const accessToken = process.env.TIKTOK_ACCESS_TOKEN;
+        if (!accessToken) return { success: false, error: "Missing TikTok credentials" };
+        if (media_urls.length === 0) return { success: false, error: "TikTok requires media" };
+
+        const isPhoto = media_urls[0].match(/\.(jpeg|jpg|gif|png|webp|avif)$/i);
         
-        // MOCK SUCCESS FOR DEMO VIDEO (App Review)
-        if (!accessToken) {
-            platformPostIds['tiktok'] = "mock_id_" + Math.floor(Math.random() * 1000000);
-            return { success: true };
+        try {
+            const headRes = await fetch(media_urls[0], { method: 'HEAD' });
+            const size = parseInt(headRes.headers.get('content-length') || '0');
+            if (!size) return { success: false, error: "Could not determine media size" };
+
+            let initRes;
+            if (isPhoto) {
+                initRes = await fetch('https://open.tiktokapis.com/v2/post/publish/content/init/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json; charset=UTF-8'
+                    },
+                    body: JSON.stringify({
+                        post_info: {
+                            title: caption,
+                            privacy_level: "PUBLIC_TO_EVERYONE",
+                            disable_comment: false
+                        },
+                        source_info: {
+                            source: "FILE_UPLOAD",
+                            photo_size: size,
+                            chunk_size: size,
+                            total_chunk_count: 1
+                        },
+                        post_mode: "DIRECT_POST",
+                        media_type: "PHOTO"
+                    })
+                });
+            } else {
+                initRes = await fetch('https://open.tiktokapis.com/v2/post/publish/video/init/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json; charset=UTF-8'
+                    },
+                    body: JSON.stringify({
+                        post_info: {
+                            title: caption,
+                            privacy_level: "PUBLIC_TO_EVERYONE",
+                            disable_comment: false,
+                            disable_duet: false,
+                            disable_stitch: false
+                        },
+                        source_info: {
+                            source: "FILE_UPLOAD",
+                            video_size: size,
+                            chunk_size: size,
+                            total_chunk_count: 1
+                        }
+                    })
+                });
+            }
+            
+            const initData = await initRes.json();
+            if (initData.error?.code !== 'ok') return { success: false, error: initData.error?.message || "TikTok Init Error" };
+
+            const uploadUrl = initData.data.upload_url;
+            const publishId = initData.data.publish_id;
+
+            const mediaRes = await fetch(media_urls[0]);
+
+            const putRes = await fetch(uploadUrl, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': isPhoto ? 'image/jpeg' : 'video/mp4',
+                    'Content-Range': `bytes 0-${size - 1}/${size}`
+                },
+                body: mediaRes.body,
+                duplex: 'half'
+            } as RequestInit);
+
+            if (!putRes.ok) return { success: false, error: "TikTok chunk upload failed" };
+
+            platformPostIds['tiktok'] = publishId;
+        } catch (e: any) {
+            return { success: false, error: e.message || "TikTok API Error" };
         }
-        
-        if (media_urls.length === 0 || media_urls[0].match(/\.(jpeg|jpg|gif|png)$/i)) return { success: false, error: "TikTok requires a video" };
-        return { success: false, error: "TikTok Native API integration is currently pending (chunked video upload required)." };
     }
 
     if (platform === 'twitter') {

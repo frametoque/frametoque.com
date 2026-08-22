@@ -46,7 +46,7 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     expenseByYear,
     expenseBreakdownRange,
     incomeBreakdownRange
-  ] = await Promise.all([
+  ] = await (async (qs) => { const rs = []; for (const q of qs) rs.push(await q); return rs; })([
     sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
     sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
     sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status IN ('unpaid', 'pending', 'partially paid')`,
@@ -238,7 +238,7 @@ export async function getIncomes(startDate?: string, endDate?: string) {
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
 
-  const [statsThisMonth, statsLastMonth, statsYtd, rows] = await Promise.all([
+  const [statsThisMonth, statsLastMonth, statsYtd, rows] = await (async (qs) => { const rs = []; for (const q of qs) rs.push(await q); return rs; })([
     sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date)`,
     sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`,
     sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('year', date) = date_trunc('year', current_date)`,
@@ -471,7 +471,7 @@ export async function getExpenses(startDate?: string, endDate?: string) {
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
 
-  const [statsThisMonth, statsLastMonth, statsYtd, rows] = await Promise.all([
+  const [statsThisMonth, statsLastMonth, statsYtd, rows] = await (async (qs) => { const rs = []; for (const q of qs) rs.push(await q); return rs; })([
     sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date)`,
     sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`,
     sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('year', date) = date_trunc('year', current_date)`,
@@ -687,7 +687,7 @@ export async function payScheduledExpense(id: number) {
 
 // -- INVOICES --
 export async function getInvoices() {
-  const [totalIssuedCount, rows, nonAdvancePaymentsRows] = await Promise.all([
+  const [totalIssuedCount, rows, nonAdvancePaymentsRows] = await (async (qs) => { const rs = []; for (const q of qs) rs.push(await q); return rs; })([
     sql`SELECT COUNT(*) as count FROM invoices`,
     sql`
       SELECT i.invoice_id as id, i.user_email as client_email, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.advance, i.tax_rate, i.total_due, i.date as due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at
@@ -1264,7 +1264,7 @@ export async function getReports(startDate?: string, endDate?: string) {
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
 
-  const [incomeStats, expenseStats, rawIncome, expensesBreakdown, journalEntriesRaw] = await Promise.all([
+  const [incomeStats, expenseStats, rawIncome, expensesBreakdown, journalEntriesRaw] = await (async (qs) => { const rs = []; for (const q of qs) rs.push(await q); return rs; })([
     sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
     sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
     sql`

@@ -23,7 +23,7 @@ function CreateNewPostForm() {
   const editId = searchParams.get('edit');
   const repostId = searchParams.get('repost');
 
-  const [platforms, setPlatforms] = useState<string[]>(['facebook', 'instagram', 'threads', 'linkedin', 'telegram', 'youtube', 'gmb']);
+  const [platforms, setPlatforms] = useState<string[]>(['facebook', 'instagram', 'threads', 'tiktok', 'telegram', 'youtube', 'gmb']);
   const [caption, setCaption] = useState("");
   const [customCaptions, setCustomCaptions] = useState<Record<string, string>>({});
   const [customize, setCustomize] = useState(false);
@@ -333,7 +333,7 @@ function CreateNewPostForm() {
                 { id: 'gmb', name: 'Google Business', icon: Store }
               ].map(p => {
                 const Icon = p.icon;
-                const isDisabled = (p.id === 'youtube' && hasImage) || (p.id === 'tiktok' && hasImage) || p.id === 'twitter' || p.id === 'linkedin';
+                const isDisabled = (p.id === 'youtube' && hasImage) || p.id === 'twitter' || p.id === 'linkedin';
                 const isSelected = platforms.includes(p.id) && !isDisabled;
                 return (
                   <button
