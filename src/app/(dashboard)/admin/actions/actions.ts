@@ -1481,7 +1481,7 @@ export async function deleteQuotation(id: number) {
   await logSystemAction(`Deleted quotation ID ${id} ("${quoteDesc}")`);
 }
  
-export async function confirmQuotation(quotationId: number, quotationData: any, projectName: string, bankAccountId: number | null = null, discountInput?: number) {
+export async function confirmQuotation(quotationId: number, quotationData: any, projectName: string, bankAccountId: number | null = null) {
   const quotation = await sql`
     SELECT q.*, c.id as client_id_val, c.email, c.full_name as client_name, c.company, c.address as billing_address
     FROM admin_quotations q
@@ -1501,8 +1501,9 @@ export async function confirmQuotation(quotationId: number, quotationData: any, 
   if (!userEmail) throw new Error("Quotation has no linked client email — please assign a client before confirming");
 
   const amount   = parseFloat(q.amount   || 0);
-  const discountVal = discountInput !== undefined ? parseFloat(discountInput as any || 0) : parseFloat(q.discount || 0);
-  const invoiceTotal = amount - discountVal;
+  const discountVal = parseFloat(q.discount || 0);
+  const subtotalVal = amount + discountVal; // since amount is total (subtotal - discount), subtotal is amount + discount
+  const invoiceTotal = amount; // no need to subtract discount again
   const advanceVal = parseFloat(q.advance || 0);
   const totalDueVal = invoiceTotal - advanceVal;
   const description = q.description || 'Project';
@@ -1545,7 +1546,7 @@ export async function confirmQuotation(quotationId: number, quotationData: any, 
         ${userEmail},
         ${projectName},
         ${todayStr},
-        ${amount},
+        ${subtotalVal},
         ${discountVal},
         ${invoiceTotal},
         ${advanceVal},

@@ -39,7 +39,7 @@ export default function QuotationsPage() {
   const [projectNameInput, setProjectNameInput] = useState("");
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [selectedBankAccountId, setSelectedBankAccountId] = useState<string>("");
-  const [discountInput, setDiscountInput] = useState<string>("");
+
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   const handleDownloadPDF = async (row: any) => {
@@ -117,7 +117,6 @@ export default function QuotationsPage() {
   const handleConfirmProject = (quotationId: number, quotationData: any) => {
     setPendingConfirmRow({ id: quotationId, ...quotationData });
     setProjectNameInput(quotationData.desc || "");
-    setDiscountInput(quotationData.discount ? quotationData.discount.toString() : "0");
     setShowProjectModal(true);
   };
 
@@ -133,8 +132,7 @@ export default function QuotationsPage() {
     setShowProjectModal(false);
     try {
       const bankId = selectedBankAccountId ? parseInt(selectedBankAccountId) : null;
-      const discountVal = parseFloat(discountInput) || 0;
-      await confirmQuotation(pendingConfirmRow.id, pendingConfirmRow, projectNameInput.trim(), bankId, discountVal);
+      await confirmQuotation(pendingConfirmRow.id, pendingConfirmRow, projectNameInput.trim(), bankId);
       await loadData();
       alert("Quotation confirmed! Invoice has been created.");
     } catch (e) {
@@ -145,7 +143,6 @@ export default function QuotationsPage() {
       setConfirmingId(null);
       setPendingConfirmRow(null);
       setProjectNameInput("");
-      setDiscountInput("");
     }
   };
 
@@ -488,19 +485,7 @@ const handleDelete = async (id: number) => {
               />
             </div>
 
-            {/* Discount input */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Discount (LKR)
-              </label>
-              <input
-                type="number"
-                value={discountInput}
-                onChange={(e) => setDiscountInput(e.target.value)}
-                placeholder="0"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none focus:border-brand-500 focus:bg-white/8 transition-colors text-sm"
-              />
-            </div>
+
 
             {/* Bank account select */}
             <div className="mb-6">

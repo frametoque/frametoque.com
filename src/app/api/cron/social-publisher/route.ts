@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
+import { publishToPlatform } from "@/app/(dashboard)/admin/actions/social-media";
+
 
 // Example Cron endpoint to process scheduled posts
 // In Vercel, setup vercel.json with:
@@ -29,29 +31,39 @@ export async function GET(request: Request) {
     // 2. Process each post
     for (const post of duePosts) {
       try {
-        // Here you would fetch access tokens from social_accounts 
-        // and call the respective APIs for each platform in post.platforms
+        let anySuccess = false;
         
-        // Mock API call delay
-        await new Promise(res => setTimeout(res, 500));
+        for (const platform of post.platforms || []) {
+           const res = await publishToPlatform(post.id, platform);
+           if (!res.success) {
+               console.error(`Failed to publish scheduled post ${post.id} to ${platform}:`, res.error);
+           } else {
+               anySuccess = true;
+           }
+           
+           // Small delay between platform API calls to prevent rate limits
+           await new Promise(r => setTimeout(r, 1000));
+        }
 
-        // Mark as published
+        const finalStatus = anySuccess ? 'published' : 'failed';
+
+        // Mark as published or failed
         await sql`
           UPDATE social_posts 
-          SET status = 'published' 
+          SET status = ${finalStatus}
           WHERE id = ${post.id}
         `;
         
-        await logSystemAction("publish_social_post");
+        if (anySuccess) await logSystemAction("publish_social_post");
         processedCount++;
       } catch (err: any) {
-        // Mark as failed
+        // Mark as failed on hard crash
         await sql`
           UPDATE social_posts 
           SET status = 'failed' 
           WHERE id = ${post.id}
         `;
-        console.error(`Failed to publish post ${post.id}`, err);
+        console.error(`Fatal error processing scheduled post ${post.id}`, err);
       }
     }
 

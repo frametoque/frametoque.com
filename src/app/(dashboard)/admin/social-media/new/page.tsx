@@ -1,8 +1,7 @@
 "use client";
-import { FaTiktok } from 'react-icons/fa';
 
 import React, { useState, useEffect, Suspense } from "react";
-import { Twitter, X, Upload, Check, Loader2, CheckCircle, AlertCircle, Facebook, Instagram, Linkedin, Send, Youtube, Store, AtSign } from "lucide-react";
+import { Twitter, X, Upload, Check, Loader2, CheckCircle, AlertCircle, Facebook, Instagram, Linkedin, Send, Youtube, Store, AtSign, Clock } from "lucide-react";
 import { uploadSocialMedia, createSocialPostRecord, publishToPlatform, finalizeSocialPost, updateSocialPostRecord, updatePlatformPost, getSocialPostById } from "../../actions/social-media";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -23,7 +22,7 @@ function CreateNewPostForm() {
   const editId = searchParams.get('edit');
   const repostId = searchParams.get('repost');
 
-  const [platforms, setPlatforms] = useState<string[]>(['facebook', 'instagram', 'threads', 'tiktok', 'telegram', 'youtube', 'gmb']);
+  const [platforms, setPlatforms] = useState<string[]>(['facebook', 'instagram', 'threads', 'telegram', 'youtube', 'gmb']);
   const [caption, setCaption] = useState("");
   const [customCaptions, setCustomCaptions] = useState<Record<string, string>>({});
   const [customize, setCustomize] = useState(false);
@@ -33,7 +32,13 @@ function CreateNewPostForm() {
   const [schedule, setSchedule] = useState("");
   const [loading, setLoading] = useState(!!(editId || repostId));
   const hasImage = mediaUrls.some(url => url.match(/\.(jpeg|jpg|gif|png|webp|avif)$/i));
-  const [publishingState, setPublishingState] = useState<{isOpen: boolean; currentPlatform: string;  results: Record<string, { status: 'loading' | 'success' | 'error' | 'warning'; error?: string; warning?: string; progress?: number }>; done: boolean}>({ isOpen: false, currentPlatform: '', results: {}, done: false });
+  const hasVideo = mediaUrls.some(url => url.match(/\.(mp4|mov|avi|mkv|webm)$/i));
+
+  useEffect(() => {
+    if (hasImage) setPlatforms(prev => prev.filter(p => p !== 'youtube'));
+    if (hasVideo) setPlatforms(prev => prev.filter(p => p !== 'gmb'));
+  }, [hasImage, hasVideo]);
+  const [publishingState, setPublishingState] = useState<{isOpen: boolean; currentPlatform: string;  results: Record<string, { status: 'loading' | 'success' | 'error' | 'warning' | 'scheduled'; error?: string; warning?: string; progress?: number }>; done: boolean; isScheduled?: boolean}>({ isOpen: false, currentPlatform: '', results: {}, done: false });
 
   useEffect(() => {
     const fetchPost = async (id: string) => {
@@ -63,6 +68,7 @@ function CreateNewPostForm() {
   
   const togglePlatform = (p: string) => {
     if (p === 'youtube' && hasImage) return alert('YouTube only accepts videos.');
+    if (p === 'gmb' && hasVideo) return alert('Google Business API does not support video uploads.');
     setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
   };
 
@@ -99,10 +105,11 @@ function CreateNewPostForm() {
     if (platforms.length === 0) return alert("Select at least one platform");
     
     setSaving(true);
-    setPublishingState({ isOpen: true, currentPlatform: '', results: {}, done: false });
-    
     const schedDate = schedule ? new Date(schedule) : null;
     const isScheduled = schedDate && schedDate > new Date();
+    
+    setPublishingState({ isOpen: true, currentPlatform: '', results: {}, done: false, isScheduled });
+    
     const finalStatus = isScheduled ? 'scheduled' : 'published';
 
     // 1. Create or Update DB Record first
@@ -130,7 +137,7 @@ function CreateNewPostForm() {
     // 2. If it's scheduled, we don't need to ping platforms now
     if (isScheduled) {
        const resObj: any = {};
-       for (const p of [...platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","tiktok","telegram","twitter","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","tiktok","telegram","twitter","gmb"].indexOf(b))) resObj[p] = { status: 'success' };
+       for (const p of [...platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(b))) resObj[p] = { status: 'scheduled' };
        setPublishingState(prev => ({ ...prev, results: resObj, done: true }));
        setTimeout(() => router.push("/admin/social-media"), 1500);
        return;
@@ -138,7 +145,7 @@ function CreateNewPostForm() {
 
     // 3. Ping each platform sequentially
     const results: any = {};
-    for (const p of [...platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","tiktok","telegram","twitter","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","tiktok","telegram","twitter","gmb"].indexOf(b))) {
+    for (const p of [...platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(b))) {
       setPublishingState(prev => ({ ...prev, currentPlatform: p, results: { ...prev.results, [p]: { status: 'loading', progress: 0 } } }));
       
       let progressInterval = setInterval(() => {
@@ -194,16 +201,19 @@ function CreateNewPostForm() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
            <div className="bg-[#0c0c0e] border border-white/10 rounded-3xl w-full max-w-md shadow-2xl p-6">
              <h3 className="text-xl font-bold text-white mb-6">
-               {publishingState.done ? "Publishing Complete" : "Publishing to Platforms..."}
+               {publishingState.done 
+                 ? (publishingState.isScheduled ? "Scheduling Complete" : "Publishing Complete") 
+                 : (publishingState.isScheduled ? "Scheduling to Platforms..." : "Publishing to Platforms...")}
              </h3>
              <div className="space-y-4">
-               {[...platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","tiktok","telegram","twitter","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","tiktok","telegram","twitter","gmb"].indexOf(b)).map(p => {
+               {[...platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(b)).map(p => {
                  const st = publishingState.results[p];
                  const isCurrent = publishingState.currentPlatform === p;
                  
                  return (
                    <div key={p} className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${
                      st?.status === 'success' ? 'bg-green-500/10 border-green-500/20' : 
+                     st?.status === 'scheduled' ? 'bg-brand-500/10 border-brand-500/20' : 
                      st?.status === 'warning' ? 'bg-yellow-500/10 border-yellow-500/20' : 
                      st?.status === 'error' ? 'bg-red-500/10 border-red-500/20' : 
                      isCurrent ? 'bg-brand-500/10 border-brand-500/20' : 'bg-white/5 border-white/10'
@@ -215,6 +225,7 @@ function CreateNewPostForm() {
                      </span>
                      <div>
                        {st?.status === 'success' && <CheckCircle className="w-5 h-5 text-green-400" />}
+                       {st?.status === 'scheduled' && <Clock className="w-5 h-5 text-brand-400" />}
                        {st?.status === 'warning' && <AlertCircle className="w-5 h-5 text-yellow-400" />}
                        {st?.status === 'error' && <AlertCircle className="w-5 h-5 text-red-400" />}
                        {st?.status === 'loading' && (
@@ -257,7 +268,7 @@ function CreateNewPostForm() {
                     ) : (
                       <img src={url} alt="Uploaded" className="w-full h-full object-cover" />
                     )}
-                    <button type="button" onClick={() => setMediaUrls(mediaUrls.filter((_, idx) => idx !== i))} className="absolute top-2 right-2 bg-black/70 p-1.5 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black">
+                    <button type="button" onClick={() => setMediaUrls(mediaUrls.filter((_, idx) => idx !== i))} className="absolute top-2 right-2 bg-black/70 p-1.5 rounded-full text-white transition-colors hover:bg-red-500 shadow-lg border border-white/20">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
@@ -297,7 +308,7 @@ function CreateNewPostForm() {
             
             {customize && (
               <div className="mt-6 space-y-4">
-                {[...platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","tiktok","telegram","twitter","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","tiktok","telegram","twitter","gmb"].indexOf(b)).map(p => (
+                {[...platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(b)).map(p => (
                   <div key={p === "gmb" ? "Google Business" : p}>
                     <label className="text-xs font-bold text-gray-400 capitalize mb-2 block">{p === "gmb" ? "Google Business" : p} Caption Override</label>
                     <textarea
@@ -327,13 +338,11 @@ function CreateNewPostForm() {
                 { id: 'threads', name: 'Threads', icon: AtSign },
                 { id: 'linkedin', name: 'LinkedIn', icon: Linkedin },
                 { id: 'youtube', name: 'YouTube', icon: Youtube },
-                { id: 'tiktok', name: 'TikTok', icon: FaTiktok },
                 { id: 'telegram', name: 'Telegram', icon: Send },
-                { id: 'twitter', name: 'X (Twitter)', icon: XIcon },
                 { id: 'gmb', name: 'Google Business', icon: Store }
               ].map(p => {
                 const Icon = p.icon;
-                const isDisabled = (p.id === 'youtube' && hasImage) || p.id === 'twitter' || p.id === 'linkedin';
+                const isDisabled = (p.id === 'youtube' && hasImage) || (p.id === 'gmb' && hasVideo) || p.id === 'linkedin';
                 const isSelected = platforms.includes(p.id) && !isDisabled;
                 return (
                   <button
@@ -351,7 +360,7 @@ function CreateNewPostForm() {
                       </div>
                       <span className={`font-bold flex items-center gap-2 ${isSelected ? "text-white" : "text-gray-400"}`}>
                         {p.name}
-                        {(p.id === 'twitter' || p.id === 'linkedin') && <span className="text-[9px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Coming Soon</span>}
+                        {(p.id === 'linkedin') && <span className="text-[9px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Coming Soon</span>}
                       </span>
                     </div>
                     
@@ -398,12 +407,10 @@ const PROFILE_LINKS: Record<string, string> = {
   facebook: "https://www.facebook.com/frametoque",
   instagram: "https://www.instagram.com/frame.toque/",
   threads: "https://www.threads.com/@frame.toque",
-  tiktok: "https://www.tiktok.com/@frame.toque",
   gmb: "https://share.google/KP8e3PxZ6cwZ0cuIy",
   linkedin: "https://www.linkedin.com/company/frametoque/",
   telegram: "https://t.me/@FrameToque",
   youtube: "https://www.youtube.com/@FrameToque",
-  twitter: "https://x.com/frametoque"
 };
 
 export default function Page() {

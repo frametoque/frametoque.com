@@ -5,6 +5,7 @@ import {
   Plus,
   Edit2,
   Trash2,
+  Download,
   X,
   Loader2,
   UploadCloud,
@@ -1717,22 +1718,35 @@ export default function PortfolioAdminPage() {
                       </div>
                     </div>
 
-                    {/* Footer bar with photo dimensions & delete icon - 100% fixed & visible */}
+                    {/* Footer bar with photo dimensions & actions - 100% fixed & visible */}
                     <div className="h-9 px-2.5 border-t border-white/10 flex items-center justify-between bg-black/90 backdrop-blur-md flex-shrink-0 z-10">
-                      <span className="text-[10px] text-gray-300 font-mono truncate max-w-[70%]">
+                      <span className="text-[10px] text-gray-300 font-mono truncate max-w-[50%]">
                         {photo.width && photo.height ? `${photo.width} × ${photo.height}` : "Photo"}
                       </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeletePhotoFromSubEvent(photo.id);
-                        }}
-                        title="Delete photo"
-                        className="p-1.5 hover:bg-red-500/20 text-gray-300 hover:text-red-400 rounded-lg transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <a
+                          href={photo.src}
+                          download
+                          target="_blank"
+                          rel="noreferrer"
+                          title="Download photo"
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-1.5 hover:bg-blue-500/20 text-gray-300 hover:text-blue-400 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Download className="w-4 h-4" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePhotoFromSubEvent(photo.id);
+                          }}
+                          title="Delete photo"
+                          className="p-1.5 hover:bg-red-500/20 text-gray-300 hover:text-red-400 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

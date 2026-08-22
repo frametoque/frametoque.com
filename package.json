@@ -39,7 +39,6 @@
     "react-markdown": "^10.1.0",
     "react-snowfall": "^2.4.0",
     "recharts": "^3.10.0",
-    "twitter-api-v2": "^1.29.1",
     "yet-another-react-lightbox": "^3.32.1"
   },
   "devDependencies": {

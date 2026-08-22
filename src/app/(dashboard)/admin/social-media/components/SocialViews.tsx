@@ -1,4 +1,3 @@
-import { FaTiktok } from 'react-icons/fa';
 import React, { useState } from "react";
 import { Clock, CheckCircle, AlertTriangle, Image as ImageIcon, Trash2, Eye, Edit2, Repeat, Facebook, Instagram, Twitter, Linkedin, Youtube, Send, X, Store, AtSign } from "lucide-react";
 import Link from "next/link";
@@ -29,14 +28,11 @@ export default function SocialViews({ posts, loading, onRefresh, onDelete }: any
     switch(plat) {
       case 'facebook': return <Facebook className="w-3 h-3" />;
       case 'instagram': return <Instagram className="w-3 h-3" />;
-      case 'x': return <Twitter className="w-3 h-3" />;
       case 'linkedin': return <Linkedin className="w-3 h-3" />;
       case 'youtube': return <Youtube className="w-3 h-3" />;
       case 'telegram': return <Send className="w-3 h-3" />;
       case 'gmb': return <Store className="w-3 h-3" />;
       case 'threads': return <AtSign className="w-3 h-3" />;
-      case 'tiktok': return <FaTiktok className="w-3 h-3" />;
-      case 'twitter': return <XIcon className="w-3 h-3" />;
       default: return null;
     }
   };
@@ -90,7 +86,7 @@ export default function SocialViews({ posts, loading, onRefresh, onDelete }: any
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
                 <div className="flex gap-1.5 text-gray-400">
                   {(() => {
-                    const order = ["facebook","instagram","threads","linkedin","youtube","tiktok","telegram","twitter","gmb"];
+                    const order = ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"];
                     const plats = p.status === 'published' ? Object.keys(p.platform_post_ids || {}) : (p.platforms || []);
                     return [...plats].sort((a, b) => order.indexOf(a) - order.indexOf(b)).map((plat: string) => (
                       <div key={plat} title={plat} className="hover:text-white transition-colors">
@@ -100,7 +96,7 @@ export default function SocialViews({ posts, loading, onRefresh, onDelete }: any
                   })()}
                 </div>
                 <div className="text-xs text-gray-500 font-medium">
-                  {p.scheduled_time ? new Date(p.scheduled_time).toLocaleDateString() : 'Immediate'}
+                  {p.scheduled_time ? new Date(p.scheduled_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Immediate'}
                 </div>
               </div>
 

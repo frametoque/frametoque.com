@@ -1,5 +1,5 @@
 "use server";
-import { TwitterApi } from "twitter-api-v2";
+
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 import { put } from "@vercel/blob";
@@ -136,6 +136,24 @@ export async function publishToPlatform(postId: number, platform: string) {
         const igRes = await fetch(`https://graph.facebook.com/v19.0/${igId}/media`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         const igData = await igRes.json();
         if (igData.error) return { success: false, error: igData.error.message };
+
+        if (isVideo) {
+            let status = 'IN_PROGRESS';
+            let attempts = 0;
+            while (status !== 'FINISHED' && attempts < 30) {
+                await new Promise(r => setTimeout(r, 4000));
+                attempts++;
+                const statusRes = await fetch(`https://graph.facebook.com/v19.0/${igData.id}?fields=status_code&access_token=${accessToken}`);
+                const statusData = await statusRes.json();
+                if (statusData.error) {
+                    console.error("IG Poll Error:", statusData.error);
+                    continue; // Do not break immediately on transient errors like rate limits
+                }
+                status = statusData.status_code;
+                if (status === 'ERROR') return { success: false, error: "Instagram video processing failed" };
+            }
+        }
+
         const igPubRes = await fetch(`https://graph.facebook.com/v19.0/${igId}/media_publish`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ creation_id: igData.id, access_token: accessToken }) });
         const igPubData = await igPubRes.json();
         if (igPubData.error) return { success: false, error: igPubData.error.message };
@@ -157,124 +175,6 @@ export async function publishToPlatform(postId: number, platform: string) {
         if (tgData.result?.message_id) platformPostIds['telegram'] = tgData.result.message_id.toString();
     }
     
-    if (platform === 'tiktok') {
-        const accessToken = process.env.TIKTOK_ACCESS_TOKEN;
-        if (!accessToken) return { success: false, error: "Missing TikTok credentials" };
-        if (media_urls.length === 0) return { success: false, error: "TikTok requires media" };
-
-        const isPhoto = media_urls[0].match(/\.(jpeg|jpg|gif|png|webp|avif)$/i);
-        
-        try {
-            const headRes = await fetch(media_urls[0], { method: 'HEAD' });
-            const size = parseInt(headRes.headers.get('content-length') || '0');
-            if (!size) return { success: false, error: "Could not determine media size" };
-
-            let initRes;
-            if (isPhoto) {
-                initRes = await fetch('https://open.tiktokapis.com/v2/post/publish/content/init/', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json; charset=UTF-8'
-                    },
-                    body: JSON.stringify({
-                        post_info: {
-                            title: caption,
-                            privacy_level: "PUBLIC_TO_EVERYONE",
-                            disable_comment: false
-                        },
-                        source_info: {
-                            source: "FILE_UPLOAD",
-                            photo_size: size,
-                            chunk_size: size,
-                            total_chunk_count: 1
-                        },
-                        post_mode: "DIRECT_POST",
-                        media_type: "PHOTO"
-                    })
-                });
-            } else {
-                initRes = await fetch('https://open.tiktokapis.com/v2/post/publish/video/init/', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json; charset=UTF-8'
-                    },
-                    body: JSON.stringify({
-                        post_info: {
-                            title: caption,
-                            privacy_level: "PUBLIC_TO_EVERYONE",
-                            disable_comment: false,
-                            disable_duet: false,
-                            disable_stitch: false
-                        },
-                        source_info: {
-                            source: "FILE_UPLOAD",
-                            video_size: size,
-                            chunk_size: size,
-                            total_chunk_count: 1
-                        }
-                    })
-                });
-            }
-            
-            const initData = await initRes.json();
-            if (initData.error?.code !== 'ok') return { success: false, error: initData.error?.message || "TikTok Init Error" };
-
-            const uploadUrl = initData.data.upload_url;
-            const publishId = initData.data.publish_id;
-
-            const mediaRes = await fetch(media_urls[0]);
-
-            const putRes = await fetch(uploadUrl, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': isPhoto ? 'image/jpeg' : 'video/mp4',
-                    'Content-Range': `bytes 0-${size - 1}/${size}`
-                },
-                body: mediaRes.body,
-                duplex: 'half'
-            } as RequestInit);
-
-            if (!putRes.ok) return { success: false, error: "TikTok chunk upload failed" };
-
-            platformPostIds['tiktok'] = publishId;
-        } catch (e: any) {
-            return { success: false, error: e.message || "TikTok API Error" };
-        }
-    }
-
-    if (platform === 'twitter') {
-        const appKey = process.env.TWITTER_API_KEY;
-        const appSecret = process.env.TWITTER_API_SECRET;
-        const accessToken = process.env.TWITTER_ACCESS_TOKEN;
-        const accessSecret = process.env.TWITTER_ACCESS_SECRET;
-        if (!appKey || !appSecret || !accessToken || !accessSecret) return { success: false, error: "Missing Twitter credentials" };
-        
-        const client = new TwitterApi({ appKey, appSecret, accessToken, accessSecret });
-        
-        try {
-            if (media_urls.length > 0) {
-                const imgRes = await fetch(media_urls[0]);
-                const arrayBuffer = await imgRes.arrayBuffer();
-                const buffer = Buffer.from(arrayBuffer);
-                let mimeType = "image/jpeg";
-                if (media_urls[0].endsWith(".png")) mimeType = "image/png";
-                else if (media_urls[0].endsWith(".gif")) mimeType = "image/gif";
-                else if (media_urls[0].match(/\.(mp4|mov)$/i)) mimeType = "video/mp4";
-                
-                const mediaId = await client.v1.uploadMedia(buffer, { mimeType });
-                const tweetRes = await client.v2.tweet({ text: caption, media: { media_ids: [mediaId] } });
-                platformPostIds['twitter'] = tweetRes.data.id;
-            } else {
-                const tweetRes = await client.v2.tweet(caption);
-                platformPostIds['twitter'] = tweetRes.data.id;
-            }
-        } catch (e: any) {
-            return { success: false, error: e.message || "Twitter API Error" };
-        }
-    }
-
     if (platform === 'threads') {
         const accessToken = process.env.THREADS_ACCESS_TOKEN;
         const threadsUserId = process.env.THREADS_USER_ID;
@@ -296,6 +196,23 @@ export async function publishToPlatform(postId: number, platform: string) {
         const cRes = await fetch(`https://graph.threads.net/v1.0/${threadsUserId}/threads`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         const cData = await cRes.json();
         if (cData.error) return { success: false, error: cData.error.message };
+
+        if (mediaType === "VIDEO") {
+            let status = 'IN_PROGRESS';
+            let attempts = 0;
+            while (status !== 'FINISHED' && attempts < 30) {
+                await new Promise(r => setTimeout(r, 4000));
+                attempts++;
+                const statusRes = await fetch(`https://graph.threads.net/v1.0/${cData.id}?fields=status,error_message&access_token=${accessToken}`);
+                const statusData = await statusRes.json();
+                if (statusData.error) {
+                    console.error("Threads Poll Error:", statusData.error);
+                    continue; // Do not break on transient errors
+                }
+                status = statusData.status;
+                if (status === 'ERROR') return { success: false, error: statusData.error_message || "Threads video processing failed" };
+            }
+        }
         
         const pRes = await fetch(`https://graph.threads.net/v1.0/${threadsUserId}/threads_publish`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ creation_id: cData.id, access_token: accessToken }) });
         const pData = await pRes.json();
@@ -327,7 +244,7 @@ export async function publishToPlatform(postId: number, platform: string) {
         oauth2Client.setCredentials({ refresh_token: refreshToken });
         const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
         
-        const response = await fetch(media_urls[0]);
+        const response = await fetch(media_urls[0], { cache: 'no-store' });
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         const readableStream = Readable.from(buffer);
@@ -367,25 +284,23 @@ export async function updatePlatformPost(postId: number, platform: string) {
     
     if (platform === 'instagram' && platformPostIds['instagram']) {
         const accessToken = process.env.META_ACCESS_TOKEN;
-        await fetch(`https://graph.facebook.com/v19.0/${platformPostIds['instagram']}?access_token=${accessToken}`, { method: 'DELETE' });
-        return await publishToPlatform(postId, platform);
+        const delRes = await fetch(`https://graph.facebook.com/v19.0/${platformPostIds['instagram']}?access_token=${accessToken}`, { method: 'DELETE' });
+        const delData = await delRes.json();
+        
+        const pubRes = await publishToPlatform(postId, platform);
+        
+        if (delData.error) {
+            if (!pubRes.success) return pubRes; // If publish failed, just show the error.
+            if (delData.error.message.includes("permission") || delData.error.code === 200) {
+                 return { success: pubRes.success, error: pubRes.error, warning: "New post published with edits. Please manually delete your previous post because Meta API delete is not supported without App Review." };
+            }
+            return { success: pubRes.success, error: pubRes.error, warning: "New post published. Failed to delete old post: " + delData.error.message };
+        }
+        
+        return pubRes;
     }
     
-    if (platform === 'twitter' && platformPostIds['twitter']) {
-        const appKey = process.env.TWITTER_API_KEY;
-        const appSecret = process.env.TWITTER_API_SECRET;
-        const accessToken = process.env.TWITTER_ACCESS_TOKEN;
-        const accessSecret = process.env.TWITTER_ACCESS_SECRET;
-        if (appKey && appSecret && accessToken && accessSecret) {
-            try {
-                const client = new TwitterApi({ appKey, appSecret, accessToken, accessSecret });
-                await client.v2.deleteTweet(platformPostIds['twitter']);
-            } catch (e) {
-                console.error("Twitter delete old tweet error:", e);
-            }
-        }
-        return await publishToPlatform(postId, platform);
-    }
+
 
     if (platform === 'threads' && platformPostIds['threads']) {
         const accessToken = process.env.THREADS_ACCESS_TOKEN;
@@ -441,20 +356,7 @@ export async function deletePlatformPost(postId: number, platform: string) {
         await fetch(`https://graph.facebook.com/v19.0/${ids['instagram']}?access_token=${accessToken}`, { method: 'DELETE' });
     }
     
-    if (platform === 'twitter' && ids['twitter']) {
-        const appKey = process.env.TWITTER_API_KEY;
-        const appSecret = process.env.TWITTER_API_SECRET;
-        const accessToken = process.env.TWITTER_ACCESS_TOKEN;
-        const accessSecret = process.env.TWITTER_ACCESS_SECRET;
-        if (appKey && appSecret && accessToken && accessSecret) {
-            try {
-                const client = new TwitterApi({ appKey, appSecret, accessToken, accessSecret });
-                await client.v2.deleteTweet(ids['twitter']);
-            } catch (e) {
-                console.error("Twitter delete error:", e);
-            }
-        }
-    }
+
 
     if (platform === 'threads' && ids['threads']) {
         const accessToken = process.env.THREADS_ACCESS_TOKEN;

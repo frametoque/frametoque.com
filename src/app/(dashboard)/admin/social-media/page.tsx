@@ -9,12 +9,10 @@ const PROFILE_LINKS: Record<string, string> = {
   facebook: "https://www.facebook.com/frametoque",
   instagram: "https://www.instagram.com/frame.toque/",
   threads: "https://www.threads.com/@frame.toque",
-  tiktok: "https://www.tiktok.com/@frame.toque",
   gmb: "https://share.google/KP8e3PxZ6cwZ0cuIy",
   linkedin: "https://www.linkedin.com/company/frametoque/",
   telegram: "https://t.me/@FrameToque",
   youtube: "https://www.youtube.com/@FrameToque",
-  twitter: "https://x.com/frametoque"
 };
 
 export default function SocialMediaPage() {
@@ -36,7 +34,7 @@ export default function SocialMediaPage() {
     setDeleteState({ isOpen: true, currentPlatform: '', platforms, results: {}, done: false });
     
     const results: any = {};
-    for (const p of [...platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","tiktok","telegram","twitter","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","tiktok","telegram","twitter","gmb"].indexOf(b))) {
+    for (const p of [...platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(b))) {
       setDeleteState(prev => ({ ...prev, currentPlatform: p, results: { ...prev.results, [p]: { status: 'loading' } } }));
       
       const res = await deletePlatformPost(id, p);
@@ -84,7 +82,7 @@ export default function SocialMediaPage() {
                {deleteState.done ? "Deletion Complete" : "Deleting from Platforms..."}
              </h3>
              <div className="space-y-4">
-               {[...deleteState.platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","tiktok","telegram","twitter","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","tiktok","telegram","twitter","gmb"].indexOf(b)).map((p: string) => {
+               {[...deleteState.platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(b)).map((p: string) => {
                  const st = deleteState.results[p];
                  const isCurrent = deleteState.currentPlatform === p;
                  
