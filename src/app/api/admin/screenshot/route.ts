@@ -119,10 +119,18 @@ export async function GET(req: NextRequest) {
     });
 
     // Navigate to target URL
-    await page.goto(formattedUrl, {
-      waitUntil: ["domcontentloaded", "networkidle2"],
-      timeout: 30000,
-    });
+    try {
+      await page.goto(formattedUrl, {
+        waitUntil: "domcontentloaded",
+        timeout: 30000,
+      });
+    } catch (e: any) {
+      if (e.name === "TimeoutError" || e.message.includes("timeout")) {
+        console.warn(`Navigation timeout for ${formattedUrl}, attempting screenshot anyway.`);
+      } else {
+        throw e;
+      }
+    }
 
     // Wait for specified delay to allow page rendering to complete
     if (delayMs > 0) {

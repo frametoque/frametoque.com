@@ -25,10 +25,10 @@ export async function initSocialTables() {
     default_caption TEXT NOT NULL,
     custom_captions JSONB,
     media_urls JSONB,
-    scheduled_time TIMESTAMP,
+    scheduled_time TIMESTAMPTZ,
     status VARCHAR(50) DEFAULT 'draft',
     platform_post_ids JSONB,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
   )`;
 }
 

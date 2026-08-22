@@ -1221,7 +1221,6 @@ export default function PortfolioAdminPage() {
                         name="title"
                         value={formData.title}
                         onChange={handleTextChange}
-                        placeholder="e.g. Maths with Janidu"
                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors"
                       />
                     </div>
@@ -1233,7 +1232,6 @@ export default function PortfolioAdminPage() {
                           name="url"
                           value={formData.url}
                           onChange={handleUrlInputChange}
-                          placeholder="https://mathswithjanidu.lk"
                           className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors"
                         />
                         <button
