@@ -15,7 +15,7 @@ export async function getServicesByCategory(categorySlug: string) {
     throw new Error(`Invalid category: ${categorySlug}`);
   }
 
-  // sql.query is used as the standard query format in this codebase
+  // sql is used as the standard query format in this codebase
   const rows = await sql.query(`SELECT * FROM ${table} ORDER BY sort_order ASC, id ASC`);
   return rows;
 }
