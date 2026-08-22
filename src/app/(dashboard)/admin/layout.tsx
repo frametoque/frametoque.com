@@ -48,7 +48,8 @@ import {
   Settings,
   DollarSign,
   Download,
-  Cloud
+  Cloud,
+  Megaphone
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -163,12 +164,12 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isInvoiceDetail = pathname.startsWith("/admin/invoice/");
   const isServices = pathname === "/admin/services";
   const isPortfolio = pathname === "/admin/portfolio";
-  const isDomains = pathname.startsWith("/admin/domains");
+  const isWebServices = pathname.startsWith("/admin/web-services");
+  const isSocialMedia = pathname.startsWith("/admin/social-media");
   const isSaas = pathname === "/admin/saas";
   const isSaasDetail = pathname.startsWith("/admin/saas/");
   const isAgreements = pathname.startsWith("/admin/agreements");
-  const isHosting = pathname === "/admin/hosting";
-  const hideSelector = isServices || isPortfolio || isBookings || isDomains || isSaas || isSaasDetail || isHosting || isInvoiceDetail;
+    const hideSelector = isServices || isPortfolio || isBookings || isWebServices || isSaas || isSaasDetail || isInvoiceDetail || isSocialMedia;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [currentTime, setCurrentTime] = useState("");
@@ -247,11 +248,11 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path === "/admin/agreements/new") return "New Agreement";
     if (path.startsWith("/admin/agreements/") && path.endsWith("/edit")) return "Edit Agreement";
     if (path.startsWith("/admin/agreements")) return "Agreements";
-    if (path.startsWith("/admin/domains")) return "Domains";
+    if (path.startsWith("/admin/web-services")) return "Web Services";
+    if (path.startsWith("/admin/social-media")) return "Social Media";
     if (path === "/admin/saas") return "SaaS";
     if (path.startsWith("/admin/saas/")) return "SaaS Details";
-    if (path.startsWith("/admin/hosting")) return "Hosting";
-    return "Admin";
+        return "Admin";
   };
 
   useEffect(() => {
@@ -325,9 +326,9 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
           >
             <Menu className="w-6 h-6" />
           </button>
-
           {/* Page Title */}
           <h1 className="text-xl font-bold text-white tracking-tight">
+
             {dynamicTitle || getPageTitle(pathname)}
           </h1>
 
@@ -335,6 +336,15 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
           {hideSelector && (
             <>
               <span className="hidden sm:block w-[1px] h-5 bg-white/15" />
+
+              {pathname === "/admin/social-media/new" && (
+                <div className="flex items-center gap-2 text-gray-400">
+                  <Link href="/admin/social-media" className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center hover:text-white" title="Go Back">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                  </Link>
+                  <span className="text-sm font-semibold tracking-tight text-gray-300">Create New Post</span>
+                </div>
+              )}
               {isInvoiceDetail ? (
                 <div className="flex items-center gap-2">
                   <button
@@ -354,14 +364,26 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                     <span>Download PDF</span>
                   </button>
                 </div>
-              ) : isDomains ? (
+              ) : isWebServices ? (
                 <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("domains:open-add"))}
+                  onClick={() => window.dispatchEvent(new CustomEvent("web-services:open-add"))}
                   className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add New</span>
                 </button>
+              ) : isSocialMedia ? (
+                
+  <div className="flex items-center gap-3">
+    {pathname !== "/admin/social-media/new" && (<>
+    <Link href="/admin/social-media/new" className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors active:scale-95 duration-200 cursor-pointer text-xs whitespace-nowrap">
+      <Plus className="w-4 h-4" />
+      Publish New Post
+    </Link>
+    
+    </>)}
+  </div>
+  
               ) : isSaas ? (
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("saas:open-add"))}
@@ -378,14 +400,6 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                 >
                   {saasActionState.loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                   <span>Create Invoice</span>
-                </button>
-              ) : isHosting ? (
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("hosting:open-add"))}
-                  className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add New</span>
                 </button>
               ) : isBookings ? (
                 <div className="flex items-center gap-2">
@@ -488,14 +502,6 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                       Add Client
                     </button>
                   </div>
-                ) : isHosting ? (
-                  <button
-                    onClick={() => window.dispatchEvent(new CustomEvent("hosting:open-add"))}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors active:scale-95 duration-200 cursor-pointer text-xs whitespace-nowrap"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Hosting Order
-                  </button>
                 ) : isReports && reportsActiveTab === "trial_balance" ? (
                   <button
                     type="button"
@@ -676,14 +682,14 @@ const Sidebar = ({
     { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
     { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
     { name: "Bookings", href: "/admin/bookings", icon: Calendar },
+    { name: "Web Services", href: "/admin/web-services", icon: Globe, divider: false },
     { name: "Clients", href: "/admin/clients", icon: Users },
     // { name: "SaaS", href: "/admin/saas", icon: Cloud, divider: true },
-    { name: "Domains", href: "/admin/domains", icon: Globe, divider: true },
-    { name: "Hosting", href: "/admin/hosting", icon: Server },
     { name: "Reports", href: "/admin/reports", icon: BarChart3, divider: true },
     { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
     { name: "Services", href: "/admin/services", icon: Briefcase },
     { name: "Portfolio", href: "/admin/portfolio", icon: Layers },
+    { name: "Social Media", href: "/admin/social-media", icon: Megaphone, divider: false },
   ];
 
   const isActive = (href: string) => {

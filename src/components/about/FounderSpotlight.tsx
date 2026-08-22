@@ -27,7 +27,7 @@ const founders: Founder[] = [
     social: {
       linkedin: "https://www.linkedin.com/in/kavinudigitalworks/",
       instagram: "https://www.instagram.com/skingod.frrr/",
-      email: "kavinu@frametoque.online",
+      email: "kavinu@frametoque.com",
     },
   },
   {
@@ -38,7 +38,7 @@ const founders: Founder[] = [
     social: {
       linkedin: "https://linkedin.com/in/",
       instagram: "https://www.instagram.com/bandara.tharul/",
-      email: "tharul@frametoque.online",
+      email: "tharul@frametoque.com",
     },
   },
 ];

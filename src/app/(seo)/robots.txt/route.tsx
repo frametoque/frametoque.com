@@ -5,7 +5,7 @@ Allow: /
 Allow: /_next/image
 
 
-Sitemap: https://frametoque.online/sitemap
+Sitemap: https://frametoque.com/sitemap
   `.trim();
 
   return new Response(content, {

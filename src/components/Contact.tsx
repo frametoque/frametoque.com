@@ -154,7 +154,7 @@ export default function ContactPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Link
-                href="mailto:info@frametoque.online"
+                href="mailto:info@frametoque.com"
                 className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group"
               >
                 <div className="p-2 rounded-xl bg-brand-500/10 group-hover:bg-brand-500/20 transition-colors">
@@ -165,7 +165,7 @@ export default function ContactPage() {
                     Email
                   </p>
                   <p className="text-sm text-slate-200 group-hover:text-brand-400 transition-colors">
-                    info@frametoque.online
+                    info@frametoque.com
                   </p>
                 </div>
               </Link>

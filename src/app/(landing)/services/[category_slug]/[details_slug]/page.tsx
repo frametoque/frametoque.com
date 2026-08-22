@@ -9,12 +9,12 @@ export const dynamic = "force-dynamic";
 const VALID_CATEGORIES = Object.keys(TABLE_MAP);
 
 function formatImageUrl(imagePath?: string): string {
-  if (!imagePath) return "https://frametoque.online/services/eventpulse.png";
+  if (!imagePath) return "https://frametoque.com/services/eventpulse.png";
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
     return imagePath;
   }
   const cleanPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
-  return `https://frametoque.online${cleanPath}`;
+  return `https://frametoque.com${cleanPath}`;
 }
 
 export async function generateMetadata({
@@ -42,7 +42,7 @@ export async function generateMetadata({
     openGraph: {
       title: `${meta.title} | Frametoque`,
       description,
-      url: `https://frametoque.online/services/${category_slug}/${details_slug}`,
+      url: `https://frametoque.com/services/${category_slug}/${details_slug}`,
       siteName: "Frametoque",
       images: [
         {
@@ -88,12 +88,12 @@ export default async function ServicePage({
     "@type": "Service",
     name: service.title,
     description: service.description,
-    url: `https://frametoque.online/services/${category_slug}/${details_slug}`,
+    url: `https://frametoque.com/services/${category_slug}/${details_slug}`,
     image: imageUrl,
     provider: {
       "@type": "LocalBusiness",
       name: "Frametoque",
-      url: "https://frametoque.online",
+      url: "https://frametoque.com",
       address: {
         "@type": "PostalAddress",
         addressLocality: "Colombo",

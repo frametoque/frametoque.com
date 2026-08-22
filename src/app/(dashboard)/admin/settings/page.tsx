@@ -4,11 +4,11 @@ export const metadata = {
   openGraph: {
     title: "Settings | Frametoque",
     description: "Manage your account settings, profile details, and payment methods all in one place.",
-    url: "https://frametoque.online/dashboard/settings", 
+    url: "https://frametoque.com/dashboard/settings", 
     siteName: "Frametoque",
     images: [
       {
-        url: "https://frametoque.online/og-image.png",
+        url: "https://frametoque.com/og-image.png",
         width: 1200,
         height: 630,
         alt: "Frametoque",

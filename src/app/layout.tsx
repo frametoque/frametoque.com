@@ -32,7 +32,7 @@ const dmMono = DM_Mono({
 // });
 
 export const metadata = {
-  metadataBase: new URL("https://frametoque.online"),
+  metadataBase: new URL("https://frametoque.com"),
 
   title: {
     default: "FrameToque Digital Media"
@@ -64,7 +64,7 @@ export const metadata = {
     description:
       "Turning ideas into powerful digital visuals through web, video, and creative media.",
     keywords: ['FrameToque', 'Digital Media', 'Creative Services', 'Web Development', 'Graphic Design', 'Video Editing', 'Photography', 'Videography'],
-    url: "https://frametoque.online",
+    url: "https://frametoque.com",
     siteName: "Frametoque",
     images: [
       {
@@ -80,7 +80,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "FrameToque Digital Media",
     description: "Turning ideas into powerful digital visuals through web, video, and creative media.",
-    images: ["https://frametoque.online/og-image.png"],
+    images: ["https://frametoque.com/og-image.png"],
   },
 };
 
@@ -94,7 +94,7 @@ const localBusiness = {
     "addressLocality": "Colombo",
     "addressCountry": "LK"
   },
-  "url": "https://frametoque.online",
+  "url": "https://frametoque.com",
   "serviceArea": "Sri Lanka"
 }
 
@@ -110,8 +110,8 @@ export default function RootLayout({ children }) {
               "@context": "https://schema.org",
               "@type": "Organization",
               name: "FrameToque Digital Media",
-              url: "https://frametoque.online",
-              logo: "https://frametoque.online/logos/ft/logo-main.png",
+              url: "https://frametoque.com",
+              logo: "https://frametoque.com/logos/ft/logo-main.png",
               sameAs: [
                 "https://instagram.com/frame.toque",
                 "https://linkedin.com/company/frametoque",

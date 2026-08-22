@@ -5,11 +5,11 @@ export const metadata = {
     openGraph: {
     title: "Terms & Conditions |  | FrameToque Digital Media",
     description: "Read the terms and conditions for using Frametoque's web development, graphic design, and video editing services.",
-    url: "https://frametoque.online/terms", 
+    url: "https://frametoque.com/terms", 
     siteName: "Frametoque",
     images: [
       {
-        url: "https://frametoque.online/og-image.png",
+        url: "https://frametoque.com/og-image.png",
         width: 1200,
         height: 630,
         alt: "Frametoque",
@@ -21,7 +21,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Terms & Conditions | FrameToque Digital Media",
     description: "Read the terms and conditions for using Frametoque's web development, graphic design, and video editing services.",
-    images: ["https://frametoque.online/og-image.png"],
+    images: ["https://frametoque.com/og-image.png"],
   },
 };
 

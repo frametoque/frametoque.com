@@ -5,11 +5,11 @@ export const metadata = {
     openGraph: {
     title: "Privacy Policy | FrameToque Digital Media",
     description: "Read the privacy policy for Frametoque, detailing how we collect and handle user data when submitting projects or using our services.",
-    url: "https://frametoque.online/privacy", 
+    url: "https://frametoque.com/privacy", 
     siteName: "Frametoque",
     images: [
       {
-        url: "https://frametoque.online/og-image.png",
+        url: "https://frametoque.com/og-image.png",
         width: 1200,
         height: 630,
         alt: "Frametoque",
@@ -21,7 +21,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Privacy Policy | FrameToque Digital Media",
     description: "Read the privacy policy for Frametoque, detailing how we collect and handle user data when submitting projects or using our services.",
-    images: ["https://frametoque.online/og-image.png"],
+    images: ["https://frametoque.com/og-image.png"],
   },
 };
 

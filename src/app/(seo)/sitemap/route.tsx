@@ -1,5 +1,5 @@
 export const GET = async () => {
-  const baseUrl = "https://frametoque.online";
+  const baseUrl = "https://frametoque.com";
 
   const staticPages = [
     { slug: "", priority: "1.0", changefreq: "weekly" },

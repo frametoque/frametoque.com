@@ -28,7 +28,7 @@ export default function AboutUs() {
       social: {
         linkedin: "https://www.linkedin.com/in/kavinudigitalworks/",
         facebook: "https://facebook.com/podismoka",
-        instagram: "https://www.instagram.com/skingod.frrr/",
+        instagram: "https://instagram.com/skingod.frrr/",
         email: "kavinu@frametoque.online"
       }
     },
@@ -41,7 +41,7 @@ export default function AboutUs() {
       social: {
 
         linkedin: "https://linkedin.com/in/",
-        facebook: "https://www.facebook.com/profile.php?id=100085498870782",
+        facebook: "https://facebook.com/profile.php?id=100085498870782",
         instagram: "https://instagram.com/bandara.tharul",
         email: "tharul@frametoque.online"
       }
@@ -76,7 +76,7 @@ export default function AboutUs() {
       name: "Dasindu Nimnal",
       role: "Head of Media",
       workingRole: "Photographer",
-      expertise: "Portrait & Commercial photography",
+      expertise: "Portrait photography",
       image: "/images/team/dasindu.jpg",
       social: {
         instagram: "https://www.instagram.com/dazuu.jay/",

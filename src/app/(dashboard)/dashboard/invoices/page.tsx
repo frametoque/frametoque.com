@@ -4,11 +4,11 @@ export const metadata = {
   openGraph: {
     title: "Invoices | FrameToque Digital Media",
     description: "View, track, and manage all your invoices in one place & Get real-time updates.",
-    url: "https://frametoque.online/dashboard/invoices", 
+    url: "https://frametoque.com/dashboard/invoices", 
     siteName: "FrameToque",
     images: [
       {
-        url: "https://frametoque.online/og-image.png",
+        url: "https://frametoque.com/og-image.png",
         width: 1200,
         height: 630,
         alt: "Frametoque",
@@ -20,7 +20,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Projects | FrameToque Digital Media",
     description: "Explore our range of services...",
-    images: ["https://frametoque.online/og-image.png"],
+    images: ["https://frametoque.com/og-image.png"],
   },
 };
 

@@ -37,7 +37,7 @@ We make brands look serious.
 ### 🔗 **Connect With Us**
 
 <p align="center">
-  <a href="https://frametoque.online"><img src="https://img.shields.io/badge/Web-frametoque.online-000000?style=for-the-badge" /></a>
+  <a href="https://frametoque.com"><img src="https://img.shields.io/badge/Web-frametoque.com-000000?style=for-the-badge" /></a>
   <a href="https://t.me/Frametoque"><img src="https://img.shields.io/badge/Telegram-@Frametoque-2CA5E0?style=for-the-badge&logo=telegram" /></a>
 </p>
 

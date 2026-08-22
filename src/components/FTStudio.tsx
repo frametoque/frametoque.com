@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function CollabCompact() {
   return (
     <Link
-      href="https://aistudio.frametoque.online"
+      href="https://aistudio.frametoque.com"
       target="_blank"
       className="block w-full transition-opacity duration-300 hover:opacity-95"
     >

@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
       const formattedTitle = `Ft. - ${b.title}`;
       const isAllDay = !b.start_time;
 
-      const uid = `booking-${b.id}@frametoque.online`;
+      const uid = `booking-${b.id}@frametoque.com`;
       const descriptionLines = [
         `Type: ${typeLabel}`,
         `Status: ${b.status}`,

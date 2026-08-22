@@ -29,11 +29,11 @@ export async function generateMetadata({
     openGraph: {
       title: `${title} | FrameToque Digital Media`,
       description,
-      url: `https://frametoque.online/projects/${slug}`,
+      url: `https://frametoque.com/projects/${slug}`,
       siteName: "Frametoque",
       images: [
         {
-          url: "https://frametoque.online/og-image.png",
+          url: "https://frametoque.com/og-image.png",
           width: 1200,
           height: 630,
           alt: "Frametoque",
@@ -45,7 +45,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: `${title} | FrameToque Digital Media`,
       description,
-      images: ["https://frametoque.online/og-image.png"],
+      images: ["https://frametoque.com/og-image.png"],
     },
   };
 }

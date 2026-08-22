@@ -12,7 +12,7 @@ function getGroqClient(): Groq {
   return _groq;
 }
 
-const host = typeof window === 'undefined' ? 'frametoque.online' : window.location.host;
+const host = typeof window === 'undefined' ? 'frametoque.com' : window.location.host;
 const protocol = 'https';
 const DOMAIN = `${protocol}://${host}`;
 
@@ -300,7 +300,7 @@ async function crawlWebsite() {
       try {
         const response = await fetch(url, {
           headers: {
-            'User-Agent': 'Frametoque-AI-Crawler/1.0 (+https://frametoque.online)',
+            'User-Agent': 'Frametoque-AI-Crawler/1.0 (+https://frametoque.com)',
           },
         });
 
