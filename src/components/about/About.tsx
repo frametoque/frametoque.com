@@ -29,7 +29,7 @@ export default function AboutUs() {
         linkedin: "https://www.linkedin.com/in/kavinudigitalworks/",
         facebook: "https://facebook.com/podismoka",
         instagram: "https://instagram.com/skingod.frrr/",
-        email: "kavinu@frametoque.online"
+        email: "kavinu@frametoque.com"
       }
     },
     {
@@ -43,7 +43,7 @@ export default function AboutUs() {
         linkedin: "https://linkedin.com/in/",
         facebook: "https://facebook.com/profile.php?id=100085498870782",
         instagram: "https://instagram.com/bandara.tharul",
-        email: "tharul@frametoque.online"
+        email: "tharul@frametoque.com"
       }
     },
     {
@@ -56,7 +56,7 @@ export default function AboutUs() {
         linkedin: "https://linkedin.com/in/itsnelitha",
         facebook: "https://facebook.com/itsnelitha",
         github: "https://github.com/itsnelitha",
-        email: "nelitha@frametoque.online"
+        email: "nelitha@frametoque.com"
       }
     },
     {
@@ -69,7 +69,7 @@ export default function AboutUs() {
         instagram: "https://www.instagram.com/sadaka.wijerathna/",
         facebook: "https://www.facebook.com/profile.php?id=61563544419694",
         github: "https://github.com/Sadaka-Wijerathna",
-        email: "sadaka@frametoque.online"
+        email: "sadaka@frametoque.com"
       }
     },
     {
@@ -81,7 +81,7 @@ export default function AboutUs() {
       social: {
         instagram: "https://www.instagram.com/dazuu.jay/",
         facebook: "https://www.facebook.com/profile.php?id=100082846762501",
-        email: "dasindu@frametoque.online"
+        email: "dasindu@frametoque.com"
       }
     },
   ];   
