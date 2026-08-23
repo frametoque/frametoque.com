@@ -1,0 +1,16 @@
+name: Social Publisher Cron
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions UI
+
+jobs:
+  trigger-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Publisher Endpoint
+        run: |
+          curl -i -X GET "${{ secrets.PRODUCTION_URL }}/api/cron/social-publisher" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

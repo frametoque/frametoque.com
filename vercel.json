@@ -4,11 +4,5 @@
       "source": "/stats/:match*",
       "destination": "https://umami-liart-omega.vercel.app/:match*"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron/social-publisher",
-      "schedule": "*/5 * * * *"
-    }
   ]
 }
