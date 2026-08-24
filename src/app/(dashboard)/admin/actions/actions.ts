@@ -152,6 +152,8 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
   ]);
 
   const totalAssets = accounts.filter((a: any) => a.isCompanyAccount).reduce((sum: number, a: any) => sum + (a.currentBalance || 0), 0);
+  const totalAfterDebts = accounts.reduce((sum: number, a: any) => sum + (a.isCompanyAccount ? (a.currentBalance || 0) : (a.currentBalance > 0 ? a.currentBalance : 0)), 0);
+  const totalCapital = accounts.reduce((sum: number, a: any) => sum + (!a.isCompanyAccount && a.currentBalance < 0 ? Math.abs(a.currentBalance) : 0), 0);
 
   const totalIncome = incomes[0]?.total ? parseFloat(incomes[0].total) : 0;
   const totalExpenses = expenses[0]?.total ? parseFloat(expenses[0].total) : 0;
@@ -194,6 +196,8 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     totalIncome,
     totalExpenses,
     totalAssets,
+    totalAfterDebts,
+    totalCapital,
     netProfit,
     incomeBreakdown,
     totalClients: parseInt(clientsCountRows[0]?.count || 0, 10),
@@ -348,7 +352,7 @@ export async function createIncome(data: any) {
     }
   }
 
-  await logSystemAction(`Created income: Recorded $${data.amount} for "${data.description}"`);
+  await logSystemAction(`Created income: Recorded LKR ${data.amount} for "${data.description}"`);
 }
 
 export async function createClient(data: { name: string; email: string; company?: string | null; phone?: string | null; address?: string | null; legal_name?: string | null }): Promise<string> {
@@ -424,7 +428,7 @@ export async function updateIncome(id: number, data: any) {
     }
   }
 
-  await logSystemAction(`Updated income ID ${id}: recorded $${data.amount} for "${data.description}"`);
+  await logSystemAction(`Updated income ID ${id}: recorded LKR ${data.amount} for "${data.description}"`);
 }
 
 export async function deleteIncome(id: number) {
@@ -500,7 +504,7 @@ export async function deleteIncome(id: number) {
 
   // 3. Delete the income record
   await sql`DELETE FROM admin_incomes WHERE id = ${id}`;
-  await logSystemAction(`Deleted income record: "$${incomeAmount}" for "${incomeDesc}" (ID: ${id})`);
+  await logSystemAction(`Deleted income record: "LKR ${incomeAmount}" for "${incomeDesc}" (ID: ${id})`);
 }
 
 // -- EXPENSES --
@@ -560,7 +564,7 @@ export async function createExpense(data: any) {
       VALUES (${data.description}, ${data.amount}, ${data.category}, ${data.frequency}, ${nextDate.toISOString().split('T')[0]}, ${data.paymentMethod}, 'active')
     `;
   }
-  await logSystemAction(`Created expense: Recorded $${data.amount} for "${data.description}"`);
+  await logSystemAction(`Created expense: Recorded LKR ${data.amount} for "${data.description}"`);
 }
 
 export async function updateExpense(id: number, data: any) {
@@ -574,7 +578,7 @@ export async function updateExpense(id: number, data: any) {
     SET date = ${data.date}, amount = ${data.amount}, description = ${data.description}, category = ${data.category}, payment_method = ${data.paymentMethod}, receipt_url = ${data.receiptUrl || null}, account_id = ${accountId}
     WHERE id = ${id}
   `;
-  await logSystemAction(`Updated expense ID ${id}: recorded $${data.amount} for "${data.description}"`);
+  await logSystemAction(`Updated expense ID ${id}: recorded LKR ${data.amount} for "${data.description}"`);
 }
 
 export async function deleteExpense(id: number) {
@@ -589,7 +593,7 @@ export async function deleteExpense(id: number) {
   } catch (e) {}
 
   await sql`DELETE FROM admin_expenses WHERE id = ${id}`;
-  await logSystemAction(`Deleted expense record: "$${expAmount}" for "${expDesc}" (ID: ${id})`);
+  await logSystemAction(`Deleted expense record: "LKR ${expAmount}" for "${expDesc}" (ID: ${id})`);
 }
 
 async function ensureScheduledExpensesTable() {
@@ -1204,7 +1208,7 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
     }
   }
 
-  await logSystemAction(`Created invoice: "${invoiceData.projectName}" (${invoiceId}) for $${invoiceData.total}`);
+  await logSystemAction(`Created invoice: "${invoiceData.projectName}" (${invoiceId}) for LKR ${invoiceData.total}`);
   return { success: true, invoiceId };
 }
 
@@ -1414,7 +1418,7 @@ export async function createQuotation(data: any, lineItems: any[] = []) {
       `;
     }
   }
-  await logSystemAction(`Created quotation for "${data.description || 'Quotation'}" (ID: ${quotationId}) for $${data.amount}`);
+  await logSystemAction(`Created quotation for "${data.description || 'Quotation'}" (ID: ${quotationId}) for LKR ${data.amount}`);
 }
 
 // ─── REPLACE updateQuotation in actions.ts ───────────────────────────────────
@@ -1771,7 +1775,7 @@ export async function recordInvoicePayment(
       WHERE invoice_id = ${invoiceId}
     `;
 
-    await logSystemAction(`Recorded payment of $${paidAmount} via ${paymentMethod} for invoice ${invoiceId}`);
+    await logSystemAction(`Recorded payment of LKR ${paidAmount} via ${paymentMethod} for invoice ${invoiceId}`);
 
     if (newStatus === "fully paid") {
       await reactivateDomainAfterRenewalPayment(invoiceId);
@@ -2085,7 +2089,7 @@ export async function adminUploadPaymentSlip(invoiceId: string, slipBase64: stri
       WHERE invoice_id = ${invoiceId} AND receipt_url IS NULL
     `;
 
-    await logSystemAction(`Admin uploaded and auto-approved payment slip for invoice ${invoiceId}: $${amount}`);
+    await logSystemAction(`Admin uploaded and auto-approved payment slip for invoice ${invoiceId}: LKR ${amount}`);
     return { success: true };
   } catch (err: any) {
     console.error("Failed to upload admin payment slip:", err);
@@ -2119,7 +2123,7 @@ export async function submitPaymentSlip(invoiceId: string, amount: number, slipB
       VALUES (${invoiceId}, ${slipUrl}, ${amount}, 'pending')
     `;
 
-    await logSystemAction(`Payment slip submitted for invoice ${invoiceId}: $${amount}`);
+    await logSystemAction(`Payment slip submitted for invoice ${invoiceId}: LKR ${amount}`);
     return { success: true };
   } catch (err: any) {
     console.error("Failed to submit payment slip:", err);
@@ -2156,9 +2160,9 @@ export async function reviewPaymentSlip(id: number, approved: boolean, reviewerI
         `;
       }
 
-      await logSystemAction(`Approved payment slip for invoice ${invoiceId}: $${amount}`);
+      await logSystemAction(`Approved payment slip for invoice ${invoiceId}: LKR ${amount}`);
     } else {
-      await logSystemAction(`Declined payment slip for invoice ${invoiceId}: $${amount}`);
+      await logSystemAction(`Declined payment slip for invoice ${invoiceId}: LKR ${amount}`);
     }
 
     await sql`
@@ -2175,4 +2179,63 @@ export async function reviewPaymentSlip(id: number, approved: boolean, reviewerI
     console.error("Failed to review payment slip:", err);
     return { success: false, error: err.message };
   }
+}
+
+export async function getExpenseBreakdownByMode(mode: string) {
+  let start = '1970-01-01';
+  let end = '2099-12-31';
+
+  const now = new Date();
+  if (mode === 'Current Month') {
+    start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+  } else if (mode === 'Last Month') {
+    start = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
+    end = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+  } else if (mode === 'Current Year') {
+    start = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
+    end = new Date(now.getFullYear(), 11, 31).toISOString().split('T')[0];
+  } else if (mode === 'Last Year') {
+    start = new Date(now.getFullYear() - 1, 0, 1).toISOString().split('T')[0];
+    end = new Date(now.getFullYear() - 1, 11, 31).toISOString().split('T')[0];
+  } // Lifetime is default
+
+  const rows = await sql`
+    SELECT 
+      category as name,
+      SUM(amount) as value
+    FROM admin_expenses
+    WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+    GROUP BY category
+    ORDER BY value DESC
+  `;
+
+  const total = rows.reduce((sum, r) => sum + parseFloat(r.value), 0);
+  return rows.map(r => {
+    const val = parseFloat(r.value);
+    return {
+      name: r.name || 'Other',
+      value: val,
+      percentage: total > 0 ? parseFloat(((val / total) * 100).toFixed(1)) : 0
+    };
+  });
+}
+
+export async function getTopClients() {
+  // Lifetime top clients by revenue
+  const rows = await sql`
+    SELECT 
+      c.full_name as name,
+      SUM(i.amount) as value
+    FROM admin_incomes i
+    LEFT JOIN admin_clients c ON i.client_id = c.id
+    WHERE c.full_name IS NOT NULL
+    GROUP BY c.id, c.full_name
+    ORDER BY value DESC
+    LIMIT 6
+  `;
+  return rows.map(r => ({
+    name: r.name,
+    value: parseFloat(r.value)
+  }));
 }

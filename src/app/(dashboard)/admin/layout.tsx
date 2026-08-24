@@ -23,7 +23,7 @@ import {
   Wallet,
   Receipt,
   FileText,
-  Users,
+  Users, Package,
   BarChart3,
   LogOut,
   X,
@@ -163,6 +163,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isAnalytics = pathname === "/admin/analytics";
   const isBookings = pathname === "/admin/bookings";
   const isClients = pathname === "/admin/clients";
+  const isInventory = pathname === "/admin/inventory";
   const isInvoiceDetail = pathname.startsWith("/admin/invoice/");
   const isServices = pathname === "/admin/services";
   const isPortfolio = pathname === "/admin/portfolio";
@@ -222,6 +223,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path.startsWith("/admin/analytics")) return "Analytics";
     if (path.startsWith("/admin/bookings")) return "Bookings";
     if (path === "/admin/clients") return "Clients";
+    if (path === "/admin/inventory") return "Inventory";
     if (path.startsWith("/admin/clients/")) return "Client Details";
     if (path.startsWith("/admin/invoice/")) {
       const parts = path.split("/");
@@ -471,7 +473,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                   <span className="sm:hidden">Add</span>
                 </button>
               </div>
-                ) : isClients ? (
+                ) : (isClients || isInventory) ? (
                   <div className="flex items-center gap-3">
                     <div className="relative w-32 sm:w-64">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -482,17 +484,17 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                         onChange={(e) => {
                           const val = e.target.value;
                           setHeaderSearchTerm(val);
-                          window.dispatchEvent(new CustomEvent("clients:search", { detail: val }));
+                          window.dispatchEvent(new CustomEvent(isInventory ? "inventory:search" : "clients:search", { detail: val }));
                         }}
                         className="w-full bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm text-white"
                       />
                     </div>
                     <button
-                      onClick={() => window.dispatchEvent(new CustomEvent("clients:open-new"))}
+                      onClick={() => window.dispatchEvent(new CustomEvent(isInventory ? "inventory:open-new" : "clients:open-new"))}
                       className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors active:scale-95 duration-200 cursor-pointer text-xs whitespace-nowrap"
                     >
                       <Plus className="w-4 h-4" />
-                      Add Client
+                      {isInventory ? "Add Item" : "Add Client"}
                     </button>
                   </div>
                 ) : isReports && reportsActiveTab === "trial_balance" ? (
@@ -678,6 +680,7 @@ const Sidebar = ({
     { name: "Bookings", href: "/admin/bookings", icon: Calendar },
     { name: "Web Services", href: "/admin/web-services", icon: Globe, divider: false },
     { name: "Clients", href: "/admin/clients", icon: Users },
+    { name: "Inventory", href: "/admin/inventory", icon: Package },
     { name: "Reports", href: "/admin/reports", icon: BarChart3, divider: true },
     { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
     { name: "Services", href: "/admin/services", icon: Briefcase },

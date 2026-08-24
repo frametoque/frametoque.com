@@ -6,6 +6,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { getDashboardData } from "../actions/actions";
 import { getAnalyticsData } from "../actions/analytics";
 import { getCalendarEvents } from "../actions/bookings";
+import ExpenseBreakdownWidget from "../components/ExpenseBreakdownWidget";
+import TopClientsWidget from "../components/TopClientsWidget";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
@@ -139,7 +141,7 @@ export default function DashboardPage() {
   }
 
   const stats = [
-    { label: "Total Assets", value: formatLKR(data.totalAssets || 0), icon: Landmark, color: "text-blue-400", bg: "bg-blue-400/10" },
+    { label: "Available Funds", value: formatLKR(data.totalAssets || 0), subtext: (data.totalAfterDebts !== undefined && data.totalAfterDebts > data.totalAssets) ? `After Debts: ${formatLKR(data.totalAfterDebts)}` : (data.totalCapital > 0 ? `Total Capital: ${formatLKR(data.totalCapital)}` : undefined), icon: Landmark, color: "text-blue-400", bg: "bg-blue-400/10" },
     { label: "Total Income", value: formatLKR(data.totalIncome), icon: Wallet, color: "text-green-400", bg: "bg-green-400/10" },
     { label: "Total Expenses", value: formatLKR(data.totalExpenses), icon: Receipt, color: "text-red-400", bg: "bg-red-400/10" },
     { label: "Net Profit", value: formatLKR(data.netProfit), icon: TrendingUp, color: "text-brand-400", bg: "bg-brand-400/10" },
@@ -167,6 +169,7 @@ export default function DashboardPage() {
               <p className="text-2xl font-semibold">
                 <AnimatedNumber value={stat.value} />
               </p>
+              {stat.subtext && <p className="text-xs text-gray-500 mt-1">{stat.subtext}</p>}
             </div>
           </div>
         ))}
@@ -185,6 +188,45 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {upcomingEvents.length > 0 && (
+        <div className="mb-6 bg-brand-500/10 border border-brand-500/20 rounded-3xl p-6">
+          <h2 className="text-lg font-semibold mb-4 text-brand-400 flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Upcoming Events
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {upcomingEvents.map((ev: any) => {
+              const isTask = ev.event_type === 'task_reminder';
+              let pillStyle = "bg-brand-500/10 text-brand-400 border-brand-500/20";
+              let label = "Upcoming";
+              
+              const today = new Date(); today.setHours(0,0,0,0);
+              const eventDate = new Date(ev.date); eventDate.setHours(0,0,0,0);
+              const diffDays = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+              
+              if (diffDays === 0) { pillStyle = "bg-green-500/10 text-green-400 border-green-500/20"; label = "Today"; }
+              else if (diffDays === 1) { pillStyle = "bg-amber-500/10 text-amber-400 border-amber-500/20"; label = "Tomorrow"; }
+              else if (diffDays > 1) { label = diffDays + " days left"; }
+              else { pillStyle = "bg-gray-500/10 text-gray-400 border-gray-500/20"; label = "Past"; }
+
+              return (
+                <div key={ev.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold text-white truncate max-w-[150px]">{ev.title}</span>
+                      <span className={"text-[9px] font-bold px-2 py-0.5 rounded-full border tracking-wide uppercase shrink-0 " + pillStyle}>{label}</span>
+                    </div>
+                    <div className="text-[11px] text-gray-300">
+                      {ev.date} {ev.time} {ev.location && <span className="text-brand-400 ml-1">{ev.location}</span>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Current Month Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -295,111 +337,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Upcoming Events */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
-          <h2 className="text-xl font-semibold mb-6">Upcoming Events</h2>
-          <div className="space-y-3">
-            {upcomingEvents.map((ev: any) => {
-              const isTask = ev.event_type === 'task_reminder';
-              let iconColor = isTask ? "text-blue-400 bg-blue-400/10" : "text-brand-400 bg-brand-400/10";
-              let Icon = isTask ? CheckSquare : Calendar;
-              if (ev.type === 'project') {
-                iconColor = "text-blue-400 bg-blue-400/10";
-                Icon = Folder;
-              } else if (ev.type === 'agreement') {
-                iconColor = "text-emerald-400 bg-emerald-400/10";
-                Icon = FileText;
-              } else if (ev.type === 'invoice') {
-                iconColor = "text-amber-400 bg-amber-400/10";
-                Icon = FileText;
-              }
-
-              // Find matching weather forecast
-              const matchForecast = ev.location ? bookingForecasts.find(
-                (bf: any) => bf.title === ev.title && bf.location === ev.location
-              ) : null;
-
-              return (
-                <div key={ev.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                  <div className="min-w-0 flex-1 pr-4">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-white truncate max-w-[120px] sm:max-w-xs">{ev.title}</p>
-                        {(() => {
-                          const today = new Date();
-                          today.setHours(0,0,0,0);
-                          const eventDate = new Date(ev.date);
-                          eventDate.setHours(0,0,0,0);
-                          const diffTime = eventDate.getTime() - today.getTime();
-                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                          let pillStyle = "bg-brand-500/10 text-brand-400 border-brand-500/20";
-                          let label = `${diffDays} days left`;
-                          if (diffDays === 0) {
-                            pillStyle = "bg-green-500/10 text-green-400 border-green-500/20";
-                            label = "Today";
-                          } else if (diffDays === 1) {
-                            pillStyle = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-                            label = "Tomorrow";
-                          } else if (diffDays < 0) {
-                            pillStyle = "bg-gray-500/10 text-gray-400 border-gray-500/20";
-                            label = "Past";
-                          }
-                          return (
-                            <>
-                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border tracking-wide uppercase shrink-0 ${pillStyle}`}>
-                                {label}
-                              </span>
-                              <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-gray-400 shrink-0">
-                                {isTask ? 'reminder' : ev.type}
-                              </span>
-                            </>
-                          );
-                        })()}
-                      </div>
-                      
-                      <div className="flex flex-col gap-1 mt-1.5 text-[11px] text-gray-300">
-                        {ev.location && (
-                          <div className="flex items-start gap-1.5">
-                            <span className="font-medium text-brand-400 break-words flex-1 leading-normal">{ev.location}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-gray-500">Date:</span>
-                          <span className="font-medium text-white">{ev.date}</span>
-                        </div>
-                        {ev.time && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-gray-500">Time:</span>
-                            <span className="font-medium text-white">{ev.time}</span>
-                          </div>
-                        )}
-                        
-                      </div>
-                  </div>
-
-                  {/* Weather forecast info inside event card */}
-                  {matchForecast && matchForecast.weather && (
-                    <div className="flex items-center gap-2 shrink-0 border-l border-white/5 pl-4 ml-2">
-                      <div className="text-right">
-                        <div className="flex items-center gap-0.5 justify-end text-sm font-bold text-blue-400 mb-0.5">
-                          <Droplets className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                          <span>{matchForecast.weather.precipitation}</span>
-                        </div>
-                        <p className="text-[9px] font-semibold text-gray-400">{matchForecast.weather.tempMax}</p>
-                      </div>
-                      <img 
-                        src={matchForecast.weather.iconUrl} 
-                        alt={matchForecast.weather.condition} 
-                        className="w-8 h-8 object-contain shrink-0" 
-                        title={matchForecast.weather.condition}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            {upcomingEvents.length === 0 && <p className="text-gray-500 text-sm">No upcoming events scheduled.</p>}
-          </div>
-        </div>
+        {/* Expense Breakdown Widget */}
+        <ExpenseBreakdownWidget initialData={data.expenseBreakdown} />
       </div>
 
       {/* Net Income & Recent Invoices Grid */}
@@ -570,89 +509,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Expense Breakdown donut chart */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex flex-col justify-between">
-          <div>
-            <h2 className="text-xl font-semibold mb-6">Expense Breakdown</h2>
-            
-            {data.expenseBreakdown.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center py-8">No expenses recorded for 2026.</p>
-            ) : (
-              <>
-                <div className="relative h-[200px] w-full flex items-center justify-center mb-6">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={data.expenseBreakdown}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={2}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {data.expenseBreakdown.map((entry: any, index: number) => {
-                          const categoryColors: Record<string, string> = {
-                            "Stock Purchase": "#1d4ed8",
-                            "Marketing": "#0ea5e9",
-                            "Equipment": "#3b82f6",
-                            "Software": "#2563eb",
-                            "Freelancers": "#60a5fa",
-                            "Transport": "#1e40af",
-                            "Other": "#1e3a8a",
-                          };
-                          const defaultColors = ["#2563eb", "#0ea5e9", "#3b82f6", "#1d4ed8", "#60a5fa", "#1e3a8a"];
-                          const color = categoryColors[entry.name] || defaultColors[index % defaultColors.length];
-                          return <Cell key={`cell-${index}`} fill={color} />;
-                        })}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{ backgroundColor: 'rgba(10,10,15,0.9)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px' }}
-                        itemStyle={{ color: '#fff' }}
-                        formatter={(value: any) => formatLKR(value)}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute flex flex-col items-center justify-center">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Total</span>
-                    <span className="text-sm font-bold text-white">
-                      {formatLKR(data.expenseBreakdown.reduce((sum: number, r: any) => sum + r.value, 0))}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {data.expenseBreakdown.map((entry: any, index: number) => {
-                    const categoryColors: Record<string, string> = {
-                      "Stock Purchase": "#1d4ed8",
-                      "Marketing": "#0ea5e9",
-                      "Equipment": "#3b82f6",
-                      "Software": "#2563eb",
-                      "Freelancers": "#60a5fa",
-                      "Transport": "#1e40af",
-                      "Other": "#1e3a8a",
-                    };
-                    const defaultColors = ["#2563eb", "#0ea5e9", "#3b82f6", "#1d4ed8", "#60a5fa", "#1e3a8a"];
-                    const color = categoryColors[entry.name] || defaultColors[index % defaultColors.length];
-                    return (
-                      <div key={index} className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="w-3.5 h-3.5 rounded-full inline-block shrink-0" style={{ backgroundColor: color }} />
-                          <span className="text-gray-300 font-medium">{entry.name}</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="text-gray-500 text-xs">{entry.percentage}%</span>
-                          <span className="text-white font-semibold">{formatLKR(entry.value)}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        {/* Top Clients Widget */}
+        <TopClientsWidget />
       </div>
     </div>
   );

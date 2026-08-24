@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Wallet, Landmark, RefreshCw } from "lucide-react";
-import { getAccounts, createAccount, updateAccount, deleteAccount, transferCash } from "../actions/accounts";
+import { Plus, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Wallet, Landmark, RefreshCw, Star } from "lucide-react";
+import { getAccounts, createAccount, updateAccount, deleteAccount, transferCash, setDefaultAccount } from "../actions/accounts";
 import AnimatedNumber from "../components/AnimatedNumber";
 
 const formatLKR = (amount: number) => {
@@ -44,10 +44,11 @@ export default function AccountsPage() {
   }, []);
 
     const handleSave = async () => {
+    const payload = { ...formData, initialBalance: parseFloat(formData.initialBalance as any) || 0 };
     if (editingId) {
-      await updateAccount(editingId, formData);
+      await updateAccount(editingId, payload);
     } else {
-      await createAccount(formData);
+      await createAccount(payload);
     }
     setShowCreate(false);
     setEditingId(null);
@@ -56,11 +57,17 @@ export default function AccountsPage() {
   };
 
   const handleTransfer = async () => {
-    if (transferData.sourceAccountId && transferData.destinationAccountId && transferData.amount > 0) {
-      await transferCash(transferData);
+    const amt = parseFloat(transferData.amount as any) || 0;
+    if (transferData.sourceAccountId && transferData.destinationAccountId && amt !== 0) {
+      await transferCash({ ...transferData, amount: amt });
       setShowTransfer(false);
       load();
     }
+  };
+
+  const handleSetDefault = async (id: number) => {
+    await setDefaultAccount(id);
+    load();
   };
 
     const handleEdit = (acc: any) => {
@@ -84,7 +91,7 @@ export default function AccountsPage() {
     }
   };
 
-  const totalAssets = accounts.filter(a => a.isCompanyAccount).reduce((sum, a) => sum + a.currentBalance, 0);
+  const totalAssets = accounts.reduce((sum, a) => sum + (a.isCompanyAccount ? (a.currentBalance || 0) : (a.currentBalance > 0 ? a.currentBalance : 0)), 0);
   const totalBank = accounts.filter(a => a.type === "Bank Account").reduce((sum, a) => sum + a.currentBalance, 0);
   const totalCash = accounts.filter(a => a.type === "Cash Account" && a.isCompanyAccount).reduce((sum, a) => sum + a.currentBalance, 0);
 
@@ -163,16 +170,25 @@ export default function AccountsPage() {
                   {acc.type === 'Bank Account' ? <Landmark className="w-5 h-5"/> : <Wallet className="w-5 h-5"/>}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">{acc.name}</h3>
+                  <h3 className="font-semibold text-lg">
+                    {acc.name}
+                  </h3>
                   <div className="flex items-center gap-2 mt-0.5">
                     <p className="text-xs text-gray-400">{acc.type}</p>
                     {acc.isCompanyAccount === false && (
-                      <span className="px-1.5 py-0.5 text-[10px] uppercase font-bold bg-white/10 text-gray-300 rounded-md">Outer Account</span>
+                      <span className="px-1.5 py-0.5 text-[10px] uppercase font-bold bg-white/10 text-gray-300 rounded-md">
+                        {acc.currentBalance < 0 ? "Capital" : "Debt"}
+                      </span>
                     )}
                   </div>
                 </div>
               </div>
               <div className="flex gap-2">
+                {acc.isCompanyAccount && (
+                  <button onClick={() => handleSetDefault(acc.id)} className={`transition-colors ${acc.isDefault ? "text-yellow-400" : "text-gray-400 hover:text-yellow-400"}`} title="Set as Default">
+                    <Star className="w-4 h-4" fill={acc.isDefault ? "currentColor" : "none"} />
+                  </button>
+                )}
                 <button onClick={() => handleEdit(acc)} className="text-gray-400 hover:text-white transition-colors"><Edit2 className="w-4 h-4" /></button>
                 <button onClick={() => handleDelete(acc.id)} className="text-gray-400 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
               </div>
@@ -193,7 +209,7 @@ export default function AccountsPage() {
               </div>
               <div className="text-right">
                 <p className="text-xs text-gray-400 mb-1">Current Balance</p>
-                <p className={`text-xl font-semibold ${acc.currentBalance < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                <p className={`text-xl font-semibold ${acc.isCompanyAccount ? (acc.currentBalance < 0 ? 'text-red-400' : 'text-green-400') : (acc.currentBalance > 0 ? 'text-red-400' : acc.currentBalance < 0 ? 'text-green-400' : 'text-green-400')}`}>
                   {formatLKR(acc.currentBalance)}
                 </p>
               </div>
@@ -244,7 +260,7 @@ export default function AccountsPage() {
               )}
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Initial Balance (LKR)</label>
-                <input type="number" value={formData.initialBalance} onChange={e => setFormData({...formData, initialBalance: parseFloat(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5" />
+                <input type="number" value={Number.isNaN(Number(formData.initialBalance)) ? formData.initialBalance : formData.initialBalance} onChange={e => setFormData({...formData, initialBalance: e.target.value === "" ? "" : e.target.value as any})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5" />
               </div>
             </div>
             <div className="flex gap-4 mt-8">
@@ -280,7 +296,7 @@ export default function AccountsPage() {
               </div>
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Amount (LKR)</label>
-                <input type="number" value={transferData.amount} onChange={e => setTransferData({...transferData, amount: parseFloat(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5" />
+                <input type="number" value={Number.isNaN(Number(transferData.amount)) ? transferData.amount : transferData.amount} onChange={e => setTransferData({...transferData, amount: e.target.value === "" ? "" : e.target.value as any})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5" />
               </div>
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Description</label>

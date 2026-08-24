@@ -383,7 +383,7 @@ export default function ExpensesPage() {
               description: '',
               paymentMethod: 'Corporate Card',
               receiptUrl: '',
-              accountId: '',
+              accountId: accounts.find((a: any) => a.isDefault)?.id?.toString() || accounts.find((a: any) => a.isCompanyAccount)?.id?.toString() || '',
               isScheduled: false,
               frequency: 'monthly'
             });
@@ -521,7 +521,7 @@ export default function ExpensesPage() {
                 <label className="text-sm text-gray-400">Description</label>
                 <input type="text" placeholder="What was this expense for?" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-sm text-gray-400">Category</label>
                   <CategoryPicker 
@@ -537,6 +537,14 @@ export default function ExpensesPage() {
                     <option className="bg-black">Bank Transfer</option>
                     <option className="bg-black">Personal Card</option>
                     <option className="bg-black">Cash</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm text-gray-400">Source Account</label>
+                  <select value={formData.accountId} onChange={e => setFormData({ ...formData, accountId: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
+                    <option value="" className="bg-black">No Account (Unlinked)</option>
+                    {accounts.map(a => <option key={a.id} value={a.id} className="bg-black">{a.name} ({formatLKR(a.currentBalance || 0)})</option>)}
                   </select>
                 </div>
               </div>

@@ -9,7 +9,7 @@ export async function getAccounts(startDate?: string, endDate?: string) {
   const end = endDate || '2099-12-31';
 
   const rows = await sql`
-    SELECT id, name, type, bank_name, account_number, branch, initial_balance, created_at, is_company_account
+    SELECT id, name, type, bank_name, account_number, branch, initial_balance, created_at, is_company_account, is_default
     FROM admin_accounts
     ORDER BY created_at ASC
   `;
@@ -24,6 +24,7 @@ export async function getAccounts(startDate?: string, endDate?: string) {
     initialBalance: parseFloat(r.initial_balance || "0"),
     createdAt: r.created_at,
     isCompanyAccount: r.is_company_account !== false,
+    isDefault: r.is_default === true,
     currentBalance: parseFloat(r.initial_balance || "0"),
     periodInflow: 0,
     periodOutflow: 0,
@@ -102,8 +103,12 @@ export async function getLedger(accountId: number | null, startDate?: string, en
   if (accountId) {
     transactions = await sql`
       WITH unified AS (
-        SELECT date, description, 'Income' as ref_type, id as ref_id, account_id, NULL::integer as related_account_id, amount as debit, 0 as credit
-        FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+        SELECT i.date, 
+               CASE WHEN c.full_name IS NOT NULL THEN COALESCE(i.description, 'Income') || ' - ' || c.full_name ELSE COALESCE(i.description, 'Income') END as description, 
+               'Income' as ref_type, i.id as ref_id, i.account_id, NULL::integer as related_account_id, i.amount as debit, 0 as credit
+        FROM admin_incomes i
+        LEFT JOIN admin_clients c ON i.client_id = c.id
+        WHERE i.date >= ${start}::timestamp AND i.date <= (${end} || ' 23:59:59.999')::timestamp
         UNION ALL
         SELECT date, description, 'Expense' as ref_type, id as ref_id, account_id, NULL::integer as related_account_id, 0 as debit, amount as credit
         FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
@@ -119,8 +124,12 @@ export async function getLedger(accountId: number | null, startDate?: string, en
   } else {
     transactions = await sql`
       WITH unified AS (
-        SELECT date, description, 'Income' as ref_type, id as ref_id, account_id, NULL::integer as related_account_id, amount as debit, 0 as credit
-        FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
+        SELECT i.date, 
+               CASE WHEN c.full_name IS NOT NULL THEN COALESCE(i.description, 'Income') || ' - ' || c.full_name ELSE COALESCE(i.description, 'Income') END as description, 
+               'Income' as ref_type, i.id as ref_id, i.account_id, NULL::integer as related_account_id, i.amount as debit, 0 as credit
+        FROM admin_incomes i
+        LEFT JOIN admin_clients c ON i.client_id = c.id
+        WHERE i.date >= ${start}::timestamp AND i.date <= (${end} || ' 23:59:59.999')::timestamp
         UNION ALL
         SELECT date, description, 'Expense' as ref_type, id as ref_id, account_id, NULL::integer as related_account_id, 0 as debit, amount as credit
         FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
@@ -145,4 +154,10 @@ export async function getLedger(accountId: number | null, startDate?: string, en
     debit: parseFloat(t.debit || "0"),
     credit: parseFloat(t.credit || "0"),
   }));
+}
+
+export async function setDefaultAccount(id: number) {
+  await sql`UPDATE admin_accounts SET is_default = FALSE`;
+  await sql`UPDATE admin_accounts SET is_default = TRUE WHERE id = ${id}`;
+  await logSystemAction(`Set account ID ${id} as default`);
 }

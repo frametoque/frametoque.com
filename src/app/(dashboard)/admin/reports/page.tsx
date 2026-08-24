@@ -387,7 +387,7 @@ export default function ReportsPage() {
               </div>
               {ledgerTab === "account" && (
                 <select value={selectedAccountId || ""} onChange={e => setSelectedAccountId(parseInt(e.target.value))} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none">
-                  {accounts.map(a => <option key={a.id} value={a.id}>{a.name} ({a.type.split(' ')[0]})</option>)}
+                  {accounts.map(a => <option key={a.id} value={a.id}>{a.isCompanyAccount === false ? `${a.currentBalance < 0 ? 'Capital' : 'Debt'} ${a.name.replace(/Debts?\s*/i, '')}` : a.name} ({a.type.split(' ')[0]})</option>)}
                 </select>
               )}
             </div>
@@ -603,27 +603,26 @@ export default function ReportsPage() {
               <tbody className="divide-y divide-white/5 text-sm">
                 {/* Assets Section */}
                 <tr className="bg-white/5 font-bold">
-                  <td colSpan={3} className="py-3 px-4 text-white text-xs uppercase tracking-wider">Assets</td>
+                  <td colSpan={3} className="py-3 px-4 text-white text-xs uppercase tracking-wider">Accounts (Assets & Liabilities)</td>
                 </tr>
-                <tr className="hover:bg-white/5 transition-colors">
-                  <td className="py-3.5 px-6 text-gray-300 pl-8">Primary Bank Account</td>
-                  <td className="py-3.5 px-4 text-right text-white font-medium">
-                    {data.netProfit >= 0 ? formatLKR(data.netProfit) : "—"}
-                  </td>
-                  <td className="py-3.5 px-4 text-right text-gray-400 font-medium">
-                    {data.netProfit < 0 ? formatLKR(Math.abs(data.netProfit)) : "—"}
-                  </td>
-                </tr>
-                {/* Total Assets calculation */}
-                <tr className="font-semibold text-gray-300">
-                  <td className="py-3.5 px-6 pl-8">Total Assets</td>
-                  <td className="py-3.5 px-4 text-right text-white font-bold">
-                    {data.netProfit >= 0 ? formatLKR(data.netProfit) : "—"}
-                  </td>
-                  <td className="py-3.5 px-4 text-right text-white font-bold">
-                    {data.netProfit < 0 ? formatLKR(Math.abs(data.netProfit)) : "—"}
-                  </td>
-                </tr>
+                {accounts.map(acc => {
+                  if (acc.currentBalance === 0) return null;
+                  return (
+                    <tr key={acc.id} className="hover:bg-white/5 transition-colors">
+                      <td className="py-3.5 px-6 text-gray-300 pl-8">
+                        {acc.isCompanyAccount === false 
+                          ? `${acc.currentBalance < 0 ? 'Capital' : 'Debt'} ${acc.name.replace(/Debts?\s*/i, '')}` 
+                          : acc.name}
+                      </td>
+                      <td className="py-3.5 px-4 text-right text-white font-medium">
+                        {acc.currentBalance > 0 ? formatLKR(acc.currentBalance) : "—"}
+                      </td>
+                      <td className="py-3.5 px-4 text-right text-gray-400 font-medium">
+                        {acc.currentBalance < 0 ? formatLKR(Math.abs(acc.currentBalance)) : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
 
                 {/* Income Section */}
                 <tr className="bg-white/5 font-bold">
@@ -646,7 +645,12 @@ export default function ReportsPage() {
                 <tr className="font-semibold text-gray-300">
                   <td className="py-3.5 px-6 pl-8">Total Income</td>
                   <td className="py-3.5 px-4 text-right text-gray-500 font-medium">—</td>
-                  <td className="py-3.5 px-4 text-right text-white font-bold">{formatLKR(data.totalIncome)}</td>
+                  <td className="py-3.5 px-4 text-right text-white font-bold">
+                    {(() => {
+                      const totalInit = accounts.reduce((sum, a) => sum + (a.initialBalance || 0), 0);
+                      return formatLKR(data.totalIncome + (totalInit > 0 ? totalInit : 0));
+                    })()}
+                  </td>
                 </tr>
 
                 {/* Expenses Section */}
@@ -669,14 +673,23 @@ export default function ReportsPage() {
                 )}
                 <tr className="font-semibold text-gray-300">
                   <td className="py-3.5 px-6 pl-8">Total Expenses</td>
-                  <td className="py-3.5 px-4 text-right text-white font-bold">{formatLKR(data.totalExpenses)}</td>
+                  <td className="py-3.5 px-4 text-right text-white font-bold">
+                    {(() => {
+                      const totalInit = accounts.reduce((sum, a) => sum + (a.initialBalance || 0), 0);
+                      return formatLKR(data.totalExpenses + (totalInit < 0 ? Math.abs(totalInit) : 0));
+                    })()}
+                  </td>
                   <td className="py-3.5 px-4 text-right text-gray-500 font-medium">—</td>
                 </tr>
 
                 {/* Grand Totals */}
                 {(() => {
-                  const grandTotalDebit = (data.netProfit >= 0 ? data.netProfit : 0) + data.totalExpenses;
-                  const grandTotalCredit = (data.netProfit < 0 ? Math.abs(data.netProfit) : 0) + data.totalIncome;
+                  const totalAccountsDebit = accounts.reduce((sum, a) => sum + (a.currentBalance > 0 ? a.currentBalance : 0), 0);
+                  const totalAccountsCredit = accounts.reduce((sum, a) => sum + (a.currentBalance < 0 ? Math.abs(a.currentBalance) : 0), 0);
+                  const totalInit = accounts.reduce((sum, a) => sum + (a.initialBalance || 0), 0);
+                  
+                  const grandTotalDebit = totalAccountsDebit + data.totalExpenses + (totalInit < 0 ? Math.abs(totalInit) : 0);
+                  const grandTotalCredit = totalAccountsCredit + data.totalIncome + (totalInit > 0 ? totalInit : 0);
                   return (
                     <tr className="bg-white/10 font-bold border-t-2 border-white/20">
                       <td className="py-4 px-4 text-white uppercase tracking-wider">Total for all accounts</td>

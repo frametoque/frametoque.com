@@ -197,7 +197,7 @@ export default function NewInvoicePage() {
         <div className="space-y-8">
 
           {/* Client Details */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
+          <div className="relative z-50 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
             <h2 className="text-xl font-semibold mb-4">Client Details</h2>
 
             <div className="space-y-1">

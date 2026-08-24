@@ -183,8 +183,9 @@ export default function IncomePage() {
 
   const openNew = () => {
     setEditingId(null);
+    const defaultAcc = bankAccounts.find((a: any) => a.isDefault) || bankAccounts.find((a: any) => a.isCompanyAccount);
     setFormData({ date: new Date().toISOString().split('T')[0], amount: '', clientId: '', description: '', paymentMethod: 'Bank Transfer',
-    accountId: '', invoiceId: '', receiptUrl: '' });
+    accountId: defaultAcc ? String(defaultAcc.id) : '', invoiceId: '', receiptUrl: '' });
     setSelectedCategories([]);
     setNewClientName(''); setNewClientEmail(''); setNewClientCompany(''); setNewClientPhone('');
     setReceiptFile(null);
@@ -608,8 +609,8 @@ export default function IncomePage() {
                   <label className="text-sm text-gray-400">Account</label>
                   <select value={formData.accountId} onChange={e => setFormData({ ...formData, accountId: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
-                    <option value="" className="bg-black">Default / Auto</option>
-                    {bankAccounts.map(a => <option key={a.id} value={a.id} className="bg-black">{a.name}</option>)}
+                    <option value="" className="bg-black">No Account (Unlinked)</option>
+                    {bankAccounts.map(a => <option key={a.id} value={a.id} className="bg-black">{a.name} ({formatLKR(a.currentBalance || 0)})</option>)}
                   </select>
                 </div>
               </div>
