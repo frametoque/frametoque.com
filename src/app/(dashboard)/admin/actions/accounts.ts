@@ -64,7 +64,7 @@ export async function getAccounts(startDate?: string, endDate?: string) {
   return accounts;
 }
 
-export async function createAccount(data: { name: string; type: string; bankName?: string; accountNumber?: string; branch?: string; initialBalance: number }) {
+export async function createAccount(data: { name: string; type: string; bankName?: string; accountNumber?: string; branch?: string; initialBalance: number; isCompanyAccount?: boolean }) {
   await sql`
     INSERT INTO admin_accounts (name, type, bank_name, account_number, branch, initial_balance, is_company_account)
     VALUES (${data.name}, ${data.type}, ${data.bankName || null}, ${data.accountNumber || null}, ${data.branch || null}, ${data.initialBalance || 0}, ${data.isCompanyAccount !== false})
