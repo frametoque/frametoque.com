@@ -13,6 +13,7 @@ export default function FloatingButtons() {
   const hideAll = ['/login', '/register', '/404', ].includes(pathname) || pathname.startsWith('/projects/');
 
   const showCurrency = pathname === '/services' || pathname.startsWith('/services/') || pathname === '/cart' || pathname.startsWith('/cart/');
+  const showAIChatbot = !pathname.startsWith('/admin');
 
   if (hideAll) return null;
 
@@ -22,7 +23,7 @@ export default function FloatingButtons() {
       style={{ visibility: mounted ? 'visible' : 'hidden' }}
     >
       {showCurrency && <CurrencyToggle />}
-      <AIChatbot />
+      {showAIChatbot && <AIChatbot />}
     </div>
   );
 }

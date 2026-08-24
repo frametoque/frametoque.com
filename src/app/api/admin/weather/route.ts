@@ -167,6 +167,7 @@ export async function GET() {
           title: b.title,
           location: b.location,
           date: displayDate,
+          rawDate: dateStr,
           startTime: startTimeFormatted || null,
           weather: forecast
         });

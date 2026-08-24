@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Search, Plus, Edit2, Trash2, X, Loader2, Package, CheckCircle2, Box, Info } from "lucide-react";
-import { getInventoryItems, createInventoryItem, updateInventoryItem, deleteInventoryItem } from "../actions/inventory";
+import { Search, Plus, Edit2, Trash2, X, Loader2, Package, CheckCircle2, Box, Info, Download, FileText, Eye, Upload, Link2 } from "lucide-react";
+import { getInventoryItems, createInventoryItem, updateInventoryItem, deleteInventoryItem, uploadInventoryDocument, getExpensesForLinking } from "../actions/inventory";
 import AnimatedNumber from "../components/AnimatedNumber";
 
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount || 0);
 
-const emptyForm = { item_name: '', category: '', serial_number: '', quantity: 1, status: 'Available', purchase_date: '', purchase_price: '', notes: '' };
+const emptyForm = { item_name: '', category: '', serial_number: '', quantity: 1, status: 'Available', purchase_date: '', purchase_price: '', notes: '', warranty_letter_url: '', expense_id: '' };
 
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,6 +16,10 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
+  const [viewingItem, setViewingItem] = useState<any | null>(null);
+  const [viewingItemTab, setViewingItemTab] = useState<'invoice' | 'warranty'>('invoice');
+  const [expenses, setExpenses] = useState<any[]>([]);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,8 +29,9 @@ export default function InventoryPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await getInventoryItems();
+      const [res, exp] = await Promise.all([getInventoryItems(), getExpensesForLinking()]);
       setData(res);
+      setExpenses(exp);
     } catch (e) {
       console.error("Failed to load inventory", e);
     } finally {
@@ -39,8 +44,8 @@ export default function InventoryPage() {
     async function load() {
       setLoading(true);
       try {
-        const res = await getInventoryItems();
-        if (!cancelled) setData(res);
+        const [res, exp] = await Promise.all([getInventoryItems(), getExpensesForLinking()]);
+        if (!cancelled) { setData(res); setExpenses(exp); }
       } catch (e) {
         console.error("Failed to load inventory", e);
       } finally {
@@ -86,9 +91,30 @@ export default function InventoryPage() {
       status: item.status || 'Available',
       purchase_date: item.purchase_date ? new Date(item.purchase_date).toISOString().split('T')[0] : '',
       purchase_price: item.purchase_price || '',
-      notes: item.notes || ''
+      notes: item.notes || '',
+      warranty_letter_url: item.warranty_letter_url || '',
+      expense_id: item.expense_id ? String(item.expense_id) : ''
     });
     setIsModalOpen(true);
+  };
+
+  const [uploadingWarranty, setUploadingWarranty] = useState(false);
+
+  const handleUploadWarranty = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingWarranty(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const url = await uploadInventoryDocument(fd);
+      setFormData(prev => ({ ...prev, warranty_letter_url: url }));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to upload warranty letter');
+    } finally {
+      setUploadingWarranty(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -212,7 +238,7 @@ export default function InventoryPage() {
           </div>
           <div>
             <p className="text-gray-400 text-sm font-medium">Est. Value</p>
-            <p className="text-2xl font-bold mt-1 truncate max-w-[120px]">
+            <p className="text-2xl font-bold mt-1">
               {formatLKR(totalValue)}
             </p>
           </div>
@@ -239,6 +265,7 @@ export default function InventoryPage() {
                   <th className="text-left py-4 px-6 font-medium text-gray-400 text-sm">Category</th>
                   <th className="text-left py-4 px-6 font-medium text-gray-400 text-sm">Status</th>
                   <th className="text-left py-4 px-6 font-medium text-gray-400 text-sm hidden sm:table-cell">Purchase Info</th>
+                  <th className="text-left py-4 px-6 font-medium text-gray-400 text-sm hidden lg:table-cell">Expense</th>
                   <th className="text-right py-4 px-6 font-medium text-gray-400 text-sm">Actions</th>
                 </tr>
               </thead>
@@ -249,6 +276,7 @@ export default function InventoryPage() {
                   if (item.status === 'Maintenance') statusColor = "bg-amber-500/10 text-amber-400 border-amber-500/20";
                   if (item.status === 'Lost') statusColor = "bg-red-500/10 text-red-400 border-red-500/20";
                   if (item.status === 'Broken') statusColor = "bg-red-500/10 text-red-400 border-red-500/20";
+                  const hasDocs = item.expense_receipt_url || item.warranty_letter_url;
 
                   return (
                     <tr key={item.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
@@ -257,9 +285,7 @@ export default function InventoryPage() {
                         {item.serial_number && <div className="text-xs text-gray-400 mt-1">SN: {item.serial_number}</div>}
                         {item.quantity > 1 && <div className="text-xs text-gray-400 mt-0.5">Qty: {item.quantity}</div>}
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-300">
-                        {item.category}
-                      </td>
+                      <td className="py-4 px-6 text-sm text-gray-300">{item.category}</td>
                       <td className="py-4 px-6">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColor}`}>
                           {item.status}
@@ -269,8 +295,31 @@ export default function InventoryPage() {
                         {item.purchase_date && <div>{new Date(item.purchase_date).toLocaleDateString()}</div>}
                         {item.purchase_price && <div className="text-gray-300">{formatLKR(item.purchase_price)}</div>}
                       </td>
+                      <td className="py-4 px-6 hidden lg:table-cell">
+                        {item.expense_id ? (
+                          <div className="flex flex-col gap-1">
+                            {item.expense_desc && (
+                              <span className="text-xs text-gray-400 max-w-[160px] truncate">{item.expense_desc}</span>
+                            )}
+                            <span className="inline-flex w-fit items-center px-2 py-0.5 rounded-md text-[10px] font-semibold font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                              EXP-{item.expense_id}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-600">—</span>
+                        )}
+                      </td>
                       <td className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          {hasDocs && (
+                            <button
+                              onClick={() => { setViewingItem(item); setViewingItemTab(item.expense_receipt_url ? 'invoice' : 'warranty'); }}
+                              className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl transition-colors"
+                              title="View Details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => openEdit(item)}
                             className="p-2 hover:bg-brand-500/20 text-gray-400 hover:text-brand-400 rounded-xl transition-colors"
@@ -408,6 +457,66 @@ export default function InventoryPage() {
                 />
               </div>
 
+              <div className="border-t border-white/10 pt-4 mt-2 space-y-3">
+                {/* Linked Expense */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Link to Expense</label>
+                  <select
+                    value={formData.expense_id}
+                    onChange={e => setFormData(prev => ({ ...prev, expense_id: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500"
+                  >
+                    <option value="">— None —</option>
+                    {expenses.map(exp => (
+                      <option key={exp.id} value={String(exp.id)}>
+                        {exp.date} · {exp.description} · {formatLKR(exp.amount)}
+                      </option>
+                    ))}
+                  </select>
+                  {formData.expense_id && (() => {
+                    const linked = expenses.find(e => String(e.id) === formData.expense_id);
+                    return linked?.receipt_url ? (
+                      <div className="mt-2 flex items-center gap-2">
+                        <button type="button" onClick={() => setViewingDoc({ url: linked.receipt_url, title: 'Purchase Invoice' })} className="flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 transition-colors">
+                          <Eye className="w-3.5 h-3.5" /> View Invoice
+                        </button>
+                        <a href={linked.receipt_url} download target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white transition-colors" title="Download Invoice">
+                          <Download className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    ) : linked ? (
+                      <p className="mt-1 text-xs text-gray-500">No invoice uploaded on this expense.</p>
+                    ) : null;
+                  })()}
+                </div>
+
+                {/* Warranty Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Warranty Letter</label>
+                  {formData.warranty_letter_url ? (
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+                      <FileText className="w-4 h-4 text-green-400 shrink-0" />
+                      <span className="text-xs text-gray-300 truncate flex-1">Uploaded</span>
+                      <button type="button" onClick={() => setViewingDoc({ url: formData.warranty_letter_url, title: 'Warranty Letter' })} className="p-1 text-gray-400 hover:text-white transition-colors" title="View">
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                      <a href={formData.warranty_letter_url} download target="_blank" rel="noopener noreferrer" className="p-1 text-gray-400 hover:text-white transition-colors" title="Download">
+                        <Download className="w-3.5 h-3.5" />
+                      </a>
+                      <button type="button" onClick={() => setFormData(prev => ({ ...prev, warranty_letter_url: '' }))} className="p-1 text-gray-400 hover:text-red-400 transition-colors" title="Remove">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors text-gray-400">
+                      {uploadingWarranty ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      {uploadingWarranty ? 'Uploading...' : 'Upload Warranty Letter'}
+                      <input type="file" className="hidden" accept="image/*,application/pdf" onChange={handleUploadWarranty} disabled={uploadingWarranty} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
               <div className="pt-4 flex justify-end gap-3 shrink-0">
                 <button
                   type="button"
@@ -426,6 +535,148 @@ export default function InventoryPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Item Detail Modal */}
+      {viewingItem && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setViewingItem(null)}>
+          <div className="bg-[#0c0c0e] border border-white/10 rounded-3xl w-full max-w-5xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col md:flex-row" onClick={e => e.stopPropagation()}>
+            
+            {/* Left Panel — Item Info */}
+            <div className="w-full md:w-72 shrink-0 bg-[#111111] border-b md:border-b-0 md:border-r border-white/10 p-6 flex flex-col gap-5 overflow-y-auto">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white leading-tight">{viewingItem.item_name}</h2>
+                  <p className="text-sm text-gray-400 mt-0.5">Item Information</p>
+                </div>
+                <button onClick={() => setViewingItem(null)} className="p-1.5 text-gray-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors shrink-0 mt-0.5">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {viewingItem.category && (
+                  <div>
+                    <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-0.5">Category</p>
+                    <p className="text-sm text-white">{viewingItem.category}</p>
+                  </div>
+                )}
+                {viewingItem.serial_number && (
+                  <div>
+                    <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-0.5">Serial Number</p>
+                    <p className="text-sm text-white font-mono">{viewingItem.serial_number}</p>
+                  </div>
+                )}
+                {viewingItem.status && (
+                  <div>
+                    <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-0.5">Status</p>
+                    <p className="text-sm text-white">{viewingItem.status}</p>
+                  </div>
+                )}
+                {viewingItem.purchase_price && (
+                  <div>
+                    <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-0.5">Purchase Cost</p>
+                    <p className="text-2xl font-bold text-brand-400">{formatLKR(viewingItem.purchase_price)}</p>
+                  </div>
+                )}
+                {viewingItem.purchase_date && (
+                  <div>
+                    <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-0.5">Purchase Date</p>
+                    <p className="text-sm text-white">{new Date(viewingItem.purchase_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                  </div>
+                )}
+                {viewingItem.expense_desc && (
+                  <div>
+                    <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-0.5">Linked Expense</p>
+                    <p className="text-sm text-white">{viewingItem.expense_desc}</p>
+                    {viewingItem.expense_amount && <p className="text-xs text-gray-400 mt-0.5">{formatLKR(viewingItem.expense_amount)}</p>}
+                  </div>
+                )}
+                {viewingItem.notes && (
+                  <div>
+                    <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-0.5">Notes</p>
+                    <p className="text-sm text-gray-300 whitespace-pre-line">{viewingItem.notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Panel — Tabs for Invoice / Warranty */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Tabs */}
+              <div className="flex items-center gap-1 px-6 pt-5 border-b border-white/10 shrink-0">
+                {viewingItem.expense_receipt_url && (
+                  <button
+                    onClick={() => setViewingItemTab('invoice')}
+                    className={`px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${viewingItemTab === 'invoice' ? 'border-brand-500 text-white' : 'border-transparent text-gray-400 hover:text-white'}`}
+                  >
+                    Purchase Invoice
+                  </button>
+                )}
+                {viewingItem.warranty_letter_url && (
+                  <button
+                    onClick={() => setViewingItemTab('warranty')}
+                    className={`px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${viewingItemTab === 'warranty' ? 'border-green-500 text-white' : 'border-transparent text-gray-400 hover:text-white'}`}
+                  >
+                    Warranty Letter
+                  </button>
+                )}
+                <div className="flex-1" />
+                {/* Download button for active tab */}
+                {viewingItemTab === 'invoice' && viewingItem.expense_receipt_url && (
+                  <a href={viewingItem.expense_receipt_url} download target="_blank" rel="noopener noreferrer" className="mb-1 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors text-gray-300">
+                    <Download className="w-3.5 h-3.5" /> Download
+                  </a>
+                )}
+                {viewingItemTab === 'warranty' && viewingItem.warranty_letter_url && (
+                  <a href={viewingItem.warranty_letter_url} download target="_blank" rel="noopener noreferrer" className="mb-1 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors text-gray-300">
+                    <Download className="w-3.5 h-3.5" /> Download
+                  </a>
+                )}
+              </div>
+
+              {/* Document viewer */}
+              <div className="flex-1 overflow-auto bg-black/40 p-4 flex items-center justify-center">
+                {viewingItemTab === 'invoice' && viewingItem.expense_receipt_url && (
+                  viewingItem.expense_receipt_url.match(/\.pdf/i)
+                    ? <iframe src={viewingItem.expense_receipt_url} className="w-full h-full min-h-[60vh] rounded-xl border border-white/10" title="Purchase Invoice" />
+                    : <img src={viewingItem.expense_receipt_url} alt="Purchase Invoice" className="max-w-full max-h-[70vh] object-contain rounded-xl" />
+                )}
+                {viewingItemTab === 'warranty' && viewingItem.warranty_letter_url && (
+                  viewingItem.warranty_letter_url.match(/\.pdf/i)
+                    ? <iframe src={viewingItem.warranty_letter_url} className="w-full h-full min-h-[60vh] rounded-xl border border-white/10" title="Warranty Letter" />
+                    : <img src={viewingItem.warranty_letter_url} alt="Warranty Letter" className="max-w-full max-h-[70vh] object-contain rounded-xl" />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Viewer Modal */}
+      {viewingDoc && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setViewingDoc(null)}>
+          <div className="bg-[#111111] border border-white/10 rounded-3xl w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
+              <h3 className="text-sm font-semibold truncate">{viewingDoc.title}</h3>
+              <div className="flex items-center gap-2">
+                <a href={viewingDoc.url} download target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors" title="Download">
+                  <Download className="w-5 h-5" />
+                </a>
+                <button onClick={() => setViewingDoc(null)} className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-black/50">
+              {viewingDoc.url.match(/\.pdf/i) ? (
+                <iframe src={viewingDoc.url} className="w-full h-[75vh] rounded-xl border border-white/10" title={viewingDoc.title} />
+              ) : (
+                <img src={viewingDoc.url} alt={viewingDoc.title} className="max-w-full max-h-[75vh] object-contain rounded-xl" />
+              )}
+            </div>
           </div>
         </div>
       )}

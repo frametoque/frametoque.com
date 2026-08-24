@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Wallet, Landmark, RefreshCw, Star } from "lucide-react";
-import { getAccounts, createAccount, updateAccount, deleteAccount, transferCash, setDefaultAccount } from "../actions/accounts";
+import { Plus, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Wallet, Landmark, RefreshCw, Star, Undo2 } from "lucide-react";
+import { getAccounts, createAccount, updateAccount, deleteAccount, transferCash, setDefaultAccount, getTransfers, updateTransfer, deleteTransfer } from "../actions/accounts";
 import AnimatedNumber from "../components/AnimatedNumber";
 
 const formatLKR = (amount: number) => {
@@ -11,10 +11,12 @@ const formatLKR = (amount: number) => {
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
+  const [transfers, setTransfers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingTransferId, setEditingTransferId] = useState<number | null>(null);
   
   const [formData, setFormData] = useState({ name: "", type: "Cash Account", bankName: "", accountNumber: "", branch: "", initialBalance: 0, isCompanyAccount: true });
   const [transferData, setTransferData] = useState({ date: new Date().toISOString().split("T")[0], sourceAccountId: 0, destinationAccountId: 0, amount: 0, description: "" });
@@ -22,8 +24,9 @@ export default function AccountsPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const accs = await getAccounts();
+      const [accs, trans] = await Promise.all([getAccounts(), getTransfers()]);
       setAccounts(accs);
+      setTransfers(trans);
     } catch (e) {
       console.error(e);
     } finally {
@@ -59,8 +62,33 @@ export default function AccountsPage() {
   const handleTransfer = async () => {
     const amt = parseFloat(transferData.amount as any) || 0;
     if (transferData.sourceAccountId && transferData.destinationAccountId && amt !== 0) {
-      await transferCash({ ...transferData, amount: amt });
+      if (editingTransferId) {
+        await updateTransfer(editingTransferId, { ...transferData, amount: amt });
+      } else {
+        await transferCash({ ...transferData, amount: amt });
+      }
       setShowTransfer(false);
+      setEditingTransferId(null);
+      setTransferData({ date: new Date().toISOString().split("T")[0], sourceAccountId: 0, destinationAccountId: 0, amount: 0, description: "" });
+      load();
+    }
+  };
+
+  const handleEditTransfer = (tr: any) => {
+    setEditingTransferId(tr.id);
+    setTransferData({
+      date: tr.date,
+      sourceAccountId: tr.sourceAccountId,
+      destinationAccountId: tr.destinationAccountId,
+      amount: tr.amount,
+      description: tr.description
+    });
+    setShowTransfer(true);
+  };
+
+  const handleDeleteTransfer = async (id: number) => {
+    if (confirm("Are you sure you want to undo this transfer?")) {
+      await deleteTransfer(id);
       load();
     }
   };
@@ -218,6 +246,49 @@ export default function AccountsPage() {
         ))}
       </div>
 
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+        <h2 className="text-lg font-semibold mb-6">Cash Transfer History</h2>
+        {transfers.length === 0 ? (
+          <p className="text-sm text-gray-500">No transfers recorded yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-gray-400 uppercase bg-white/5 border-b border-white/10">
+                <tr>
+                  <th className="px-4 py-3 font-medium rounded-tl-xl">Date</th>
+                  <th className="px-4 py-3 font-medium">Source Account</th>
+                  <th className="px-4 py-3 font-medium">Destination Account</th>
+                  <th className="px-4 py-3 font-medium">Description</th>
+                  <th className="px-4 py-3 font-medium text-right">Amount</th>
+                  <th className="px-4 py-3 font-medium text-right rounded-tr-xl">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {transfers.map((tr) => (
+                  <tr key={tr.id} className="hover:bg-white/5 transition-colors">
+                    <td className="px-4 py-3 whitespace-nowrap">{tr.date}</td>
+                    <td className="px-4 py-3 text-red-400">{tr.sourceAccountName}</td>
+                    <td className="px-4 py-3 text-green-400">{tr.destinationAccountName}</td>
+                    <td className="px-4 py-3 text-gray-400">{tr.description || "-"}</td>
+                    <td className="px-4 py-3 text-right font-medium">{formatLKR(tr.amount)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-3">
+                        <button onClick={() => handleEditTransfer(tr)} className="text-gray-400 hover:text-white transition-colors" title="Edit Transfer">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDeleteTransfer(tr.id)} className="text-gray-400 hover:text-red-400 transition-colors" title="Undo Transfer">
+                          <Undo2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {showCreate && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#1a1a1a] border border-white/10 rounded-3xl p-6 w-full max-w-md">
@@ -304,8 +375,8 @@ export default function AccountsPage() {
               </div>
             </div>
             <div className="flex gap-4 mt-8">
-              <button onClick={() => setShowTransfer(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 transition-colors">Cancel</button>
-              <button onClick={handleTransfer} className="flex-1 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white transition-colors">Transfer Funds</button>
+              <button onClick={() => { setShowTransfer(false); setEditingTransferId(null); setTransferData({ date: new Date().toISOString().split("T")[0], sourceAccountId: 0, destinationAccountId: 0, amount: 0, description: "" }); }} className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 transition-colors">Cancel</button>
+              <button onClick={handleTransfer} className="flex-1 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white transition-colors">{editingTransferId ? "Save Changes" : "Transfer Funds"}</button>
             </div>
           </div>
         </div>

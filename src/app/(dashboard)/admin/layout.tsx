@@ -14,7 +14,7 @@ import {
 import DateRangeSelector from "./components/DateRangeSelector";
 import { AdminDateRangeProvider, useAdminDateRange } from "./context/AdminDateRangeContext";
 import { AnalyticsDateRangeProvider, useAnalyticsDateRange } from "./context/AnalyticsDateRangeContext";
-
+import { getCalendarEvents } from "./actions/bookings";
 import {
   Bell,
   Menu,
@@ -23,7 +23,7 @@ import {
   Wallet,
   Receipt,
   FileText,
-  Users, Package,
+  Users, Package, Droplets,
   BarChart3,
   LogOut,
   X,
@@ -180,6 +180,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const [activeVisitors, setActiveVisitors] = useState(0);
   const [weather, setWeather] = useState<{ city: string; temp: string; condition: string; iconUrl: string } | null>(null);
   const [bookingForecasts, setBookingForecasts] = useState<any[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [headerSearchTerm, setHeaderSearchTerm] = useState("");
   const isReports = pathname === "/admin/reports";
   const [reportsActiveTab, setReportsActiveTab] = useState("overview");
@@ -284,6 +285,26 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
 
     const fetchWeatherData = async () => {
       try {
+        const eventsRes = await getCalendarEvents().catch(() => []);
+        const now = new Date();
+        const upcoming = eventsRes
+          .filter((e: any) => {
+            if (e.type !== 'booking' || e.status === 'cancelled') return false;
+            const eventDateTime = new Date(`${e.date}T${e.time || '00:00'}:00`);
+            if (e.time) {
+              return eventDateTime >= now;
+            }
+            const endOfDay = new Date(`${e.date}T23:59:59`);
+            return endOfDay >= now;
+          })
+          .sort((a: any, b: any) => {
+            const dateA = `${a.date}T${a.time || '00:00'}:00`;
+            const dateB = `${b.date}T${b.time || '00:00'}:00`;
+            return dateA.localeCompare(dateB);
+          })
+          .slice(0, 5);
+        setUpcomingEvents(upcoming);
+
         const res = await fetch("/api/admin/weather");
         if (res.ok) {
           const data = await res.json();
@@ -543,101 +564,92 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
 
           {/* Current Time */}
           <div className="flex items-center gap-1.5 text-gray-300">
-            <Clock className="w-3.5 h-3.5 text-gray-500" />
-            <span className="font-medium tabular-nums">{currentTime || "Loading..."}</span>
+            <Clock className="w-4 h-4 text-gray-400" />
+            <span className="font-medium tabular-nums text-sm">{currentTime || "Loading..."}</span>
           </div>
 
           <span className="w-1 h-1 rounded-full bg-white/20" />
 
           {/* Current Date (showing Day Name e.g. Fri, Sat, Sun) */}
           <div className="flex items-center gap-1.5 text-gray-300">
-            <Calendar className="w-3.5 h-3.5 text-gray-500" />
-            <span className="font-medium">{currentDate || "Loading..."}</span>
+            <Calendar className="w-4 h-4 text-gray-400" />
+            <span className="font-medium text-sm">{currentDate || "Loading..."}</span>
           </div>
 
-          {weather && (
-            <>
-              <span className="w-1 h-1 rounded-full bg-white/20" />
-              <div className="relative group flex items-center gap-1.5 text-gray-300 py-1">
-                <span className="text-gray-400">{weather.city}:</span>
-                <span className="font-semibold text-white/90">{weather.temp}</span>
-                {weather.iconUrl && (
-                  <img 
-                    src={weather.iconUrl} 
-                    alt={weather.condition} 
-                    className="w-5 h-5 object-contain flex-shrink-0"
-                    title={weather.condition}
-                  />
-                )}
+          <span className="w-1 h-1 rounded-full bg-white/20" />
 
-                {/* Custom Dialog Box on Hover */}
-                {bookingForecasts && bookingForecasts.length > 0 && (
-                  <div className="absolute right-0 top-full mt-3 w-96 bg-[#0c0c0e] border border-white/10 rounded-3xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 invisible scale-95 group-hover:opacity-100 group-hover:visible group-hover:scale-100 transition-all duration-300 z-50 pointer-events-none group-hover:pointer-events-auto before:absolute before:-top-3 before:left-0 before:right-0 before:h-3">
-                    {/* Header */}
-                    <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
-                      <div>
-                        <h4 className="text-sm font-bold text-white">Upcoming Bookings Weather</h4>
-                        <p className="text-[10px] text-gray-400 mt-0.5">Predicted weather at the venues</p>
-                      </div>
-                      <span className="px-2.5 py-0.5 text-[9px] font-semibold bg-brand-500/10 border border-brand-500/20 text-brand-400 rounded-full">
-                        3 Days Forecast
-                      </span>
-                    </div>
+          {/* Upcoming Events Dropdown */}
+          <div className="relative group flex items-center">
+            <button className="relative p-2 hover:bg-white/10 rounded-full transition-colors">
+              <Bell className="w-4 h-4 text-gray-300 group-hover:text-white" />
+              {upcomingEvents.length > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-brand-500 rounded-full border border-black"></span>
+              )}
+            </button>
 
-                    {/* Booking list */}
-                    <div className="space-y-4">
-                      {bookingForecasts.map((bf, idx) => (
-                        <div key={idx} className="bg-white/5 border border-white/5 rounded-2xl p-3.5 hover:bg-white/10 transition-colors">
-                          <div className="flex justify-between items-start gap-3">
-                            <div className="min-w-0 flex-1">
-                              <h5 className="text-xs font-bold text-white truncate">{bf.title}</h5>
-                              <p className="text-[10px] text-gray-400 truncate mt-0.5">{bf.location}</p>
-                              <div className="flex items-center gap-1.5 mt-2">
-                                <span className="px-2 py-0.5 rounded bg-white/5 text-[9px] font-medium text-gray-300">
-                                  {bf.date}
-                                </span>
-                                {bf.startTime && (
-                                  <span className="px-2 py-0.5 rounded bg-white/5 text-[9px] font-medium text-gray-300">
-                                    {bf.startTime}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            
-                            {bf.weather ? (
-                              <div className="flex flex-col items-end shrink-0">
-                                <div className="flex items-center gap-1">
-                                  <img src={bf.weather.iconUrl} alt={bf.weather.condition} className="w-8 h-8 object-contain" />
-                                  <span className="text-sm font-bold text-white">{bf.weather.tempMax}</span>
-                                </div>
-                                <div className="text-right mt-1">
-                                  <div className="flex items-center gap-1 justify-end">
-                                    <span className="text-[9px] text-gray-400">Precipitation:</span>
-                                    <span className="text-[9px] font-semibold text-blue-400">{bf.weather.precipitation}</span>
-                                  </div>
-                                  {/* Precipitation progress bar */}
-                                  <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden mt-1 ml-auto">
-                                    <div 
-                                      className="h-full bg-blue-400 rounded-full" 
-                                      style={{ width: bf.weather.precipitation }}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            ) : (
-                              <span className="text-[10px] text-gray-500 self-center shrink-0">No forecast data</span>
-                            )}
-                          </div>
+            <div className="absolute right-0 top-full mt-2 w-80 bg-[#0c0c0e] border border-white/10 rounded-3xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 invisible scale-95 group-hover:opacity-100 group-hover:visible group-hover:scale-100 transition-all duration-300 z-50 pointer-events-none group-hover:pointer-events-auto before:absolute before:-top-3 before:left-0 before:right-0 before:h-3">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
+                <h4 className="text-sm font-bold text-white">Upcoming Events</h4>
+                <span className="px-2 py-0.5 text-[10px] font-semibold bg-brand-500/10 border border-brand-500/20 text-brand-400 rounded-full">
+                  {upcomingEvents.length} Pending
+                </span>
+              </div>
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                {upcomingEvents.length === 0 ? (
+                  <p className="text-xs text-gray-500 text-center py-4">No upcoming events</p>
+                ) : (
+                  upcomingEvents.map((ev: any) => {
+                    let pillStyle = "bg-brand-500/10 text-brand-400 border-brand-500/20";
+                    let label = "Upcoming";
+                    const today = new Date(); today.setHours(0,0,0,0);
+                    const eventDate = new Date(ev.date); eventDate.setHours(0,0,0,0);
+                    const diffDays = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 0) { pillStyle = "bg-green-500/10 text-green-400 border-green-500/20"; label = "Today"; }
+                    else if (diffDays === 1) { pillStyle = "bg-amber-500/10 text-amber-400 border-amber-500/20"; label = "Tomorrow"; }
+                    else if (diffDays > 1) { label = diffDays + " days left"; }
+                    else { pillStyle = "bg-gray-500/10 text-gray-400 border-gray-500/20"; label = "Past"; }
+
+                    return (
+                      <div key={ev.id} className="bg-white/5 border border-white/5 rounded-2xl p-3 hover:bg-white/10 transition-colors">
+                        <div className="flex justify-between items-start gap-2 mb-1">
+                          <span className="font-semibold text-white text-xs truncate">{ev.title}</span>
+                          <span className={"text-[9px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 " + pillStyle}>{label}</span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                        <div className="flex justify-between items-end">
+                          <div className="text-[10px] text-gray-400 flex flex-col gap-0.5">
+                            <span>{ev.date} {ev.time}</span>
+                            {ev.location && <span className="text-brand-400 truncate max-w-[150px]">{ev.location}</span>}
+                          </div>
+                          {(() => {
+                            const forecast = bookingForecasts.find(bf => bf.title === ev.title && bf.rawDate === ev.date);
+                            if (forecast && forecast.weather) {
+                              return (
+                                <div className="flex flex-col items-end shrink-0 pl-2 border-l border-white/10">
+                                  <div className="flex items-center gap-1 mt-0.5" title={forecast.weather.condition}>
+                                    <img src={forecast.weather.iconUrl} alt={forecast.weather.condition} className="w-6 h-6 object-contain" />
+                                    <span className="text-[10px] text-gray-400">{forecast.weather.tempMax}</span>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="flex items-center gap-1 justify-end text-blue-400">
+                                      <Droplets className="w-3.5 h-3.5" />
+                                      <span className="text-xs font-bold">{forecast.weather.precipitation}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
               </div>
-            </>
-          )}
+            </div>
+          </div>
         </div>
-
       </div>
     </header>
   );
@@ -863,7 +875,7 @@ const Sidebar = ({
 
             <SignOutButton redirectUrl="/login">
               <button
-                className="flex items-center justify-center p-2.5 text-gray-400 hover:text-red-400 rounded-xl transition-colors hover:bg-red-500/10 flex-shrink-0"
+                className={`flex items-center justify-center p-2.5 text-gray-400 hover:text-red-400 rounded-xl transition-colors hover:bg-red-500/10 flex-shrink-0 ${desktopExpanded ? "" : "lg:hidden"}`}
                 title="Logout"
               >
                 <LogOut className="w-5 h-5" />

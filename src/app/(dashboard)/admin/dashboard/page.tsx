@@ -189,44 +189,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {upcomingEvents.length > 0 && (
-        <div className="mb-6 bg-brand-500/10 border border-brand-500/20 rounded-3xl p-6">
-          <h2 className="text-lg font-semibold mb-4 text-brand-400 flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Upcoming Events
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {upcomingEvents.map((ev: any) => {
-              const isTask = ev.event_type === 'task_reminder';
-              let pillStyle = "bg-brand-500/10 text-brand-400 border-brand-500/20";
-              let label = "Upcoming";
-              
-              const today = new Date(); today.setHours(0,0,0,0);
-              const eventDate = new Date(ev.date); eventDate.setHours(0,0,0,0);
-              const diffDays = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-              
-              if (diffDays === 0) { pillStyle = "bg-green-500/10 text-green-400 border-green-500/20"; label = "Today"; }
-              else if (diffDays === 1) { pillStyle = "bg-amber-500/10 text-amber-400 border-amber-500/20"; label = "Tomorrow"; }
-              else if (diffDays > 1) { label = diffDays + " days left"; }
-              else { pillStyle = "bg-gray-500/10 text-gray-400 border-gray-500/20"; label = "Past"; }
-
-              return (
-                <div key={ev.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-white truncate max-w-[150px]">{ev.title}</span>
-                      <span className={"text-[9px] font-bold px-2 py-0.5 rounded-full border tracking-wide uppercase shrink-0 " + pillStyle}>{label}</span>
-                    </div>
-                    <div className="text-[11px] text-gray-300">
-                      {ev.date} {ev.time} {ev.location && <span className="text-brand-400 ml-1">{ev.location}</span>}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Current Month Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

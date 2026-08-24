@@ -8,11 +8,27 @@ export async function getAccounts(startDate?: string, endDate?: string) {
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
 
-  const rows = await sql`
-    SELECT id, name, type, bank_name, account_number, branch, initial_balance, created_at, is_company_account, is_default
-    FROM admin_accounts
-    ORDER BY created_at ASC
-  `;
+  let rows;
+  try {
+    rows = await sql`
+      SELECT id, name, type, bank_name, account_number, branch, initial_balance, created_at, is_company_account, is_default, is_hidden
+      FROM admin_accounts
+      WHERE is_hidden IS NOT TRUE
+      ORDER BY created_at ASC
+    `;
+  } catch (e: any) {
+    if (e.message?.includes('does not exist') || String(e).includes('does not exist')) {
+      await sql`ALTER TABLE admin_accounts ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN DEFAULT FALSE`;
+      rows = await sql`
+        SELECT id, name, type, bank_name, account_number, branch, initial_balance, created_at, is_company_account, is_default, is_hidden
+        FROM admin_accounts
+        WHERE is_hidden IS NOT TRUE
+        ORDER BY created_at ASC
+      `;
+    } else {
+      throw e;
+    }
+  }
 
   const accounts = rows.map((r: any) => ({
     id: r.id,
@@ -79,12 +95,20 @@ export async function updateAccount(id: number, data: { name: string; type: stri
     SET name = ${data.name}, type = ${data.type}, bank_name = ${data.bankName || null}, account_number = ${data.accountNumber || null}, branch = ${data.branch || null}, is_company_account = ${data.isCompanyAccount !== false}
     WHERE id = ${id}
   `;
-  await logSystemAction(`Updated account ID ${id}`);
+  await logSystemAction(`Updated account "${data.name}"`);
 }
 
 export async function deleteAccount(id: number) {
-  await sql`DELETE FROM admin_accounts WHERE id = ${id}`;
-  await logSystemAction(`Deleted account ID ${id}`);
+  // Soft delete by hiding it from the UI.
+  // Add 'is_hidden' column if it doesn't exist.
+  try {
+    await sql`ALTER TABLE admin_accounts ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN DEFAULT FALSE`;
+  } catch (e) {
+    console.error("Failed to add is_hidden column", e);
+  }
+
+  await sql`UPDATE admin_accounts SET is_hidden = TRUE WHERE id = ${id}`;
+  await logSystemAction(`Deleted account`);
 }
 
 export async function transferCash(data: { date: string; sourceAccountId: number; destinationAccountId: number; amount: number; description: string }) {
@@ -92,7 +116,45 @@ export async function transferCash(data: { date: string; sourceAccountId: number
     INSERT INTO admin_transfers (date, source_account_id, destination_account_id, amount, description)
     VALUES (${data.date}, ${data.sourceAccountId}, ${data.destinationAccountId}, ${data.amount}, ${data.description})
   `;
-  await logSystemAction(`Transferred LKR ${data.amount}`);
+  await logSystemAction(`Transferred LKR ${data.amount} between accounts`);
+}
+
+export async function getTransfers() {
+  const rows = await sql`
+    SELECT t.id, t.date, t.amount, t.description, 
+           t.source_account_id, t.destination_account_id,
+           sa.name as source_account_name,
+           da.name as destination_account_name
+    FROM admin_transfers t
+    LEFT JOIN admin_accounts sa ON t.source_account_id = sa.id
+    LEFT JOIN admin_accounts da ON t.destination_account_id = da.id
+    ORDER BY t.date DESC, t.id DESC
+  `;
+  
+  return rows.map((r: any) => ({
+    id: r.id,
+    date: new Date(r.date).toISOString().split('T')[0],
+    amount: parseFloat(r.amount || "0"),
+    description: r.description || "",
+    sourceAccountId: r.source_account_id,
+    destinationAccountId: r.destination_account_id,
+    sourceAccountName: r.source_account_name || "Unknown",
+    destinationAccountName: r.destination_account_name || "Unknown"
+  }));
+}
+
+export async function updateTransfer(id: number, data: { date: string; sourceAccountId: number; destinationAccountId: number; amount: number; description: string }) {
+  await sql`
+    UPDATE admin_transfers
+    SET date = ${data.date}, source_account_id = ${data.sourceAccountId}, destination_account_id = ${data.destinationAccountId}, amount = ${data.amount}, description = ${data.description}
+    WHERE id = ${id}
+  `;
+  await logSystemAction(`Updated cash transfer of LKR ${data.amount}`);
+}
+
+export async function deleteTransfer(id: number) {
+  await sql`DELETE FROM admin_transfers WHERE id = ${id}`;
+  await logSystemAction(`Undid a cash transfer`);
 }
 
 export async function getLedger(accountId: number | null, startDate?: string, endDate?: string) {

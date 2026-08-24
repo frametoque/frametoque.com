@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { 
   Calendar as CalendarIcon, Plus, Trash2, Edit2, ChevronLeft, ChevronRight,
-  Clock, FileText, Folder, CalendarPlus, X, Apple, MapPin
+  Clock, FileText, Folder, CalendarPlus, X, Apple, MapPin, Droplets
 } from "lucide-react";
 import { 
   getBookings, createBooking, updateBooking, deleteBooking, getCalendarEvents,
@@ -103,17 +103,23 @@ export default function BookingsAdminPage() {
   // Calendar month/year navigation state
   const [currentDate, setCurrentDate] = useState(new Date());
   
+  const [bookingForecasts, setBookingForecasts] = useState<any[]>([]);
+
   const loadData = async () => {
     try {
       setLoading(true);
-      const [bList, eList, hList] = await Promise.all([
+      const [bList, eList, hList, weatherRes] = await Promise.all([
         getBookings(),
         getCalendarEvents(),
-        getSriLankaHolidays().catch(() => ({}))
+        getSriLankaHolidays().catch(() => ({})),
+        fetch("/api/admin/weather").then(r => r.ok ? r.json() : null).catch(() => null)
       ]);
       setBookings(bList);
       setCalendarEvents(eList);
       setSriLankaHolidays(hList);
+      if (weatherRes && weatherRes.bookingForecasts) {
+        setBookingForecasts(weatherRes.bookingForecasts);
+      }
     } catch (e) {
       console.error("Failed to load bookings data:", e);
     } finally {
@@ -126,15 +132,19 @@ export default function BookingsAdminPage() {
     async function load() {
       try {
         setLoading(true);
-        const [bList, eList, hList] = await Promise.all([
+        const [bList, eList, hList, weatherRes] = await Promise.all([
           getBookings(),
           getCalendarEvents(),
-          getSriLankaHolidays().catch(() => ({}))
+          getSriLankaHolidays().catch(() => ({})),
+          fetch("/api/admin/weather").then(r => r.ok ? r.json() : null).catch(() => null)
         ]);
         if (!cancelled) {
           setBookings(bList);
           setCalendarEvents(eList);
           setSriLankaHolidays(hList);
+          if (weatherRes && weatherRes.bookingForecasts) {
+            setBookingForecasts(weatherRes.bookingForecasts);
+          }
         }
       } catch (e) {
         console.error("Failed to load bookings data:", e);
@@ -459,13 +469,33 @@ export default function BookingsAdminPage() {
                 .map(b => (
                   <div key={b.id} className="bg-white/5 border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between gap-3 group">
                   <div className="flex justify-between items-start gap-2">
-                    <div>
-                      <h3 className="font-semibold text-white text-base leading-snug">{b.title}</h3>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-white text-base leading-snug truncate">{b.title}</h3>
                       {b.description && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{b.description}</p>}
                     </div>
-                    <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border shrink-0 ${statusStyles[b.status] || ""}`}>
-                      {b.status}
-                    </span>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${statusStyles[b.status] || ""}`}>
+                        {b.status}
+                      </span>
+                      {(() => {
+                        const forecast = bookingForecasts.find(bf => bf.title === b.title && bf.rawDate === b.booking_date);
+                        if (forecast && forecast.weather) {
+                          return (
+                            <div className="flex flex-col items-end shrink-0 pl-2">
+                              <div className="flex items-center gap-1 mt-0.5" title={forecast.weather.condition}>
+                                <img src={forecast.weather.iconUrl} alt={forecast.weather.condition} className="w-6 h-6 object-contain" />
+                                <span className="text-[10px] text-gray-400">{forecast.weather.tempMax}</span>
+                              </div>
+                              <div className="flex items-center gap-1 justify-end text-blue-400 mt-0.5">
+                                <Droplets className="w-3.5 h-3.5" />
+                                <span className="text-xs font-bold">{forecast.weather.precipitation}</span>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
                   </div>
 
                   <div className="border-t border-white/5 pt-3 flex flex-col gap-1.5 text-xs text-gray-300">
