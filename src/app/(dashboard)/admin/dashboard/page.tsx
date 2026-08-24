@@ -190,24 +190,24 @@ export default function DashboardPage() {
       </div>
 
 
-      {/* Current Month Stats */}
+      {/* This Month Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           {
-            label: "Current Month Income",
+            label: "This Month Income",
             value: data.currentMonthStats?.income || 0,
             prevValue: data.currentMonthStats?.lastMonthIncome || 0,
             isCurrency: true,
           },
           {
-            label: "Current Month Expenses",
+            label: "This Month Expenses",
             value: data.currentMonthStats?.expenses || 0,
             prevValue: data.currentMonthStats?.lastMonthExpenses || 0,
             isCurrency: true,
-            invertColors: true, // For expenses, increase is bad (red)
+            invertColors: true, 
           },
           {
-            label: "Current Month Profit",
+            label: "This Month Profit",
             value: (data.currentMonthStats?.income || 0) - (data.currentMonthStats?.expenses || 0),
             prevValue: (data.currentMonthStats?.lastMonthIncome || 0) - (data.currentMonthStats?.lastMonthExpenses || 0),
             isCurrency: true,

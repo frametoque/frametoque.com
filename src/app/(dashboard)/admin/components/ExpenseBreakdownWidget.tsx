@@ -5,7 +5,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { getExpenseBreakdownByMode } from "../actions/actions";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const MODES = ["Current Month", "Last Month", "Current Year", "Last Year", "Lifetime"];
+const MODES = ["This Month", "Last Month", "This Year", "Last Year", "Lifetime"];
 
 const formatLKR = (amount: number) => {
   return new Intl.NumberFormat('en-LK', {

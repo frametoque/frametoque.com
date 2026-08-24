@@ -20,12 +20,11 @@ export default function ReportsPage() {
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { dateRange, startDate, endDate, setStartDate, setEndDate, setDateRange } = useAdminDateRange();
-  const [activeTab, setActiveTab] = useState<"overview" | "profit_loss" | "trial_balance" | "general_ledger">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "profit_loss" | "trial_balance" | "general_ledger" | "account_ledger">("overview");
 
   // Ledger specific state
   const [accounts, setAccounts] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [ledgerTab, setLedgerTab] = useState<"general" | "account">("general");
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -75,7 +74,7 @@ export default function ReportsPage() {
     async function loadLedger() {
       setLedgerLoading(true);
       try {
-        const txs = await import("../actions/accounts").then(m => m.getLedger(ledgerTab === "account" ? selectedAccountId : null, startDate, endDate));
+        const txs = await import("../actions/accounts").then(m => m.getLedger(activeTab === "account_ledger" ? selectedAccountId : null, startDate, endDate));
         if (!cancelled) {
           setTransactions(txs);
         }
@@ -87,7 +86,7 @@ export default function ReportsPage() {
     }
     loadLedger();
     return () => { cancelled = true; };
-  }, [startDate, endDate, ledgerTab, selectedAccountId]);
+  }, [startDate, endDate, activeTab, selectedAccountId]);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("reports:tab-change", { detail: activeTab }));
@@ -248,12 +247,21 @@ export default function ReportsPage() {
           {[
             { id: "overview", label: "Overview Dashboard" },
             { id: "general_ledger", label: "General Ledger" },
+            { id: "account_ledger", label: "Account Ledgers" },
             { id: "profit_loss", label: "Profit & Loss" },
             { id: "trial_balance", label: "Trial Balance" }
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => {
+                setActiveTab(tab.id as any);
+                if (tab.id === 'account_ledger' && accounts.length > 0 && !selectedAccountId) {
+                  setSelectedAccountId(accounts[0].id);
+                }
+                if (tab.id === 'general_ledger') {
+                  setSelectedAccountId(null);
+                }
+              }}
               className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
                 activeTab === tab.id
                   ? "bg-white text-black border-white shadow-md font-bold"
@@ -335,9 +343,6 @@ export default function ReportsPage() {
           {topClientsChart.length > 0 && (
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-brand-400/10 rounded-xl">
-                  <Users className="w-5 h-5 text-brand-400" />
-                </div>
                 <h2 className="text-xl font-semibold">Top Clients by Revenue</h2>
               </div>
               <div className="h-[300px] w-full">
@@ -376,24 +381,9 @@ export default function ReportsPage() {
         </>
       )}
 
-      {activeTab === "general_ledger" && (
+      {(activeTab === "general_ledger" || activeTab === "account_ledger") && (
         <div className="space-y-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-white/10 pb-6">
-            <div className="flex items-center gap-6">
-              <h2 className="text-xl font-semibold text-white">Ledgers</h2>
-              <div className="flex bg-white/5 rounded-xl p-1">
-                <button onClick={() => { setLedgerTab("general"); setSelectedAccountId(null); }} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ledgerTab === 'general' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}>General Ledger</button>
-                <button onClick={() => { setLedgerTab("account"); if (accounts.length > 0 && !selectedAccountId) setSelectedAccountId(accounts[0].id); }} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ledgerTab === 'account' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}>Account Ledgers</button>
-              </div>
-              {ledgerTab === "account" && (
-                <select value={selectedAccountId || ""} onChange={e => setSelectedAccountId(parseInt(e.target.value))} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none">
-                  {accounts.map(a => <option key={a.id} value={a.id}>{a.isCompanyAccount === false ? `${a.currentBalance < 0 ? 'Capital' : 'Debt'} ${a.name.replace(/Debts?\s*/i, '')}` : a.name} ({a.type.split(' ')[0]})</option>)}
-                </select>
-              )}
-            </div>
-          </div>
-
-          {ledgerTab === "account" && accounts.find(a => a.id === selectedAccountId) && (() => {
+          {activeTab === "account_ledger" && accounts.find(a => a.id === selectedAccountId) && (() => {
             const selectedAccount = accounts.find(a => a.id === selectedAccountId);
             const periodInflow = transactions.reduce((sum, t) => sum + t.debit, 0);
             const periodOutflow = transactions.reduce((sum, t) => sum + t.credit, 0);
@@ -418,8 +408,14 @@ export default function ReportsPage() {
           <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
             <div className="p-6 border-b border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex items-center gap-3">
-                <BookOpen className="w-5 h-5 text-brand-400" />
-                <h2 className="text-lg font-semibold">Ledger: {ledgerTab === 'general' ? 'All Accounts' : accounts.find(a => a.id === selectedAccountId)?.name}</h2>
+                {activeTab === 'general_ledger' && (
+                  <h2 className="text-lg font-semibold">Ledger: All Accounts</h2>
+                )}
+                {activeTab === 'account_ledger' && (
+                  <select value={selectedAccountId || ""} onChange={e => setSelectedAccountId(parseInt(e.target.value))} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none">
+                    {accounts.map(a => <option key={a.id} value={a.id}>{a.isCompanyAccount === false ? `${a.currentBalance < 0 ? 'Capital' : 'Debt'} ${a.name.replace(/Debts?\s*/i, '')}` : a.name} ({a.type.split(' ')[0]})</option>)}
+                  </select>
+                )}
               </div>
               <div className="relative w-full sm:w-64">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -432,11 +428,12 @@ export default function ReportsPage() {
                 <thead>
                   <tr className="border-b border-white/10 text-xs text-gray-400 uppercase tracking-wider">
                     <th className="p-4 font-medium">Date</th>
+                    {activeTab === 'general_ledger' && <th className="p-4 font-medium">Account</th>}
                     <th className="p-4 font-medium">Description</th>
                     <th className="p-4 font-medium">Reference</th>
                     <th className="p-4 font-medium text-right">Debit (+)</th>
                     <th className="p-4 font-medium text-right">Credit (-)</th>
-                    {ledgerTab === 'account' && <th className="p-4 font-medium text-right">Running Balance</th>}
+                    {activeTab === 'account_ledger' && <th className="p-4 font-medium text-right">Running Balance</th>}
                   </tr>
                 </thead>
                 <tbody className="text-sm divide-y divide-white/5">
@@ -446,20 +443,28 @@ export default function ReportsPage() {
                     <tr><td colSpan={6} className="p-8 text-center text-gray-400">No transactions found for this period.</td></tr>
                   ) : (
                     (() => {
-                      let rb = ledgerTab === 'account' && selectedAccountId ? (accounts.find(a => a.id === selectedAccountId)?.initialBalance || 0) : 0;
+                      let rb = activeTab === 'account_ledger' && selectedAccountId ? (accounts.find(a => a.id === selectedAccountId)?.initialBalance || 0) : 0;
                       
                       const filtered = transactions.filter(t => t.description.toLowerCase().includes(searchTerm.toLowerCase()) || t.referenceType.toLowerCase().includes(searchTerm.toLowerCase()));
                       
                       const withBalance = filtered.map(t => {
-                        if (ledgerTab === 'account') {
+                        if (activeTab === 'account_ledger') {
                           rb += t.debit - t.credit;
                         }
                         return { ...t, rb };
                       });
 
-                      return withBalance.reverse().map((t, i) => (
+                      return withBalance.reverse().map((t, i) => {
+                        const accName = accounts.find(a => a.id === t.accountId)?.name || 'Unknown';
+                        const relatedAccName = accounts.find(a => a.id === t.relatedAccountId)?.name || 'Unknown';
+                        let displayAccount = accName;
+                        if (activeTab === 'general_ledger' && t.referenceType === 'Transfer') {
+                          displayAccount = `${accName} → ${relatedAccName}`;
+                        }
+                        return (
                           <tr key={i} className="hover:bg-white/5 transition-colors">
                             <td className="p-4 text-gray-300">{new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                            {activeTab === 'general_ledger' && <td className="p-4 text-gray-300 text-xs">{displayAccount}</td>}
                             <td className="p-4">{t.description || "-"}</td>
                             <td className="p-4">
                               <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${t.referenceType === 'Income' ? 'bg-green-500/10 text-green-400' : t.referenceType === 'Expense' ? 'bg-red-500/10 text-red-400' : 'bg-purple-500/10 text-purple-400'}`}>
@@ -468,13 +473,14 @@ export default function ReportsPage() {
                             </td>
                             <td className="p-4 text-right text-green-400">{t.debit > 0 ? `+${formatLKR(t.debit)}` : "-"}</td>
                             <td className="p-4 text-right text-red-400">{t.credit > 0 ? `-${formatLKR(t.credit)}` : "-"}</td>
-                            {ledgerTab === 'account' && (
+                            {activeTab === 'account_ledger' && (
                               <td className={`p-4 text-right font-medium ${t.rb < 0 ? 'text-red-400' : 'text-green-400'}`}>
                                 {formatLKR(t.rb)}
                               </td>
                             )}
                           </tr>
-                      ));
+                        );
+                      });
                     })()
                   )}
                 </tbody>
@@ -646,10 +652,7 @@ export default function ReportsPage() {
                   <td className="py-3.5 px-6 pl-8">Total Income</td>
                   <td className="py-3.5 px-4 text-right text-gray-500 font-medium">—</td>
                   <td className="py-3.5 px-4 text-right text-white font-bold">
-                    {(() => {
-                      const totalInit = accounts.reduce((sum, a) => sum + (a.initialBalance || 0), 0);
-                      return formatLKR(data.totalIncome + (totalInit > 0 ? totalInit : 0));
-                    })()}
+                    {formatLKR(data.totalIncome)}
                   </td>
                 </tr>
 
@@ -674,13 +677,27 @@ export default function ReportsPage() {
                 <tr className="font-semibold text-gray-300">
                   <td className="py-3.5 px-6 pl-8">Total Expenses</td>
                   <td className="py-3.5 px-4 text-right text-white font-bold">
-                    {(() => {
-                      const totalInit = accounts.reduce((sum, a) => sum + (a.initialBalance || 0), 0);
-                      return formatLKR(data.totalExpenses + (totalInit < 0 ? Math.abs(totalInit) : 0));
-                    })()}
+                    {formatLKR(data.totalExpenses)}
                   </td>
                   <td className="py-3.5 px-4 text-right text-gray-500 font-medium">—</td>
                 </tr>
+
+                {/* Initial Capital / Opening Balance */}
+                {(() => {
+                  const totalInit = accounts.reduce((sum, a) => sum + (a.initialBalance || 0), 0);
+                  if (totalInit === 0) return null;
+                  return (
+                    <tr className="font-semibold text-gray-300">
+                      <td className="py-3.5 px-6 pl-8">Net Opening Balance</td>
+                      <td className="py-3.5 px-4 text-right text-white font-medium">
+                        {totalInit < 0 ? formatLKR(Math.abs(totalInit)) : "—"}
+                      </td>
+                      <td className="py-3.5 px-4 text-right text-white font-medium">
+                        {totalInit > 0 ? formatLKR(totalInit) : "—"}
+                      </td>
+                    </tr>
+                  );
+                })()}
 
                 {/* Grand Totals */}
                 {(() => {

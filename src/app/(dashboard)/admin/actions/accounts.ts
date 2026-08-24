@@ -167,42 +167,39 @@ export async function getLedger(accountId: number | null, startDate?: string, en
       WITH unified AS (
         SELECT i.date, 
                CASE WHEN c.full_name IS NOT NULL THEN COALESCE(i.description, 'Income') || ' - ' || c.full_name ELSE COALESCE(i.description, 'Income') END as description, 
-               'Income' as ref_type, i.id as ref_id, i.account_id, NULL::integer as related_account_id, i.amount as debit, 0 as credit
+               'Income' as ref_type, i.id as ref_id, i.account_id, NULL::integer as related_account_id, i.amount as debit, 0 as credit, i.created_at
         FROM admin_incomes i
         LEFT JOIN admin_clients c ON i.client_id = c.id
         WHERE i.date >= ${start}::timestamp AND i.date <= (${end} || ' 23:59:59.999')::timestamp
         UNION ALL
-        SELECT date, description, 'Expense' as ref_type, id as ref_id, account_id, NULL::integer as related_account_id, 0 as debit, amount as credit
+        SELECT date, description, 'Expense' as ref_type, id as ref_id, account_id, NULL::integer as related_account_id, 0 as debit, amount as credit, created_at
         FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
         UNION ALL
-        SELECT date, description, 'Transfer Out' as ref_type, id as ref_id, source_account_id as account_id, destination_account_id as related_account_id, 0 as debit, amount as credit
+        SELECT date, description, 'Transfer Out' as ref_type, id as ref_id, source_account_id as account_id, destination_account_id as related_account_id, 0 as debit, amount as credit, created_at
         FROM admin_transfers WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
         UNION ALL
-        SELECT date, description, 'Transfer In' as ref_type, id as ref_id, destination_account_id as account_id, source_account_id as related_account_id, amount as debit, 0 as credit
+        SELECT date, description, 'Transfer In' as ref_type, id as ref_id, destination_account_id as account_id, source_account_id as related_account_id, amount as debit, 0 as credit, created_at
         FROM admin_transfers WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
       )
-      SELECT * FROM unified WHERE account_id = ${accountId} ORDER BY date ASC
+      SELECT * FROM unified WHERE account_id = ${accountId} ORDER BY date ASC, created_at ASC, ref_type ASC
     `;
   } else {
     transactions = await sql`
       WITH unified AS (
         SELECT i.date, 
                CASE WHEN c.full_name IS NOT NULL THEN COALESCE(i.description, 'Income') || ' - ' || c.full_name ELSE COALESCE(i.description, 'Income') END as description, 
-               'Income' as ref_type, i.id as ref_id, i.account_id, NULL::integer as related_account_id, i.amount as debit, 0 as credit
+               'Income' as ref_type, i.id as ref_id, i.account_id, NULL::integer as related_account_id, i.amount as debit, 0 as credit, i.created_at
         FROM admin_incomes i
         LEFT JOIN admin_clients c ON i.client_id = c.id
         WHERE i.date >= ${start}::timestamp AND i.date <= (${end} || ' 23:59:59.999')::timestamp
         UNION ALL
-        SELECT date, description, 'Expense' as ref_type, id as ref_id, account_id, NULL::integer as related_account_id, 0 as debit, amount as credit
+        SELECT date, description, 'Expense' as ref_type, id as ref_id, account_id, NULL::integer as related_account_id, 0 as debit, amount as credit, created_at
         FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
         UNION ALL
-        SELECT date, description, 'Transfer Out' as ref_type, id as ref_id, source_account_id as account_id, destination_account_id as related_account_id, 0 as debit, amount as credit
-        FROM admin_transfers WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
-        UNION ALL
-        SELECT date, description, 'Transfer In' as ref_type, id as ref_id, destination_account_id as account_id, source_account_id as related_account_id, amount as debit, 0 as credit
+        SELECT date, description, 'Transfer' as ref_type, id as ref_id, source_account_id as account_id, destination_account_id as related_account_id, amount as debit, amount as credit, created_at
         FROM admin_transfers WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
       )
-      SELECT * FROM unified ORDER BY date ASC
+      SELECT * FROM unified ORDER BY date ASC, created_at ASC, ref_type ASC
     `;
   }
 

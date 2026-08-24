@@ -2186,13 +2186,13 @@ export async function getExpenseBreakdownByMode(mode: string) {
   let end = '2099-12-31';
 
   const now = new Date();
-  if (mode === 'Current Month') {
+  if (mode === 'This Month') {
     start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
     end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
   } else if (mode === 'Last Month') {
     start = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
     end = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
-  } else if (mode === 'Current Year') {
+  } else if (mode === 'This Year') {
     start = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
     end = new Date(now.getFullYear(), 11, 31).toISOString().split('T')[0];
   } else if (mode === 'Last Year') {
