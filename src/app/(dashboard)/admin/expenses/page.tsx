@@ -182,6 +182,7 @@ export default function ExpensesPage() {
         description: '',
         paymentMethod: 'Corporate Card',
         receiptUrl: '',
+        accountId: '',
         isScheduled: false,
         frequency: 'monthly'
       });
@@ -221,6 +222,7 @@ export default function ExpensesPage() {
       description: row.desc || '',
       paymentMethod: row.paidVia || 'Corporate Card',
       receiptUrl: row.receiptUrl || '',
+      accountId: row.accountId || '',
       isScheduled: false,
       frequency: 'monthly'
     });
@@ -381,6 +383,7 @@ export default function ExpensesPage() {
               description: '',
               paymentMethod: 'Corporate Card',
               receiptUrl: '',
+              accountId: '',
               isScheduled: false,
               frequency: 'monthly'
             });
