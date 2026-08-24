@@ -134,7 +134,6 @@ export default function WebDevAgreementPDF({
             width: 150,
             height: 40,
           });
-          console.log("✅ Client signature drawn");
         } catch (err) {
           console.error("❌ Error drawing client signature:", err);
         }

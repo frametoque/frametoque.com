@@ -45,11 +45,18 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     incomeByYear,
     expenseByYear,
     expenseBreakdownRange,
-    incomeBreakdownRange
-  ] = await (async (qs) => { const rs = []; for (const q of qs) rs.push(await q); return rs; })([
+    incomeBreakdownRange,
+    thisMonthIncome,
+    lastMonthIncome,
+    thisMonthExpenses,
+    lastMonthExpenses,
+    clientsCountRows,
+
+    accounts
+  ] = await Promise.all([
     sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
     sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
-    sql`SELECT COUNT(*) as count FROM invoices WHERE payment_status IN ('unpaid', 'pending', 'partially paid')`,
+    sql`SELECT COUNT(*) as count, SUM(total_due) as total_amount FROM invoices WHERE payment_status IN ('unpaid', 'pending', 'partially paid')`,
     sql`
       SELECT 
         payment_status as status,
@@ -135,8 +142,16 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
       WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
       GROUP BY category
       ORDER BY value DESC
-    `
+    `,
+    sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date)`,
+    sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`,
+    sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date)`,
+    sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`,
+    sql`SELECT COUNT(*) as count FROM admin_clients`,
+    import('./accounts').then(m => m.getAccounts(start, end))
   ]);
+
+  const totalAssets = accounts.filter((a: any) => a.isCompanyAccount).reduce((sum: number, a: any) => sum + (a.currentBalance || 0), 0);
 
   const totalIncome = incomes[0]?.total ? parseFloat(incomes[0].total) : 0;
   const totalExpenses = expenses[0]?.total ? parseFloat(expenses[0].total) : 0;
@@ -178,9 +193,18 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
   return {
     totalIncome,
     totalExpenses,
+    totalAssets,
     netProfit,
     incomeBreakdown,
+    totalClients: parseInt(clientsCountRows[0]?.count || 0, 10),
     unpaidCount: unpaid[0]?.count || 0,
+    unpaidAmount: parseFloat(unpaid[0]?.total_amount || 0),
+    currentMonthStats: {
+      income: parseFloat(thisMonthIncome[0]?.total || 0),
+      expenses: parseFloat(thisMonthExpenses[0]?.total || 0),
+      lastMonthIncome: parseFloat(lastMonthIncome[0]?.total || 0),
+      lastMonthExpenses: parseFloat(lastMonthExpenses[0]?.total || 0),
+    },
     invoiceAging: invoiceAging.map(row => ({
       status: row.status,
       amount: parseFloat(row.amount_sum || 0),
@@ -189,7 +213,8 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     chartData: chartDataRaw.map(row => ({
       name: row.name,
       income: parseFloat(row.income),
-      expenses: parseFloat(row.expenses)
+      expenses: parseFloat(row.expenses),
+      year: parseInt(row.year_num, 10)
     })),
     recentInvoices: recentInvoicesRaw.map(row => ({
       id: row.id,
@@ -238,14 +263,14 @@ export async function getIncomes(startDate?: string, endDate?: string) {
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
 
-  const [statsThisMonth, statsLastMonth, statsYtd, rows] = await (async (qs) => { const rs = []; for (const q of qs) rs.push(await q); return rs; })([
+  const [statsThisMonth, statsLastMonth, statsYtd, rows] = await Promise.all([
     sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date)`,
     sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`,
     sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('year', date) = date_trunc('year', current_date)`,
     sql`
       SELECT 
         i.id, i.date, TO_CHAR(i.date, 'YYYY-MM-DD') as "rawDate", i.amount, c.full_name as client, i.client_id as "clientId", 
-        i.description as desc, i.category, i.invoice_id as invoice, 
+        i.description as desc, i.category, i.invoice_id as invoice, i.account_id as "accountId", i.payment_method as "paymentMethod",
         COALESCE(
           i.receipt_url,
           (SELECT slip_url FROM invoice_payment_slips ips WHERE ips.invoice_id = i.invoice_id ORDER BY ips.id DESC LIMIT 1),
@@ -276,9 +301,16 @@ export async function getIncomes(startDate?: string, endDate?: string) {
 }
 
 export async function createIncome(data: any) {
+  // If payment method is bank transfer and no account_id is provided, try to fetch the invoice's bank account
+  let accountId = data.accountId || null;
+  if (!accountId && data.paymentMethod === 'Bank Transfer') {
+    const def = await sql`SELECT id FROM admin_accounts WHERE type = 'Bank Account' LIMIT 1`;
+    if (def.length > 0) accountId = def[0].id;
+  }
+
   await sql`
-    INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id, receipt_url)
-    VALUES (${data.date}, ${data.amount}, ${data.description}, ${data.category}, ${data.paymentMethod}, ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null})
+    INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id, receipt_url, account_id)
+    VALUES (${data.date}, ${data.amount}, ${data.description}, ${data.category}, ${data.paymentMethod}, ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, ${accountId})
   `;
 
   if (data.invoiceId) {
@@ -366,9 +398,15 @@ export async function deleteClient(clientId: string) {
 }
 
 export async function updateIncome(id: number, data: any) {
+  let accountId = data.accountId || null;
+  if (!accountId && data.paymentMethod === 'Bank Transfer') {
+    const def = await sql`SELECT id FROM admin_accounts WHERE type = 'Bank Account' LIMIT 1`;
+    if (def.length > 0) accountId = def[0].id;
+  }
+
   await sql`
     UPDATE admin_incomes 
-    SET date = ${data.date}, amount = ${data.amount}, description = ${data.description}, category = ${data.category}, payment_method = ${data.paymentMethod}, invoice_id = ${data.invoiceId || null}, client_id = ${data.clientId || null}, receipt_url = ${data.receiptUrl || null}
+    SET date = ${data.date}, amount = ${data.amount}, description = ${data.description}, category = ${data.category}, payment_method = ${data.paymentMethod}, invoice_id = ${data.invoiceId || null}, client_id = ${data.clientId || null}, receipt_url = ${data.receiptUrl || null}, account_id = ${accountId}
     WHERE id = ${id}
   `;
 
@@ -471,12 +509,12 @@ export async function getExpenses(startDate?: string, endDate?: string) {
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
 
-  const [statsThisMonth, statsLastMonth, statsYtd, rows] = await (async (qs) => { const rs = []; for (const q of qs) rs.push(await q); return rs; })([
+  const [statsThisMonth, statsLastMonth, statsYtd, rows] = await Promise.all([
     sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date)`,
     sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`,
     sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('year', date) = date_trunc('year', current_date)`,
     sql`
-      SELECT id, date, TO_CHAR(date, 'YYYY-MM-DD') as "rawDate", amount, description as desc, category, payment_method as "paidVia", receipt_url as "receiptUrl", created_at
+      SELECT id, date, TO_CHAR(date, 'YYYY-MM-DD') as "rawDate", amount, description as desc, category, payment_method as "paidVia", receipt_url as "receiptUrl", account_id as "accountId", created_at
       FROM admin_expenses
       WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
       ORDER BY date DESC, created_at DESC, id DESC
@@ -498,9 +536,14 @@ export async function getExpenses(startDate?: string, endDate?: string) {
 }
 
 export async function createExpense(data: any) {
+  let accountId = data.accountId || null;
+  if (!accountId && data.paymentMethod === 'Bank Transfer') {
+    const def = await sql`SELECT id FROM admin_accounts WHERE type = 'Bank Account' LIMIT 1`;
+    if (def.length > 0) accountId = def[0].id;
+  }
   await sql`
-    INSERT INTO admin_expenses (date, amount, description, category, payment_method, receipt_url)
-    VALUES (${data.date}, ${data.amount}, ${data.description}, ${data.category}, ${data.paymentMethod}, ${data.receiptUrl || null})
+    INSERT INTO admin_expenses (date, amount, description, category, payment_method, receipt_url, account_id)
+    VALUES (${data.date}, ${data.amount}, ${data.description}, ${data.category}, ${data.paymentMethod}, ${data.receiptUrl || null}, ${accountId})
   `;
 
   if (data.isScheduled) {
@@ -521,9 +564,14 @@ export async function createExpense(data: any) {
 }
 
 export async function updateExpense(id: number, data: any) {
+  let accountId = data.accountId || null;
+  if (!accountId && data.paymentMethod === 'Bank Transfer') {
+    const def = await sql`SELECT id FROM admin_accounts WHERE type = 'Bank Account' LIMIT 1`;
+    if (def.length > 0) accountId = def[0].id;
+  }
   await sql`
     UPDATE admin_expenses 
-    SET date = ${data.date}, amount = ${data.amount}, description = ${data.description}, category = ${data.category}, payment_method = ${data.paymentMethod}, receipt_url = ${data.receiptUrl || null}
+    SET date = ${data.date}, amount = ${data.amount}, description = ${data.description}, category = ${data.category}, payment_method = ${data.paymentMethod}, receipt_url = ${data.receiptUrl || null}, account_id = ${accountId}
     WHERE id = ${id}
   `;
   await logSystemAction(`Updated expense ID ${id}: recorded $${data.amount} for "${data.description}"`);
@@ -687,7 +735,7 @@ export async function payScheduledExpense(id: number) {
 
 // -- INVOICES --
 export async function getInvoices() {
-  const [totalIssuedCount, rows, nonAdvancePaymentsRows] = await (async (qs) => { const rs = []; for (const q of qs) rs.push(await q); return rs; })([
+  const [totalIssuedCount, rows, nonAdvancePaymentsRows] = await Promise.all([
     sql`SELECT COUNT(*) as count FROM invoices`,
     sql`
       SELECT i.invoice_id as id, i.user_email as client_email, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.advance, i.tax_rate, i.total_due, i.date as due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at
@@ -855,12 +903,12 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
       COALESCE(ac.full_name, i.user_email) as client_name,
       ac.address as billing_address,
       ba.name as bank_acc_name,
-      ba.number as bank_acc_number,
-      ba.bank as bank_acc_bank,
+      ba.account_number as bank_acc_number,
+      ba.bank_name as bank_acc_bank,
       ba.branch as bank_acc_branch
     FROM invoices i
     LEFT JOIN admin_clients ac ON LOWER(i.user_email) = LOWER(ac.email)
-    LEFT JOIN bank_accs ba ON COALESCE(i.bank_account_id, (SELECT id FROM bank_accs WHERE is_default = 1 LIMIT 1)) = ba.id
+    LEFT JOIN admin_accounts ba ON COALESCE(i.bank_account_id, (SELECT id FROM admin_accounts WHERE type = 'Bank Account' LIMIT 1)) = ba.id
     WHERE i.invoice_id = ${invoiceId}
   `;
 
@@ -976,29 +1024,8 @@ export async function getClients() {
   const clients = await Promise.all(
     rows.map(async (r) => {
       let imageUrl: string | null = null;
-      const clerkId = (r.clerk_id || "").trim();
-
-      if (clerkId) {
-        try {
-          const user = await clerk.users.getUser(clerkId);
-          if (user && user.imageUrl) {
-            imageUrl = user.imageUrl;
-          }
-        } catch (e) {
-          console.error("Failed to fetch clerk user for clerk_id:", clerkId, e);
-        }
-      }
-
-      if (!imageUrl && r.email) {
-        try {
-          const clerkUsersResponse = await clerk.users.getUserList({ emailAddress: [r.email.trim()], limit: 1 });
-          const user = clerkUsersResponse.data?.[0];
-          if (user && user.imageUrl) {
-            imageUrl = user.imageUrl;
-          }
-        } catch (e) {
-          // Ignore individual lookup errors
-        }
+      if (r.email) {
+        imageUrl = getGravatarUrl(r.email.trim());
       }
 
       return {
@@ -1046,24 +1073,8 @@ export async function getClientById(clientId: string) {
   const c = rows[0];
 
   let imageUrl = null;
-  if (c.clerk_id) {
-    try {
-      const user = await clerk.users.getUser(c.clerk_id);
-      imageUrl = user.imageUrl;
-    } catch (e) {
-      console.error("Failed to fetch clerk user image for", c.clerk_id, e);
-    }
-  }
-
-  if (!imageUrl && c.email) {
-    try {
-      const clerkUsersResponse = await clerk.users.getUserList({ emailAddress: [c.email], limit: 1 });
-      if (clerkUsersResponse.data.length > 0 && clerkUsersResponse.data[0].imageUrl) {
-        imageUrl = clerkUsersResponse.data[0].imageUrl;
-      }
-    } catch (e) {
-      console.error("Failed to fetch clerk user by email for", c.email, e);
-    }
+  if (c.email) {
+    imageUrl = getGravatarUrl(c.email.trim());
   }
 
   const invoices = await sql`
@@ -1264,7 +1275,7 @@ export async function getReports(startDate?: string, endDate?: string) {
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
 
-  const [incomeStats, expenseStats, rawIncome, expensesBreakdown, journalEntriesRaw] = await (async (qs) => { const rs = []; for (const q of qs) rs.push(await q); return rs; })([
+  const [incomeStats, expenseStats, rawIncome, expensesBreakdown, journalEntriesRaw] = await Promise.all([
     sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
     sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
     sql`
@@ -1287,10 +1298,10 @@ export async function getReports(startDate?: string, endDate?: string) {
     `
   ]);
 
-  const annualRevenue = parseFloat(incomeStats[0]?.total || 0);
-  const annualExpenses = parseFloat(expenseStats[0]?.total || 0);
-  const netProfit = annualRevenue - annualExpenses;
-  const profitMargin = annualRevenue > 0 ? ((netProfit / annualRevenue) * 100).toFixed(1) : '0.0';
+  const totalIncome = parseFloat(incomeStats[0]?.total || 0);
+  const totalExpenses = parseFloat(expenseStats[0]?.total || 0);
+  const netProfit = totalIncome - totalExpenses;
+  const profitMargin = totalIncome > 0 ? ((netProfit / totalIncome) * 100).toFixed(1) : '0.0';
 
   const serviceMap: Record<string, number> = {};
   for (const row of rawIncome) {
@@ -1317,8 +1328,8 @@ export async function getReports(startDate?: string, endDate?: string) {
   }));
 
   return {
-    annualRevenue,
-    annualExpenses,
+    totalIncome,
+    totalExpenses,
     netProfit,
     profitMargin,
     incomeByService,
@@ -1598,10 +1609,12 @@ export async function getQuotationById(quotationId: string) {
       SELECT q.*,
              c.full_name as client_name, c.email, c.company, c.phone,
              c.address as billing_address,
-             ba.name as bank_acc_name, ba.number as bank_acc_number, ba.bank as bank_acc_bank, ba.branch as bank_acc_branch
+             ba.name as bank_acc_name, ba.account_number as bank_acc_number,
+      ba.bank_name as bank_acc_bank,
+      ba.branch as bank_acc_branch
       FROM admin_quotations q
       LEFT JOIN admin_clients c ON q.client_id = c.id
-      LEFT JOIN bank_accs ba ON COALESCE(q.bank_account_id, (SELECT id FROM bank_accs WHERE is_default = 1 LIMIT 1)) = ba.id
+      LEFT JOIN admin_accounts ba ON COALESCE(q.bank_account_id, (SELECT id FROM admin_accounts WHERE type = 'Bank Account' LIMIT 1)) = ba.id
       WHERE q.id = ${parseInt(quotationId)}
     `;
  
@@ -1663,8 +1676,9 @@ export async function getQuotationById(quotationId: string) {
 // -- BANK ACCOUNTS --
 export async function getBankAccounts() {
   const rows = await sql`
-    SELECT id, name, number, bank, branch, COALESCE(is_default, 0) as is_default
-    FROM bank_accs
+    SELECT id, name, account_number as number, bank_name as bank, branch, 0 as is_default
+    FROM admin_accounts
+    WHERE type = 'Bank Account'
     ORDER BY id ASC
   `;
   return rows.map(r => ({
@@ -1730,8 +1744,8 @@ export async function recordInvoicePayment(
     }
 
     await sql`
-      INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id, receipt_url)
-      VALUES (${paymentDate}, ${paidAmount}, ${description}, ${category}, ${paymentMethod}, ${invoiceId}, ${clientId}, ${receiptUrlToAttach})
+      INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id, receipt_url, account_id)
+      VALUES (${paymentDate}, ${paidAmount}, ${description}, ${category}, ${paymentMethod}, ${invoiceId}, ${clientId}, ${receiptUrlToAttach}, ${paymentMethod === 'Bank Transfer' ? invoice.bank_account_id : null})
     `;
 
     // 5. Update invoice payment fields
@@ -1882,8 +1896,8 @@ export async function approveBankSlip(invoiceId: string, slipId?: string | numbe
     const description = `Bank Transfer Payment for ${invoice.project_name || 'Project'}`;
     const category = invoice.category || 'Web dev';
     await sql`
-      INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id, receipt_url)
-      VALUES (CURRENT_DATE, ${paidAmount}, ${description}, ${category}, 'Bank Transfer', ${invoiceId}, ${clientId}, ${slip.slip_url || null})
+      INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id, receipt_url, account_id)
+      VALUES (CURRENT_DATE, ${paidAmount}, ${description}, ${category}, 'Bank Transfer', ${invoiceId}, ${clientId}, ${slip.slip_url || null}, ${invoice.bank_account_id})
     `;
 
     await sql`

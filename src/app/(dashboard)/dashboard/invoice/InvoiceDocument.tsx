@@ -67,7 +67,6 @@ function wrapText(text: string, font: any, size: number, maxWidth: number): stri
 }
 
 export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
-  console.log("generateInvoicePDF input:", invoice);
   const pdfDoc = await PDFDocument.create();
 
   // A4 size: 595.276 x 841.89 points

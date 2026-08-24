@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Trash2, ArrowLeft, Send, Save, Loader2 } from "lucide-react";
+import ClientCombobox from "../../components/ClientCombobox";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createQuotation, getClients, createClient, getBankAccounts } from "../../actions/actions";
@@ -242,16 +243,7 @@ export default function NewQuotationPage() {
 
             <div className="space-y-1">
               <label className="text-sm text-gray-400">Select Client</label>
-              <select name="clientId" value={formData.clientId} onChange={handleFormChange}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
-                <option value="" className="bg-black">Choose a client...</option>
-                <option value="new" className="bg-brand-900">+ Create New Client</option>
-                {clients.map(c => (
-                  <option key={c.id} value={c.id} className="bg-black">
-                    {c.name} ({c.email})
-                  </option>
-                ))}
-              </select>
+              <ClientCombobox name="clientId" value={String(formData.clientId || "")} onChange={handleFormChange} clients={clients} />
             </div>
 
             {showNewClientForm && (

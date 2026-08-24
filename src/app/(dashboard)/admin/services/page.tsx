@@ -47,7 +47,6 @@ const CATEGORIES = [
   { slug: "graphic-design", name: "Graphic Design" },
   { slug: "video-editing", name: "Video Editing" },
   { slug: "web-dev", name: "Web Development" },
-  { slug: "saas-products", name: "SaaS Products" },
 ];
 
 // Available icons for features
@@ -743,24 +742,6 @@ export default function ServicesAdminPage() {
                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors resize-none"
                       />
                     </div>
-                    {activeCategory === "saas-products" && (
-                      <>
-
-                        <div>
-                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                            Demo URL
-                          </label>
-                          <input
-                            type="text"
-                            name="demo_url"
-                            value={formData.demo_url}
-                            onChange={handleTextChange}
-                            placeholder="https://demo.example.com"
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors"
-                          />
-                        </div>
-                      </>
-                    )}
                   </div>
 
                   <div className="space-y-4">
@@ -831,20 +812,18 @@ export default function ServicesAdminPage() {
                     </div>
 
                     {/* Technologies list */}
-                    {activeCategory !== "saas-products" && (
-                      <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                          Technologies (comma separated)
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.technologies.join(", ")}
-                          onChange={handleTechChange}
-                          placeholder="e.g. Next.js, TailwindCSS, React, PostgreSQL"
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors"
-                        />
-                      </div>
-                    )}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                        Technologies (comma separated)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.technologies.join(", ")}
+                        onChange={handleTechChange}
+                        placeholder="e.g. Next.js, TailwindCSS, React, PostgreSQL"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

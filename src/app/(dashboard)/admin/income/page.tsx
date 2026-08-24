@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2, Eye, FilePlus, Trash } from "lucide-react";
+import ClientCombobox from "../components/ClientCombobox";
 import Link from "next/link";
-import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice, getBankAccounts, getInvoices } from "../actions/actions";
+import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice, getInvoices } from "../actions/actions";
+import { getAccounts } from "../actions/accounts";
 import CategoryPicker from "../components/CategoryPicker";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
@@ -103,6 +105,7 @@ export default function IncomePage() {
     clientId: '',
     description: '',
     paymentMethod: 'Bank Transfer',
+    accountId: '',
     invoiceId: '',
     receiptUrl: '',
   });
@@ -144,7 +147,7 @@ export default function IncomePage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [res, cls, accs, invsData] = await Promise.all([getIncomes(startDate, endDate), getClients(), getBankAccounts(), getInvoices()]);
+      const [res, cls, accs, invsData] = await Promise.all([getIncomes(startDate, endDate), getClients(), getAccounts(), getInvoices()]);
       setData(res);
       setClients(cls);
       setBankAccounts(accs);
@@ -161,7 +164,7 @@ export default function IncomePage() {
     async function load() {
       setLoading(true);
       try {
-        const [res, cls, accs, invsData] = await Promise.all([getIncomes(startDate, endDate), getClients(), getBankAccounts(), getInvoices()]);
+        const [res, cls, accs, invsData] = await Promise.all([getIncomes(startDate, endDate), getClients(), getAccounts(), getInvoices()]);
         if (!cancelled) {
           setData(res);
           setClients(cls);
@@ -180,7 +183,8 @@ export default function IncomePage() {
 
   const openNew = () => {
     setEditingId(null);
-    setFormData({ date: new Date().toISOString().split('T')[0], amount: '', clientId: '', description: '', paymentMethod: 'Bank Transfer', invoiceId: '', receiptUrl: '' });
+    setFormData({ date: new Date().toISOString().split('T')[0], amount: '', clientId: '', description: '', paymentMethod: 'Bank Transfer',
+    accountId: '', invoiceId: '', receiptUrl: '' });
     setSelectedCategories([]);
     setNewClientName(''); setNewClientEmail(''); setNewClientCompany(''); setNewClientPhone('');
     setReceiptFile(null);
@@ -206,7 +210,8 @@ export default function IncomePage() {
       formattedDate = new Date().toISOString().split('T')[0];
     }
     setEditingId(row.id);
-    setFormData({ date: formattedDate, amount: row.amount.toString(), clientId: row.clientId || '', description: row.desc || '', paymentMethod: row.paymentMethod || 'Bank Transfer', invoiceId: row.invoice || '', receiptUrl: row.receiptUrl || '' });
+    setFormData({ date: formattedDate, amount: row.amount.toString(), clientId: row.clientId || '', description: row.desc || '', paymentMethod: row.paymentMethod || 'Bank Transfer',
+    accountId: row.accountId || row.bank_account_id || '', invoiceId: row.invoice || '', receiptUrl: row.receiptUrl || '' });
     setSelectedCategories(parseCategories(row.category));
     setReceiptFile(null);
     setIsModalOpen(true);
@@ -367,6 +372,15 @@ export default function IncomePage() {
     }
   };
 
+  const dynamicCategories = useMemo(() => {
+    if (!data?.items) return ALL_CATEGORIES;
+    const all = new Set(ALL_CATEGORIES);
+    data.items.forEach((item: any) => {
+      parseCategories(item.category).forEach(c => all.add(c));
+    });
+    return Array.from(all);
+  }, [data?.items]);
+
   if (loading || !data) {
     return (
       <div className="space-y-6">
@@ -404,6 +418,10 @@ export default function IncomePage() {
     { label: "Year to Date", value: formatLKR(data.ytd), icon: TrendingUp, color: "text-brand-400", bg: "bg-brand-400/10" },
   ];
 
+
+
+  const dynamicFilters = ["All", ...dynamicCategories];
+
   // Filter: match if any of the row's categories includes the active filter
   const filteredIncome = data.items.filter((row: any) => {
     if (activeFilter === "All") return true;
@@ -429,7 +447,7 @@ export default function IncomePage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         {/* Filters */}
         <div className="flex flex-wrap gap-2">
-          {filters.map((f) => (
+          {dynamicFilters.map((f) => (
             <button key={f} onClick={() => setActiveFilter(f)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeFilter === f ? "bg-white text-black" : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"}`}>
               {f}
@@ -551,12 +569,7 @@ export default function IncomePage() {
 
               <div className="space-y-1">
                 <label className="text-sm text-gray-400">Client</label>
-                <select value={formData.clientId} onChange={e => setFormData({ ...formData, clientId: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
-                  <option value="" className="bg-black">None</option>
-                  <option value="new" className="bg-brand-900">+ Add New Client</option>
-                  {clients.map(c => <option key={c.id} value={c.id} className="bg-black">{c.name}</option>)}
-                </select>
+                <ClientCombobox name="clientId" value={String(formData.clientId || "")} onChange={e => setFormData({ ...formData, clientId: e.target.value })} clients={clients} />
               </div>
 
               {formData.clientId === 'new' && (
@@ -576,10 +589,10 @@ export default function IncomePage() {
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-sm text-gray-400">Categories</label>
-                  <CategoryPicker categories={ALL_CATEGORIES} value={selectedCategories} onChange={setSelectedCategories} placeholder="Select categories..." />
+                  <CategoryPicker categories={dynamicCategories} value={selectedCategories} onChange={setSelectedCategories} placeholder="Select categories..." />
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm text-gray-400">Payment Method</label>
@@ -589,6 +602,14 @@ export default function IncomePage() {
                     <option className="bg-black">Stripe</option>
                     <option className="bg-black">PayPal</option>
                     <option className="bg-black">Cash</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm text-gray-400">Account</label>
+                  <select value={formData.accountId} onChange={e => setFormData({ ...formData, accountId: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
+                    <option value="" className="bg-black">Default / Auto</option>
+                    {bankAccounts.map(a => <option key={a.id} value={a.id} className="bg-black">{a.name}</option>)}
                   </select>
                 </div>
               </div>

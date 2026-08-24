@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, FileText, Users, Eye, Calendar, Folder, MapPin, CheckSquare, Droplets } from "lucide-react";
+import { Landmark, Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, FileText, Users, Eye, Calendar, Folder, MapPin, CheckSquare, Droplets, ChevronLeft, ChevronRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { getDashboardData } from "../actions/actions";
 import { getAnalyticsData } from "../actions/analytics";
@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const [bookingForecasts, setBookingForecasts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { startDate, endDate } = useAdminDateRange();
+  const [chartYear, setChartYear] = useState<number>(new Date().getFullYear());
 
   useEffect(() => {
     let cancelled = false;
@@ -78,14 +79,26 @@ export default function DashboardPage() {
   if (loading || !data) {
     return (
       <div className="space-y-6">
-        {/* Skeleton Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
+        {/* Skeleton Stats Cards (Row 1) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+          {[...Array(5)].map((_, i) => (
             <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4 animate-pulse">
               <div className="p-4 rounded-2xl bg-white/5 w-14 h-14" />
               <div className="space-y-2 flex-1">
                 <div className="h-4 bg-white/5 rounded-full w-24" />
                 <div className="h-6 bg-white/10 rounded-full w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Skeleton Stats Cards (Row 2) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4 animate-pulse">
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/5 rounded-full w-32" />
+                <div className="h-8 bg-white/10 rounded-full w-40" />
               </div>
             </div>
           ))}
@@ -126,10 +139,10 @@ export default function DashboardPage() {
   }
 
   const stats = [
+    { label: "Total Assets", value: formatLKR(data.totalAssets || 0), icon: Landmark, color: "text-blue-400", bg: "bg-blue-400/10" },
     { label: "Total Income", value: formatLKR(data.totalIncome), icon: Wallet, color: "text-green-400", bg: "bg-green-400/10" },
     { label: "Total Expenses", value: formatLKR(data.totalExpenses), icon: Receipt, color: "text-red-400", bg: "bg-red-400/10" },
     { label: "Net Profit", value: formatLKR(data.netProfit), icon: TrendingUp, color: "text-brand-400", bg: "bg-brand-400/10" },
-    { label: "Unpaid Invoices", value: data.unpaidCount.toString(), icon: AlertCircle, color: "text-amber-400", bg: "bg-amber-400/10" },
   ];
 
   const analyticsStats = analytics
@@ -143,7 +156,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         {stats.map((stat, i) => (
           <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors">
             <div className={`p-4 rounded-2xl ${stat.bg}`}>
@@ -157,6 +170,79 @@ export default function DashboardPage() {
             </div>
           </div>
         ))}
+        {/* Unpaid Invoices */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors">
+          <div className="w-14 h-14 rounded-2xl bg-amber-400/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-xl font-bold text-amber-400">
+              <AnimatedNumber value={data.unpaidCount || 0} />
+            </span>
+          </div>
+          <div>
+            <p className="text-gray-400 text-sm">Unpaid Invoices</p>
+            <p className="text-2xl font-semibold text-amber-400">
+              <AnimatedNumber value={formatLKR(data.unpaidAmount || 0)} />
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Current Month Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          {
+            label: "Current Month Income",
+            value: data.currentMonthStats?.income || 0,
+            prevValue: data.currentMonthStats?.lastMonthIncome || 0,
+            isCurrency: true,
+          },
+          {
+            label: "Current Month Expenses",
+            value: data.currentMonthStats?.expenses || 0,
+            prevValue: data.currentMonthStats?.lastMonthExpenses || 0,
+            isCurrency: true,
+            invertColors: true, // For expenses, increase is bad (red)
+          },
+          {
+            label: "Current Month Profit",
+            value: (data.currentMonthStats?.income || 0) - (data.currentMonthStats?.expenses || 0),
+            prevValue: (data.currentMonthStats?.lastMonthIncome || 0) - (data.currentMonthStats?.lastMonthExpenses || 0),
+            isCurrency: true,
+          },
+          {
+            label: "Year to Date Profit",
+            value: data.netIncomeComparison?.currentNet || 0,
+            prevValue: data.netIncomeComparison?.previousNet || 0,
+            isCurrency: true,
+          }
+        ].map((stat, i) => {
+          let pct = 0;
+          if (stat.prevValue === 0) {
+            pct = stat.value > 0 ? 100 : 0;
+          } else {
+            pct = ((stat.value - stat.prevValue) / Math.abs(stat.prevValue)) * 100;
+          }
+          const isPositive = pct >= 0;
+          const displayPct = Math.abs(pct).toFixed(1);
+          
+          let pctColor = "text-gray-400";
+          if (pct > 0) pctColor = stat.invertColors ? "text-red-400" : "text-green-400";
+          else if (pct < 0) pctColor = stat.invertColors ? "text-green-400" : "text-red-400";
+
+          return (
+            <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 hover:bg-white/10 transition-colors flex flex-col justify-between">
+              <p className="text-gray-400 text-sm mb-2">{stat.label}</p>
+              <div className="flex items-end justify-between">
+                <p className="text-2xl font-semibold">
+                  <AnimatedNumber value={stat.isCurrency ? formatLKR(stat.value) : stat.value} />
+                </p>
+                <div className={`flex items-center gap-1 text-sm font-medium ${pctColor}`}>
+                  {isPositive ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                  <span><AnimatedNumber value={displayPct + "%"} /></span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Analytics Stats Cards */}
@@ -181,10 +267,17 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart */}
         <div className="lg:col-span-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
-          <h2 className="text-xl font-semibold mb-6">Income vs Expenses</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold">Income vs Expenses</h2>
+            <div className="flex items-center gap-4 text-gray-400 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl">
+              <button onClick={() => setChartYear(y => y - 1)} className="hover:text-white transition-colors p-1"><ChevronLeft className="w-4 h-4" /></button>
+              <span className="text-white font-medium text-sm">{chartYear}</span>
+              <button onClick={() => setChartYear(y => y + 1)} className="hover:text-white transition-colors p-1"><ChevronRight className="w-4 h-4" /></button>
+            </div>
+          </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={data.chartData.filter((d: any) => d.year === chartYear)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `LKR ${value/1000}k`} />

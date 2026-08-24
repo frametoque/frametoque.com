@@ -6,6 +6,8 @@ import {
   getExpenses, createExpense, deleteExpense, updateExpense, uploadReceipt,
   getScheduledExpenses, deleteScheduledExpense
 } from "../actions/actions";
+import { getAccounts } from "../actions/accounts";
+import CategoryPicker from "../components/CategoryPicker";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 
@@ -91,15 +93,17 @@ export default function ExpensesPage() {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [convertingPdf, setConvertingPdf] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
+  const [accounts, setAccounts] = useState<any[]>([]);
 
   // Form states
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([filters[1]]);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     amount: '',
     description: '',
-    category: filters[1],
     paymentMethod: 'Corporate Card',
     receiptUrl: '',
+    accountId: '',
     isScheduled: false,
     frequency: 'monthly'
   });
@@ -107,10 +111,12 @@ export default function ExpensesPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [res, schedRes] = await Promise.all([
-        getExpenses(startDate, endDate),
-        getScheduledExpenses().catch(() => [])
-      ]);
+      const [res, schedRes, accs] = await Promise.all([
+          getExpenses(startDate, endDate),
+          getScheduledExpenses().catch(() => []),
+          getAccounts()
+        ]);
+        setAccounts(accs);
       setData(res);
       setScheduledExpenses(schedRes);
     } catch (e) {
@@ -125,10 +131,12 @@ export default function ExpensesPage() {
     async function load() {
       setLoading(true);
       try {
-        const [res, schedRes] = await Promise.all([
+        const [res, schedRes, accs] = await Promise.all([
           getExpenses(startDate, endDate),
-          getScheduledExpenses().catch(() => [])
+          getScheduledExpenses().catch(() => []),
+          getAccounts()
         ]);
+        setAccounts(accs);
         if (!cancelled) {
           setData(res);
           setScheduledExpenses(schedRes);
@@ -157,6 +165,7 @@ export default function ExpensesPage() {
       const payload = { 
         ...formData, 
         amount: parseFloat(formData.amount) || 0, 
+        category: selectedCategories.join(", "),
         receiptUrl: uploadedUrl 
       };
       if (editingId) {
@@ -171,12 +180,12 @@ export default function ExpensesPage() {
         date: new Date().toISOString().split('T')[0],
         amount: '',
         description: '',
-        category: filters[1],
         paymentMethod: 'Corporate Card',
         receiptUrl: '',
         isScheduled: false,
         frequency: 'monthly'
       });
+      setSelectedCategories([filters[1]]);
       await loadData();
     } catch (e) {
       console.error(e);
@@ -210,12 +219,12 @@ export default function ExpensesPage() {
       date: formattedDate,
       amount: row.amount.toString(),
       description: row.desc || '',
-      category: row.category || filters[1],
       paymentMethod: row.paidVia || 'Corporate Card',
       receiptUrl: row.receiptUrl || '',
       isScheduled: false,
       frequency: 'monthly'
     });
+    setSelectedCategories(parseCategories(row.category).length ? parseCategories(row.category) : [filters[1]]);
     setReceiptFile(null);
     setIsModalOpen(true);
   };
@@ -241,6 +250,15 @@ export default function ExpensesPage() {
       }
     }
   };
+
+  const dynamicCategories = useMemo(() => {
+    if (!data?.items) return filters.filter(f => f !== "All");
+    const all = new Set(filters.filter(f => f !== "All"));
+    data.items.forEach((item: any) => {
+      parseCategories(item.category).forEach(c => all.add(c));
+    });
+    return Array.from(all);
+  }, [data?.items]);
 
   if (loading || !data) {
     return (
@@ -279,9 +297,12 @@ export default function ExpensesPage() {
     { label: "Year to Date", value: formatLKR(data.ytd), icon: CreditCard, color: "text-brand-400", bg: "bg-brand-400/10" },
   ];
 
-  const filteredExpenses = data.items.filter((row: any) => 
-    activeFilter === "All" || row.category === activeFilter
-  );
+  const dynamicFilters = ["All", ...dynamicCategories];
+
+  const filteredExpenses = data.items.filter((row: any) => {
+    if (activeFilter === "All") return true;
+    return parseCategories(row.category).includes(activeFilter);
+  });
 
   return (
     <div className="space-y-6">
@@ -336,7 +357,7 @@ export default function ExpensesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         {/* Filters */}
         <div className="flex flex-wrap gap-2">
-          {filters.map((f) => (
+          {dynamicFilters.map((f) => (
             <button
               key={f}
               onClick={() => setActiveFilter(f)}
@@ -358,12 +379,12 @@ export default function ExpensesPage() {
               date: new Date().toISOString().split('T')[0],
               amount: '',
               description: '',
-              category: filters[1],
               paymentMethod: 'Corporate Card',
               receiptUrl: '',
               isScheduled: false,
               frequency: 'monthly'
             });
+            setSelectedCategories([filters[1]]);
             setReceiptFile(null);
             setIsModalOpen(true);
           }}
@@ -500,9 +521,11 @@ export default function ExpensesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-sm text-gray-400">Category</label>
-                  <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
-                    {filters.filter(f => f !== "All").map(f => <option key={f} value={f} className="bg-black">{f}</option>)}
-                  </select>
+                  <CategoryPicker 
+                    categories={dynamicCategories} 
+                    value={selectedCategories} 
+                    onChange={setSelectedCategories} 
+                  />
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm text-gray-400">Payment Method</label>

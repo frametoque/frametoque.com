@@ -27,7 +27,6 @@ const convertPdfToImage = async (file: File): Promise<File> => {
   const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
   if (!isPdf) return file;
 
-  console.log("PDF file detected, initiating image conversion:", file.name);
 
   if (!(window as any).pdfjsLib) {
     const existingScript = document.querySelector('script[src*="pdf.min.js"]');
@@ -79,7 +78,6 @@ const convertPdfToImage = async (file: File): Promise<File> => {
       }
       const newFilename = file.name.replace(/\.[^/.]+$/, "") + ".png";
       const convertedFile = new File([blob], newFilename, { type: "image/png" });
-      console.log("PDF successfully converted to image file:", newFilename);
       resolve(convertedFile);
     }, "image/png");
   });

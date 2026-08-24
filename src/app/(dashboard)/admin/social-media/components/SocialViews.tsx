@@ -14,7 +14,31 @@ const XIcon = ({ className }: { className?: string }) => (
 export default function SocialViews({ posts, loading, onRefresh, onDelete }: any) {
   const [viewingPost, setViewingPost] = useState<any>(null);
 
-  if (loading) return <div className="text-gray-500">Loading posts...</div>;
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {[...Array(10)].map((_, i) => (
+          <div key={i} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden flex flex-col animate-pulse">
+            <div className="w-full aspect-square bg-white/5" />
+            <div className="p-3 h-24 flex flex-col justify-between">
+              <div className="space-y-2 mt-1">
+                <div className="h-3 bg-white/10 rounded-full w-full" />
+                <div className="h-3 bg-white/10 rounded-full w-2/3" />
+              </div>
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded bg-white/5" />
+                  <div className="w-3 h-3 rounded bg-white/5" />
+                  <div className="w-3 h-3 rounded bg-white/5" />
+                </div>
+                <div className="h-2.5 bg-white/5 rounded-full w-20" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
   if (posts.length === 0) return <div className="text-gray-500 text-center py-20">No posts found. Create one to get started!</div>;
 
   const getStatusIcon = (status: string) => {

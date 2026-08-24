@@ -29,7 +29,7 @@ export default function CategoryPicker({
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom;
-    const dropdownHeight = Math.min(categories.length * 44, 260);
+    const dropdownHeight = Math.min(categories.length * 44 + 60, 600);
 
     if (spaceBelow >= dropdownHeight) {
       // Open downward
@@ -93,9 +93,41 @@ export default function CategoryPicker({
     <div
       ref={dropdownRef}
       style={{ ...dropdownStyle, position: "absolute", zIndex: 9999 }}
-      className="bg-[#0d0d12] border border-white/15 rounded-xl shadow-2xl overflow-y-auto max-h-[260px]"
+      className="bg-[#0d0d12] border border-white/15 rounded-xl shadow-2xl overflow-y-auto max-h-[600px]"
     >
-      {categories.map((cat) => {
+      <div className="p-2 border-b border-white/10 flex gap-2">
+        <input
+          type="text"
+          placeholder="New category..."
+          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-500 text-white"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              const val = e.currentTarget.value.trim();
+              if (val && !value.includes(val)) {
+                onChange([...value, val]);
+                e.currentTarget.value = "";
+              }
+            }
+          }}
+        />
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+            const val = input.value.trim();
+            if (val && !value.includes(val)) {
+              onChange([...value, val]);
+              input.value = "";
+            }
+          }}
+          className="px-3 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-sm font-medium transition-colors"
+        >
+          Add
+        </button>
+      </div>
+      {Array.from(new Set([...categories, ...value])).sort((a, b) => a.localeCompare(b)).map((cat) => {
         const selected = value.includes(cat);
         return (
           <button

@@ -9,7 +9,6 @@ const NewsletterSection = () => {
     e.preventDefault();
     if (email) {
       // In a real app, you would handle the subscription here
-      console.log("Subscribing email:", email);
       setEmail("");
     }
   };

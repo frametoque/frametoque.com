@@ -126,7 +126,6 @@ function SSOCallbackContent() {
   useEffect(() => {
     const safetyTimeout = setTimeout(() => {
       if (!isComplete && progress >= 95 && !error) {
-        console.log("Safety redirect triggered");
         setProgress(100);
         setIsComplete(true);
         setShowManualButton(false);
@@ -140,7 +139,6 @@ function SSOCallbackContent() {
   }, [isComplete, progress, error, router]);
 
   const handleManualRedirect = () => {
-    console.log("Manual redirect to dashboard");
     setProgress(100);
     setIsComplete(true);
     setShowManualButton(false);

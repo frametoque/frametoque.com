@@ -49,7 +49,9 @@ import {
   DollarSign,
   Download,
   Cloud,
-  Megaphone
+  Megaphone,
+  BookOpen,
+  Landmark
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -166,10 +168,10 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isPortfolio = pathname === "/admin/portfolio";
   const isWebServices = pathname.startsWith("/admin/web-services");
   const isSocialMedia = pathname.startsWith("/admin/social-media");
-  const isSaas = pathname === "/admin/saas";
-  const isSaasDetail = pathname.startsWith("/admin/saas/");
   const isAgreements = pathname.startsWith("/admin/agreements");
-    const hideSelector = isServices || isPortfolio || isBookings || isWebServices || isSaas || isSaasDetail || isInvoiceDetail || isSocialMedia;
+  const isDashboard = pathname === "/admin/dashboard";
+  const isAccounts = pathname.startsWith("/admin/accounts");
+  const hideSelector = isServices || isPortfolio || isBookings || isWebServices || isInvoiceDetail || isSocialMedia || isDashboard || isAccounts;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [currentTime, setCurrentTime] = useState("");
@@ -182,22 +184,15 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const [reportsActiveTab, setReportsActiveTab] = useState("overview");
   const [reportsFormattedDate, setReportsFormattedDate] = useState("");
   const [dynamicTitle, setDynamicTitle] = useState("");
-  const [saasActionState, setSaasActionState] = useState({ show: false, loading: false });
 
   useEffect(() => {
     const handleUpdateTitle = (e: Event) => {
       const customEvent = e as CustomEvent<string>;
       setDynamicTitle(customEvent.detail);
     };
-    const handleSaasActionState = (e: Event) => {
-      const customEvent = e as CustomEvent<{ show: boolean, loading: boolean }>;
-      setSaasActionState(customEvent.detail);
-    };
     window.addEventListener("update-title", handleUpdateTitle);
-    window.addEventListener("saas:action-state", handleSaasActionState);
     return () => {
       window.removeEventListener("update-title", handleUpdateTitle);
-      window.removeEventListener("saas:action-state", handleSaasActionState);
     };
   }, []);
 
@@ -241,6 +236,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path.startsWith("/admin/quotations")) return "Quotations";
     if (path.startsWith("/admin/income")) return "Income";
     if (path.startsWith("/admin/expenses")) return "Expenses";
+    if (path.startsWith("/admin/accounts")) return "Accounts";
     if (path.startsWith("/admin/reports")) return "Reports";
     if (path.startsWith("/admin/portfolio")) return "Portfolio";
     if (path.startsWith("/admin/services")) return "Services";
@@ -250,8 +246,6 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path.startsWith("/admin/agreements")) return "Agreements";
     if (path.startsWith("/admin/web-services")) return "Web Services";
     if (path.startsWith("/admin/social-media")) return "Social Media";
-    if (path === "/admin/saas") return "SaaS";
-    if (path.startsWith("/admin/saas/")) return "SaaS Details";
         return "Admin";
   };
 
@@ -383,24 +377,6 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     
     </>)}
   </div>
-  
-              ) : isSaas ? (
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("saas:open-add"))}
-                  className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Project</span>
-                </button>
-              ) : isSaasDetail && saasActionState.show ? (
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("saas:create-invoice"))}
-                  disabled={saasActionState.loading}
-                  className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm disabled:opacity-50"
-                >
-                  {saasActionState.loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-                  <span>Create Invoice</span>
-                </button>
               ) : isBookings ? (
                 <div className="flex items-center gap-2">
                   <button
@@ -418,9 +394,26 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                     <span>Sync with your calendar</span>
                   </button>
                 </div>
+              ) : isAccounts ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("accounts:open-transfer"))}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Transfer Cash</span>
+                  </button>
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("accounts:open-create"))}
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Account</span>
+                  </button>
+                </div>
               ) : (
                 <a
-                  href={isServices ? "/services" : "/work"}
+                  href={isDashboard ? "/" : isServices ? "/services" : "/work"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors text-sm"
@@ -678,13 +671,13 @@ const Sidebar = ({
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Income", href: "/admin/income", icon: Wallet },
     { name: "Expenses", href: "/admin/expenses", icon: Receipt },
+    { name: "Accounts", href: "/admin/accounts", icon: Landmark, divider: false },
     { name: "Invoices", href: "/admin/invoices", icon: FileText, divider: true },
     { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
     { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
     { name: "Bookings", href: "/admin/bookings", icon: Calendar },
     { name: "Web Services", href: "/admin/web-services", icon: Globe, divider: false },
     { name: "Clients", href: "/admin/clients", icon: Users },
-    // { name: "SaaS", href: "/admin/saas", icon: Cloud, divider: true },
     { name: "Reports", href: "/admin/reports", icon: BarChart3, divider: true },
     { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
     { name: "Services", href: "/admin/services", icon: Briefcase },
