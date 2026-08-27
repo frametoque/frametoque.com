@@ -22,7 +22,8 @@ export interface SocialPost {
 
 export async function uploadSocialMedia(formData: FormData) {
   const file = formData.get("file") as File;
-  const blob = await put(`social/${Date.now()}-${file.name}`, file, { access: 'public' });
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+  const blob = await put(`social/${Date.now()}-${safeName}`, file, { access: 'public' });
   return blob.url;
 }
 
@@ -66,9 +67,14 @@ export async function publishToPlatform(postId: number, platform: string) {
     const res = await sql`SELECT * FROM social_posts WHERE id = ${postId}`;
     if (res.length === 0) return { success: false, error: "Not found" };
     const post = res[0];
-    const platformPostIds = post.platform_post_ids || {};
-    const caption = post.custom_captions?.[platform] || post.default_caption || "";
-    const media_urls = post.media_urls || [];
+    let platformPostIds = post.platform_post_ids || {};
+    if (typeof platformPostIds === 'string') platformPostIds = JSON.parse(platformPostIds);
+    let customCaptions = post.custom_captions || {};
+    if (typeof customCaptions === 'string') customCaptions = JSON.parse(customCaptions);
+    
+    const caption = customCaptions?.[platform] || post.default_caption || "";
+    let media_urls = post.media_urls || [];
+    if (typeof media_urls === 'string') media_urls = JSON.parse(media_urls);
     
     if (platform === 'gmb') {
         const ayrshareKey = process.env.AYRSHARE_API_KEY;
@@ -154,10 +160,20 @@ export async function publishToPlatform(postId: number, platform: string) {
         if (!botToken || !chatId) return { success: false, error: "Missing TG credentials" };
         const isVideo = media_urls.length > 0 && media_urls[0].match(/\.(mp4|mov|avi|mkv|webm)$/i);
         const endpoint = media_urls.length === 0 ? 'sendMessage' : (isVideo ? 'sendVideo' : 'sendPhoto');
-        const payload: any = { chat_id: chatId };
-        if (media_urls.length === 0) payload.text = caption;
-        else { payload.caption = caption; if (isVideo) payload.video = media_urls[0]; else payload.photo = media_urls[0]; }
-        const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        
+        let tgRes;
+        if (media_urls.length === 0) {
+            tgRes = await fetch(`https://api.telegram.org/bot${botToken}/${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: chatId, text: caption }) });
+        } else {
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            if (caption) formData.append('caption', caption);
+            const fileRes = await fetch(media_urls[0]);
+            const fileBlob = await fileRes.blob();
+            formData.append(isVideo ? 'video' : 'photo', fileBlob, 'file' + (isVideo ? '.mp4' : '.jpg'));
+            tgRes = await fetch(`https://api.telegram.org/bot${botToken}/${endpoint}`, { method: 'POST', body: formData });
+        }
+        
         const tgData = await tgRes.json();
         if (!tgData.ok) return { success: false, error: tgData.description };
         if (tgData.result?.message_id) platformPostIds['telegram'] = tgData.result.message_id.toString();
@@ -255,9 +271,14 @@ export async function updatePlatformPost(postId: number, platform: string) {
     const res = await sql`SELECT * FROM social_posts WHERE id = ${postId}`;
     if (res.length === 0) return { success: false, error: "Not found" };
     const post = res[0];
-    const platformPostIds = post.platform_post_ids || {};
-    const caption = post.custom_captions?.[platform] || post.default_caption || "";
-    const media_urls = post.media_urls || [];
+    let platformPostIds = post.platform_post_ids || {};
+    if (typeof platformPostIds === 'string') platformPostIds = JSON.parse(platformPostIds);
+    let customCaptions = post.custom_captions || {};
+    if (typeof customCaptions === 'string') customCaptions = JSON.parse(customCaptions);
+    
+    const caption = customCaptions?.[platform] || post.default_caption || "";
+    let media_urls = post.media_urls || [];
+    if (typeof media_urls === 'string') media_urls = JSON.parse(media_urls);
     
     if (platform === 'gmb' && platformPostIds['gmb']) {
         const ayrshareKey = process.env.AYRSHARE_API_KEY;
@@ -327,7 +348,8 @@ export async function deletePlatformPost(postId: number, platform: string) {
     const res = await sql`SELECT * FROM social_posts WHERE id = ${postId}`;
     if (res.length === 0) return { success: false, error: "Not found" };
     const post = res[0];
-    const ids = post.platform_post_ids || {};
+    let ids = post.platform_post_ids || {};
+    if (typeof ids === 'string') ids = JSON.parse(ids);
     
     if (platform === 'gmb' && ids['gmb']) {
         const ayrshareKey = process.env.AYRSHARE_API_KEY;
