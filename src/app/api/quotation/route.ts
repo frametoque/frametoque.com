@@ -1,7 +1,6 @@
 // app/api/quotation/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { neon } from "@neondatabase/serverless";
-
+import sql from "@/lib/db";
 export async function POST(req: NextRequest) {
   // ── Env check ────────────────────────────────────────────────────────────
   if (!process.env.DATABASE_URL) {
@@ -12,9 +11,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Initialise inside the handler so env is always resolved
-  const sql = neon(process.env.DATABASE_URL);
-
+  // Removed duplicate initialization
   // ── Parse body ────────────────────────────────────────────────────────────
   let body: {
     quoteName: string;
@@ -323,8 +320,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const sql = neon(process.env.DATABASE_URL);
-
+  // Removed duplicate initialization
   try {
     const { searchParams } = new URL(req.url);
     const userEmail = searchParams.get("user_email");

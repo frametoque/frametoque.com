@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.6",
-    "@neondatabase/serverless": "^1.1.0",
     "@sparticuz/chromium": "^133.0.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.6.1",
@@ -28,6 +27,7 @@
     "passkit-generator": "^3.5.7",
     "pdf-lib": "^1.17.1",
     "pg": "^8.22.0",
+    "postgres": "^3.4.9",
     "puppeteer": "^25.3.0",
     "puppeteer-core": "^24.43.1",
     "puppeteer-extra": "^3.3.6",

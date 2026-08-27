@@ -31,14 +31,14 @@ export async function fetchLiveNotifications(): Promise<NotificationItem[]> {
     ] = await Promise.allSettled([
       getActiveVisitors(),
       getAnalyticsData("this year"),
-      sql.query(`
+      sql.unsafe(`
         SELECT id, client_name, title, client_sig_date,
                EXTRACT(EPOCH FROM (NOW() - updated_at)) * 1000 AS ms_ago
         FROM admin_agreements
         WHERE status = 'signed' AND client_sig_date IS NOT NULL
         ORDER BY updated_at DESC LIMIT 2
       `),
-      sql.query(`
+      sql.unsafe(`
         SELECT q.id, q.amount, c.full_name as client, q.category, q.date,
                EXTRACT(EPOCH FROM (NOW() - q.created_at)) * 1000 AS ms_ago
         FROM admin_quotations q
@@ -46,28 +46,28 @@ export async function fetchLiveNotifications(): Promise<NotificationItem[]> {
         WHERE q.status IN ('pending', 'client-draft')
         ORDER BY q.date DESC, q.created_at DESC LIMIT 2
       `),
-      sql.query(`
+      sql.unsafe(`
         SELECT invoice_id, user_email, total,
                EXTRACT(EPOCH FROM (NOW() - created_at)) * 1000 AS ms_ago
         FROM invoices
         WHERE payment_status = 'fully paid'
         ORDER BY date DESC, created_at DESC LIMIT 2
       `),
-      sql.query(`
+      sql.unsafe(`
         SELECT invoice_id, user_email, total,
                EXTRACT(EPOCH FROM (NOW() - due_date)) * 1000 AS ms_ago
         FROM invoices
         WHERE payment_status IN ('unpaid', 'pending') AND due_date < NOW()
         ORDER BY due_date ASC LIMIT 1
       `),
-      sql.query(`
+      sql.unsafe(`
         SELECT id, client_name, title,
                EXTRACT(EPOCH FROM (deadline::timestamp - NOW())) * 1000 AS ms_until
         FROM admin_agreements
         WHERE status = 'pending' AND deadline >= NOW() AND deadline <= NOW() + INTERVAL '7 days'
         ORDER BY deadline ASC LIMIT 1
       `),
-      sql.query(`
+      sql.unsafe(`
         SELECT id, title, customer_name, booking_date, start_time, event_type,
                EXTRACT(EPOCH FROM ((booking_date::text || ' ' || COALESCE(start_time::text, '00:00:00'))::timestamp - NOW())) * 1000 AS ms_until
         FROM admin_bookings
@@ -83,12 +83,12 @@ export async function fetchLiveNotifications(): Promise<NotificationItem[]> {
 
     const activeCount = getVal(activeCountResult, 0);
     const analytics = getVal(analyticsResult, null);
-    const signedAgreements = getVal(signedAgreementsResult, []);
-    const pendingQuotations = getVal(pendingQuotationsResult, []);
-    const paidInvoices = getVal(paidInvoicesResult, []);
-    const overdueInvoices = getVal(overdueInvoicesResult, []);
-    const upcomingAgreements = getVal(upcomingAgreementsResult, []);
-    const upcomingBookings = getVal(upcomingBookingsResult, []);
+    const signedAgreements = getVal(signedAgreementsResult, [] as any[]);
+    const pendingQuotations = getVal(pendingQuotationsResult, [] as any[]);
+    const paidInvoices = getVal(paidInvoicesResult, [] as any[]);
+    const overdueInvoices = getVal(overdueInvoicesResult, [] as any[]);
+    const upcomingAgreements = getVal(upcomingAgreementsResult, [] as any[]);
+    const upcomingBookings = getVal(upcomingBookingsResult, [] as any[]);
 
     // Build an ISO timestamp from a DB-computed ms offset, anchored to *this* request's `now`.
     // This avoids ever asking the Node pg driver to parse a naive TIMESTAMP column back into

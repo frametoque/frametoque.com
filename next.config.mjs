@@ -5,6 +5,11 @@ const nextConfig = {
       bodySizeLimit: '100mb',
     },
   },
+  compiler: {
+    removeConsole: {
+      exclude: ['error', 'warn'],
+    },
+  },
   async redirects() {
     return [
       {

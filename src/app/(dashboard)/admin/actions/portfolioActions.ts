@@ -22,7 +22,7 @@ const TABLE_MAP: Record<string, string> = {
  */
 export async function getPortfolioByCategory(categorySlug: string) {
   if (categorySlug === "photography") {
-    const rows = await sql.query(
+    const rows = await sql.unsafe(
       `SELECT p.id, e.id as event_id, e.event_name, p.src, p.width, p.height, p.sort_order, e.sort_order as event_sort_order
        FROM work_photography_events e
        JOIN work_photography_photos p ON p.event_id = e.id
@@ -36,7 +36,7 @@ export async function getPortfolioByCategory(categorySlug: string) {
     throw new Error(`Invalid portfolio category: ${categorySlug}`);
   }
 
-  const rows = await sql.query(`SELECT * FROM ${table} ORDER BY sort_order ASC, id ASC`);
+  const rows = await sql.unsafe(`SELECT * FROM ${table} ORDER BY sort_order ASC, id ASC`);
   return rows;
 }
 
@@ -50,8 +50,8 @@ export async function createPortfolioItem(categorySlug: string, data: any) {
   }
 
   if (categorySlug === "web-dev") {
-    await sql.query(`UPDATE work_web SET sort_order = sort_order + 1`);
-    await sql.query(
+    await sql.unsafe(`UPDATE work_web SET sort_order = sort_order + 1`);
+    await sql.unsafe(
       `INSERT INTO work_web (domain, image_path, title, description, techs, url, sort_order)
        VALUES ($1, $2, $3, $4, $5, $6, 1)`,
       [
@@ -64,25 +64,25 @@ export async function createPortfolioItem(categorySlug: string, data: any) {
       ]
     );
   } else if (categorySlug === "graphic-design") {
-    await sql.query(`UPDATE work_graphics SET sort_order = sort_order + 1`);
-    await sql.query(
+    await sql.unsafe(`UPDATE work_graphics SET sort_order = sort_order + 1`);
+    await sql.unsafe(
       `INSERT INTO work_graphics (image_path, sort_order)
        VALUES ($1, 1)`,
       [data.image_path]
     );
   } else if (categorySlug === "video-editing" || categorySlug === "videography") {
-    await sql.query(`UPDATE ${table} SET sort_order = sort_order + 1`);
-    await sql.query(
+    await sql.unsafe(`UPDATE ${table} SET sort_order = sort_order + 1`);
+    await sql.unsafe(
       `INSERT INTO ${table} (url, sort_order)
        VALUES ($1, 1)`,
       [data.url]
     );
   } else if (categorySlug === "photography") {
     // 1. Shift event sort orders
-    await sql.query(`UPDATE work_photography_events SET sort_order = sort_order + 1`);
+    await sql.unsafe(`UPDATE work_photography_events SET sort_order = sort_order + 1`);
     
     // 2. Insert event if it doesn't exist
-    await sql.query(
+    await sql.unsafe(
       `INSERT INTO work_photography_events (event_name, sort_order)
        VALUES ($1, 1)
        ON CONFLICT (event_name) DO NOTHING`,
@@ -90,20 +90,20 @@ export async function createPortfolioItem(categorySlug: string, data: any) {
     );
     
     // Fetch event ID
-    const eventRes = await sql.query(
+    const eventRes = await sql.unsafe(
       `SELECT id FROM work_photography_events WHERE event_name = $1`,
       [data.event_name]
     );
     const eventId = eventRes[0].id;
     
     // 3. Shift photo sort orders for this event
-    await sql.query(
+    await sql.unsafe(
       `UPDATE work_photography_photos SET sort_order = sort_order + 1 WHERE event_id = $1`,
       [eventId]
     );
     
     // 4. Insert photo at the top
-    await sql.query(
+    await sql.unsafe(
       `INSERT INTO work_photography_photos (event_id, src, width, height, sort_order)
        VALUES ($1, $2, $3, $4, 1)`,
       [
@@ -126,7 +126,7 @@ export async function updatePortfolioItem(categorySlug: string, id: number, data
   }
 
   if (categorySlug === "web-dev") {
-    await sql.query(
+    await sql.unsafe(
       `UPDATE work_web
        SET domain = $1, image_path = $2, title = $3, description = $4, techs = $5, url = $6
        WHERE id = $7`,
@@ -141,32 +141,32 @@ export async function updatePortfolioItem(categorySlug: string, id: number, data
       ]
     );
   } else if (categorySlug === "graphic-design") {
-    await sql.query(
+    await sql.unsafe(
       `UPDATE work_graphics
        SET image_path = $1
        WHERE id = $2`,
       [data.image_path, id]
     );
   } else if (categorySlug === "video-editing" || categorySlug === "videography") {
-    await sql.query(
+    await sql.unsafe(
       `UPDATE ${table}
        SET url = $1
        WHERE id = $2`,
       [data.url, id]
     );
   } else if (categorySlug === "photography") {
-    await sql.query(
+    await sql.unsafe(
       `INSERT INTO work_photography_events (event_name)
        VALUES ($1)
        ON CONFLICT (event_name) DO NOTHING`,
       [data.event_name]
     );
-    const eventRes = await sql.query(
+    const eventRes = await sql.unsafe(
       `SELECT id FROM work_photography_events WHERE event_name = $1`,
       [data.event_name]
     );
     const eventId = eventRes[0].id;
-    await sql.query(
+    await sql.unsafe(
       `UPDATE work_photography_photos
        SET event_id = $1, src = $2, width = $3, height = $4
        WHERE id = $5`,
@@ -187,7 +187,7 @@ export async function updatePortfolioItem(categorySlug: string, id: number, data
 export async function deletePortfolioItem(categorySlug: string, id: number) {
   if (categorySlug === "photography") {
     // 1. Fetch event_id and src first before deleting photo
-    const photoRes = await sql.query(`SELECT event_id, src FROM work_photography_photos WHERE id = $1`, [id]);
+    const photoRes = await sql.unsafe(`SELECT event_id, src FROM work_photography_photos WHERE id = $1`, [id]);
     if (photoRes.length === 0) return;
 
     const eventId = photoRes[0].event_id;
@@ -216,12 +216,12 @@ export async function deletePortfolioItem(categorySlug: string, id: number) {
     }
 
     // 3. Delete the photo row from database
-    await sql.query(`DELETE FROM work_photography_photos WHERE id = $1`, [id]);
+    await sql.unsafe(`DELETE FROM work_photography_photos WHERE id = $1`, [id]);
     
     // 4. Check if the event now has 0 photos remaining, if so delete the event
-    const countRes = await sql.query(`SELECT COUNT(*) as count FROM work_photography_photos WHERE event_id = $1`, [eventId]);
+    const countRes = await sql.unsafe(`SELECT COUNT(*) as count FROM work_photography_photos WHERE event_id = $1`, [eventId]);
     if (parseInt(countRes[0].count) === 0) {
-      await sql.query(`DELETE FROM work_photography_events WHERE id = $1`, [eventId]);
+      await sql.unsafe(`DELETE FROM work_photography_events WHERE id = $1`, [eventId]);
     }
     return;
   }
@@ -233,7 +233,7 @@ export async function deletePortfolioItem(categorySlug: string, id: number) {
 
   // Delete image from Vercel Blob CDN if item has image_path or src
   try {
-    const rows = await sql.query(`SELECT image_path, src FROM ${table} WHERE id = $1`, [id]);
+    const rows = await sql.unsafe(`SELECT image_path, src FROM ${table} WHERE id = $1`, [id]);
     if (rows.length > 0) {
       const url = rows[0].image_path || rows[0].src;
       if (url && url.startsWith("http")) {
@@ -244,7 +244,7 @@ export async function deletePortfolioItem(categorySlug: string, id: number) {
     // Ignore if column doesn't exist
   }
 
-  await sql.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
+  await sql.unsafe(`DELETE FROM ${table} WHERE id = $1`, [id]);
 }
 
 /**
@@ -261,7 +261,7 @@ export async function reorderPortfolioItems(
   }
 
   // Fetch both current sort_orders
-  const res = await sql.query(
+  const res = await sql.unsafe(
     `SELECT id, sort_order FROM ${table} WHERE id = ANY($1)`,
     [[idA, idB]]
   );
@@ -271,11 +271,11 @@ export async function reorderPortfolioItems(
   const rowB = res.find((r: any) => r.id === idB);
 
   // Swap their sort_order values
-  await sql.query(
+  await sql.unsafe(
     `UPDATE ${table} SET sort_order = $1 WHERE id = $2`,
     [rowB.sort_order, idA]
   );
-  await sql.query(
+  await sql.unsafe(
     `UPDATE ${table} SET sort_order = $1 WHERE id = $2`,
     [rowA.sort_order, idB]
   );
@@ -312,7 +312,7 @@ export async function reorderPortfolioItemsBatch(
     WHERE t.id = v.id
   `;
 
-  await sql.query(query, params);
+  await sql.unsafe(query, params);
 }
 
 /**
@@ -337,7 +337,7 @@ export async function reorderEventPhotosBatch(orderedPhotoIds: number[]) {
     WHERE p.id = v.id
   `;
 
-  await sql.query(query, params);
+  await sql.unsafe(query, params);
 }
 
 /**
@@ -453,10 +453,10 @@ export async function createBatchPortfolioPhotos(
   const cleanEvent = eventName.trim();
 
   // 1. Shift event sort orders
-  await sql.query(`UPDATE work_photography_events SET sort_order = sort_order + 1`);
+  await sql.unsafe(`UPDATE work_photography_events SET sort_order = sort_order + 1`);
   
   // 2. Insert event if it doesn't exist
-  await sql.query(
+  await sql.unsafe(
     `INSERT INTO work_photography_events (event_name, sort_order)
      VALUES ($1, 1)
      ON CONFLICT (event_name) DO NOTHING`,
@@ -464,7 +464,7 @@ export async function createBatchPortfolioPhotos(
   );
   
   // Fetch event ID
-  const eventRes = await sql.query(
+  const eventRes = await sql.unsafe(
     `SELECT id FROM work_photography_events WHERE event_name = $1`,
     [cleanEvent]
   );
@@ -474,7 +474,7 @@ export async function createBatchPortfolioPhotos(
   const eventId = eventRes[0].id;
 
   // Fetch all existing photos for this event
-  const existingPhotos = await sql.query(
+  const existingPhotos = await sql.unsafe(
     `SELECT id, src, original_filename, file_hash FROM work_photography_photos WHERE event_id = $1`,
     [eventId]
   );
@@ -520,7 +520,7 @@ export async function createBatchPortfolioPhotos(
       }
 
       // Duplicate filename or content found! Replace existing photo record with the new upload
-      await sql.query(
+      await sql.unsafe(
         `UPDATE work_photography_photos 
          SET src = $1, width = $2, height = $3, original_filename = $4, file_hash = $5 
          WHERE id = $6`,
@@ -541,7 +541,7 @@ export async function createBatchPortfolioPhotos(
   if (newPhotos.length === 0) return;
 
   // 3. Shift photo sort orders for this event by newPhotos.length
-  await sql.query(
+  await sql.unsafe(
     `UPDATE work_photography_photos SET sort_order = sort_order + $1 WHERE event_id = $2`,
     [newPhotos.length, eventId]
   );
@@ -565,7 +565,7 @@ export async function createBatchPortfolioPhotos(
   });
 
   const insertQuery = `INSERT INTO work_photography_photos (event_id, src, width, height, sort_order, file_hash, original_filename) VALUES ${valueStrings.join(", ")}`;
-  await sql.query(insertQuery, queryParams);
+  await sql.unsafe(insertQuery, queryParams);
 }
 
 /**
@@ -577,14 +577,14 @@ export async function cleanDuplicatesFromEvent(eventName: string): Promise<{ kep
   const cleanEvent = eventName.trim();
 
   // Find event ID
-  const eventRes = await sql.query(
+  const eventRes = await sql.unsafe(
     `SELECT id FROM work_photography_events WHERE LOWER(event_name) = LOWER($1) OR LOWER(event_name) LIKE LOWER($2)`,
     [cleanEvent, `%${cleanEvent}%`]
   );
   if (!eventRes || eventRes.length === 0) return { kept: 0, deleted: 0 };
 
   const eventId = eventRes[0].id;
-  const photos = await sql.query(
+  const photos = await sql.unsafe(
     `SELECT id, src, original_filename, file_hash, sort_order FROM work_photography_photos WHERE event_id = $1 ORDER BY id ASC`,
     [eventId]
   );
@@ -628,7 +628,7 @@ export async function cleanDuplicatesFromEvent(eventName: string): Promise<{ kep
         console.error(`Deduplication: Failed to delete blob ${photo.src}:`, err);
       }
     }
-    await sql.query(`DELETE FROM work_photography_photos WHERE id = $1`, [photo.id]);
+    await sql.unsafe(`DELETE FROM work_photography_photos WHERE id = $1`, [photo.id]);
     deletedCount++;
   }
 

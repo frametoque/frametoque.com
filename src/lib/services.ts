@@ -1,6 +1,4 @@
-import { neon } from "@neondatabase/serverless";
-
-const sql = neon(process.env.DATABASE_URL!);
+import sql from "@/lib/db";
 
 const TABLE_MAP: Record<string, string> = {
   "web-dev":        "services_webdev",
@@ -72,7 +70,7 @@ export async function getServiceCards(categorySlug: string): Promise<ServiceCard
   const table = TABLE_MAP[categorySlug];
   if (!table) return [];
 
-  const rows = await sql.query(
+  const rows = await sql.unsafe(
     `SELECT service_id, title, overview, packages, hero_image FROM ${table} ORDER BY sort_order ASC, id ASC`
   ) as ServiceRow[];
 
@@ -93,7 +91,7 @@ export async function getServiceCards(categorySlug: string): Promise<ServiceCard
 /** Get a single service by slug from all tables */
 export async function getServiceBySlug(serviceId: string): Promise<(ServiceRow & { categorySlug: string }) | null> {
   for (const [slug, table] of Object.entries(TABLE_MAP)) {
-    const rows = await sql.query(
+    const rows = await sql.unsafe(
       `SELECT * FROM ${table} WHERE service_id = $1 LIMIT 1`,
       [serviceId]
     ) as ServiceRow[];
@@ -117,7 +115,7 @@ export async function getServiceBySlugAndCategory(
   const table = TABLE_MAP[categorySlug];
   if (!table) return null;
 
-  const rows = await sql.query(
+  const rows = await sql.unsafe(
     `SELECT * FROM ${table} WHERE service_id = $1 LIMIT 1`,
     [serviceId]
   ) as ServiceRow[];

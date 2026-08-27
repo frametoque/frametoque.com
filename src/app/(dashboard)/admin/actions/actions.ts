@@ -34,33 +34,41 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
   const end = endDate || '2099-12-31';
 
   const [
-    incomes,
-    expenses,
-    unpaid,
+    incomesStatsRow,
+    expensesStatsRow,
     invoiceAging,
     chartDataRaw,
     recentInvoicesRaw,
     recentQuotationsRaw,
     recentTransactionsRaw,
-    incomeByYear,
-    expenseByYear,
     expenseBreakdownRange,
     incomeBreakdownRange,
-    thisMonthIncome,
-    lastMonthIncome,
-    thisMonthExpenses,
-    lastMonthExpenses,
     clientsCountRows,
-
     accounts
   ] = await Promise.all([
-    sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
-    sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp`,
-    sql`SELECT COUNT(*) as count, SUM(total_due) as total_amount FROM invoices WHERE payment_status IN ('unpaid', 'pending', 'partially paid')`,
+    sql`
+      SELECT 
+        SUM(CASE WHEN date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp THEN amount ELSE 0 END) as range_total,
+        SUM(CASE WHEN date_trunc('month', date) = date_trunc('month', current_date) THEN amount ELSE 0 END) as this_month,
+        SUM(CASE WHEN date_trunc('month', date) = date_trunc('month', current_date - interval '1 month') THEN amount ELSE 0 END) as last_month,
+        SUM(CASE WHEN EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE) THEN amount ELSE 0 END) as current_year,
+        SUM(CASE WHEN EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE) - 1 THEN amount ELSE 0 END) as previous_year
+      FROM admin_incomes
+    `,
+    sql`
+      SELECT 
+        SUM(CASE WHEN date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp THEN amount ELSE 0 END) as range_total,
+        SUM(CASE WHEN date_trunc('month', date) = date_trunc('month', current_date) THEN amount ELSE 0 END) as this_month,
+        SUM(CASE WHEN date_trunc('month', date) = date_trunc('month', current_date - interval '1 month') THEN amount ELSE 0 END) as last_month,
+        SUM(CASE WHEN EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE) THEN amount ELSE 0 END) as current_year,
+        SUM(CASE WHEN EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE) - 1 THEN amount ELSE 0 END) as previous_year
+      FROM admin_expenses
+    `,
     sql`
       SELECT 
         payment_status as status,
         SUM(total) as amount_sum,
+        SUM(total_due) as total_due_sum,
         COUNT(*) as count
       FROM invoices
       GROUP BY payment_status
@@ -111,22 +119,6 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     `,
     sql`
       SELECT 
-        EXTRACT(YEAR FROM date) as year,
-        SUM(amount) as total
-      FROM admin_incomes
-      WHERE EXTRACT(YEAR FROM date) IN (EXTRACT(YEAR FROM CURRENT_DATE), EXTRACT(YEAR FROM CURRENT_DATE) - 1)
-      GROUP BY EXTRACT(YEAR FROM date)
-    `,
-    sql`
-      SELECT 
-        EXTRACT(YEAR FROM date) as year,
-        SUM(amount) as total
-      FROM admin_expenses
-      WHERE EXTRACT(YEAR FROM date) IN (EXTRACT(YEAR FROM CURRENT_DATE), EXTRACT(YEAR FROM CURRENT_DATE) - 1)
-      GROUP BY EXTRACT(YEAR FROM date)
-    `,
-    sql`
-      SELECT 
         category as name,
         SUM(amount) as value
       FROM admin_expenses
@@ -143,33 +135,39 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
       GROUP BY category
       ORDER BY value DESC
     `,
-    sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date)`,
-    sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`,
-    sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date)`,
-    sql`SELECT SUM(amount) as total FROM admin_expenses WHERE date_trunc('month', date) = date_trunc('month', current_date - interval '1 month')`,
     sql`SELECT COUNT(*) as count FROM admin_clients`,
     import('./accounts').then(m => m.getAccounts(start, end))
   ]);
+
+  const incomesStats = incomesStatsRow[0] || {};
+  const expensesStats = expensesStatsRow[0] || {};
 
   const totalAssets = accounts.filter((a: any) => a.isCompanyAccount).reduce((sum: number, a: any) => sum + (a.currentBalance || 0), 0);
   const totalAfterDebts = accounts.reduce((sum: number, a: any) => sum + (a.isCompanyAccount ? (a.currentBalance || 0) : (a.currentBalance > 0 ? a.currentBalance : 0)), 0);
   const totalCapital = accounts.reduce((sum: number, a: any) => sum + (!a.isCompanyAccount && a.currentBalance < 0 ? Math.abs(a.currentBalance) : 0), 0);
 
-  const totalIncome = incomes[0]?.total ? parseFloat(incomes[0].total) : 0;
-  const totalExpenses = expenses[0]?.total ? parseFloat(expenses[0].total) : 0;
+  const totalIncome = parseFloat(incomesStats.range_total || 0);
+  const totalExpenses = parseFloat(expensesStats.range_total || 0);
   const netProfit = totalIncome - totalExpenses;
 
-  const currentYear = new Date().getFullYear();
-  const previousYear = currentYear - 1;
+  const previousIncome = parseFloat(incomesStats.previous_year || 0);
+  const currentIncome = parseFloat(incomesStats.current_year || 0);
 
-  const previousIncome = parseFloat(incomeByYear.find((r: any) => Math.round(parseFloat(r.year)) === previousYear)?.total || 0);
-  const currentIncome = parseFloat(incomeByYear.find((r: any) => Math.round(parseFloat(r.year)) === currentYear)?.total || 0);
-
-  const previousExpense = parseFloat(expenseByYear.find((r: any) => Math.round(parseFloat(r.year)) === previousYear)?.total || 0);
-  const currentExpense = parseFloat(expenseByYear.find((r: any) => Math.round(parseFloat(r.year)) === currentYear)?.total || 0);
+  const previousExpense = parseFloat(expensesStats.previous_year || 0);
+  const currentExpense = parseFloat(expensesStats.current_year || 0);
 
   const previousNet = previousIncome - previousExpense;
   const currentNet = currentIncome - currentExpense;
+
+  let unpaidCount = 0;
+  let unpaidAmount = 0;
+  const targetStatuses = ['unpaid', 'pending', 'partially paid'];
+  invoiceAging.forEach(row => {
+    if (targetStatuses.includes(row.status?.toLowerCase())) {
+      unpaidCount += parseInt(row.count || 0);
+      unpaidAmount += parseFloat(row.total_due_sum || 0);
+    }
+  });
 
   const totalExpenseRange = expenseBreakdownRange.reduce((sum, r) => sum + parseFloat(r.value), 0);
   const totalIncomeRange = incomeBreakdownRange.reduce((sum, r) => sum + parseFloat(r.value), 0);
@@ -201,13 +199,13 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     netProfit,
     incomeBreakdown,
     totalClients: parseInt(clientsCountRows[0]?.count || 0, 10),
-    unpaidCount: unpaid[0]?.count || 0,
-    unpaidAmount: parseFloat(unpaid[0]?.total_amount || 0),
+    unpaidCount,
+    unpaidAmount,
     currentMonthStats: {
-      income: parseFloat(thisMonthIncome[0]?.total || 0),
-      expenses: parseFloat(thisMonthExpenses[0]?.total || 0),
-      lastMonthIncome: parseFloat(lastMonthIncome[0]?.total || 0),
-      lastMonthExpenses: parseFloat(lastMonthExpenses[0]?.total || 0),
+      income: parseFloat(incomesStats.this_month || 0),
+      expenses: parseFloat(expensesStats.this_month || 0),
+      lastMonthIncome: parseFloat(incomesStats.last_month || 0),
+      lastMonthExpenses: parseFloat(expensesStats.last_month || 0),
     },
     invoiceAging: invoiceAging.map(row => ({
       status: row.status,

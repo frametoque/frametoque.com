@@ -20,7 +20,7 @@ async function getBearerToken(): Promise<string> {
       username: UMAMI_USERNAME,
       password: UMAMI_PASSWORD,
     }),
-    cache: "no-store",
+    next: { revalidate: 3600 },
   });
 
   if (!res.ok) {
@@ -106,19 +106,19 @@ export async function getAnalyticsData(dateRange = "all time") {
     referrersRes, channelsRes,
     urlsRes, entryRes, exitRes,
   ] = await Promise.all([
-    fetch(`${base}/stats?${params}`,                          { headers, cache: "no-store" }),
-    fetch(`${base}/pageviews?${params}&unit=${unit}`,         { headers, cache: "no-store" }),
-    fetch(`${base}/metrics?${params}&type=country&limit=10`,  { headers, cache: "no-store" }),
-    fetch(`${base}/metrics?${params}&type=region&limit=10`,   { headers, cache: "no-store" }),
-    fetch(`${base}/metrics?${params}&type=city&limit=10`,     { headers, cache: "no-store" }),
-    fetch(`${base}/metrics?${params}&type=device&limit=10`,   { headers, cache: "no-store" }),
-    fetch(`${base}/metrics?${params}&type=browser&limit=10`,  { headers, cache: "no-store" }),
-    fetch(`${base}/metrics?${params}&type=os&limit=10`,       { headers, cache: "no-store" }),
-    fetch(`${base}/metrics?${params}&type=referrer&limit=10`, { headers, cache: "no-store" }),
-    fetch(`${base}/metrics?${params}&type=channel&limit=10`,  { headers, cache: "no-store" }),
-    fetch(`${base}/metrics?${params}&type=path&limit=10`,     { headers, cache: "no-store" }),
-    fetch(`${base}/metrics?${params}&type=entry&limit=10`,    { headers, cache: "no-store" }),
-    fetch(`${base}/metrics?${params}&type=exit&limit=10`,     { headers, cache: "no-store" }),
+    fetch(`${base}/stats?${params}`,                          { headers, next: { revalidate: 60 } }),
+    fetch(`${base}/pageviews?${params}&unit=${unit}`,         { headers, next: { revalidate: 60 } }),
+    fetch(`${base}/metrics?${params}&type=country&limit=10`,  { headers, next: { revalidate: 60 } }),
+    fetch(`${base}/metrics?${params}&type=region&limit=10`,   { headers, next: { revalidate: 60 } }),
+    fetch(`${base}/metrics?${params}&type=city&limit=10`,     { headers, next: { revalidate: 60 } }),
+    fetch(`${base}/metrics?${params}&type=device&limit=10`,   { headers, next: { revalidate: 60 } }),
+    fetch(`${base}/metrics?${params}&type=browser&limit=10`,  { headers, next: { revalidate: 60 } }),
+    fetch(`${base}/metrics?${params}&type=os&limit=10`,       { headers, next: { revalidate: 60 } }),
+    fetch(`${base}/metrics?${params}&type=referrer&limit=10`, { headers, next: { revalidate: 60 } }),
+    fetch(`${base}/metrics?${params}&type=channel&limit=10`,  { headers, next: { revalidate: 60 } }),
+    fetch(`${base}/metrics?${params}&type=path&limit=10`,     { headers, next: { revalidate: 60 } }),
+    fetch(`${base}/metrics?${params}&type=entry&limit=10`,    { headers, next: { revalidate: 60 } }),
+    fetch(`${base}/metrics?${params}&type=exit&limit=10`,     { headers, next: { revalidate: 60 } }),
   ]);
 
   if (!statsRes.ok) {
@@ -201,7 +201,7 @@ export async function getActiveVisitors(): Promise<number> {
     const headers = await getHeaders();
     const res = await fetch(
       `${UMAMI_URL}/api/websites/${WEBSITE_ID}/active`,
-      { headers, cache: "no-store" }
+      { headers, next: { revalidate: 15 } }
     );
     if (!res.ok) return 0;
     const data = await res.json();
@@ -219,7 +219,7 @@ export async function getActiveVisitors30m(): Promise<number> {
     const base = `${UMAMI_URL}/api/websites/${WEBSITE_ID}`;
     const res = await fetch(
       `${base}/stats?startAt=${startAt}&endAt=${endAt}`,
-      { headers, cache: "no-store" }
+      { headers, next: { revalidate: 15 } }
     );
     if (!res.ok) return 0;
     const data = await res.json();
@@ -259,7 +259,7 @@ export async function getChartData(zoomLevel: string) {
   const base = `${UMAMI_URL}/api/websites/${WEBSITE_ID}`;
   const headers = await getHeaders();
 
-  const res = await fetch(`${base}/pageviews?${params}`, { headers, cache: "no-store" });
+  const res = await fetch(`${base}/pageviews?${params}`, { headers, next: { revalidate: 60 } });
   if (!res.ok) {
     throw new Error(`Umami pageviews error: ${res.status} ${res.statusText}`);
   }

@@ -16,7 +16,7 @@ export async function getServicesByCategory(categorySlug: string) {
   }
 
   // sql is used as the standard query format in this codebase
-  const rows = await sql.query(`SELECT * FROM ${table} ORDER BY sort_order ASC, id ASC`);
+  const rows = await sql.unsafe(`SELECT * FROM ${table} ORDER BY sort_order ASC, id ASC`);
   return rows;
 }
 
@@ -30,9 +30,9 @@ export async function createService(categorySlug: string, data: any) {
   }
 
   // Shift existing elements up by 1 to make space for the new one at index 1
-  await sql.query(`UPDATE ${table} SET sort_order = sort_order + 1`);
+  await sql.unsafe(`UPDATE ${table} SET sort_order = sort_order + 1`);
 
-  await sql.query(
+  await sql.unsafe(
     `INSERT INTO ${table} (service_id, title, description, overview, hero_image, features, packages, process, technologies, created_at, updated_at, sort_order, monthly_price, yearly_price, demo_url)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), 1, $10, $11, $12)`,
     [
@@ -61,7 +61,7 @@ export async function updateService(categorySlug: string, id: number, data: any)
     throw new Error(`Invalid category: ${categorySlug}`);
   }
 
-  await sql.query(
+  await sql.unsafe(
     `UPDATE ${table}
      SET service_id = $1, title = $2, description = $3, overview = $4, hero_image = $5,
          features = $6, packages = $7, process = $8, technologies = $9, updated_at = NOW(),
@@ -94,7 +94,7 @@ export async function deleteService(categorySlug: string, id: number) {
     throw new Error(`Invalid category: ${categorySlug}`);
   }
 
-  await sql.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
+  await sql.unsafe(`DELETE FROM ${table} WHERE id = $1`, [id]);
 }
 
 /**
@@ -110,7 +110,7 @@ export async function reorderServices(
     throw new Error(`Invalid category: ${categorySlug}`);
   }
 
-  const res = await sql.query(
+  const res = await sql.unsafe(
     `SELECT id, sort_order FROM ${table} WHERE id = ANY($1)`,
     [[idA, idB]]
   );
@@ -119,8 +119,8 @@ export async function reorderServices(
   const rowA = res.find((r: any) => r.id === idA);
   const rowB = res.find((r: any) => r.id === idB);
 
-  await sql.query(`UPDATE ${table} SET sort_order = $1 WHERE id = $2`, [rowB.sort_order, idA]);
-  await sql.query(`UPDATE ${table} SET sort_order = $1 WHERE id = $2`, [rowA.sort_order, idB]);
+  await sql.unsafe(`UPDATE ${table} SET sort_order = $1 WHERE id = $2`, [rowB.sort_order, idA]);
+  await sql.unsafe(`UPDATE ${table} SET sort_order = $1 WHERE id = $2`, [rowA.sort_order, idB]);
 }
 
 /**
@@ -137,7 +137,7 @@ export async function reorderServicesBatch(
   }
 
   for (let i = 0; i < orderedIds.length; i++) {
-    await sql.query(
+    await sql.unsafe(
       `UPDATE ${table} SET sort_order = $1 WHERE id = $2`,
       [i + 1, orderedIds[i]]
     );
