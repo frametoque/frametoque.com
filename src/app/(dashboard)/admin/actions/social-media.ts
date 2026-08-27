@@ -30,14 +30,27 @@ export async function uploadSocialMedia(formData: FormData) {
 export async function getSocialPosts() {
   try {
     const result = await sql`SELECT * FROM social_posts ORDER BY created_at DESC`;
-    return result;
+    return result.map(post => {
+      const parsed = { ...post };
+      if (typeof parsed.platforms === 'string') parsed.platforms = JSON.parse(parsed.platforms);
+      if (typeof parsed.custom_captions === 'string') parsed.custom_captions = JSON.parse(parsed.custom_captions);
+      if (typeof parsed.media_urls === 'string') parsed.media_urls = JSON.parse(parsed.media_urls);
+      if (typeof parsed.platform_post_ids === 'string') parsed.platform_post_ids = JSON.parse(parsed.platform_post_ids);
+      return parsed;
+    });
   } catch(e) { return []; }
 }
 
 export async function getSocialPostById(id: number) {
   try {
     const result = await sql`SELECT * FROM social_posts WHERE id = ${id}`;
-    return result[0];
+    if (result.length === 0) return null;
+    const parsed = { ...result[0] };
+    if (typeof parsed.platforms === 'string') parsed.platforms = JSON.parse(parsed.platforms);
+    if (typeof parsed.custom_captions === 'string') parsed.custom_captions = JSON.parse(parsed.custom_captions);
+    if (typeof parsed.media_urls === 'string') parsed.media_urls = JSON.parse(parsed.media_urls);
+    if (typeof parsed.platform_post_ids === 'string') parsed.platform_post_ids = JSON.parse(parsed.platform_post_ids);
+    return parsed;
   } catch(e) { return null; }
 }
 
