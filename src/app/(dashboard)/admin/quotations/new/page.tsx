@@ -5,7 +5,7 @@ import { Plus, Trash2, ArrowLeft, Send, Save, Loader2 } from "lucide-react";
 import ClientCombobox from "../../components/ClientCombobox";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createQuotation, getClients, createClient, getBankAccounts } from "../../actions/actions";
+import { createQuotation, getClients, createClient } from "../../actions/actions";
 import CategoryPicker from "../../components/CategoryPicker";
 
 /** Returns today's date as YYYY-MM-DD in local time (avoids UTC off-by-one). */
@@ -24,8 +24,6 @@ export default function NewQuotationPage() {
   const [loading, setLoading] = useState(true);
   const [showNewClientForm, setShowNewClientForm] = useState(false);
 
-  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
-
   const [newClientData, setNewClientData] = useState({
     name: "", email: "", company: "", phone: "", address: "", legalName: ""
   });
@@ -41,12 +39,11 @@ export default function NewQuotationPage() {
     description: "",
     date: localToday(),          // ← local date, not UTC
     category: "Web dev",
-    paymentMethod: "Bank Transfer",
+    paymentMethod: "Option A: Advance Deposit Required",
     notes: "This quotation is valid for 14 days from the date of issue.",
     taxRate: 0,
     discount: 0,
     advance: 0,
-    bankAccountId: "",
     legalName: "",
   });
 
@@ -60,18 +57,10 @@ export default function NewQuotationPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [cls, accs] = await Promise.all([
-          getClients(),
-          getBankAccounts()
-        ]);
+        const cls = await getClients();
         setClients(cls);
-        setBankAccounts(accs);
-        if (accs.length > 0) {
-          const def = accs.find((a: any) => a.is_default === 1) || accs[0];
-          setFormData(prev => ({ ...prev, bankAccountId: String(def.id) }));
-        }
       } catch (e) {
-        console.error("Failed to load clients or bank accounts", e);
+        console.error("Failed to load clients", e);
       } finally {
         setLoading(false);
       }
@@ -120,8 +109,8 @@ export default function NewQuotationPage() {
   };
 
   const handleCreateNewClient = async () => {
-    if (!newClientData.name || !newClientData.email) {
-      alert("Please enter client name and email");
+    if (!newClientData.name || (!newClientData.email && !newClientData.phone)) {
+      alert("Please enter a name and either an email or phone number for the new client.");
       return;
     }
     try {
@@ -187,7 +176,7 @@ export default function NewQuotationPage() {
     new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" }).format(amount || 0);
 
   const handleSave = async () => {
-    if (!formData.userEmail) { alert("Please enter a user email."); return; }
+    if (!formData.userEmail && !formData.clientId && !formData.phone) { alert("Please specify a client."); return; }
     if (lineItems.every(item => !item.description)) {
       alert("Please add at least one line item with description.");
       return;
@@ -207,9 +196,11 @@ export default function NewQuotationPage() {
         paymentMethod: formData.paymentMethod,
         invoiceId: null,
         receiptUrl: null,
-        bankAccountId: formData.bankAccountId ? parseInt(formData.bankAccountId) : null,
         notes: formData.notes || null,
         legalName: formData.legalName || null,
+        clientName: formData.clientName || null,
+        userEmail: formData.userEmail || null,
+        phone: formData.phone || null,
       }, lineItems);
 
       alert("Quotation created successfully!");
@@ -238,7 +229,7 @@ export default function NewQuotationPage() {
         <div className="space-y-8">
 
           {/* Client Details */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
+          <div className="relative z-50 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
             <h2 className="text-xl font-semibold mb-4">Client Details</h2>
 
             <div className="space-y-1">
@@ -349,46 +340,16 @@ export default function NewQuotationPage() {
                 <CategoryPicker categories={ALL_CATEGORIES} value={selectedCategories} onChange={setSelectedCategories} />
               </div>
               <div className="space-y-1">
-                <label className="text-sm text-gray-400">Payment Method</label>
+                <label className="text-sm text-gray-400">Payment Terms</label>
                 <select name="paymentMethod" value={formData.paymentMethod} onChange={handleFormChange}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
-                  <option className="bg-black">Bank Transfer</option>
-                  <option className="bg-black">Stripe</option>
-                  <option className="bg-black">PayPal</option>
-                  <option className="bg-black">Cash</option>
+                  <option className="bg-black">Option A: Advance Deposit Required</option>
+                  <option className="bg-black">Option B: 100% Upfront Payment</option>
                 </select>
               </div>
             </div>
-
-
-            {/* Payment Bank Account — PDF only */}
-            <div className="space-y-1">
-              <label className="text-sm text-gray-400">
-                Payment Bank Account
-              </label>
-              <select
-                name="bankAccountId"
-                value={formData.bankAccountId}
-                onChange={handleFormChange}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none"
-              >
-                <option value="" className="bg-black">— No bank account —</option>
-                {bankAccounts.map(acc => (
-                  <option key={acc.id} value={String(acc.id)} className="bg-black">
-                    {acc.name} · {acc.bank} · {acc.number}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
 
-          {/* Notes */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
-            <h2 className="text-xl font-semibold mb-4">Notes</h2>
-            <textarea name="notes" value={formData.notes} onChange={handleFormChange}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors resize-none"
-              rows={3} placeholder="Terms, conditions, or special notes..." />
-          </div>
         </div>
 
         {/* Right Column */}
@@ -400,9 +361,10 @@ export default function NewQuotationPage() {
               {lineItems.map((item) => (
                 <div key={item.id} className="flex items-start gap-3">
                   <div className="flex-1 space-y-1">
-                    <input type="text" placeholder="Description" value={item.description}
+                    <textarea placeholder="Description (use newlines for subtitles)" value={item.description}
                       onChange={(e) => handleLineItemChange(item.id, "description", e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
+                      rows={2}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm resize-none" />
                   </div>
                   <div className="w-20">
                     <input type="number" placeholder="Qty" min="1" value={item.quantity}
@@ -460,42 +422,13 @@ export default function NewQuotationPage() {
             </div>
           </div>
 
-          {/* Advance Payment */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
-            <h2 className="text-xl font-semibold mb-1">Advance Payment</h2>
-            <p className="text-sm text-gray-400 mb-4">Specify any upfront payment required before work begins.</p>
-            <div className="flex justify-between items-center text-sm">
-              <label className="text-gray-400">Advance Amount</label>
-              <input type="number" name="advance" value={formData.advance || ""} onChange={handleFormChange} min="0"
-                className="w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 outline-none focus:border-brand-500 transition-colors text-right text-sm"
-                placeholder="0.00" />
-            </div>
-            <div className="border-t border-white/10 pt-4 space-y-3">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-400">Total Quotation</span>
-                <span>{formatCurrency(total)}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-400">Advance</span>
-                <span className="text-green-400">− {formatCurrency(Number(formData.advance) || 0)}</span>
-              </div>
-              <div className="flex justify-between items-center text-lg font-semibold border-t border-white/10 pt-3 text-brand-400">
-                <span>Balance Due</span>
-                <span>{formatCurrency(totalDue)}</span>
-              </div>
-            </div>
-          </div>
-
           <div className="flex flex-col gap-3">
-            <button className="flex items-center justify-center gap-2 px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-3xl font-semibold transition-colors">
-              <Save className="w-5 h-5" /> Save as Draft
-            </button>
             <button onClick={handleSave} disabled={isSubmitting}
               className="flex items-center justify-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
               {isSubmitting ? (
                 <><Loader2 className="w-5 h-5 animate-spin" /> Creating...</>
               ) : (
-                <><Send className="w-5 h-5" /> Create Quotation</>
+                <><Save className="w-5 h-5" /> Create Quotation</>
               )}
             </button>
           </div>

@@ -91,7 +91,7 @@ export default function ClientsPage() {
 
   const handleSave = async () => {
     if (!formData.name.trim()) { alert("Client name is required."); return; }
-    if (!formData.email.trim()) { alert("Client email is required."); return; }
+    if (!formData.email.trim() && !formData.phone.trim()) { alert("Client email or phone is required."); return; }
     setSaving(true);
     try {
       if (editingId) {

@@ -6,6 +6,7 @@ import { put, del } from '@vercel/blob';
 import { logSystemAction } from "@/lib/logger";
 import { getGravatarUrl } from "@/lib/gravatar";
 import { reactivateDomainAfterRenewalPayment } from "./domains-shared";
+import { revalidatePath } from "next/cache";
 
 export async function uploadReceipt(formData: FormData, type: 'income' | 'expenses'): Promise<string> {
   const file = formData.get('file') as File;
@@ -353,24 +354,24 @@ export async function createIncome(data: any) {
   await logSystemAction(`Created income: Recorded LKR ${data.amount} for "${data.description}"`);
 }
 
-export async function createClient(data: { name: string; email: string; company?: string | null; phone?: string | null; address?: string | null; legal_name?: string | null }): Promise<string> {
+export async function createClient(data: { name: string; email?: string | null; company?: string | null; phone?: string | null; address?: string | null; legal_name?: string | null }): Promise<string> {
   const clientId = 'C-' + Date.now();
   await sql`
     INSERT INTO admin_clients (id, full_name, email, company, phone, address, active, legal_name)
-    VALUES (${clientId}, ${data.name}, ${data.email}, ${data.company || null}, ${data.phone || null}, ${data.address || null}, true, ${data.legal_name || null})
+    VALUES (${clientId}, ${data.name}, ${data.email || null}, ${data.company || null}, ${data.phone || null}, ${data.address || null}, true, ${data.legal_name || null})
   `;
-  await logSystemAction(`Created client: "${data.name}" (${data.email})`);
+  await logSystemAction(`Created client: "${data.name}" (${data.email || data.phone || 'No contact'})`);
   return clientId;
 }
 
-export async function updateClient(clientId: string, data: { name?: string; email?: string; company?: string | null; phone?: string | null; address?: string | null; legal_name?: string | null }) {
+export async function updateClient(clientId: string, data: { name?: string; email?: string | null; company?: string | null; phone?: string | null; address?: string | null; legal_name?: string | null }) {
   // Fetch current email first so we can cascade if it changes
   const existing = await sql`SELECT email, full_name FROM admin_clients WHERE id = ${clientId}`;
   if (existing.length === 0) throw new Error("Client not found");
-  const oldEmail = existing[0].email as string;
+  const oldEmail = (existing[0].email as string) || "";
   const clientName = existing[0].full_name || clientId;
-  const newEmail = data.email?.trim() || oldEmail;
-  const emailChanged = newEmail.toLowerCase() !== oldEmail.toLowerCase();
+  const newEmail = (data.email !== undefined ? data.email?.trim() : oldEmail) || null;
+  const emailChanged = oldEmail && newEmail && newEmail.toLowerCase() !== oldEmail.toLowerCase();
 
   // Update admin_clients row
   await sql`
@@ -378,7 +379,7 @@ export async function updateClient(clientId: string, data: { name?: string; emai
     SET 
       full_name = COALESCE(${data.name  || null}, full_name),
       email   = ${newEmail},
-      company = ${data.company ?? null},
+      company = ${data.company !== undefined ? data.company : null},
       phone   = ${data.phone   ?? null},
       address = ${data.address ?? null},
       legal_name = ${data.legal_name ?? null}
@@ -1153,17 +1154,22 @@ async function generateUniqueInvoiceId(): Promise<string> {
 
 export async function createInvoice(invoiceData: any, lineItems: any[]) {
   // Upsert client — also save billing address if provided
-  const existingClient = await sql`SELECT id FROM admin_clients WHERE LOWER(email) = LOWER(${invoiceData.userEmail})`;
+  let existingClient: any[] = [];
+  if (invoiceData.clientId) {
+    existingClient = await sql`SELECT id FROM admin_clients WHERE id = ${invoiceData.clientId}`;
+  } else if (invoiceData.userEmail) {
+    existingClient = await sql`SELECT id FROM admin_clients WHERE LOWER(email) = LOWER(${invoiceData.userEmail})`;
+  }
   
-  if (existingClient.length === 0 && invoiceData.userEmail) {
-    const clientId = 'C-' + Date.now();
+  if (existingClient.length === 0 && (invoiceData.userEmail || invoiceData.phone)) {
+    const clientId = invoiceData.clientId || 'C-' + Date.now();
     await sql`
       INSERT INTO admin_clients (id, full_name, company, email, phone, address, active, legal_name)
       VALUES (
         ${clientId},
-        ${invoiceData.clientName || invoiceData.userEmail.split('@')[0]},
+        ${invoiceData.clientName || (invoiceData.userEmail ? invoiceData.userEmail.split('@')[0] : 'Unknown')},
         ${invoiceData.company || null},
-        ${invoiceData.userEmail},
+        ${invoiceData.userEmail || null},
         ${invoiceData.phone || null},
         ${invoiceData.billingAddress || null},
         true,
@@ -1178,7 +1184,7 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
         full_name = COALESCE(${invoiceData.clientName || null}, full_name),
         address = COALESCE(${invoiceData.billingAddress || null}, address),
         legal_name = COALESCE(${invoiceData.legalName || null}, legal_name)
-      WHERE LOWER(email) = LOWER(${invoiceData.userEmail})
+      WHERE id = ${existingClient[0].id}
     `;
   }
 
@@ -1189,7 +1195,7 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
     subtotal, discount, total, advance, total_due, 
     work_status, payment_status, currency, category, bank_account_id, tax_rate, legal_name
   ) VALUES (
-    ${invoiceId}, ${invoiceData.userEmail},
+    ${invoiceId}, ${invoiceData.userEmail || null},
     ${invoiceData.projectName}, ${invoiceData.date},
     ${invoiceData.subtotal}, ${invoiceData.discount}, ${invoiceData.total}, ${invoiceData.advance}, ${invoiceData.totalDue},
     ${invoiceData.workStatus}, ${invoiceData.paymentStatus}, ${invoiceData.currency}, ${invoiceData.category || null},
@@ -1383,25 +1389,51 @@ export async function createQuotation(data: any, lineItems: any[] = []) {
   const discount = data.discount || 0;
   const totalDue = data.totalDue ?? (data.amount - advance);
 
-  if (data.clientId && data.billingAddress) {
+  let existingClient: any[] = [];
+  if (data.clientId) {
+    existingClient = await sql`SELECT id FROM admin_clients WHERE id = ${data.clientId}`;
+  } else if (data.userEmail) {
+    existingClient = await sql`SELECT id FROM admin_clients WHERE LOWER(email) = LOWER(${data.userEmail})`;
+  }
+
+  if (existingClient.length === 0 && (data.userEmail || data.phone)) {
+    const clientId = data.clientId || 'C-' + Date.now();
+    data.clientId = clientId;
+    await sql`
+      INSERT INTO admin_clients (id, full_name, email, phone, address, active, legal_name)
+      VALUES (
+        ${clientId},
+        ${data.clientName || (data.userEmail ? data.userEmail.split('@')[0] : 'Unknown')},
+        ${data.userEmail || null},
+        ${data.phone || null},
+        ${data.billingAddress || null},
+        true,
+        ${data.legalName || null}
+      )
+    `;
+  } else if (existingClient.length > 0) {
+    data.clientId = existingClient[0].id;
     await sql`
       UPDATE admin_clients
       SET 
-        address = ${data.billingAddress},
-        legal_name = COALESCE(${data.legalName || null}, legal_name)
-      WHERE id = ${data.clientId}
+        full_name = COALESCE(${data.clientName || null}, full_name),
+        address = COALESCE(${data.billingAddress || null}, address),
+        legal_name = COALESCE(${data.legalName || null}, legal_name),
+        email = COALESCE(${data.userEmail || null}, email),
+        phone = COALESCE(${data.phone || null}, phone)
+      WHERE id = ${existingClient[0].id}
     `;
   }
 
   const result = await sql`
     INSERT INTO admin_quotations (
       date, amount, advance, total_due, discount,
-      description, category, payment_method, invoice_id, client_id, receipt_url, status, bank_account_id, notes, legal_name
+      description, category, payment_method, invoice_id, client_id, receipt_url, status, bank_account_id, notes, legal_name, valid_until
     )
     VALUES (
       ${data.date}, ${data.amount}, ${advance}, ${totalDue}, ${discount},
       ${data.description}, ${data.category}, ${data.paymentMethod},
-      ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, 'draft', ${data.bankAccountId || null}, ${data.notes || null}, ${data.legalName || null}
+      ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, 'draft', ${data.bankAccountId || null}, ${data.notes || null}, ${data.legalName || null}, ${data.validUntil || null}
     )
     RETURNING id
   `;
@@ -1426,13 +1458,39 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
     const discount = data.discount || 0;
     const totalDue = data.totalDue ?? (data.amount - advance);
 
-    if (data.clientId && data.billingAddress) {
+    let existingClient: any[] = [];
+    if (data.clientId) {
+      existingClient = await sql`SELECT id FROM admin_clients WHERE id = ${data.clientId}`;
+    } else if (data.userEmail) {
+      existingClient = await sql`SELECT id FROM admin_clients WHERE LOWER(email) = LOWER(${data.userEmail})`;
+    }
+
+    if (existingClient.length === 0 && (data.userEmail || data.phone)) {
+      const clientId = data.clientId || 'C-' + Date.now();
+      data.clientId = clientId;
+      await sql`
+        INSERT INTO admin_clients (id, full_name, email, phone, address, active, legal_name)
+        VALUES (
+          ${clientId},
+          ${data.clientName || (data.userEmail ? data.userEmail.split('@')[0] : 'Unknown')},
+          ${data.userEmail || null},
+          ${data.phone || null},
+          ${data.billingAddress || null},
+          true,
+          ${data.legalName || null}
+        )
+      `;
+    } else if (existingClient.length > 0) {
+      data.clientId = existingClient[0].id;
       await sql`
         UPDATE admin_clients
         SET 
-          address = ${data.billingAddress},
-          legal_name = COALESCE(${data.legalName || null}, legal_name)
-        WHERE id = ${data.clientId}
+          full_name = COALESCE(${data.clientName || null}, full_name),
+          address = COALESCE(${data.billingAddress || null}, address),
+          legal_name = COALESCE(${data.legalName || null}, legal_name),
+          email = COALESCE(${data.userEmail || null}, email),
+          phone = COALESCE(${data.phone || null}, phone)
+        WHERE id = ${existingClient[0].id}
       `;
     }
 
@@ -1447,11 +1505,13 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
         description   = ${data.description}, 
         category      = ${data.category}, 
         payment_method= ${data.paymentMethod}, 
+        client_id     = ${data.clientId || null},
         invoice_id    = ${data.invoiceId || null}, 
         receipt_url   = ${data.receiptUrl || null},
         bank_account_id = ${data.bankAccountId || null},
         notes         = ${data.notes || null},
-        legal_name    = ${data.legalName || null}
+        legal_name    = ${data.legalName || null},
+        valid_until   = ${data.validUntil || null}
       WHERE id = ${id} AND status != 'confirmed'
     `;
 
@@ -1465,7 +1525,11 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
         `;
       }
     }
+
     await logSystemAction(`Updated quotation ID ${id} ("${data.description || 'Quotation'}")`);
+    revalidatePath("/admin/quotations");
+    revalidatePath(`/admin/quotations/${id}/edit`);
+    revalidatePath("/admin/clients");
   } catch (e) {
     console.error("Failed to update quotation:", e);
     throw new Error("Failed to update quotation");
@@ -1647,6 +1711,9 @@ export async function getQuotationById(quotationId: string) {
       category: q.category,
       payment_method: q.payment_method,
       invoice_id: q.invoice_id,
+      notes: q.notes,
+      legal_name: q.legal_name,
+      valid_until: q.valid_until,
       receipt_url: q.receipt_url,
       status: q.status,
       project_confirmed: q.project_confirmed,

@@ -60,12 +60,12 @@ export default function EditAgreementPage() {
         const ag = await getAgreementById(parseInt(agreement_id as string));
         if (ag) {
           // Find if there's a client matching the email
-          const matchingClient = cls.find(c => c.email.toLowerCase() === ag.client_email.toLowerCase());
+          const matchingClient = cls.find(c => c.email && ag.client_email && c.email.toLowerCase() === ag.client_email.toLowerCase());
           
           setFormData({
             clientId: matchingClient ? matchingClient.id : "manual",
             client_name: ag.client_name,
-            client_email: ag.client_email,
+            client_email: ag.client_email || "",
             client_phone: ag.client_phone || "",
             client_company: ag.client_company || "",
             client_address: ag.client_address || "",
@@ -139,8 +139,8 @@ export default function EditAgreementPage() {
   };
 
   const handleCreateNewClient = async () => {
-    if (!newClientData.name || !newClientData.email) {
-      alert("Please enter client name and email");
+    if (!newClientData.name || (!newClientData.email && !newClientData.phone)) {
+      alert("Please enter a name and either an email or phone number for the new client.");
       return;
     }
     try {
@@ -184,7 +184,7 @@ export default function EditAgreementPage() {
   };
 
   const handleSave = async () => {
-    if (!formData.client_email) { alert("Please select or enter client email."); return; }
+    if (!formData.client_email && !formData.client_phone) { alert("Please select or enter client email or phone."); return; }
     if (!formData.title) { alert("Please enter the project/website name."); return; }
     if (!formData.delivery_date) { alert("Please enter estimated delivery date."); return; }
     if (!formData.deadline) { alert("Please enter content submission deadline."); return; }
@@ -222,7 +222,7 @@ export default function EditAgreementPage() {
         {/* Left Column: Client & Agreement Meta */}
         <div className="space-y-6">
           {/* Client Details */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
+          <div className="relative z-50 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
             <h2 className="text-xl font-semibold mb-4 text-brand-400">Client Details</h2>
 
             <div className="space-y-1">

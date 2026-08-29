@@ -231,6 +231,11 @@ export default function IncomePage() {
 
       let clientId = formData.clientId;
       if (clientId === 'new') {
+        if (!newClientName || (!newClientEmail && !newClientPhone)) {
+          alert("Please enter a client name and either an email or phone number.");
+          setSaving(false);
+          return;
+        }
         clientId = await createClient({ name: newClientName, email: newClientEmail, company: newClientCompany || null, phone: newClientPhone || null });
       }
 

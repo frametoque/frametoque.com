@@ -88,8 +88,8 @@ export default function NewAgreementPage() {
   };
 
   const handleCreateNewClient = async () => {
-    if (!newClientData.name || !newClientData.email) {
-      alert("Please enter client name and email");
+    if (!newClientData.name || (!newClientData.email && !newClientData.phone)) {
+      alert("Please enter a name and either an email or phone number for the new client.");
       return;
     }
     try {
@@ -133,7 +133,7 @@ export default function NewAgreementPage() {
   };
 
   const handleSave = async () => {
-    if (!formData.client_email) { alert("Please select or enter client email."); return; }
+    if (!formData.client_email && !formData.client_phone) { alert("Please select or enter client email or phone."); return; }
     if (!formData.title) { alert("Please enter the project/website name."); return; }
     if (!formData.delivery_date) { alert("Please enter estimated delivery date."); return; }
     if (!formData.deadline) { alert("Please enter content submission deadline."); return; }
@@ -162,7 +162,7 @@ export default function NewAgreementPage() {
         {/* Left Column: Client & Agreement Meta */}
         <div className="space-y-6">
           {/* Client Details */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
+          <div className="relative z-50 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
             <h2 className="text-xl font-semibold mb-4 text-brand-400">Client Details</h2>
 
             <div className="space-y-1">

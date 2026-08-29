@@ -12,7 +12,7 @@ const formatDate = (dateString: string | Date) => {
 
 const formatMoney = (value: any, currency = "") => {
   if (!value || isNaN(parseFloat(value))) return "";
-  const prefix = currency === "LKR" ? "Rs." : currency;
+  const prefix = currency === "LKR" ? "Rs. " : currency;
   return `${prefix} ${parseFloat(value).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -21,7 +21,7 @@ const formatMoney = (value: any, currency = "") => {
 
 const formatMoneySlash = (value: any, currency = "") => {
   if (!value || isNaN(parseFloat(value))) return "-";
-  const prefix = currency === "LKR" ? "Rs." : currency;
+  const prefix = currency === "LKR" ? "Rs. " : currency;
   const suffix = currency === "LKR" ? "/-" : "";
   return `${prefix} ${parseFloat(value).toLocaleString("en-US", {
     minimumFractionDigits: 2,
@@ -212,7 +212,7 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
     // Price
     let priceText = "-";
     if (item.price) {
-      const formattedPrice = `${currency === "LKR" ? "Rs." : currency} ${item.price}`;
+      const formattedPrice = `${currency === "LKR" ? "Rs. " : currency} ${item.price}`;
       const qty = Number(item.quantity || item.qty) || 1;
       priceText = `${qty} x ${formattedPrice}`;
     }

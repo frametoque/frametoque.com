@@ -54,7 +54,7 @@ const formatDateTime = (dateString: string | Date | null | undefined) => {
 
 const formatMoney = (value: any, currency = "LKR") => {
   if (!value || isNaN(parseFloat(value))) return "N/A";
-  const currencySymbol = currency === "LKR" ? "Rs." : currency;
+  const currencySymbol = currency === "LKR" ? "Rs. " : currency;
   return `${currencySymbol} ${parseFloat(value).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -334,7 +334,7 @@ export default function AdminInvoicePage() {
   }
 
   const lineItems = invoice.items || [];
-  const currencyLabel = invoice.currency === "LKR" ? "Rs." : invoice.currency;
+  const currencyLabel = invoice.currency === "LKR" ? "Rs. " : invoice.currency;
   const subtotal = parseFloat(invoice.subtotal || 0);
   const discount = parseFloat(invoice.discount || 0);
   const advance = parseFloat(invoice.advance || 0);

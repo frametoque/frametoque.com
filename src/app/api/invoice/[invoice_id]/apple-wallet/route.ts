@@ -25,7 +25,7 @@ const formatDate = (d: string | null | undefined): string =>
     : "N/A";
 
 const formatMoney = (value: any, currency = "LKR"): string => {
-  const prefix = currency === "LKR" ? "Rs." : currency;
+  const prefix = currency === "LKR" ? "Rs. " : currency;
   const num = parseFloat(value ?? 0);
   if (isNaN(num)) return "N/A";
   return `${prefix} ${num.toLocaleString("en-US", {

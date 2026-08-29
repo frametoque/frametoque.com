@@ -160,8 +160,8 @@ export default function EditInvoicePage() {
   };
 
   const handleCreateNewClient = async () => {
-    if (!newClientData.name || !newClientData.email) {
-      alert("Please enter client name and email");
+    if (!newClientData.name || (!newClientData.email && !newClientData.phone)) {
+      alert("Please enter a name and either an email or phone number for the new client.");
       return;
     }
     try {
@@ -225,7 +225,7 @@ export default function EditInvoicePage() {
     }).format(amount || 0);
 
   const handleSave = async () => {
-    if (!formData.userEmail) { alert("Please enter a user email."); return; }
+    if (!formData.userEmail && !formData.clientId && !formData.phone) { alert("Please specify a client."); return; }
     setIsSubmitting(true);
     try {
       await updateInvoice(invoice_id as string, {
@@ -492,13 +492,10 @@ export default function EditInvoicePage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-3xl font-semibold transition-colors">
-              <Save className="w-5 h-5" /> Save Draft
-            </button>
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-0 justify-between items-center bg-white/5 border border-white/10 p-4 rounded-3xl backdrop-blur-xl">
             <button onClick={handleSave} disabled={isSubmitting}
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors ml-auto disabled:opacity-50 disabled:cursor-not-allowed">
-              <Send className="w-5 h-5" /> {isSubmitting ? "Updating..." : "Update Invoice"}
+              <Save className="w-5 h-5" /> {isSubmitting ? "Updating..." : "Update Invoice"}
             </button>
           </div>
         </div>

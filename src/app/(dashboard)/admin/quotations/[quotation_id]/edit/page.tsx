@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Trash2, ArrowLeft, Send, Save, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { updateQuotation, getQuotationById, getBankAccounts } from "../../../actions/actions";
+import { updateQuotation, getQuotationById } from "../../../actions/actions";
 import CategoryPicker from "../../../components/CategoryPicker";
 
 /** Returns today's date as YYYY-MM-DD in local time (avoids UTC off-by-one). */
@@ -35,8 +35,6 @@ export default function EditQuotationPage() {
   const [error, setError] = useState<string | null>(null);
   const [quotationStatus, setQuotationStatus] = useState<string>("draft");
 
-  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
-
   const [formData, setFormData] = useState({
     clientId: "",
     clientName: "",
@@ -48,13 +46,11 @@ export default function EditQuotationPage() {
     projectName: "",
     description: "",
     date: localToday(),
+    validUntil: localToday(),
     category: "Web dev",
-    paymentMethod: "Bank Transfer",
-    notes: "",
+    paymentMethod: "Option A: Advance Deposit Required",
     taxRate: 0,
     discount: 0,
-    advance: 0,
-    bankAccountId: "",
     legalName: "",
     invoiceId: "",
   });
@@ -71,17 +67,13 @@ export default function EditQuotationPage() {
     if (!quotation_id) return;
     const fetchQuotationAndBanks = async () => {
       try {
-        const [data, banks] = await Promise.all([
-          getQuotationById(quotation_id as string),
-          getBankAccounts()
-        ]);
+        const data = await getQuotationById(quotation_id as string);
         if (!data) throw new Error("Quotation not found");
 
-        setBankAccounts(banks);
         setQuotationStatus(data.status || "draft");
 
         setFormData({
-          clientId: "",
+          clientId: data.client_id || "",
           clientName: data.client_name || "",
           company: data.company || "",
           userEmail: data.email || "",
@@ -90,14 +82,12 @@ export default function EditQuotationPage() {
           projectName: data.project_name || "",
           description: data.description || "",
           date: toLocalDateInput(data.date),
+          validUntil: data.valid_until ? toLocalDateInput(data.valid_until) : toLocalDateInput(new Date(new Date(data.date).getTime() + 14 * 24 * 60 * 60 * 1000)),
           category: data.category || "Web dev",
-          paymentMethod: data.payment_method || "Bank Transfer",
+          paymentMethod: data.payment_method || "Option A: Advance Deposit Required",
           invoiceId: data.invoice_id || "",
-          notes: data.notes || "This quotation is valid for 14 days from the date of issue.",
           taxRate: 0,
           discount: Number(data.discount) || 0,
-          advance: Number(data.advance) || 0,
-          bankAccountId: data.bank_account_id ? String(data.bank_account_id) : "",
           legalName: data.legal_name || data.client_name || "",
         });
 
@@ -155,12 +145,13 @@ export default function EditQuotationPage() {
     }
   };
 
-  const subtotal = lineItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+  const subtotal  = lineItems.reduce((sum, item) => sum + item.quantity * item.rate, 0);
   const taxAmount = subtotal * (formData.taxRate / 100);
-  const discount = Number(formData.discount) || 0;
-  const total = subtotal + taxAmount - discount;
-  const advance = Number(formData.advance) || 0;
-  const totalDue = total - advance;
+  const discount  = Number(formData.discount) || 0;
+  const total     = subtotal + taxAmount - discount;
+  const totalDue  = total;
+
+  const isConfirmed = quotationStatus === 'confirmed';
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-LK', {
@@ -169,14 +160,8 @@ export default function EditQuotationPage() {
     }).format(amount || 0);
   };
 
-  const isConfirmed = quotationStatus === 'confirmed';
-
   const handleSave = async () => {
-    if (!formData.userEmail) {
-      alert("Please enter a user email.");
-      return;
-    }
-
+    if (!formData.userEmail && !formData.clientId && !formData.phone) { alert("Please specify a client."); return; }
     if (lineItems.every(item => !item.description)) {
       alert("Please add at least one line item with description.");
       return;
@@ -186,20 +171,24 @@ export default function EditQuotationPage() {
     try {
       await updateQuotation(parseInt(quotation_id as string), {
         date: formData.date,
+        validUntil: formData.validUntil,
         amount: total,
-        advance,
+        advance: 0,
         discount,                                // ← now sent to DB
         totalDue,
         billingAddress: formData.billingAddress,
-        clientId: formData.clientId,
+        clientId: formData.clientId || null,
         description: formData.projectName || formData.description,
         category: selectedCategories.join(", "),
         paymentMethod: formData.paymentMethod,
         invoiceId: formData.invoiceId || null,
         receiptUrl: null,
-        bankAccountId: formData.bankAccountId ? parseInt(formData.bankAccountId) : null,
-        notes: formData.notes || null,
-        legalName: formData.legalName || null
+        notes: null,
+        legalName: formData.legalName || null,
+        clientName: formData.clientName || null,
+        userEmail: formData.userEmail || null,
+        phone: formData.phone || null,
+        validUntil: formData.validUntil || null,
       }, lineItems);
       
       router.push("/admin/quotations");
@@ -300,11 +289,19 @@ export default function EditQuotationPage() {
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors disabled:opacity-50"
                   disabled={isConfirmed} />
               </div>
-              <div className="space-y-1">
-                <label className="text-sm text-gray-400">Date</label>
-                <input type="date" name="date" value={formData.date} onChange={handleFormChange}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors disabled:opacity-50"
-                  disabled={isConfirmed} />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm text-gray-400">Date</label>
+                  <input type="date" name="date" value={formData.date} onChange={handleFormChange}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors disabled:opacity-50"
+                    disabled={isConfirmed} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm text-gray-400">Valid Until</label>
+                  <input type="date" name="validUntil" value={formData.validUntil} onChange={handleFormChange}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors disabled:opacity-50"
+                    disabled={isConfirmed} />
+                </div>
               </div>
             </div>
             <div className="space-y-1">
@@ -319,47 +316,15 @@ export default function EditQuotationPage() {
                 <CategoryPicker categories={ALL_CATEGORIES} value={selectedCategories} onChange={setSelectedCategories} disabled={isConfirmed} />
               </div>
               <div className="space-y-1">
-                <label className="text-sm text-gray-400">Payment Method</label>
+                <label className="text-sm text-gray-400">Payment Terms</label>
                 <select name="paymentMethod" value={formData.paymentMethod} onChange={handleFormChange}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none disabled:opacity-50"
                   disabled={isConfirmed}>
-                  <option className="bg-black">Bank Transfer</option>
-                  <option className="bg-black">Stripe</option>
-                  <option className="bg-black">PayPal</option>
-                  <option className="bg-black">Cash</option>
+                  <option className="bg-black">Option A: Advance Deposit Required</option>
+                  <option className="bg-black">Option B: 100% Upfront Payment</option>
                 </select>
               </div>
             </div>
-
-            
-            {/* Payment Bank Account — PDF only */}
-            <div className="space-y-1">
-              <label className="text-sm text-gray-400">
-                Payment Bank Account
-              </label>
-              <select
-                name="bankAccountId"
-                value={formData.bankAccountId}
-                onChange={handleFormChange}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none disabled:opacity-50"
-                disabled={isConfirmed}
-              >
-                <option value="" className="bg-black">— No bank account —</option>
-                {bankAccounts.map(acc => (
-                  <option key={acc.id} value={String(acc.id)} className="bg-black">
-                    {acc.name} · {acc.bank} · {acc.number}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
-            <h2 className="text-xl font-semibold mb-4">Notes</h2>
-            <textarea name="notes" value={formData.notes} onChange={handleFormChange}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors resize-none disabled:opacity-50"
-              rows={3} placeholder="Terms, conditions, or special notes..." disabled={isConfirmed} />
           </div>
         </div>
 
@@ -372,9 +337,10 @@ export default function EditQuotationPage() {
               {lineItems.map((item) => (
                 <div key={item.id} className="flex items-start gap-3">
                   <div className="flex-1 space-y-1">
-                    <input type="text" placeholder="Description" value={item.description}
+                    <textarea placeholder="Description (use newlines for subtitles)" value={item.description}
                       onChange={(e) => handleLineItemChange(item.id, 'description', e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm disabled:opacity-50"
+                      rows={2}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm resize-none disabled:opacity-50"
                       disabled={isConfirmed} />
                   </div>
                   <div className="w-20 space-y-1">
@@ -438,43 +404,13 @@ export default function EditQuotationPage() {
             </div>
           </div>
 
-          {/* Advance Payment */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
-            <h2 className="text-xl font-semibold mb-1">Advance Payment</h2>
-            <p className="text-sm text-gray-400 mb-4">Specify any upfront payment required before work begins.</p>
-            <div className="flex justify-between items-center text-sm">
-              <label className="text-gray-400">Advance Amount</label>
-              <input type="number" name="advance" value={formData.advance || ""} onChange={handleFormChange} min="0"
-                className="w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 outline-none focus:border-brand-500 transition-colors text-right text-sm disabled:opacity-50"
-                placeholder="0.00" disabled={isConfirmed} />
-            </div>
-            <div className="border-t border-white/10 pt-4 space-y-3">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-400">Total Quotation</span>
-                <span>{formatCurrency(total)}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-400">Advance</span>
-                <span className="text-green-400">− {formatCurrency(advance)}</span>
-              </div>
-              <div className="flex justify-between items-center text-lg font-semibold border-t border-white/10 pt-3 text-brand-400">
-                <span>Balance Due</span>
-                <span>{formatCurrency(totalDue)}</span>
-              </div>
-            </div>
-          </div>
-
           <div className="flex flex-col gap-3">
-            <button className="flex items-center justify-center gap-2 px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-3xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isConfirmed}>
-              <Save className="w-5 h-5" /> Save as Draft
-            </button>
             <button onClick={handleSave} disabled={isSubmitting || isConfirmed}
               className="flex items-center justify-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
               {isSubmitting ? (
                 <><Loader2 className="w-5 h-5 animate-spin" /> Updating...</>
               ) : (
-                <><Send className="w-5 h-5" /> Update Quotation</>
+                <><Save className="w-5 h-5" /> Update Quotation</>
               )}
             </button>
           </div>

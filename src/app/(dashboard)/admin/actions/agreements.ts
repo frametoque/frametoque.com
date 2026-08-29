@@ -127,19 +127,20 @@ export async function getAgreementById(id: number): Promise<AgreementData | null
 export async function createAgreement(data: any) {
   try {
     // Check client existence
-    const existingClient = await sql`
-      SELECT id FROM admin_clients WHERE LOWER(email) = LOWER(${data.client_email})
-    `;
+    let existingClient: any[] = [];
+    if (data.client_email) {
+      existingClient = await sql`SELECT id FROM admin_clients WHERE LOWER(email) = LOWER(${data.client_email})`;
+    }
     
-    if (existingClient.length === 0 && data.client_email) {
+    if (existingClient.length === 0 && (data.client_email || data.client_phone)) {
       const clientId = 'C-' + Date.now();
       await sql`
-        INSERT INTO admin_clients (id, name, company, email, phone, address, active)
+        INSERT INTO admin_clients (id, full_name, company, email, phone, address, active)
         VALUES (
           ${clientId},
           ${data.client_name},
           ${data.client_company || null},
-          ${data.client_email},
+          ${data.client_email || null},
           ${data.client_phone || null},
           ${data.client_address || null},
           true
@@ -155,7 +156,7 @@ export async function createAgreement(data: any) {
         revision_rounds, hosting_preference, representative_name, representative_signature, status
       ) VALUES (
         ${data.client_name},
-        ${data.client_email},
+        ${data.client_email || null},
         ${data.client_phone || null},
         ${data.client_company || null},
         ${data.client_address || null},
@@ -189,7 +190,7 @@ export async function updateAgreement(id: number, data: any) {
     await sql`
       UPDATE admin_agreements SET
         client_name = ${data.client_name},
-        client_email = ${data.client_email},
+        client_email = ${data.client_email || null},
         client_phone = ${data.client_phone || null},
         client_company = ${data.client_company || null},
         client_address = ${data.client_address || null},

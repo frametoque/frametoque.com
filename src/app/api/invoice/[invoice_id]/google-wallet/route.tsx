@@ -129,7 +129,7 @@ async function ensureClass(authClient: GoogleAuth) {
 function buildPassObject(invoice: Record<string, any>) {
   const objectId = `${ISSUER_ID}.invoice_${invoice.invoice_id}`;
 
-  const currencyLabel = invoice.currency === "LKR" ? "Rs." : (invoice.currency ?? "");
+  const currencyLabel = invoice.currency === "LKR" ? "Rs. " : (invoice.currency ?? "");
   const totalDueVal = invoice.total_due !== undefined && invoice.total_due !== null
     ? parseFloat(invoice.total_due)
     : (
