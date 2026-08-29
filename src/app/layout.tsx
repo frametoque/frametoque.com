@@ -7,23 +7,37 @@ import SWRegister from "../lib/sw-register";
 import SnowfallWrapper from "@/components/SnowfallWrapper";
 import FloatingButtons from '@/components/FloatingButtons';
 import type { Metadata } from 'next'
-import { Bricolage_Grotesque, DM_Mono } from "next/font/google";
-//import localFont from "next/font/local";
+import localFont from "next/font/local";
 import UmamiScript from "@/components/UmamiScript";
 
 import SmoothScroll from "@/components/SmoothScroll";
 
 
-const bricolage = Bricolage_Grotesque({
+const bricolage = localFont({
+  src: "./fonts/BricolageGrotesque-Variable.ttf",
   variable: "--font-geist-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "400 800",
 });
 
-const dmMono = DM_Mono({
+const dmMono = localFont({
+  src: [
+    {
+      path: './fonts/DMMono-Light.ttf',
+      weight: '300',
+      style: 'normal',
+    },
+    {
+      path: './fonts/DMMono-Regular.ttf',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: './fonts/DMMono-Medium.ttf',
+      weight: '500',
+      style: 'normal',
+    },
+  ],
   variable: "--font-geist-mono",
-  subsets: ["latin"],
-  weight: ["300", "400", "500"],
 });
 
 // const aestera = localFont({

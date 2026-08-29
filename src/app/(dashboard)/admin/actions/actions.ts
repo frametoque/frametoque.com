@@ -1711,8 +1711,6 @@ export async function getQuotationById(quotationId: string) {
       category: q.category,
       payment_method: q.payment_method,
       invoice_id: q.invoice_id,
-      notes: q.notes,
-      legal_name: q.legal_name,
       valid_until: q.valid_until,
       receipt_url: q.receipt_url,
       status: q.status,
