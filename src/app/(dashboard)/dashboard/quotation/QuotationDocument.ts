@@ -11,8 +11,8 @@ const formatDate = (dateString: string | Date) => {
 };
 
 const formatMoney = (value: any, currency = "") => {
-  if (!value || isNaN(parseFloat(value))) return "Rs. 0.00";
-  const prefix = currency === "LKR" ? "Rs. " : currency;
+  if (!value || isNaN(parseFloat(value))) return "LKR 0.00";
+  const prefix = currency === "LKR" ? "LKR " : currency;
   return `${prefix}${parseFloat(value).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

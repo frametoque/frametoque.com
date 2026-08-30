@@ -4,7 +4,9 @@ import { useEffect, useState, useMemo } from "react";
 import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2, Eye, FilePlus, Trash } from "lucide-react";
 import ClientCombobox from "../components/ClientCombobox";
 import Link from "next/link";
-import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice, getInvoices } from "../actions/actions";
+import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice, getInvoices, getInvoiceByIdAdmin } from "../actions/actions";
+import { generateReceiptPDF } from "@/app/(dashboard)/dashboard/receipt/ReceiptDocument";
+import { Download } from "lucide-react";
 import { getAccounts } from "../actions/accounts";
 import CategoryPicker from "../components/CategoryPicker";
 import AnimatedNumber from "../components/AnimatedNumber";
@@ -93,6 +95,47 @@ export default function IncomePage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [invoicesList, setInvoicesList] = useState<any[]>([]);
+
+  const [downloadingReceiptId, setDownloadingReceiptId] = useState<number | null>(null);
+
+  const handleDownloadReceipt = async (row: any) => {
+    if (!row.invoice) return;
+    setDownloadingReceiptId(row.id);
+    try {
+      const invoiceData = await getInvoiceByIdAdmin(row.invoice);
+      if (!invoiceData) {
+        alert("Failed to load invoice details for receipt");
+        return;
+      }
+      
+      const clients = await getClients();
+      const client = clients.find((c: any) => c.email?.toLowerCase() === invoiceData.user_email?.toLowerCase()) || {};
+      
+      const accountsList = await getAccounts();
+      const account = accountsList.find((a: any) => a.id === row.accountId) || null;
+
+      const receiptData = {
+        income: row,
+        invoice: invoiceData,
+        client: client,
+        account: account
+      };
+      
+      const pdfBytes = await generateReceiptPDF(receiptData);
+      const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `REC-${String(row.id).padStart(5, "0")}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Receipt generation failed:", err);
+      alert("Failed to generate Receipt PDF.");
+    } finally {
+      setDownloadingReceiptId(null);
+    }
+  };
 
   const [newClientName, setNewClientName] = useState("");
   const [newClientEmail, setNewClientEmail] = useState("");
@@ -517,6 +560,20 @@ export default function IncomePage() {
                         </button>
                       ) : (
                         <div className="w-8 h-8" /> // Keeps alignment
+                      )}
+
+                      {/* Download Receipt button */}
+                      {row.invoice ? (
+                        <button 
+                          onClick={() => handleDownloadReceipt(row)} 
+                          title="Download Receipt"
+                          disabled={downloadingReceiptId === row.id}
+                          className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white cursor-pointer disabled:opacity-50"
+                        >
+                          {downloadingReceiptId === row.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                        </button>
+                      ) : (
+                        <div className="w-8 h-8" />
                       )}
 
                       {/* Create Invoice button */}

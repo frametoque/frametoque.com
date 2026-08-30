@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, Image, CheckCircle2, ShieldCheck, XCircle, DollarSign, X, ChevronLeft, ChevronRight, Trash2, Upload, Image as ImageIcon, FileText as FileIcon } from "lucide-react";
 import Link from "next/link";
 import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
+import { generateReceiptPDF } from "@/app/(dashboard)/dashboard/receipt/ReceiptDocument";
 import { getInvoiceByIdAdmin, approveBankSlip, declineBankSlip, undoApprovedBankSlipPayment, recordInvoicePayment, deleteIncome, adminUploadPaymentSlip } from "../../actions/actions";
 
 const workStatusStyles = {
@@ -54,7 +55,7 @@ const formatDateTime = (dateString: string | Date | null | undefined) => {
 
 const formatMoney = (value: any, currency = "LKR") => {
   if (!value || isNaN(parseFloat(value))) return "N/A";
-  const currencySymbol = currency === "LKR" ? "Rs. " : currency;
+  const currencySymbol = currency === "LKR" ? "LKR " : currency;
   return `${currencySymbol} ${parseFloat(value).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -81,6 +82,7 @@ export default function AdminInvoicePage() {
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [isAdvance, setIsAdvance] = useState(false);
+  const [paymentDescription, setPaymentDescription] = useState("");
   const [savingIncome, setSavingIncome] = useState(false);
 
   // Payment slip upload states
@@ -212,14 +214,7 @@ export default function AdminInvoicePage() {
     setActiveSlipIndex(-1);
   }, [invoice_id]);
 
-  // Auto-download if ?download=true
-  useEffect(() => {
-    if (invoice && searchParams.get("download") === "true" && !downloadTriggeredRef.current) {
-      downloadTriggeredRef.current = true;
-      setAutoDownloaded(true);
-      handleDownload();
-    }
-  }, [invoice, searchParams]);
+  
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -281,6 +276,40 @@ export default function AdminInvoicePage() {
     }
   };
 
+  const [downloadingReceiptId, setDownloadingReceiptId] = useState<number | null>(null);
+
+  const handleDownloadReceipt = async (payment: any) => {
+    setDownloadingReceiptId(payment.id);
+    try {
+      // Get the full client details using the client_id if we have one (or user_email)
+      const clients = await import("../../actions/actions").then(m => m.getClients());
+      const accounts = await import("../../actions/accounts").then(m => m.getAccounts());
+      
+      const client = clients.find((c: any) => c.email?.toLowerCase() === invoice.user_email?.toLowerCase()) || {};
+      const account = accounts.find((a: any) => a.id === payment.account_id) || null;
+
+      const receiptData = {
+        income: payment,
+        invoice: invoice,
+        client: client,
+        account: account
+      };
+      const pdfBytes = await generateReceiptPDF(receiptData);
+      const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `REC-${String(payment.id).padStart(5, "0")}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Receipt generation failed:", err);
+      alert("Failed to generate Receipt PDF.");
+    } finally {
+      setDownloadingReceiptId(null);
+    }
+  };
+
   const handleDeleteAndReverseActiveSlip = async () => {
     if (!activeSlip || !invoice) return;
     if (!confirm('Are you sure you want to delete and reverse this payment slip? This will reverse the payment and restore the due balance on the invoice.')) {
@@ -334,7 +363,7 @@ export default function AdminInvoicePage() {
   }
 
   const lineItems = invoice.items || [];
-  const currencyLabel = invoice.currency === "LKR" ? "Rs. " : invoice.currency;
+  const currencyLabel = invoice.currency === "LKR" ? "LKR " : invoice.currency;
   const subtotal = parseFloat(invoice.subtotal || 0);
   const discount = parseFloat(invoice.discount || 0);
   const advance = parseFloat(invoice.advance || 0);
@@ -415,7 +444,8 @@ export default function AdminInvoicePage() {
         parseFloat(paidAmount) || 0,
         paymentMethod,
         paymentDate,
-        isAdvance
+        isAdvance,
+        paymentDescription
       );
 
       // Step 2: Upload slip if included (only for Bank Transfer)
@@ -467,8 +497,9 @@ export default function AdminInvoicePage() {
 
           {/* Project Name */}
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-            <h2 className="text-xl font-bold text-white mb-1">{invoice.project_name || "Untitled Project"}</h2>
-            {invoice.billing_address && <p className="text-gray-400 text-sm">{invoice.billing_address}</p>}
+            <h2 className="text-xl font-bold text-white mb-2">{invoice.project_name || "Untitled Project"}</h2>
+            {invoice.client_name && <p className="text-gray-300 font-medium text-sm">{invoice.client_name}</p>}
+            {invoice.billing_address && <p className="text-gray-400 text-sm mt-1">{invoice.billing_address}</p>}
             <p className="text-gray-400 text-sm mt-1 flex items-center gap-2">
               Client Email: <span className="text-white">{invoice.user_email}</span>
             </p>
@@ -611,20 +642,36 @@ export default function AdminInvoicePage() {
                         <td className="py-3 text-gray-400">{p.description}</td>
                         <td className="py-3 text-right">
                           {p.id && (
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteAndReversePayment(p.id, p.amount)}
-                              disabled={deletingPaymentId === p.id}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl transition-all disabled:opacity-50 cursor-pointer"
-                              title="Delete & Reverse Payment"
-                            >
-                              {deletingPaymentId === p.id ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-3.5 h-3.5" />
-                              )}
-                              <span>Delete & Reverse</span>
-                            </button>
+                            <div className="flex justify-end items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadReceipt(p)}
+                                disabled={downloadingReceiptId === p.id}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/20 rounded-xl transition-all disabled:opacity-50 cursor-pointer"
+                                title="Download Receipt"
+                              >
+                                {downloadingReceiptId === p.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Download className="w-3.5 h-3.5" />
+                                )}
+                                <span>Receipt</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteAndReversePayment(p.id, p.amount)}
+                                disabled={deletingPaymentId === p.id}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl transition-all disabled:opacity-50 cursor-pointer"
+                                title="Delete & Reverse Payment"
+                              >
+                                {deletingPaymentId === p.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                )}
+                                <span>Delete & Reverse</span>
+                              </button>
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -939,6 +986,18 @@ export default function AdminInvoicePage() {
                   <option value="Cash" className="bg-black text-white">Cash</option>
                 </select>
               </div>
+
+              <div className="space-y-1">
+                <label className="text-sm text-gray-400 block font-medium">Description (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="Custom description..."
+                  value={paymentDescription}
+                  onChange={(e) => setPaymentDescription(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white"
+                />
+              </div>
+
 
               <div className="flex items-center gap-2 pt-2 pb-2">
                 <input

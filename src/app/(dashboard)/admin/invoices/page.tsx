@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { FileText, CheckCircle, Clock, AlertCircle, Search, Eye, Edit2, Send, Download, Trash2, DollarSign, X, Loader2, Upload, Image as ImageIcon, FileText as FileIcon } from "lucide-react";
 import Link from "next/link";
-import { getInvoices, deleteInvoice, recordInvoicePayment, adminUploadPaymentSlip } from "../actions/actions";
+import { getInvoices, deleteInvoice, recordInvoicePayment, adminUploadPaymentSlip, getInvoiceByIdAdmin } from "../actions/actions";
 import AnimatedNumber from "../components/AnimatedNumber";
 
 const filters = ["All", "Fully Paid", "Partially Paid", "On Review", "Overdue", "Advance-Paid", "Unpaid"];
@@ -20,6 +20,32 @@ export default function InvoicesPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownloadPDF = async (row: any) => {
+    setDownloadingId(row.id);
+    try {
+      const invoiceData = await getInvoiceByIdAdmin(row.id.toString());
+      if (!invoiceData) {
+        alert("Failed to load invoice details");
+        return;
+      }
+      const { generateInvoicePDF } = await import("@/app/(dashboard)/dashboard/invoice/InvoiceDocument");
+      const pdfBytes = await generateInvoicePDF(invoiceData);
+      const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${row.id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Failed to generate PDF. Please try again.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   // Payment recording modal states
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -244,11 +270,7 @@ export default function InvoicesPage() {
     }
   };
 
-  const handleSend = (id: string) => {
-    const url = `${window.location.origin}/dashboard/invoice/${id}`;
-    navigator.clipboard.writeText(url);
-    alert("Invoice link copied to clipboard: " + url);
-  };
+  
 
   const filteredInvoices = useMemo(() => data?.items?.filter((row: any) => {
     let statusMatch = false;
@@ -461,12 +483,18 @@ export default function InvoicesPage() {
                         <Link href={`/admin/invoices/${row.id}/edit`} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white" title="Edit">
                           <Edit2 className="w-4 h-4" />
                         </Link>
-                        <button onClick={() => handleSend(row.id)} className="p-2 hover:bg-brand-400/10 rounded-xl transition-colors text-gray-400 hover:text-brand-400" title="Copy Link">
-                          <Send className="w-4 h-4" />
+                        <button 
+                          onClick={() => handleDownloadPDF(row)}
+                          disabled={downloadingId === row.id}
+                          className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white disabled:opacity-50"
+                          title="Download PDF"
+                        >
+                          {downloadingId === row.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
                         </button>
-                        <Link href={`/admin/invoice/${row.id}?download=true`} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white" title="Download PDF">
-                          <Download className="w-4 h-4" />
-                        </Link>
                         <button onClick={() => handleDelete(row.id)} className="p-2 hover:bg-red-400/10 rounded-xl transition-colors text-gray-400 hover:text-red-400" title="Delete">
                           <Trash2 className="w-4 h-4" />
                         </button>

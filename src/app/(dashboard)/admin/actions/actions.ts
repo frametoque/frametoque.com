@@ -1764,7 +1764,8 @@ export async function recordInvoicePayment(
   paidAmount: number,
   paymentMethod: string,
   paymentDate: string,
-  isAdvance: boolean
+  isAdvance: boolean,
+  customDescription?: string
 ) {
   try {
     // 1. Fetch invoice info
@@ -1793,9 +1794,12 @@ export async function recordInvoicePayment(
     }
 
     // 3. Create description and category for the income entry
-    const description = isAdvance 
-      ? `Advance: ${invoice.project_name || 'Project'}`
-      : invoice.project_name || 'Payment';
+    let description = customDescription;
+    if (!description) {
+      description = isAdvance 
+        ? `Advance: ${invoice.project_name || 'Project'}`
+        : invoice.project_name || 'Payment';
+    }
     const category = invoice.category || 'Web dev';
 
     // 4. Create the income record with receipt_url if available

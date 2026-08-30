@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, ArrowLeft, Send, Save } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Send, Save, Loader2 } from "lucide-react";
 import ClientCombobox from "../../components/ClientCombobox";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -431,10 +431,14 @@ export default function NewInvoicePage() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-0 justify-between items-center bg-white/5 border border-white/10 p-4 rounded-3xl backdrop-blur-xl">
+          <div className="flex flex-col gap-3">
             <button onClick={handleSave} disabled={isSubmitting}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors ml-auto disabled:opacity-50 disabled:cursor-not-allowed">
-              <Save className="w-5 h-5" /> {isSubmitting ? "Saving..." : "Save & Send"}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              {isSubmitting ? (
+                <><Loader2 className="w-5 h-5 animate-spin" /> Saving...</>
+              ) : (
+                <><Save className="w-5 h-5" /> Save</>
+              )}
             </button>
           </div>
         </div>
