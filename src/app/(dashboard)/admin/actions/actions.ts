@@ -1702,6 +1702,7 @@ export async function getQuotationById(quotationId: string) {
       advance: parseFloat(q.advance || 0),
       total_due: parseFloat(q.total_due || q.amount),
       billing_address: q.billing_address || '',
+      client_id: q.client_id,
       client_name: q.client_name || q.email?.split('@')[0] || '',
       email: q.email,
       company: q.company,
