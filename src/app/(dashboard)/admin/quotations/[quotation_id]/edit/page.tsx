@@ -188,7 +188,6 @@ export default function EditQuotationPage() {
         clientName: formData.clientName || null,
         userEmail: formData.userEmail || null,
         phone: formData.phone || null,
-        validUntil: formData.validUntil || null,
       }, lineItems);
       
       router.push("/admin/quotations");
