@@ -279,7 +279,7 @@ export async function generateQuotationPDF(quotation: any) {
   // ── 5. Totals ───────────────────────────────────────────────────────────────
   drawTextAligned(formatMoney(subtotal, currency), 2030, 2330, 45, primaryFont, "#222222", "right", 300);
   drawTextAligned(formatMoney(discountVal, currency), 2030, 2400, 45, primaryFont, "#222222", "right", 300);
-  drawTextAligned(formatMoney(total, currency), 2030, 2570, 75, primaryFontBold, "#222222", "right", 300);
+  drawTextAligned(formatMoney(total, currency), 2030, 2560, 75, primaryFontBold, "#222222", "right", 300);
 
   // ── 6. Payment Terms / Notes ─────────────────────────────────────────────────
   if (notes || paymentMethod) {
