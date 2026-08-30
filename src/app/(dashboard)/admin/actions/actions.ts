@@ -1006,6 +1006,21 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
 export async function getClients() {
   const clerk = await clerkClient();
 
+  let clerkUsersMap: Record<string, string> = {};
+  try {
+    const { data: users } = await clerk.users.getUserList({ limit: 500 });
+    users.forEach((u) => {
+      if (u.imageUrl) {
+        clerkUsersMap[u.id] = u.imageUrl;
+        u.emailAddresses.forEach((e) => {
+          clerkUsersMap[e.emailAddress.toLowerCase()] = u.imageUrl;
+        });
+      }
+    });
+  } catch (e) {
+    console.warn("Failed to fetch clerk users for images", e);
+  }
+
   const rows = await sql`
     SELECT c.id,
            c.full_name as name,
@@ -1027,7 +1042,11 @@ export async function getClients() {
   const clients = await Promise.all(
     rows.map(async (r) => {
       let imageUrl: string | null = null;
-      if (r.email) {
+      if (r.clerk_id && clerkUsersMap[r.clerk_id]) {
+        imageUrl = clerkUsersMap[r.clerk_id];
+      } else if (r.email && clerkUsersMap[r.email.toLowerCase()]) {
+        imageUrl = clerkUsersMap[r.email.toLowerCase()];
+      } else if (r.email) {
         imageUrl = getGravatarUrl(r.email.trim());
       }
 
@@ -1076,7 +1095,30 @@ export async function getClientById(clientId: string) {
   const c = rows[0];
 
   let imageUrl = null;
-  if (c.email) {
+  
+  if (c.clerk_id) {
+    try {
+      const u = await clerk.users.getUser(c.clerk_id);
+      if (u?.imageUrl) {
+        imageUrl = u.imageUrl;
+      }
+    } catch (e) {
+      console.warn("Failed to fetch clerk user image by ID", e);
+    }
+  }
+  
+  if (!imageUrl && c.email) {
+    try {
+      const { data: users } = await clerk.users.getUserList({ emailAddress: [c.email.trim()] });
+      if (users.length > 0 && users[0].imageUrl) {
+        imageUrl = users[0].imageUrl;
+      }
+    } catch (e) {
+      console.warn("Failed to fetch clerk user image by email", e);
+    }
+  }
+
+  if (!imageUrl && c.email) {
     imageUrl = getGravatarUrl(c.email.trim());
   }
 
