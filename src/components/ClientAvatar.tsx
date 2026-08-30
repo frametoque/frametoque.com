@@ -27,13 +27,18 @@ export default function ClientAvatar({
 
   const initial = (name || email || "?").trim().charAt(0).toUpperCase() || "?";
 
-  if (imageUrl && !primaryFailed) {
+  if (imageUrl && imageUrl !== "null" && !primaryFailed) {
     return (
       <img
         src={imageUrl}
         alt={name || "Client Avatar"}
         className={className}
         onError={() => setPrimaryFailed(true)}
+        ref={(img) => {
+          if (img && img.complete && img.naturalWidth === 0) {
+            setPrimaryFailed(true);
+          }
+        }}
       />
     );
   }
@@ -45,6 +50,11 @@ export default function ClientAvatar({
         alt={name || "Client Avatar"}
         className={className}
         onError={() => setGravatarFailed(true)}
+        ref={(img) => {
+          if (img && img.complete && img.naturalWidth === 0) {
+            setGravatarFailed(true);
+          }
+        }}
       />
     );
   }
