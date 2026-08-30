@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     .join(", ")}`;
 
   // Get or Create Client
-  let clientId: string;
+  let clientId: string | null = null;
   try {
     const existing = await sql`
       SELECT id FROM admin_clients WHERE LOWER(email) = LOWER(${quoteEmail}) LIMIT 1
@@ -98,21 +98,6 @@ export async function POST(req: NextRequest) {
           });
         }
       }
-    } else {
-      clientId = "C-" + Date.now();
-      await sql`
-        INSERT INTO admin_clients (id, name, company, email, phone, address, active)
-        VALUES (
-          ${clientId},
-          ${quoteName},
-          null,
-          ${quoteEmail},
-          ${quotePhone},
-          null,
-          true
-        )
-      `;
-      console.log("[quotation] created new client:", clientId);
     }
   } catch (err) {
     console.error("[quotation] client lookup/creation failed:", err);
@@ -249,7 +234,10 @@ export async function POST(req: NextRequest) {
         status,
         project_confirmed,
         advance,
-        total_due
+        total_due,
+        client_name,
+        client_email,
+        client_phone
       ) VALUES (
         CURRENT_DATE,
         ${subtotalLKR},
@@ -260,7 +248,10 @@ export async function POST(req: NextRequest) {
         'client-draft',
         false,
         0,
-        ${subtotalLKR}
+        ${subtotalLKR},
+        ${quoteName},
+        ${quoteEmail},
+        ${quotePhone}
       )
       RETURNING id
     `;

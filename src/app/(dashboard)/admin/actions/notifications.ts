@@ -39,7 +39,7 @@ export async function fetchLiveNotifications(): Promise<NotificationItem[]> {
         ORDER BY updated_at DESC LIMIT 2
       `),
       sql.unsafe(`
-        SELECT q.id, q.amount, c.full_name as client, q.category, q.date,
+        SELECT q.id, q.amount, COALESCE(c.full_name, q.client_name) as client, q.category, q.date,
                EXTRACT(EPOCH FROM (NOW() - q.created_at)) * 1000 AS ms_ago
         FROM admin_quotations q
         LEFT JOIN admin_clients c ON q.client_id = c.id

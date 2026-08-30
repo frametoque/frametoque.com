@@ -104,7 +104,7 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
       LIMIT 4
     `,
     sql`
-      SELECT q.id, COALESCE(q.description, 'Untitled') as project, COALESCE(c.full_name, 'Unknown') as client, q.amount as amount, q.status
+      SELECT q.id, COALESCE(q.description, 'Untitled') as project, COALESCE(c.full_name, q.client_name, 'Unknown') as client, q.amount as amount, q.status
       FROM admin_quotations q
       LEFT JOIN admin_clients c ON q.client_id = c.id
       WHERE q.date >= ${start}::timestamp AND q.date <= (${end} || ' 23:59:59.999')::timestamp
@@ -1353,7 +1353,7 @@ export async function getQuotations(startDate?: string, endDate?: string) {
   
   const rows = await sql`
     SELECT q.id, q.date, q.amount, q.advance, q.total_due as "totalDue", q.discount, q.bank_account_id as "bankAccountId",
-           c.full_name as client, c.email as "clientEmail", q.client_id as "clientId", q.description as desc, q.category,
+           COALESCE(c.full_name, q.client_name) as client, COALESCE(c.email, q.client_email) as "clientEmail", q.client_phone as "clientPhone", q.client_id as "clientId", q.description as desc, q.category,
            q.invoice_id as invoice, q.receipt_url as "receiptUrl", q.status, q.project_confirmed as "projectConfirmed", q.legal_name as "legalName", q.created_at
     FROM admin_quotations q
     LEFT JOIN admin_clients c ON q.client_id = c.id
@@ -1560,7 +1560,7 @@ export async function deleteQuotation(id: number) {
  
 export async function confirmQuotation(quotationId: number, quotationData: any, projectName: string, bankAccountId: number | null = null) {
   const quotation = await sql`
-    SELECT q.*, c.id as client_id_val, c.email, c.full_name as client_name, c.company, c.address as billing_address
+    SELECT q.*, c.id as client_id_val, COALESCE(c.email, q.client_email) as email, COALESCE(c.full_name, q.client_name) as client_name, c.company, c.address as billing_address
     FROM admin_quotations q
     LEFT JOIN admin_clients c ON q.client_id = c.id
     WHERE q.id = ${quotationId}
@@ -1673,7 +1673,7 @@ export async function getQuotationById(quotationId: string) {
   try {
     const quotation = await sql`
       SELECT q.*,
-             c.full_name as client_name, c.email, c.company, c.phone,
+             COALESCE(c.full_name, q.client_name) as client_name, COALESCE(c.email, q.client_email) as email, c.company, COALESCE(c.phone, q.client_phone) as phone,
              c.address as billing_address,
              ba.name as bank_acc_name, ba.account_number as bank_acc_number,
       ba.bank_name as bank_acc_bank,

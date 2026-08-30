@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { 
-  ShoppingBag, Trash2, Plus, Minus, ArrowRight, Check, Send, Sparkles, FileText, Mail
+  ShoppingBag, Trash2, Plus, Minus, ArrowRight, Check, Send, Sparkles, FileText, Download
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -164,6 +164,30 @@ export default function CartClient() {
         }
       }
 
+      if (data.quotationId) {
+        try {
+          const { getQuotationById } = await import("@/app/(dashboard)/admin/actions/actions");
+          const q = await getQuotationById(data.quotationId.toString());
+          if (q) {
+            if (!q.client_name) q.client_name = quoteName;
+            if (!q.email) q.email = quoteEmail;
+            if (!q.phone) q.phone = quotePhone;
+
+            const { generateQuotationPDF } = await import("@/app/(dashboard)/dashboard/quotation/QuotationDocument");
+            const pdfBytes = await generateQuotationPDF(q);
+            const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `QT-${String(q.id).padStart(4, "0")}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+        } catch (pdfErr) {
+          console.error("PDF generation failed:", pdfErr);
+        }
+      }
+
       setQuotationSuccess(true);
     } catch (err: any) {
       console.error(err);
@@ -299,7 +323,7 @@ if (success) {
                   </div>
                   <h3 className="text-xl font-black text-white">Get Your Quotation</h3>
                   <p className="text-xs text-slate-400 leading-relaxed max-w-md">
-                    Want a formal quote before committing? Drop your details and we'll send a full breakdown to your inbox.
+                    Want a formal quote before committing? Drop your details and download a full breakdown immediately.
                   </p>
                 </div>
 
@@ -309,9 +333,9 @@ if (success) {
                       <Check className="w-5 h-5 text-green-400" />
                     </div>
                     <div>
-                      <p className="font-bold text-green-300 text-sm">Quotation request received!</p>
+                      <p className="font-bold text-green-300 text-sm">Quotation generated successfully!</p>
                       <p className="text-slate-400 text-xs mt-0.5">
-                        Our team will send the quotation to <span className="text-white font-medium">{quoteEmail}</span> shortly.
+                        Your quotation PDF has been generated and downloaded to your device.
                       </p>
                     </div>
                   </div>
@@ -373,7 +397,7 @@ if (success) {
                       {quotationSubmitting ? (
                         <div className="w-4 h-4 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" />
                       ) : (
-                        <><Mail className="w-4 h-4" /> Get Quotation to Mail</>
+                        <><Download className="w-4 h-4" /> Download Quotation PDF</>
                       )}
                     </button>
                   </form>
