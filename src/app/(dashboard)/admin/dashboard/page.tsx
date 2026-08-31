@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Landmark, Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, FileText, Users, Eye, Calendar, Folder, MapPin, CheckSquare, Droplets, ChevronLeft, ChevronRight } from "lucide-react";
+import { Landmark, Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, ArrowDownLeft, FileText, Users, Eye, Calendar, Folder, MapPin, CheckSquare, Droplets, ChevronLeft, ChevronRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { getDashboardData } from "../actions/actions";
 import { getAnalyticsData } from "../actions/analytics";
@@ -452,9 +452,9 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-4">
                   <div className={`p-3 rounded-2xl ${tx.type === 'income' ? 'bg-green-400/10' : 'bg-red-400/10'}`}>
                     {tx.type === 'income' ? (
-                      <ArrowUpRight className={`w-5 h-5 text-green-400`} />
+                      <ArrowDownLeft className={`w-5 h-5 text-green-400`} />
                     ) : (
-                      <ArrowDownRight className={`w-5 h-5 text-red-400`} />
+                      <ArrowUpRight className={`w-5 h-5 text-red-400`} />
                     )}
                   </div>
                   <div>
