@@ -47,6 +47,38 @@ const wrapText = (text: string, font: any, fontSize: number, maxWidth: number) =
   return lines;
 };
 
+async function fetchImageAsPngBytes(url: string): Promise<ArrayBuffer> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch ${url}`);
+  const blob = await res.blob();
+  
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Failed to get canvas context"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const dataUrl = canvas.toDataURL("image/png");
+      const base64 = dataUrl.split(",")[1];
+      const binaryStr = window.atob(base64);
+      const len = binaryStr.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      resolve(bytes.buffer);
+    };
+    img.onerror = () => reject(new Error("Failed to load image into canvas"));
+    img.src = URL.createObjectURL(blob);
+  });
+}
+
 export async function generateQuotationPDF(quotation: any) {
   const pdfDoc = await PDFDocument.create();
 
@@ -59,9 +91,7 @@ export async function generateQuotationPDF(quotation: any) {
 
   // ── Background template ────────────────────────────────────────────────────
   try {
-    const bgResponse = await fetch("/quotation.png");
-    if (!bgResponse.ok) throw new Error(`Failed to fetch /quotation.png`);
-    const bgBytes = await bgResponse.arrayBuffer();
+    const bgBytes = await fetchImageAsPngBytes("/quotation.png");
     const bgImage = await pdfDoc.embedPng(bgBytes);
     page.drawImage(bgImage, { x: 0, y: 0, width: 595.276, height: 841.89 });
   } catch (error) {

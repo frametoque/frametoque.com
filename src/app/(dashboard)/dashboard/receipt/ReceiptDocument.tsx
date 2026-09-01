@@ -1,5 +1,37 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
+async function fetchImageAsPngBytes(url: string): Promise<ArrayBuffer> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch ${url}`);
+  const blob = await res.blob();
+  
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Failed to get canvas context"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const dataUrl = canvas.toDataURL("image/png");
+      const base64 = dataUrl.split(",")[1];
+      const binaryStr = window.atob(base64);
+      const len = binaryStr.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      resolve(bytes.buffer);
+    };
+    img.onerror = () => reject(new Error("Failed to load image into canvas"));
+    img.src = URL.createObjectURL(blob);
+  });
+}
+
 export async function generateReceiptPDF(receiptData: any): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
   const width = 595.276;
@@ -79,8 +111,7 @@ export async function generateReceiptPDF(receiptData: any): Promise<Uint8Array> 
 
   let bgImage: any = null;
   try {
-    const bgRes = await fetch("/Reciept.png");
-    const bgBytes = await bgRes.arrayBuffer();
+    const bgBytes = await fetchImageAsPngBytes("/Reciept.png");
     bgImage = await pdfDoc.embedPng(bgBytes);
     page.drawImage(bgImage, { x: 0, y: 0, width, height });
   } catch (err) {
