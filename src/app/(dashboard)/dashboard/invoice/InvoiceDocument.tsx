@@ -146,7 +146,7 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
 
   // ── Background template ────────────────────────────────────────────────────
   try {
-    const bgBytes = await fetchImageAsPngBytes("/Invoice.png"); // UPDATED to enforce PNG format
+    const bgBytes = await fetchImageAsPngBytes("/invoice.png"); // UPDATED to enforce PNG format
     const bgImage = await pdfDoc.embedPng(bgBytes);
     page.drawImage(bgImage, { x: 0, y: 0, width: 595.276, height: 841.89 });
   } catch (error) {
@@ -354,9 +354,7 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
   // ── 7. PAID Stamp ────────────────────────────────────────────────────────────
   if (payment_status === "fully paid") {
     try {
-      const stampResponse = await fetch("/paid-stamp.png");
-      if (!stampResponse.ok) throw new Error("Stamp not found");
-      const stampBytes = await stampResponse.arrayBuffer();
+      const stampBytes = await fetchImageAsPngBytes("/paid-stamp.png");
       const stampImage = await pdfDoc.embedPng(stampBytes);
 
       const stampSize = 155; 
