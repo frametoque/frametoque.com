@@ -2,6 +2,7 @@
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
+import { generateUniqueInvoiceId } from "./actions";
 import { put } from '@vercel/blob';
 
 export async function uploadProviderInvoice(formData: FormData): Promise<string> {
@@ -330,8 +331,7 @@ export async function createDomainRenewalInvoice(id: number, currency: "USD" | "
       finalPrice = lkrPrice;
     }
 
-    const num = Math.floor(100000 + Math.random() * 900000);
-    const invoiceId = `INV-${num}`;
+    const invoiceId = await generateUniqueInvoiceId();
 
     await sql`
       INSERT INTO invoices (
@@ -600,9 +600,7 @@ export async function createDomainInvoice(
       finalSellingPrice = lkrSellingPrice;
     }
 
-    // 4. Generate unique invoice ID
-    const num = Math.floor(100000 + Math.random() * 900000);
-    const invoiceId = `INV-${num}`;
+    const invoiceId = await generateUniqueInvoiceId();
 
     // 5. Insert parent invoice
     await sql`
@@ -663,8 +661,7 @@ export async function renewExpiredDomain(id: number): Promise<CreateInvoiceResul
     const lkrRate = await getUsdToLkrRate();
     const lkrPrice = parseFloat((renewalPriceUsd * lkrRate).toFixed(2));
 
-    const num = Math.floor(100000 + Math.random() * 900000);
-    const invoiceId = `INV-${num}`;
+    const invoiceId = await generateUniqueInvoiceId();
 
     // Create invoice in LKR
     await sql`

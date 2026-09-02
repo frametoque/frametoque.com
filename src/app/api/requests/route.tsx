@@ -25,6 +25,7 @@ export async function GET(request) {
         user_email,
         project_name,
         date,
+        due_date,
         subtotal,
         discount,
         advance,

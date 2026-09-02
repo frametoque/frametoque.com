@@ -157,6 +157,10 @@ export default function NewQuotationPage() {
   };
 
   const addLineItem = () => {
+    if (lineItems.length >= 5) {
+      alert("Maximum 5 line items allowed");
+      return;
+    }
     setLineItems(prev => [...prev, { id: Date.now(), description: "", quantity: 1, rate: 0 }]);
   };
 
@@ -229,7 +233,7 @@ export default function NewQuotationPage() {
         <div className="space-y-8">
 
           {/* Client Details */}
-          <div className="relative z-50 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
+          <div className="relative z-30 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
             <h2 className="text-xl font-semibold mb-4">Client Details</h2>
 
             <div className="space-y-1">
@@ -359,7 +363,7 @@ export default function NewQuotationPage() {
 
             <div className="space-y-3">
               {lineItems.map((item) => (
-                <div key={item.id} className="flex items-start gap-3">
+                <div key={item.id} className="flex items-center gap-3">
                   <div className="flex-1 space-y-1">
                     <textarea placeholder="Description (use newlines for subtitles)" value={item.description}
                       onChange={(e) => handleLineItemChange(item.id, "description", e.target.value)}
@@ -376,21 +380,25 @@ export default function NewQuotationPage() {
                       onChange={(e) => handleLineItemChange(item.id, "rate", Number(e.target.value))}
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
                   </div>
-                  <div className="w-24 py-2 text-right text-sm font-semibold">
+                  <div className="w-24 text-right text-sm font-semibold">
                     {formatCurrency(item.quantity * item.rate)}
                   </div>
                   <button onClick={() => removeLineItem(item.id)}
-                    className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-colors mt-0.5">
+                    className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))}
             </div>
 
-            <button onClick={addLineItem}
-              className="flex items-center gap-2 text-sm text-brand-400 font-medium hover:text-brand-300 transition-colors mt-4">
-              <Plus className="w-4 h-4" /> Add line item
-            </button>
+            {lineItems.length < 5 ? (
+              <button onClick={addLineItem}
+                className="flex items-center gap-2 text-sm text-brand-400 font-medium hover:text-brand-300 transition-colors mt-4">
+                <Plus className="w-4 h-4" /> Add line item
+              </button>
+            ) : (
+              <p className="text-xs text-brand-400/70 mt-4 italic">Maximum 5 line items reached</p>
+            )}
 
             <div className="border-t border-white/10 mt-6 pt-4 space-y-3">
               <div className="flex justify-between items-center text-sm">

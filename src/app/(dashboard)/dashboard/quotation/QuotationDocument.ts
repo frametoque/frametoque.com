@@ -3,11 +3,10 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 const formatDate = (dateString: string | Date) => {
   if (!dateString) return "";
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 };
 
 const formatMoney = (value: any, currency = "") => {
@@ -260,11 +259,20 @@ export async function generateQuotationPDF(quotation: any) {
   }
 
   // ── 3. Project (Right) ────────────────────────────────────────
-  if (description) {
+  let projectNameToPrint = description;
+  if (items && items.length > 0) {
+      // Check if it's a legacy auto-generated project name from the cart
+      const legacyAutoName = items.map((i: any) => (i.description || "").replace(")", "")).join(", ");
+      if (description === legacyAutoName) {
+          projectNameToPrint = `Quotation #${String(id).padStart(4, '0')}`;
+      }
+  }
+
+  if (projectNameToPrint) {
       const { x, y, size } = convert(980, 1780, 65);
       const color       = hexToRgb("#222222");
       let   currentY    = y - size;
-      const lines = wrapText(description, primaryFontBold, size, 650 * scaleX);
+      const lines = wrapText(projectNameToPrint, primaryFontBold, size, 650 * scaleX);
       for (const line of lines) {
         page.drawText(line, { x, y: currentY, size, font: primaryFontBold, color });
         currentY -= (size * 1.2);
@@ -272,44 +280,74 @@ export async function generateQuotationPDF(quotation: any) {
   }
 
   // ── 4. Line Items ────────────────────────────────────────────────────────────
-  const startRowTop = 1580;
-  const rowHeight = 150;
+  // 1. THIS MUST MATCH THE BACKGROUND IMAGE GRID. Do not change startRowTop.
+  const startRowTop = 1534; // Mathematically calculated from the PNG template lines
+  const rowHeight = 138; // The exact pixel distance between the underlines in the template
+  
+  // 2. Change THIS value to shift text up (-) or down (+) inside their rows.
+  const visualOffsetY = 0;  
   
   const displayItems = items.length > 0 ? items : [{ description: description || 'Project', quantity: 1, rate: subtotal, total: subtotal }];
   
   displayItems.forEach((item: any, i: number) => {
     if (!item.description) return;
-    const rowTop = startRowTop + (i * rowHeight);
+    const rowTop = startRowTop + (i * rowHeight) + visualOffsetY;
+
+    let parts = item.description.split("\n");
+    // Intercept legacy item descriptions that lacked newlines (e.g., "Personal Portfolio Website – Modern UI)")
+    if (parts.length === 1 && item.description.includes(" – ")) {
+      const splitIdx = item.description.indexOf(" – ");
+      const title = item.description.substring(0, splitIdx).trim();
+      let subtitle = item.description.substring(splitIdx + 3).trim();
+      if (subtitle.endsWith(")")) {
+        subtitle = subtitle.substring(0, subtitle.length - 1); // Remove trailing parenthesis
+      }
+      if (!subtitle.startsWith("(")) subtitle = `(${subtitle})`;
+      parts = [title, subtitle];
+    }
+    
+    const titleFontSize = 42;
+    const subFontSize = titleFontSize * 0.75;
+    const subLineHeight = subFontSize * 1.3;
+    const blockHeight = titleFontSize + (parts.length - 1) * subLineHeight;
+    const descTopPx = rowTop + (rowHeight - blockHeight) / 2;
+    const singleLineTopPx = rowTop + (rowHeight - 42) / 2;
 
     // Description
-    const { x, y, size } = convert(rowTop, 150, 42);
-    const color           = hexToRgb("#222222");
+    const { x, y, size } = convert(descTopPx, 202, titleFontSize);
+    const color = hexToRgb("#222222");
     
-    // Split description into title and subtitle if needed
-    const parts = item.description.split("\n");
-    page.drawText(parts[0], { x, y: y - size, size: size, font: primaryFontBold, color });
+    let currentY = y - size;
+    page.drawText(parts[0], { x, y: currentY, size: size, font: primaryFontBold, color });
     
     if (parts.length > 1) {
-        const subSize = size * 0.8;
-        page.drawText(parts.slice(1).join(" "), { x, y: y - size - (size * 1.2), size: subSize, font: primaryFont, color: hexToRgb("#555555") });
+        const subSize = size * 0.75;
+        page.drawText(parts.slice(1).join("\n"), { 
+            x, 
+            y: currentY - (size * 0.95), 
+            size: subSize, 
+            font: primaryFont, 
+            color: hexToRgb("#555555"),
+            lineHeight: subSize * 1.3
+        });
     }
 
     // QTY
     const qty = String(Number(item.quantity || item.qty) || 1).padStart(2, '0');
-    drawTextAligned(qty, 1200, rowTop, 42, primaryFont, "#222222", "center", 100);
+    drawTextAligned(qty, 1190, singleLineTopPx, 42, primaryFont, "#222222", "center", 100);
 
-    // Unit Price
+    // Unit Price (Center ~1674. Right-aligned for decimals: 1524 + 280 = 1804 edge)
     const priceVal = item.rate || item.price || 0;
-    drawTextAligned(formatMoney(priceVal, currency), 1580, rowTop, 42, primaryFont, "#222222", "center", 300);
+    drawTextAligned(formatMoney(priceVal, currency), 1524, singleLineTopPx, 42, primaryFont, "#222222", "right", 280);
 
-    // Total
-    drawTextAligned(formatMoney(item.total, currency), 2030, rowTop, 42, primaryFont, "#222222", "right", 300);
+    // Total / Amount (Center ~2136. Right-aligned for decimals: 1986 + 280 = 2266 edge)
+    drawTextAligned(formatMoney(item.total, currency), 1986, singleLineTopPx, 42, primaryFont, "#222222", "right", 280);
   });
 
   // ── 5. Totals ───────────────────────────────────────────────────────────────
-  drawTextAligned(formatMoney(subtotal, currency), 2030, 2330, 45, primaryFont, "#222222", "right", 300);
-  drawTextAligned(formatMoney(discountVal, currency), 2030, 2400, 45, primaryFont, "#222222", "right", 300);
-  drawTextAligned(formatMoney(total, currency), 2030, 2560, 75, primaryFontBold, "#222222", "right", 300);
+  drawTextAligned(formatMoney(subtotal, currency), 1986, 2330, 45, primaryFont, "#222222", "right", 280);
+  drawTextAligned(formatMoney(discountVal, currency), 1986, 2400, 45, primaryFont, "#222222", "right", 280);
+  drawTextAligned(formatMoney(total, currency), 1986, 2560, 75, primaryFontBold, "#222222", "right", 280);
 
   // ── 6. Payment Terms / Notes ─────────────────────────────────────────────────
   if (notes || paymentMethod) {

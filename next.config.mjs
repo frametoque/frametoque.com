@@ -10,6 +10,8 @@ const nextConfig = {
       exclude: ['error', 'warn'],
     },
   },
+  reactStrictMode: true,
+  poweredByHeader: false,
   async redirects() {
     return [
       {

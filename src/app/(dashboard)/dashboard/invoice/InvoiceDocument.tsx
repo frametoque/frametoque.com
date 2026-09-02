@@ -3,11 +3,10 @@ import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 const formatDate = (dateString: string | Date) => {
   if (!dateString) return "";
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 };
 
 const formatMoney = (value: any, currency = "") => {
@@ -224,7 +223,7 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
   const invNum = invoice_id ? `${String(invoice_id).padStart(4, "0")}` : "";
   drawTextAligned(invNum, 2080, 570, 38, primaryFont, "#222222");
   drawTextAligned(formatDate(date), 2080, 615, 38, primaryFont, "#222222");
-  drawTextAligned(formatDate(date), 2080, 665, 38, primaryFont, "#222222"); // Assuming Due Date is Invoice Date for now or update it if there's a due_date
+  drawTextAligned(formatDate(invoice.due_date || date), 2080, 665, 38, primaryFont, "#222222");
 
   // ── 2. PREPARED FOR (Left) ────────────────────────────────────────
   if (legal_name || client_name || billing_address || client?.email) {
@@ -290,50 +289,74 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
   const calculatedTotalDue = Math.max(0, totalVal - advancePaymentsSum);
 
   // ── 4. Line Items ────────────────────────────────────────────────────────────
-  const startRowTop = 1580;
-  const rowHeight = 150;
+  // 1. THIS MUST MATCH THE BACKGROUND IMAGE GRID. Do not change startRowTop.
+  const startRowTop = 1534; // Mathematically calculated from the PNG template lines
+  const rowHeight = 138; // The exact pixel distance between the underlines in the template
+  
+  // 2. Change THIS value to shift text up (-) or down (+) inside their rows.
+  const visualOffsetY = 0;  
   
   const displayItems = items.length > 0 ? items : [{ description: project_name || 'Project', quantity: 1, price: subtotal, total: subtotal }];
   
   displayItems.forEach((item: any, i: number) => {
     if (!item.description) return;
-    const rowTop = startRowTop + (i * rowHeight);
+    const rowTop = startRowTop + (i * rowHeight) + visualOffsetY;
 
-    // Description
-    const { x, y, size } = convert(rowTop, 150, 42);
-    const color           = hexToRgb("#222222");
-    
-    // Split description into title and subtitle if needed
     const parts = item.description.split("\n");
-    page.drawText(parts[0], { x, y: y - size, size: size, font: primaryFontBold, color });
+    
+    const titleFontSize = 42;
+    const subFontSize = titleFontSize * 0.75;
+    const subLineHeight = subFontSize * 1.3;
+    const blockHeight = titleFontSize + (parts.length - 1) * subLineHeight;
+    const descTopPx = rowTop + (rowHeight - blockHeight) / 2;
+    const singleLineTopPx = rowTop + (rowHeight - 42) / 2;
+
+    // Description (Header starts at ~202)
+    const { x, y, size } = convert(descTopPx, 202, titleFontSize);
+    const color = hexToRgb("#222222");
+    
+    // DrawText naturally draws from baseline up. The convert() function gives us a Y
+    // and expects us to subtract 'size' to get the baseline.
+    let currentY = y - size;
+    page.drawText(parts[0], { x, y: currentY, size: size, font: primaryFontBold, color });
     
     if (parts.length > 1) {
-        const subSize = size * 0.8;
-        page.drawText(parts.slice(1).join(" "), { x, y: y - size - (size * 1.2), size: subSize, font: primaryFont, color: hexToRgb("#555555") });
+        const subSize = size * 0.75;
+        // The subtitle is drawn below the title.
+        // We move down by size * 0.95 in PDF points (which is our spacing).
+        page.drawText(parts.slice(1).join("\n"), { 
+            x, 
+            y: currentY - (size * 0.95), 
+            size: subSize, 
+            font: primaryFont, 
+            color: hexToRgb("#555555"),
+            lineHeight: subSize * 1.3
+        });
     }
 
-    // QTY
+    // QTY (Header center is ~1240 -> 1190 + 50)
     const qty = String(Number(item.quantity || item.qty) || 1).padStart(2, '0');
-    drawTextAligned(qty, 1200, rowTop, 42, primaryFont, "#222222", "center", 100);
+    drawTextAligned(qty, 1190, singleLineTopPx, 42, primaryFont, "#222222", "center", 100);
 
-    // Unit Price
+    // Unit Price (Center ~1674. Right-aligned for decimals: 1524 + 280 = 1804 edge)
     const priceVal = item.rate || item.price || 0;
-    drawTextAligned(formatMoney(priceVal, currency), 1580, rowTop, 42, primaryFont, "#222222", "center", 300);
+    drawTextAligned(formatMoney(priceVal, currency), 1524, singleLineTopPx, 42, primaryFont, "#222222", "right", 280);
 
-    // Total
-    drawTextAligned(formatMoney(item.total, currency), 2030, rowTop, 42, primaryFont, "#222222", "right", 300);
+    // Total / Amount (Center ~2136. Right-aligned for decimals: 1986 + 280 = 2266 edge)
+    drawTextAligned(formatMoney(item.total, currency), 1986, singleLineTopPx, 42, primaryFont, "#222222", "right", 280);
   });
 
   // ── 5. Totals ───────────────────────────────────────────────────────────────
   const subtotalWithTax = subtotalVal + taxAmountVal; // Invoice template only has TOTAL
-  drawTextAligned(formatMoney(subtotalWithTax, currency), 2030, 2290, 45, primaryFont, "#222222", "right", 300);
-  drawTextAligned(formatMoney(discountVal, currency), 2030, 2370, 45, primaryFont, "#222222", "right", 300);
+  // Align right edge slightly to match the centered amount column's visual right bound
+  drawTextAligned(formatMoney(subtotalWithTax, currency), 1986, 2290, 45, primaryFont, "#222222", "right", 280);
+  drawTextAligned(formatMoney(discountVal, currency), 1986, 2370, 45, primaryFont, "#222222", "right", 280);
   
   // Use ONLY advance payments for ADVANCE field
-  drawTextAligned(formatMoney(advancePaymentsSum, currency), 2030, 2441, 45, primaryFont, "#222222", "right", 300);
+  drawTextAligned(formatMoney(advancePaymentsSum, currency), 1986, 2441, 45, primaryFont, "#222222", "right", 280);
   
   // Due
-  drawTextAligned(formatMoney(calculatedTotalDue, currency), 2030, 2600, 75, primaryFontBold, "#222222", "right", 300);
+  drawTextAligned(formatMoney(calculatedTotalDue, currency), 1986, 2600, 75, primaryFontBold, "#222222", "right", 280);
 
 
   // ── 6. Bank Account Details ─────────────────────────────────────────────────

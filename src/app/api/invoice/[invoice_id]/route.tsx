@@ -32,6 +32,7 @@ export async function GET(request, { params }) {
         i.user_email,
         i.project_name,
         i.date,
+        i.due_date,
         i.currency,
         i.subtotal,
         i.discount,

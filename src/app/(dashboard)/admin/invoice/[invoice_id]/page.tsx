@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, Image, CheckCircle2, ShieldCheck, XCircle, DollarSign, X, ChevronLeft, ChevronRight, Trash2, Upload, Image as ImageIcon, FileText as FileIcon } from "lucide-react";
+import { Download, ArrowLeft, Loader2, FileText, Calendar, Clock, Tag, Briefcase, Image, CheckCircle2, ShieldCheck, XCircle, DollarSign, X, ChevronLeft, ChevronRight, Trash2, Upload, Image as ImageIcon, FileText as FileIcon } from "lucide-react";
 import Link from "next/link";
 import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
 import { generateReceiptPDF } from "@/app/(dashboard)/dashboard/receipt/ReceiptDocument";
@@ -506,7 +506,7 @@ export default function AdminInvoicePage() {
           </div>
 
           {/* Details Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             <div className="bg-white/5 border border-white/10 rounded-3xl p-5 flex items-start gap-4">
               <div className="p-2 rounded-3xl bg-brand-500/10">
                 <FileText className="w-5 h-5 text-brand-400" />
@@ -526,6 +526,20 @@ export default function AdminInvoicePage() {
                 <p className="text-white font-semibold">{formatDate(invoice.date)}</p>
               </div>
             </div>
+
+            {invoice.due_date && (
+              <div className="bg-white/5 border border-white/10 rounded-3xl p-5 flex items-start gap-4">
+                <div className="p-2 rounded-3xl bg-brand-500/10">
+                  <Clock className="w-5 h-5 text-brand-400" />
+                </div>
+                <div>
+                  <p className="text-gray-400 text-xs mb-1">Due Date</p>
+                  <p className={`font-semibold ${new Date(invoice.due_date) < new Date() && invoice.payment_status !== 'fully paid' ? 'text-red-400' : 'text-white'}`}>
+                    {formatDate(invoice.due_date)}
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="bg-white/5 border border-white/10 rounded-3xl p-5 flex items-start gap-4">
               <div className="p-2 rounded-3xl bg-brand-500/10">
@@ -555,24 +569,36 @@ export default function AdminInvoicePage() {
           {/* Line Items */}
           {lineItems.length > 0 && (
             <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden mt-4">
-              <div className="grid grid-cols-3 px-5 py-3 border-b border-white/10 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                <span>Description</span>
-                <span className="text-center">Price</span>
+              <div className="grid grid-cols-[2fr_1fr_1fr_1fr] px-5 py-3 border-b border-white/10 text-xs font-semibold text-gray-400 uppercase tracking-wider gap-4">
+                <span className="text-left">Description</span>
+                <span className="text-right">Price</span>
+                <span className="text-center">Qty</span>
                 <span className="text-right">Total</span>
               </div>
-              {lineItems.map((item: any, i: number) => (
-                <div key={i} className="grid grid-cols-3 px-5 py-4 border-b border-white/5 last:border-0">
-                  <span className="text-white text-sm">{item.description}</span>
-                  <span className="text-gray-300 text-sm text-center">
-                    {item.price ? `${currencyLabel} ${item.price}` : "-"}
-                  </span>
-                  <span className="text-white text-sm text-right font-medium">
-                    {!isNaN(parseFloat(item.total))
-                      ? `${currencyLabel} ${parseFloat(item.total).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
-                      : "-"}
-                  </span>
-                </div>
-              ))}
+              {lineItems.map((item: any, i: number) => {
+                const parts = item.description ? item.description.split('\n') : [];
+                return (
+                  <div key={i} className="grid grid-cols-[2fr_1fr_1fr_1fr] px-5 py-4 border-b border-white/5 last:border-0 gap-4 items-center">
+                    <div className="flex flex-col text-left">
+                      <span className="text-white text-sm whitespace-pre-wrap">{parts[0]}</span>
+                      {parts.length > 1 && (
+                        <span className="text-gray-400 text-xs mt-1 whitespace-pre-wrap">{parts.slice(1).join('\n')}</span>
+                      )}
+                    </div>
+                    <span className="text-gray-300 text-sm text-right">
+                      {item.price ? `${currencyLabel} ${item.price}` : "-"}
+                    </span>
+                    <span className="text-gray-300 text-sm text-center">
+                      {item.quantity || item.qty || 1}
+                    </span>
+                    <span className="text-white text-sm text-right font-medium">
+                      {!isNaN(parseFloat(item.total))
+                        ? `${currencyLabel} ${parseFloat(item.total).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+                        : "-"}
+                    </span>
+                  </div>
+                );
+              })}
 
               {/* Billing Summary */}
               <div className="px-5 py-4 space-y-3 border-t border-white/10 bg-white/5">

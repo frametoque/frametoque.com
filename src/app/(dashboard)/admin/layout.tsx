@@ -172,7 +172,8 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isAgreements = pathname.startsWith("/admin/agreements");
   const isDashboard = pathname === "/admin/dashboard";
   const isAccounts = pathname.startsWith("/admin/accounts");
-  const hideSelector = isServices || isPortfolio || isBookings || isWebServices || isInvoiceDetail || isSocialMedia || isDashboard || isAccounts;
+  const isCreateOrEdit = pathname.endsWith("/new") || pathname.endsWith("/edit");
+  const hideSelector = isServices || isPortfolio || isBookings || isWebServices || isInvoiceDetail || isSocialMedia || isDashboard || isAccounts || isCreateOrEdit;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [currentTime, setCurrentTime] = useState("");
@@ -352,7 +353,9 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
           {/* View Page button / Refresh button */}
           {hideSelector && (
             <>
-              <span className="hidden sm:block w-[1px] h-5 bg-white/15" />
+              {!isCreateOrEdit && (
+                <span className="hidden sm:block w-[1px] h-5 bg-white/15" />
+              )}
 
               {pathname === "/admin/social-media/new" && (
                 <div className="flex items-center gap-2 text-gray-400">
@@ -434,7 +437,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                     <span>Add Account</span>
                   </button>
                 </div>
-              ) : (
+              ) : isCreateOrEdit ? null : (
                 <a
                   href={isDashboard ? "/" : isServices ? "/services" : "/work"}
                   target="_blank"

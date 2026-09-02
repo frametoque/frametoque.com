@@ -54,7 +54,7 @@ export default function ClientCombobox({ name, value, onChange, clients, loading
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors flex justify-between items-center text-left"
+        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors flex justify-between items-center text-left"
       >
         <span className={value ? "text-white" : "text-gray-400"}>
           {loading ? "Loading clients..." : value === "new" ? "+ Create New Client" : selectedClient ? `${selectedClient.name} (${selectedClient.email})` : "Choose a client..."}
@@ -63,7 +63,7 @@ export default function ClientCombobox({ name, value, onChange, clients, loading
       </button>
 
       {open && (
-        <div className="absolute z-50 top-full left-0 w-full mt-2 bg-black border border-white/15 rounded-xl shadow-2xl overflow-hidden flex flex-col">
+        <div className="absolute z-50 top-full left-0 w-full mt-2 bg-[#0d0d12] border border-white/15 rounded-xl shadow-2xl overflow-hidden flex flex-col">
           <div className="p-2 border-b border-white/10 flex items-center gap-2 px-3">
             <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
             <input

@@ -281,19 +281,26 @@ export default function ClientQuotationsPage() {
                         <thead>
                           <tr className="bg-white/5 text-slate-400 text-xs uppercase font-semibold">
                             <th className="p-4">Description</th>
+                            <th className="p-4 text-center">Unit Price</th>
                             <th className="p-4 text-center">Qty</th>
-                            <th className="p-4 text-right">Unit Price</th>
                             <th className="p-4 text-right">Total</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 text-sm text-slate-300">
                           {q.items?.map((item) => (
                             <tr key={item.id} className="hover:bg-white/5 transition-colors">
-                              <td className="p-4 font-medium text-white">{item.description}</td>
-                              <td className="p-4 text-center">{item.quantity}</td>
-                              <td className="p-4 text-right">
+                              <td className="p-4 font-medium text-white">
+                                <div className="flex flex-col">
+                                  <span className="whitespace-pre-wrap">{item.description ? item.description.split('\n')[0] : ""}</span>
+                                  {item.description && item.description.split('\n').length > 1 && (
+                                    <span className="text-gray-400 text-xs mt-1 whitespace-pre-wrap">{item.description.split('\n').slice(1).join('\n')}</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="p-4 text-center">
                                 {parseFloat(String(item.price)).toLocaleString("en-US")} LKR
                               </td>
+                              <td className="p-4 text-center">{item.quantity}</td>
                               <td className="p-4 text-right font-semibold text-white">
                                 {parseFloat(String(item.total)).toLocaleString("en-US")} LKR
                               </td>

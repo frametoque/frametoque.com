@@ -311,9 +311,10 @@ export async function createIncome(data: any) {
     if (def.length > 0) accountId = def[0].id;
   }
 
+  const nextId = await getAvailableReceiptId();
   await sql`
-    INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id, receipt_url, account_id)
-    VALUES (${data.date}, ${data.amount}, ${data.description}, ${data.category}, ${data.paymentMethod}, ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, ${accountId})
+    INSERT INTO admin_incomes (id, date, amount, description, category, payment_method, invoice_id, client_id, receipt_url, account_id)
+    VALUES (${nextId}, ${data.date}, ${data.amount}, ${data.description}, ${data.category}, ${data.paymentMethod}, ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, ${accountId})
   `;
 
   if (data.invoiceId) {
@@ -741,7 +742,7 @@ export async function getInvoices() {
   const [totalIssuedCount, rows, nonAdvancePaymentsRows] = await Promise.all([
     sql`SELECT COUNT(*) as count FROM invoices`,
     sql`
-      SELECT i.invoice_id as id, i.user_email as client_email, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.advance, i.tax_rate, i.total_due, i.date as due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at
+      SELECT i.invoice_id as id, i.user_email as client_email, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.advance, i.tax_rate, i.total_due, i.date, i.due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at
       FROM invoices i
       LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
       ORDER BY i.date DESC, i.created_at DESC
@@ -795,7 +796,8 @@ export async function getInvoices() {
       service: r.service,
       amount: totalVal,
       total_due: calculatedTotalDue,
-      due: r.due_date ? new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Colombo' }) : '-',
+      date: r.date ? new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Colombo' }) : '-',
+      dueDate: r.due_date ? new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Colombo' }) : '',
       status: status,
       work_status: r.work_status,
       overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && status !== 'paid' && status !== 'fully paid')
@@ -890,6 +892,7 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
       i.user_email,
       i.project_name,
       i.date,
+      i.due_date,
       i.currency,
       i.category,
       i.subtotal,
@@ -1183,15 +1186,41 @@ export async function getClientById(clientId: string) {
   };
 }
 
-async function generateUniqueInvoiceId(): Promise<string> {
-  while (true) {
-    const num = Math.floor(100000 + Math.random() * 900000);
-    const invoiceId = `INV-${num}`;
-    const existing = await sql`SELECT 1 FROM invoices WHERE invoice_id = ${invoiceId}`;
-    if (existing.length === 0) {
-      return invoiceId;
-    }
+export async function generateUniqueInvoiceId(): Promise<string> {
+  const existing = await sql`SELECT invoice_id FROM invoices WHERE invoice_id LIKE 'INV-%'`;
+  const usedIds = existing
+    .map(row => parseInt(row.invoice_id.replace('INV-', ''), 10))
+    .filter(num => !isNaN(num))
+    .sort((a, b) => a - b);
+    
+  let nextId = 1;
+  for (const num of usedIds) {
+    if (num === nextId) nextId++;
+    else if (num > nextId) break;
   }
+  return `INV-${String(nextId).padStart(5, '0')}`;
+}
+
+export async function getAvailableQuotationId(): Promise<number> {
+  const existing = await sql`SELECT id FROM admin_quotations`;
+  const usedIds = existing.map(r => r.id).sort((a, b) => a - b);
+  let nextId = 1;
+  for (const num of usedIds) {
+    if (num === nextId) nextId++;
+    else if (num > nextId) break;
+  }
+  return nextId;
+}
+
+export async function getAvailableReceiptId(): Promise<number> {
+  const existing = await sql`SELECT id FROM admin_incomes`;
+  const usedIds = existing.map(r => r.id).sort((a, b) => a - b);
+  let nextId = 1;
+  for (const num of usedIds) {
+    if (num === nextId) nextId++;
+    else if (num > nextId) break;
+  }
+  return nextId;
 }
 
 export async function createInvoice(invoiceData: any, lineItems: any[]) {
@@ -1233,12 +1262,12 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
   const invoiceId = await generateUniqueInvoiceId();
   await sql`
   INSERT INTO invoices (
-    invoice_id, user_email, project_name, date, 
+    invoice_id, user_email, project_name, date, due_date,
     subtotal, discount, total, advance, total_due, 
     work_status, payment_status, currency, category, bank_account_id, tax_rate, legal_name
   ) VALUES (
     ${invoiceId}, ${invoiceData.userEmail || null},
-    ${invoiceData.projectName}, ${invoiceData.date},
+    ${invoiceData.projectName}, ${invoiceData.date}, ${invoiceData.dueDate || null},
     ${invoiceData.subtotal}, ${invoiceData.discount}, ${invoiceData.total}, ${invoiceData.advance}, ${invoiceData.totalDue},
     ${invoiceData.workStatus}, ${invoiceData.paymentStatus}, ${invoiceData.currency}, ${invoiceData.category || null},
     ${invoiceData.bankAccountId || null}, ${parseFloat(invoiceData.taxRate) || 0}, ${invoiceData.legalName || null}
@@ -1290,6 +1319,7 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
     user_email = ${invoiceData.userEmail},
     project_name = ${invoiceData.projectName},
     date = ${invoiceData.date},
+    due_date = ${invoiceData.dueDate || null},
     subtotal = ${invoiceData.subtotal},
     discount = ${invoiceData.discount},
     total = ${invoiceData.total},
@@ -1467,13 +1497,15 @@ export async function createQuotation(data: any, lineItems: any[] = []) {
     `;
   }
 
+  const nextId = await getAvailableQuotationId();
+
   const result = await sql`
     INSERT INTO admin_quotations (
-      date, amount, advance, total_due, discount,
+      id, date, amount, advance, total_due, discount,
       description, category, payment_method, invoice_id, client_id, receipt_url, status, bank_account_id, notes, legal_name, valid_until
     )
     VALUES (
-      ${data.date}, ${data.amount}, ${advance}, ${totalDue}, ${discount},
+      ${nextId}, ${data.date}, ${data.amount}, ${advance}, ${totalDue}, ${discount},
       ${data.description}, ${data.category}, ${data.paymentMethod},
       ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, 'draft', ${data.bankAccountId || null}, ${data.notes || null}, ${data.legalName || null}, ${data.validUntil || null}
     )
@@ -1857,9 +1889,10 @@ export async function recordInvoicePayment(
       }
     }
 
+    const nextId = await getAvailableReceiptId();
     await sql`
-      INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id, receipt_url, account_id)
-      VALUES (${paymentDate}, ${paidAmount}, ${description}, ${category}, ${paymentMethod}, ${invoiceId}, ${clientId}, ${receiptUrlToAttach}, ${paymentMethod === 'Bank Transfer' ? invoice.bank_account_id : null})
+      INSERT INTO admin_incomes (id, date, amount, description, category, payment_method, invoice_id, client_id, receipt_url, account_id)
+      VALUES (${nextId}, ${paymentDate}, ${paidAmount}, ${description}, ${category}, ${paymentMethod}, ${invoiceId}, ${clientId}, ${receiptUrlToAttach}, ${paymentMethod === 'Bank Transfer' ? invoice.bank_account_id : null})
     `;
 
     // 5. Update invoice payment fields
@@ -2009,9 +2042,10 @@ export async function approveBankSlip(invoiceId: string, slipId?: string | numbe
 
     const description = `Bank Transfer Payment for ${invoice.project_name || 'Project'}`;
     const category = invoice.category || 'Web dev';
+    const nextId = await getAvailableReceiptId();
     await sql`
-      INSERT INTO admin_incomes (date, amount, description, category, payment_method, invoice_id, client_id, receipt_url, account_id)
-      VALUES (CURRENT_DATE, ${paidAmount}, ${description}, ${category}, 'Bank Transfer', ${invoiceId}, ${clientId}, ${slip.slip_url || null}, ${invoice.bank_account_id})
+      INSERT INTO admin_incomes (id, date, amount, description, category, payment_method, invoice_id, client_id, receipt_url, account_id)
+      VALUES (${nextId}, CURRENT_DATE, ${paidAmount}, ${description}, ${category}, 'Bank Transfer', ${invoiceId}, ${clientId}, ${slip.slip_url || null}, ${invoice.bank_account_id})
     `;
 
     await sql`

@@ -222,7 +222,7 @@ export default function EditAgreementPage() {
         {/* Left Column: Client & Agreement Meta */}
         <div className="space-y-6">
           {/* Client Details */}
-          <div className="relative z-50 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
+          <div className="relative z-30 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
             <h2 className="text-xl font-semibold mb-4 text-brand-400">Client Details</h2>
 
             <div className="space-y-1">

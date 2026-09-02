@@ -223,8 +223,17 @@ export async function POST(req: NextRequest) {
   // ── Step 1: insert parent quotation ──────────────────────────────────────
   let quotationId: number;
   try {
+    const existing = await sql`SELECT id FROM admin_quotations`;
+    const usedIds = existing.map(r => r.id).sort((a, b) => a - b);
+    let nextId = 1;
+    for (const num of usedIds) {
+      if (num === nextId) nextId++;
+      else if (num > nextId) break;
+    }
+
     const rows = await sql`
       INSERT INTO admin_quotations (
+        id,
         date,
         amount,
         client_id,
@@ -239,10 +248,11 @@ export async function POST(req: NextRequest) {
         client_email,
         client_phone
       ) VALUES (
+        ${nextId},
         CURRENT_DATE,
         ${subtotalLKR},
         ${clientId},
-        ${descriptionText},
+        ${`Quotation #${String(nextId).padStart(4, '0')}`},
         ${quotationCategory},
         'Bank Transfer',
         'client-draft',
@@ -281,7 +291,7 @@ export async function POST(req: NextRequest) {
           total
         ) VALUES (
           ${quotationId},
-          ${`${item.serviceTitle} – ${item.tier})`},
+          ${`${item.serviceTitle}\n(${item.tier})`},
           ${item.quantity},
           ${unitPrice},
           ${lineTotal}

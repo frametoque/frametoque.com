@@ -2,6 +2,7 @@
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
+import { generateUniqueInvoiceId } from "./actions";
 
 export interface SaaSOrder {
   id: number;
@@ -180,8 +181,7 @@ export async function createSaaSInvoice(
       finalPrice = price / 300; 
     }
 
-    const num = Math.floor(100000 + Math.random() * 900000);
-    const invoiceId = `INV-${num}`;
+    const invoiceId = await generateUniqueInvoiceId();
 
     await sql`
       INSERT INTO invoices (

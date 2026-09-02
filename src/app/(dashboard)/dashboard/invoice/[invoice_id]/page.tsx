@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
-import { Download, ArrowLeft, Loader2, FileText, Calendar, Tag, Briefcase, CreditCard } from "lucide-react";
+import { Download, ArrowLeft, Loader2, FileText, Calendar, Clock, Tag, Briefcase, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
 import PayModal from "@/components/PayModal";
@@ -246,7 +246,7 @@ export default function InvoicePage() {
           </div>
 
           {/* Details Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             <div className="bg-white/5 border border-white/10 rounded-3xl p-5 flex items-start gap-4">
               <div className="p-2 rounded-3xl bg-brand-500/10">
                 <FileText className="w-5 h-5 text-brand-400" />
@@ -266,6 +266,20 @@ export default function InvoicePage() {
                 <p className="text-white font-semibold">{formatDate(invoice?.date)}</p>
               </div>
             </div>
+
+            {invoice?.due_date && (
+              <div className="bg-white/5 border border-white/10 rounded-3xl p-5 flex items-start gap-4">
+                <div className="p-2 rounded-3xl bg-brand-500/10">
+                  <Clock className="w-5 h-5 text-brand-400" />
+                </div>
+                <div>
+                  <p className="text-gray-400 text-xs mb-1">Due Date</p>
+                  <p className={`font-semibold ${new Date(invoice.due_date) < new Date() && invoice.payment_status !== 'fully paid' ? 'text-red-400' : 'text-white'}`}>
+                    {formatDate(invoice.due_date)}
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="bg-white/5 border border-white/10 rounded-3xl p-5 flex items-start gap-4">
               <div className="p-2 rounded-3xl bg-brand-500/10">

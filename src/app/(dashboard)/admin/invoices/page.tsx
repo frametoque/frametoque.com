@@ -404,12 +404,12 @@ export default function InvoicesPage() {
             <thead>
               <tr className="border-b border-white/10 text-gray-400 text-sm">
                 <th className="p-4 font-medium">Invoice #</th>
+                <th className="p-4 font-medium">Date</th>
                 <th className="p-4 font-medium">Client</th>
                 <th className="p-4 font-medium">Service</th>
-                <th className="p-4 font-medium">Amount</th>
-                <th className="p-4 font-medium">Date</th>
-                <th className="p-4 font-medium">Work Status</th>
-                <th className="p-4 font-medium">Payment Status</th>
+                <th className="p-4 font-medium text-center">Work Status</th>
+                <th className="p-4 font-medium text-center">Payment Status</th>
+                <th className="p-4 font-medium text-right">Amount</th>
                 <th className="p-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
@@ -439,36 +439,41 @@ export default function InvoicesPage() {
                       </Link>
                     </td>
                     <td className="p-4">
+                      <div className="font-semibold text-white">{row.date}</div>
+                      {row.dueDate && paymentStatus !== 'fully paid' && (
+                        <div className={`text-xs mt-0.5 ${row.overdue ? 'text-red-400 font-medium' : 'text-gray-500'}`}>
+                          Due: {row.dueDate}
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-4">
                       <div className="text-sm font-medium text-white">{row.client}</div>
                       {row.clientEmail && (
                         <div className="text-xs text-gray-500 mt-0.5">{row.clientEmail}</div>
                       )}
                     </td>
                     <td className="p-4 text-sm text-gray-300">{row.service}</td>
-                    <td className="p-4">
-                      <div className="font-semibold text-white">{formatLKR(row.amount)}</div>
-                      {paymentStatus !== 'fully paid' && (
-                        <div className={`text-xs mt-0.5 font-medium ${
-                          paymentStatus === 'unpaid' || paymentStatus === 'pending' || paymentStatus === 'overdue'
-                            ? 'text-gray-400'
-                            : 'text-indigo-400'
-                        }`}>
-                          Due: {formatLKR(row.total_due)}
-                        </div>
-                      )}
-                    </td>
-                    <td className={`p-4 text-sm ${row.overdue ? 'text-red-400 font-semibold' : 'text-gray-300'}`}>
-                      {row.due}
-                    </td>
-                    <td className="p-4">
+                    <td className="p-4 text-center">
                       <span className={`px-2.5 py-1 text-[10px] uppercase font-bold rounded-full border ${workColor}`}>
                         {row.work_status || '—'}
                       </span>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 text-center">
                       <span className={`px-2.5 py-1 text-[10px] uppercase font-bold rounded-full border ${paymentColor}`}>
                         {row.status}
                       </span>
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="font-semibold text-white">{formatLKR(row.amount)}</div>
+                      {paymentStatus !== 'fully paid' && (
+                        <div className={`text-xs mt-0.5 font-medium ${
+                          parseFloat(row.total_due) >= parseFloat(row.amount)
+                            ? 'text-yellow-400'
+                            : 'text-purple-400'
+                        }`}>
+                          Due: {formatLKR(row.total_due)}
+                        </div>
+                      )}
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-1">
