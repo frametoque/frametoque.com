@@ -338,7 +338,7 @@ export default function ClientsPage() {
                           imageUrl={client.imageUrl}
                           email={client.email}
                           name={client.name}
-                          hasProfile={!!client.clerkId}
+                          hasProfile={!!client.hasClerkProfile}
                         />
                         <div>
                           <p className="font-semibold text-white text-sm">{client.name}</p>

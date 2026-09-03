@@ -1045,9 +1045,15 @@ export async function getClients() {
   const clerk = await clerkClient();
 
   let clerkUsersMap: Record<string, string> = {};
+  let clerkEmailSet: Set<string> = new Set();
+  let clerkIdSet: Set<string> = new Set();
   try {
     const { data: users } = await clerk.users.getUserList({ limit: 500 });
     users.forEach((u) => {
+      clerkIdSet.add(u.id);
+      u.emailAddresses.forEach((e) => {
+        clerkEmailSet.add(e.emailAddress.toLowerCase());
+      });
       if (u.imageUrl) {
         clerkUsersMap[u.id] = u.imageUrl;
         u.emailAddresses.forEach((e) => {
@@ -1094,6 +1100,9 @@ export async function getClients() {
         name: r.name || r.email.split('@')[0],
         email: r.email,
         clerkId: r.clerk_id || null,
+        hasClerkProfile:
+          (r.clerk_id && clerkIdSet.has(r.clerk_id)) ||
+          (r.email && clerkEmailSet.has(r.email.toLowerCase())),
         active: r.active,
         company: r.company,
         phone: r.phone,
