@@ -3,7 +3,7 @@ export const metadata = {
   description:
     "Read the cookie policy for Frametoque, explaining how we use cookies and similar technologies on our website.",
     openGraph: {
-    title: "Cookie Policy | FrameToque Digital Media",
+    title: "Cookie Policy | Frametoque Digital Media",
     description: "Read the cookie policy for Frametoque, explaining how we use cookies and similar technologies on our website.",
     url: "https://frametoque.com/cookies", 
     siteName: "Frametoque",
@@ -19,7 +19,7 @@ export const metadata = {
   },
     twitter: {
     card: "summary_large_image",
-    title: "Cookie Policy | FrameToque Digital Media",
+    title: "Cookie Policy | Frametoque Digital Media",
     description: "Read the cookie policy for Frametoque, explaining how we use cookies and similar technologies on our website.",
     images: ["https://frametoque.com/og-image.png"],
   },

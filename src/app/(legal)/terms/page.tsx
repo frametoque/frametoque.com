@@ -3,7 +3,7 @@ export const metadata = {
   description:
     "Read the terms and conditions for using Frametoque's web development, graphic design, and video editing services.",
     openGraph: {
-    title: "Terms & Conditions |  | FrameToque Digital Media",
+    title: "Terms & Conditions |  | Frametoque Digital Media",
     description: "Read the terms and conditions for using Frametoque's web development, graphic design, and video editing services.",
     url: "https://frametoque.com/terms", 
     siteName: "Frametoque",
@@ -19,7 +19,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Terms & Conditions | FrameToque Digital Media",
+    title: "Terms & Conditions | Frametoque Digital Media",
     description: "Read the terms and conditions for using Frametoque's web development, graphic design, and video editing services.",
     images: ["https://frametoque.com/og-image.png"],
   },

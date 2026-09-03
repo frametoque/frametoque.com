@@ -2,10 +2,10 @@ export const metadata = {
   title: "Invoices",
   description: "View, track, and manage all your invoices in one place & Get real-time updates.",
   openGraph: {
-    title: "Invoices | FrameToque Digital Media",
+    title: "Invoices | Frametoque Digital Media",
     description: "View, track, and manage all your invoices in one place & Get real-time updates.",
     url: "https://frametoque.com/dashboard/invoices", 
-    siteName: "FrameToque",
+    siteName: "Frametoque",
     images: [
       {
         url: "https://frametoque.com/og-image.png",
@@ -18,7 +18,7 @@ export const metadata = {
   },
     twitter: {
     card: "summary_large_image",
-    title: "Projects | FrameToque Digital Media",
+    title: "Projects | Frametoque Digital Media",
     description: "Explore our range of services...",
     images: ["https://frametoque.com/og-image.png"],
   },

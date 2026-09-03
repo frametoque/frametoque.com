@@ -3,7 +3,7 @@ export const metadata = {
   description:
     "Read the privacy policy for Frametoque, detailing how we collect and handle user data when submitting projects or using our services.",
     openGraph: {
-    title: "Privacy Policy | FrameToque Digital Media",
+    title: "Privacy Policy | Frametoque Digital Media",
     description: "Read the privacy policy for Frametoque, detailing how we collect and handle user data when submitting projects or using our services.",
     url: "https://frametoque.com/privacy", 
     siteName: "Frametoque",
@@ -19,7 +19,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Privacy Policy | FrameToque Digital Media",
+    title: "Privacy Policy | Frametoque Digital Media",
     description: "Read the privacy policy for Frametoque, detailing how we collect and handle user data when submitting projects or using our services.",
     images: ["https://frametoque.com/og-image.png"],
   },

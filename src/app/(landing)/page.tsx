@@ -1,8 +1,8 @@
 export const metadata = {
-  title: "FrameToque Digital Media",
+  title: "Frametoque Digital Media",
   description: "We craft fast websites, bold graphic, and pro videos that make your brand shine.",
   openGraph: {
-    title: "FrameToque Digital Media | Simple.Better.Fast.",
+    title: "Frametoque Digital Media | Simple.Better.Fast.",
     description: "We craft fast websites, bold graphic, and pro videos that make your brand shine.",
     url: "https://frametoque.com/", 
     siteName: "Frametoque",
@@ -18,7 +18,7 @@ export const metadata = {
   },
     twitter: {
     card: "summary_large_image",
-    title: "FrameToque Digital Media | Simple.Better.Fast.",
+    title: "Frametoque Digital Media | Simple.Better.Fast.",
     description: "We craft fast websites, bold graphic, and pro videos that make your brand shine.",
     images: ["https://frametoque.com/og-image.png"],
   },

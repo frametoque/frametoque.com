@@ -49,10 +49,10 @@ export const metadata = {
   metadataBase: new URL("https://frametoque.com"),
 
   title: {
-    default: "FrameToque Digital Media"
+    default: "Frametoque Digital Media"
   },
   description:
-    "FrameToque Digital Media is a creative media company focused on web development, video production, and digital storytelling.",
+    "Frametoque Digital Media is a creative media company focused on web development, video production, and digital storytelling.",
 
   icons: {
     icon: [
@@ -70,14 +70,14 @@ export const metadata = {
   manifest: "/site.webmanifest",
 
   appleWebApp: {
-    title: "FrameToque",
+    title: "Frametoque",
   },
 
   openGraph: {
-    title: "FrameToque Digital Media",
+    title: "Frametoque Digital Media",
     description:
       "Turning ideas into powerful digital visuals through web, video, and creative media.",
-    keywords: ['FrameToque', 'Digital Media', 'Creative Services', 'Web Development', 'Graphic Design', 'Video Editing', 'Photography', 'Videography'],
+    keywords: ['Frametoque', 'Digital Media', 'Creative Services', 'Web Development', 'Graphic Design', 'Video Editing', 'Photography', 'Videography'],
     url: "https://frametoque.com",
     siteName: "Frametoque",
     images: [
@@ -85,14 +85,14 @@ export const metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "FrameToque Digital Media",
+        alt: "Frametoque Digital Media",
       },
     ],
     type: "website",
   },
     twitter: {
     card: "summary_large_image",
-    title: "FrameToque Digital Media",
+    title: "Frametoque Digital Media",
     description: "Turning ideas into powerful digital visuals through web, video, and creative media.",
     images: ["https://frametoque.com/og-image.png"],
   },
@@ -101,7 +101,7 @@ export const metadata = {
 const localBusiness = {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
-  "name": "FrameToque Digital Media",
+  "name": "Frametoque Digital Media",
   "description": "graphic design, Video editing, photography, videography & web development",
   "address": {
     "@type": "PostalAddress",
@@ -123,7 +123,7 @@ export default function RootLayout({ children }) {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              name: "FrameToque Digital Media",
+              name: "Frametoque Digital Media",
               url: "https://frametoque.com",
               logo: "https://frametoque.com/logos/ft/logo-main.png",
               sameAs: [

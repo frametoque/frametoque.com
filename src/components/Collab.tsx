@@ -11,7 +11,7 @@ export default function CollabCompact() {
               <Link href="/contact" >
                   <Image
                     src="/collab-banner.webp"
-                    alt="FrameToque Digital Media"
+                    alt="Frametoque Digital Media"
                     width={1920}
                     height={480}
                     quality={100}

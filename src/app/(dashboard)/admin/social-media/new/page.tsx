@@ -409,8 +409,8 @@ const PROFILE_LINKS: Record<string, string> = {
   threads: "https://www.threads.com/@frame.toque",
   gmb: "https://share.google/KP8e3PxZ6cwZ0cuIy",
   linkedin: "https://www.linkedin.com/company/frametoque/",
-  telegram: "https://t.me/@FrameToque",
-  youtube: "https://www.youtube.com/@FrameToque",
+  telegram: "https://t.me/@Frametoque",
+  youtube: "https://www.youtube.com/@Frametoque",
 };
 
 export default function Page() {

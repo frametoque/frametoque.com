@@ -18,7 +18,7 @@ export const metadata = {
   },
     twitter: {
     card: "summary_large_image",
-    title: "Dashboard | FrameToque Digital Media",
+    title: "Dashboard | Frametoque Digital Media",
     description: "Explore our range of services...",
     images: ["https://frametoque.com/og-image.png"],
   },

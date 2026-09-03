@@ -62,7 +62,7 @@ export default function ClientAgreementsPage() {
             <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Agreements</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl">
-            Review and sign your service agreements with FrameToque Digital Media.
+            Review and sign your service agreements with Frametoque Digital Media.
           </p>
         </div>
       </div>

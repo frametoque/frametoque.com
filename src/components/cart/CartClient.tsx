@@ -97,7 +97,7 @@ export default function CartClient() {
         `${idx + 1}. ${item.serviceTitle} - ${item.tier} \n   Price: ${getDisplayPrice(item)} ${currency}\n   Duration: ${item.duration}\n   Quantity: ${item.quantity}`
       )
       .join("\n\n");
-    const messageText = `Hi FrameToque Team,\n\nI'd like to book the following service package(s):\n\n${packagesText}\n\nTotal Cart Value: ${getDisplaySubtotal()} ${currency}\n\nClient Details:\n- Name: ${name}\n- Email: ${email}\n- Phone/WhatsApp: ${phone}\n\n${notes ? `Additional Notes:\n${notes}` : ""}\n\nThank you!`;
+    const messageText = `Hi Frametoque Team,\n\nI'd like to book the following service package(s):\n\n${packagesText}\n\nTotal Cart Value: ${getDisplaySubtotal()} ${currency}\n\nClient Details:\n- Name: ${name}\n- Email: ${email}\n- Phone/WhatsApp: ${phone}\n\n${notes ? `Additional Notes:\n${notes}` : ""}\n\nThank you!`;
     const waUrl = `https://wa.me/${targetWa}?text=${encodeURIComponent(messageText)}`;
 
     // Auto-save a quotation record in DB for every order placed via WhatsApp

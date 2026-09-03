@@ -254,7 +254,7 @@ export default function ClientAgreementViewPage() {
           <div className="border-b border-white/10 pb-6 mb-6 text-center md:text-left">
             <h2 className="text-xs font-bold tracking-wider text-brand-400 uppercase">Agreement Document</h2>
             <h3 className="text-2xl font-bold text-white mt-1">{agreement.title}</h3>
-            <p className="text-sm text-gray-400 mt-1">Between FrameToque Digital Media and {agreement.client_name}</p>
+            <p className="text-sm text-gray-400 mt-1">Between Frametoque Digital Media and {agreement.client_name}</p>
           </div>
 
           {/* Web Preview Content */}
@@ -262,9 +262,9 @@ export default function ClientAgreementViewPage() {
             <div>
               <h4 className="text-white font-bold text-base mb-2 uppercase tracking-wide">Preamble</h4>
               <p>
-                This Website Development Agreement ("Agreement") is entered into between FrameToque Digital Media 
-                ("FrameToque," "Service Provider," "we," or "our") and the undersigned client ("Client," "you," or "your"). By 
-                commissioning web development services from FrameToque, the Client acknowledges that they have read, 
+                This Website Development Agreement ("Agreement") is entered into between Frametoque Digital Media 
+                ("Frametoque," "Service Provider," "we," or "our") and the undersigned client ("Client," "you," or "your"). By 
+                commissioning web development services from Frametoque, the Client acknowledges that they have read, 
                 understood, and agreed to all terms and conditions outlined in this Agreement.
               </p>
             </div>
@@ -285,7 +285,7 @@ export default function ClientAgreementViewPage() {
             <div className="border-t border-white/5 pt-4">
               <h4 className="text-white font-bold text-base mb-2 uppercase tracking-wide">1. Project Scope</h4>
               <p>
-                FrameToque agrees to design and develop a website as described and agreed upon during the initial 
+                Frametoque agrees to design and develop a website as described and agreed upon during the initial 
                 consultation and project brief. The project scope covers only the features, pages, and functionalities explicitly 
                 agreed upon in writing.
               </p>

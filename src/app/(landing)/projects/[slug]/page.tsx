@@ -21,13 +21,13 @@ export async function generateMetadata({
   const { slug } = await params;
 
   const title = titles[slug] || "Our Projects";
-  const description = `Explore our ${title.toLowerCase()} at FrameToque.`;
+  const description = `Explore our ${title.toLowerCase()} at Frametoque.`;
 
   return {
     title: `${title}`,
     description,
     openGraph: {
-      title: `${title} | FrameToque Digital Media`,
+      title: `${title} | Frametoque Digital Media`,
       description,
       url: `https://frametoque.com/projects/${slug}`,
       siteName: "Frametoque",
@@ -43,7 +43,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: `${title} | FrameToque Digital Media`,
+      title: `${title} | Frametoque Digital Media`,
       description,
       images: ["https://frametoque.com/og-image.png"],
     },
