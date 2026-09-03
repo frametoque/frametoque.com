@@ -497,7 +497,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                   <span className="sm:hidden">Add</span>
                 </button>
               </div>
-                ) : (isClients || isInventory) ? (
+                ) : isInventory ? (
                   <div className="flex items-center gap-3">
                     <div className="relative w-32 sm:w-64">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

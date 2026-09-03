@@ -10,10 +10,11 @@ import AnimatedNumber from "../components/AnimatedNumber";
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount || 0);
 
-const emptyForm = { name: '', email: '', company: '', phone: '', address: '' };
+const emptyForm = { name: '', email: '', phone: '', address: '', legalName: '' };
 
 export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("All");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -81,10 +82,10 @@ export default function ClientsPage() {
     setEditingId(client.id);
     setFormData({
       name: client.name || '',
-      email: client.email || '',
-      company: client.company || '',
+      email: (client.email && !client.email.includes('@client.local')) ? client.email : '',
       phone: client.phone || '',
       address: client.address || '',
+      legalName: client.legalName || '',
     });
     setIsModalOpen(true);
   };
@@ -98,17 +99,17 @@ export default function ClientsPage() {
         await updateClient(editingId, {
           name: formData.name,
           email: formData.email,
-          company: formData.company || null,
           phone: formData.phone || null,
           address: formData.address || null,
+          legal_name: formData.legalName || null,
         });
       } else {
         await createClient({
           name: formData.name,
           email: formData.email,
-          company: formData.company || null,
           phone: formData.phone || null,
           address: formData.address || null,
+          legal_name: formData.legalName || null,
         });
       }
       setIsModalOpen(false);
@@ -211,11 +212,19 @@ export default function ClientsPage() {
     },
   ];
 
-  const filteredClients = data.filter((client: any) =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (client.company || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredClients = data.filter((client: any) => {
+    const isClient = client.invoices > 0 || client.incomeCount > 0;
+    const isLead = !isClient && client.quotationCount > 0;
+    const type = isClient ? 'Client' : isLead ? 'Quoted' : 'New';
+
+    if (filterType !== 'All' && type !== filterType) return false;
+
+    return (
+      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (client.company || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   // A client is "linked" if it has any invoices, income, or active work
   const isLinked = (c: any) =>
@@ -246,6 +255,49 @@ export default function ClientsPage() {
         ))}
       </div>
 
+      {/* Search, Filters & Add Button */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          {/* Search */}
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search clients..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-full pl-11 pr-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm text-white"
+            />
+          </div>
+
+          {/* Filters */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            {['All', 'Client', 'Quoted', 'New'].map((type) => (
+              <button
+                key={type}
+                onClick={() => setFilterType(type)}
+                className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  filterType === type 
+                    ? 'bg-white text-black' 
+                    : 'text-gray-400 hover:text-white border border-white/10 hover:bg-white/5'
+                }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Add Client Button */}
+        <button
+          onClick={() => openEdit(emptyForm)}
+          className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-full font-semibold transition-colors w-full sm:w-auto self-end lg:self-auto"
+        >
+          <Plus className="w-5 h-5" />
+          Add Client
+        </button>
+      </div>
+
       {/* Table */}
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden">
         <div className="overflow-x-auto">
@@ -253,9 +305,9 @@ export default function ClientsPage() {
             <thead>
               <tr className="border-b border-white/10 text-gray-400 text-sm">
                 <th className="p-4 font-medium">Client</th>
-                <th className="p-4 font-medium hidden md:table-cell">Company</th>
+                <th className="p-4 font-medium hidden md:table-cell">Billing Details</th>
                 <th className="p-4 font-medium hidden sm:table-cell">Phone</th>
-                <th className="p-4 font-medium hidden lg:table-cell">Status</th>
+                <th className="p-4 font-medium hidden lg:table-cell">Type</th>
                 <th className="p-4 font-medium hidden sm:table-cell">Invoices</th>
                 <th className="p-4 font-medium">Revenue</th>
                 <th className="p-4 font-medium text-right">Actions</th>
@@ -269,6 +321,15 @@ export default function ClientsPage() {
                   ? `Cannot delete — this client has linked invoices, income, or active work`
                   : `Delete ${client.name}`;
 
+                const isClientType = client.invoices > 0 || client.incomeCount > 0;
+                const isLeadType = !isClientType && client.quotationCount > 0;
+                const typeLabel = isClientType ? 'Client' : isLeadType ? 'Quoted' : 'New';
+                const typeStyle = isClientType 
+                  ? 'bg-brand-400/20 text-brand-400 border-brand-400/30' 
+                  : isLeadType 
+                    ? 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+                    : 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+
                 return (
                   <tr key={client.id} className="hover:bg-white/5 transition-colors group">
                     <td className="p-4">
@@ -277,25 +338,33 @@ export default function ClientsPage() {
                           imageUrl={client.imageUrl}
                           email={client.email}
                           name={client.name}
+                          hasProfile={!!client.clerkId}
                         />
                         <div>
                           <p className="font-semibold text-white text-sm">{client.name}</p>
-                          <p className="text-xs text-gray-400">{client.email}</p>
+                          <p className="text-xs text-gray-400">
+                            {(client.email && !client.email.includes('@client.local')) ? client.email : 'No email provided'}
+                          </p>
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-sm text-gray-300 hidden md:table-cell">
-                      {client.company
-                        ? <span className="text-brand-400">{client.company}</span>
-                        : <span className="text-gray-600">—</span>}
+                    <td className="p-4 text-sm hidden md:table-cell">
+                      {client.legalName || client.address ? (
+                        <div className="flex flex-col space-y-0.5">
+                          {client.legalName && <span className="text-gray-200 font-medium">{client.legalName}</span>}
+                          {client.address && <span className="text-gray-400 text-xs">{client.address}</span>}
+                        </div>
+                      ) : (
+                        <span className="text-gray-600">—</span>
+                      )}
                     </td>
                     <td className="p-4 text-sm text-gray-300 hidden sm:table-cell">
                       {client.phone || <span className="text-gray-600">—</span>}
                     </td>
                     <td className="p-4 hidden lg:table-cell">
-                      {client.active
-                        ? <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Active</span>
-                        : <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-500/20 text-gray-400 border border-gray-500/30">Inactive</span>}
+                      <span className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded-full border ${typeStyle}`}>
+                        {typeLabel}
+                      </span>
                     </td>
                     <td className="p-4 text-sm text-gray-300 hidden sm:table-cell">
                       {client.invoices}
@@ -378,16 +447,6 @@ export default function ClientsPage() {
 
             {/* Modal Body */}
             <div className="p-6 space-y-4">
-              {/* Email change cascade warning — only shown in edit mode */}
-              {editingId && (
-                <div className="flex items-start gap-3 px-4 py-3 bg-amber-400/10 border border-amber-400/20 rounded-2xl">
-                  <span className="text-amber-400 text-lg leading-none mt-0.5">⚠</span>
-                  <p className="text-xs text-amber-300 leading-relaxed">
-                    Changing the email will automatically update all linked <strong>invoices</strong> to use the new address.
-                  </p>
-                </div>
-              )}
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1 col-span-2 sm:col-span-1">
                   <label className="text-sm text-gray-400">Full Name <span className="text-red-400">*</span></label>
@@ -400,8 +459,7 @@ export default function ClientsPage() {
                 </div>
                 <div className="space-y-1 col-span-2 sm:col-span-1">
                   <label className="text-sm text-gray-400">
-                    Email <span className="text-red-400">*</span>
-                    {editingId && <span className="text-amber-400/70 text-xs ml-1">(cascades to all records)</span>}
+                    Email <span className="text-gray-500 text-xs">(Required if no phone)</span>
                   </label>
                   <input
                     type="email"
@@ -414,29 +472,29 @@ export default function ClientsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Company</label>
+                  <label className="text-sm text-gray-400">Phone <span className="text-gray-500 text-xs">(Required if no email)</span></label>
                   <input
-                    type="text"
-                    placeholder="(optional)"
-                    value={formData.company}
-                    onChange={e => setFormData({ ...formData, company: e.target.value })}
+                    type="tel"
+                    placeholder="Phone number"
+                    value={formData.phone}
+                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Phone</label>
+                  <label className="text-sm text-gray-400">Billing Name</label>
                   <input
-                    type="tel"
+                    type="text"
                     placeholder="(optional)"
-                    value={formData.phone}
-                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                    value={formData.legalName}
+                    onChange={e => setFormData({ ...formData, legalName: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm text-gray-400">Address</label>
+                <label className="text-sm text-gray-400">Billing Address</label>
                 <input
                   type="text"
                   placeholder="(optional)"

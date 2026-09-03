@@ -284,7 +284,7 @@ export default function EditInvoicePage() {
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
                 <input type="text" name="company" placeholder="Company (Optional)" value={newClientData.company} onChange={handleNewClientChange}
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
-                <input type="text" name="legalName" placeholder="Client Name (Legal) (Optional)" value={newClientData.legalName} onChange={handleNewClientChange}
+                <input type="text" name="legalName" placeholder="Billing Name (Optional)" value={newClientData.legalName} onChange={handleNewClientChange}
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
                 <input type="text" name="phone" placeholder="Phone (Optional)" value={newClientData.phone} onChange={handleNewClientChange}
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm" />
@@ -331,7 +331,7 @@ export default function EditInvoicePage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-sm text-gray-400">Client Name (Legal)</label>
+                    <label className="text-sm text-gray-400">Billing Name</label>
                     <input type="text" name="legalName" value={formData.legalName} onChange={handleFormChange}
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors"
                       placeholder="Legal company / individual name..." />

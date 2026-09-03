@@ -447,9 +447,14 @@ export default function InvoicesPage() {
                       )}
                     </td>
                     <td className="p-4">
-                      <div className="text-sm font-medium text-white">{row.client}</div>
-                      {row.clientEmail && (
-                        <div className="text-xs text-gray-500 mt-0.5">{row.clientEmail}</div>
+                      {row.clientId ? (
+                        <Link href={`/admin/clients/${row.clientId}`} className="text-sm font-medium text-white hover:text-brand-400" title={row.clientEmail || ''}>
+                          {row.client}
+                        </Link>
+                      ) : (
+                        <div className="text-sm font-medium text-white" title={row.clientEmail || ''}>
+                          {row.client}
+                        </div>
                       )}
                     </td>
                     <td className="p-4 text-sm text-gray-300">{row.service}</td>

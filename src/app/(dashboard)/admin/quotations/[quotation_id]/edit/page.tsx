@@ -265,7 +265,7 @@ export default function EditQuotationPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-sm text-gray-400">Client Name (Legal)</label>
+                <label className="text-sm text-gray-400">Billing Name</label>
                 <input type="text" name="legalName" value={formData.legalName} onChange={handleFormChange}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors disabled:opacity-50"
                   disabled={isConfirmed} placeholder="Legal company / individual name..." />

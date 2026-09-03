@@ -57,11 +57,6 @@ export default function ClientProfilePage() {
 
   return (
     <div className="space-y-6">
-      <Link href="/admin/clients" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
-        <ArrowLeft className="w-4 h-4" />
-        Back to Clients
-      </Link>
-
       {/* Client Profile Banner */}
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
@@ -96,10 +91,10 @@ export default function ClientProfilePage() {
                   <a href={`tel:${client.phone}`} className="hover:text-white transition-colors">{client.phone}</a>
                 </div>
               )}
-              {client.company && (
+              {client.legalName && (
                 <div className="flex items-center gap-2">
-                  <Building className="w-4 h-4 text-brand-400" />
-                  <span className="text-white">{client.company}</span>
+                  <FileText className="w-4 h-4 text-brand-400" />
+                  <span className="text-white">Billing: {client.legalName}</span>
                 </div>
               )}
               {client.website && (
@@ -170,10 +165,13 @@ export default function ClientProfilePage() {
                   <td className="p-4 font-semibold text-white">{formatLKR(order.amount)}</td>
                   <td className="p-4 text-sm text-gray-300">{order.date}</td>
                   <td className="p-4">
-                    {order.status === 'paid' && (
+                    {order.status === 'fully paid' && (
                       <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Paid</span>
                     )}
-                    {order.status === 'unpaid' && (
+                    {order.status === 'partially paid' && (
+                      <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Partial</span>
+                    )}
+                    {(order.status === 'unpaid' || order.status === 'pending') && (
                       <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">Pending</span>
                     )}
                     {order.status === 'overdue' && (

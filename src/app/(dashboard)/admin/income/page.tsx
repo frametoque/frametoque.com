@@ -529,7 +529,15 @@ export default function IncomePage() {
                 <tr key={row.id} className="hover:bg-white/5 transition-colors">
                   <td className="p-4 text-sm">{row.date}</td>
                   <td className="p-4 font-semibold text-green-400">{formatLKR(row.amount)}</td>
-                  <td className="p-4 text-sm">{row.client || '-'}</td>
+                  <td className="p-4 text-sm">
+                    {row.clientId && row.client ? (
+                      <Link href={`/admin/clients/${row.clientId}`} className="text-white hover:text-brand-400" title={row.clientEmail || ''}>
+                        {row.client}
+                      </Link>
+                    ) : (
+                      <span title={row.clientEmail || ''}>{row.client || '-'}</span>
+                    )}
+                  </td>
                   <td className="p-4 text-sm text-gray-300">{row.desc}</td>
                   <td className="p-4 w-36">
                     <div className="flex flex-wrap gap-1 max-w-[144px]">

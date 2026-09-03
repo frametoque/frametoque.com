@@ -10,6 +10,7 @@ interface ClientAvatarProps {
   className?: string;
   fallbackClassName?: string;
   size?: number;
+  hasProfile?: boolean;
 }
 
 export default function ClientAvatar({
@@ -19,7 +20,10 @@ export default function ClientAvatar({
   className = "w-9 h-9 rounded-full object-cover flex-shrink-0",
   fallbackClassName = "w-9 h-9 rounded-full bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center text-white font-bold text-sm flex-shrink-0",
   size = 200,
+  hasProfile = false,
 }: ClientAvatarProps) {
+  const finalClass = hasProfile ? `${className} ring-2 ring-brand-500 ring-offset-2 ring-offset-black` : className;
+  const finalFallbackClass = hasProfile ? `${fallbackClassName} ring-2 ring-brand-500 ring-offset-2 ring-offset-black` : fallbackClassName;
   const gravatarUrl = email ? getGravatarUrl(email, size) : null;
 
   const [primaryFailed, setPrimaryFailed] = useState(false);
@@ -32,7 +36,7 @@ export default function ClientAvatar({
       <img
         src={imageUrl}
         alt={name || "Client Avatar"}
-        className={className}
+        className={finalClass}
         onError={() => setPrimaryFailed(true)}
         ref={(img) => {
           if (img && img.complete && img.naturalWidth === 0) {
@@ -48,7 +52,7 @@ export default function ClientAvatar({
       <img
         src={gravatarUrl}
         alt={name || "Client Avatar"}
-        className={className}
+        className={finalClass}
         onError={() => setGravatarFailed(true)}
         ref={(img) => {
           if (img && img.complete && img.naturalWidth === 0) {
@@ -60,7 +64,7 @@ export default function ClientAvatar({
   }
 
   return (
-    <div className={fallbackClassName}>
+    <div className={finalFallbackClass}>
       {initial}
     </div>
   );

@@ -272,7 +272,7 @@ export async function getIncomes(startDate?: string, endDate?: string) {
     sql`SELECT SUM(amount) as total FROM admin_incomes WHERE date_trunc('year', date) = date_trunc('year', current_date)`,
     sql`
       SELECT 
-        i.id, i.date, TO_CHAR(i.date, 'YYYY-MM-DD') as "rawDate", i.amount, c.full_name as client, i.client_id as "clientId", 
+        i.id, i.date, TO_CHAR(i.date, 'YYYY-MM-DD') as "rawDate", i.amount, c.full_name as client, i.client_id as "clientId", c.email as "clientEmail", 
         i.description as desc, i.category, i.invoice_id as invoice, i.account_id as "accountId", i.payment_method as "paymentMethod",
         COALESCE(
           i.receipt_url,
@@ -357,9 +357,17 @@ export async function createIncome(data: any) {
 
 export async function createClient(data: { name: string; email?: string | null; company?: string | null; phone?: string | null; address?: string | null; legal_name?: string | null }): Promise<string> {
   const clientId = 'C-' + Date.now();
+  const emailToSave = (data.email && data.email.trim() !== '') ? data.email.trim() : `${clientId}@client.local`;
+
+  const legalNameToSave = (data.legal_name && data.legal_name.trim() !== '') ? data.legal_name.trim() : data.name.trim();
+  let addressToSave = (data.address && data.address.trim() !== '') ? data.address.trim() : null;
+  if (!addressToSave && data.email && data.email.trim() !== '') {
+    addressToSave = data.email.trim();
+  }
+
   await sql`
     INSERT INTO admin_clients (id, full_name, email, company, phone, address, active, legal_name)
-    VALUES (${clientId}, ${data.name}, ${data.email || null}, ${data.company || null}, ${data.phone || null}, ${data.address || null}, true, ${data.legal_name || null})
+    VALUES (${clientId}, ${data.name}, ${emailToSave}, ${data.company || null}, ${data.phone || null}, ${addressToSave}, true, ${legalNameToSave})
   `;
   await logSystemAction(`Created client: "${data.name}" (${data.email || data.phone || 'No contact'})`);
   return clientId;
@@ -371,8 +379,27 @@ export async function updateClient(clientId: string, data: { name?: string; emai
   if (existing.length === 0) throw new Error("Client not found");
   const oldEmail = (existing[0].email as string) || "";
   const clientName = existing[0].full_name || clientId;
-  const newEmail = (data.email !== undefined ? data.email?.trim() : oldEmail) || null;
+  
+  let newEmail = oldEmail;
+  if (data.email !== undefined) {
+    newEmail = (data.email && data.email.trim() !== '') ? data.email.trim() : `${clientId}@client.local`;
+  }
+  
   const emailChanged = oldEmail && newEmail && newEmail.toLowerCase() !== oldEmail.toLowerCase();
+
+  let legalNameToSave = data.legal_name;
+  if (legalNameToSave !== undefined && (!legalNameToSave || legalNameToSave.trim() === '')) {
+    legalNameToSave = (data.name && data.name.trim() !== '') ? data.name.trim() : clientName;
+  }
+  
+  let addressToSave = data.address;
+  if (addressToSave !== undefined && (!addressToSave || addressToSave.trim() === '')) {
+    if (newEmail && !newEmail.includes('@client.local')) {
+      addressToSave = newEmail;
+    } else {
+      addressToSave = null;
+    }
+  }
 
   // Update admin_clients row
   await sql`
@@ -382,15 +409,22 @@ export async function updateClient(clientId: string, data: { name?: string; emai
       email   = ${newEmail},
       company = ${data.company !== undefined ? data.company : null},
       phone   = ${data.phone   ?? null},
-      address = ${data.address ?? null},
-      legal_name = ${data.legal_name ?? null}
+      address = ${addressToSave !== undefined ? addressToSave : null},
+      legal_name = ${legalNameToSave !== undefined ? legalNameToSave : null}
     WHERE id = ${clientId}
   `;
 
   // Cascade email change to every table that stores user_email
   if (emailChanged) {
-    await sql`UPDATE invoices  SET user_email = ${newEmail} WHERE LOWER(user_email) = LOWER(${oldEmail})`;
+    await sql`UPDATE invoices SET user_email = ${newEmail} WHERE LOWER(user_email) = LOWER(${oldEmail})`;
   }
+
+  // Cascade legal_name to all linked records so they stay in sync
+  if (legalNameToSave !== undefined) {
+    await sql`UPDATE invoices SET legal_name = ${legalNameToSave} WHERE LOWER(user_email) = LOWER(${newEmail})`;
+    await sql`UPDATE admin_quotations SET legal_name = ${legalNameToSave} WHERE client_id = ${clientId}`;
+  }
+
   await logSystemAction(`Updated client details for "${clientName}" (${clientId})`);
 }
 
@@ -742,7 +776,7 @@ export async function getInvoices() {
   const [totalIssuedCount, rows, nonAdvancePaymentsRows] = await Promise.all([
     sql`SELECT COUNT(*) as count FROM invoices`,
     sql`
-      SELECT i.invoice_id as id, i.user_email as client_email, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.advance, i.tax_rate, i.total_due, i.date, i.due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at
+      SELECT i.invoice_id as id, i.user_email as client_email, c.id as client_id, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.advance, i.tax_rate, i.total_due, i.date, i.due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at
       FROM invoices i
       LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
       ORDER BY i.date DESC, i.created_at DESC
@@ -792,6 +826,7 @@ export async function getInvoices() {
       client: r.client_name || r.client_email?.split('@')[0] || 'Unknown',
       clientEmail: r.client_email || '',
       client_email: r.client_email || '',
+      clientId: r.client_id,
       legalName: r.legal_name || '',
       service: r.service,
       amount: totalVal,
@@ -1037,7 +1072,8 @@ export async function getClients() {
            (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email)) as invoices,
            COALESCE((SELECT SUM(amount) FROM admin_incomes inc WHERE inc.client_id = c.id), 0) as revenue,
            (SELECT COUNT(*) FROM admin_incomes inc WHERE inc.client_id = c.id) as income_count,
-           (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email) AND i.work_status IS NOT NULL) as project_count
+           (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email) AND i.work_status IS NOT NULL) as project_count,
+           (SELECT COUNT(*) FROM admin_quotations q WHERE q.client_id = c.id) as quotation_count
     FROM admin_clients c
     ORDER BY c.id DESC
   `;
@@ -1068,6 +1104,7 @@ export async function getClients() {
         revenue: parseFloat(r.revenue),
         incomeCount: parseInt(r.income_count),
         projectCount: parseInt(r.project_count),
+        quotationCount: parseInt(r.quotation_count),
       };
     })
   );
