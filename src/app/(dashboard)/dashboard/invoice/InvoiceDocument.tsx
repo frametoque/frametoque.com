@@ -227,15 +227,16 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
 
   // ── 2. PREPARED FOR (Left) ────────────────────────────────────────
   if (legal_name || client_name || billing_address || client?.email) {
-    const { x, y, size } = convert(980, 150, 42);
+    const { x, y, size: nameSize } = convert(980, 150, 65);
+    const detailSize = convert(980, 150, 38).size;
     const color       = hexToRgb("#222222");
-    const lineSpacing = size * 1.4;
-    let   currentY    = y - size;
+    const detailSpacing = detailSize * 1.4;
+    let   currentY    = y - nameSize;
 
     const nameToUse = legal_name || client_name || "";
     if (nameToUse) {
-      page.drawText(nameToUse, { x, y: currentY, size, font: primaryFontBold, color });
-      currentY -= (size * 1.2);
+      page.drawText(nameToUse, { x, y: currentY, size: nameSize, font: primaryFontBold, color });
+      currentY -= (nameSize * 1.15);
     }
 
     if (billing_address) {
@@ -243,8 +244,8 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
       for (let i = 0; i < parts.length; i += 2) {
          const chunk = parts.slice(i, i + 2).join(", ");
          const textToPrint = chunk + (i + 2 < parts.length ? "," : "");
-         page.drawText(textToPrint, { x, y: currentY, size: size * 0.9, font: primaryFont, color });
-         currentY -= lineSpacing * 0.9;
+         page.drawText(textToPrint, { x, y: currentY, size: detailSize, font: primaryFont, color });
+         currentY -= detailSpacing;
       }
     }
     
@@ -253,20 +254,20 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
     const phoneStr = client?.phone || "";
     const contactStr = [phoneStr, emailStr].filter(Boolean).join(" | ");
     if (contactStr) {
-      page.drawText(contactStr, { x, y: currentY, size: size * 0.9, font: primaryFont, color });
-      currentY -= lineSpacing * 0.9;
+      page.drawText(contactStr, { x, y: currentY, size: detailSize, font: primaryFont, color });
+      currentY -= detailSpacing;
     }
   }
 
   // ── 3. PROJECT (Right) ────────────────────────────────────────
   if (project_name) {
-      const { x, y, size } = convert(980, 1780, 42);
+      const { x, y, size: projSize } = convert(980, 1780, 60);
       const color       = hexToRgb("#222222");
-      let   currentY    = y - size;
-      const lines = wrapText(project_name, primaryFontBold, size, 650 * scaleX);
+      let   currentY    = y - projSize;
+      const lines = wrapText(project_name, primaryFontBold, projSize, 650 * scaleX);
       for (const line of lines) {
-        page.drawText(line, { x, y: currentY, size, font: primaryFontBold, color });
-        currentY -= (size * 1.2);
+        page.drawText(line, { x, y: currentY, size: projSize, font: primaryFontBold, color });
+        currentY -= (projSize * 1.2);
       }
   }
 

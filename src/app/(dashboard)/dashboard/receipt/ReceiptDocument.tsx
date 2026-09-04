@@ -160,37 +160,61 @@ export async function generateReceiptPDF(receiptData: any): Promise<Uint8Array> 
   const addressToUse = address || billing_address || "";
   const emailToUse = email || invoice?.user_email || "";
 
-  const { x: xl, y: yl, size: sizel } = convert(980, 150, 42);
-  let currentY = yl - sizel;
-  const color = hexToRgb("#222222");
-  const lineSpacing = sizel * 1.4;
+  {
+    const { x: xl, y: yl, size: nameSize } = convert(980, 150, 65);
+    const detailSize = convert(980, 150, 38).size;
+    let currentY = yl - nameSize;
+    const color = hexToRgb("#222222");
+    const detailSpacing = detailSize * 1.4;
 
-  if (nameToUse) {
-    page.drawText(nameToUse, { x: xl, y: currentY, size: sizel, font: primaryFontBold, color });
-    currentY -= (sizel * 1.2);
-  }
+    if (nameToUse) {
+      page.drawText(nameToUse, { x: xl, y: currentY, size: nameSize, font: primaryFontBold, color });
+      currentY -= (nameSize * 1.15);
+    }
 
-  if (addressToUse) {
-    const parts = addressToUse.split(",").map((s: string) => s.trim()).filter(Boolean);
-    for (let i = 0; i < parts.length; i += 2) {
-       const chunk = parts.slice(i, i + 2).join(", ");
-       const textToPrint = chunk + (i + 2 < parts.length ? "," : "");
-       page.drawText(textToPrint, { x: xl, y: currentY, size: sizel * 0.9, font: primaryFont, color });
-       currentY -= lineSpacing * 0.9;
+    if (addressToUse) {
+      const parts = addressToUse.split(",").map((s: string) => s.trim()).filter(Boolean);
+      for (let i = 0; i < parts.length; i += 2) {
+         const chunk = parts.slice(i, i + 2).join(", ");
+         const textToPrint = chunk + (i + 2 < parts.length ? "," : "");
+         page.drawText(textToPrint, { x: xl, y: currentY, size: detailSize, font: primaryFont, color });
+         currentY -= detailSpacing;
+      }
+    }
+
+    if (emailToUse) {
+      page.drawText(emailToUse, { x: xl, y: currentY, size: detailSize, font: primaryFont, color });
     }
   }
 
-  if (emailToUse) {
-    page.drawText(emailToUse, { x: xl, y: currentY, size: sizel * 0.9, font: primaryFont, color });
-  }
-
   // 3. PROJECT (Right)
-  const { x: xr, y: yr, size: sizer } = convert(980, 1780, 42);
-  let rightY = yr - sizer;
+  {
+    const { x: xr, y: yr, size: projSize } = convert(980, 1780, 60);
+    const color = hexToRgb("#222222");
+    let rightY = yr - projSize;
 
-  if (project_name) {
-    page.drawText(project_name, { x: xr, y: rightY, size: sizer, font: primaryFontBold, color });
-    rightY -= (sizer * 1.5);
+    if (project_name) {
+      // Simple word-wrap for long project names
+      const maxWidthPts = 660 * scaleX;
+      const words = project_name.split(" ");
+      const lines: string[] = [];
+      let cur = "";
+      for (const w of words) {
+        const test = cur ? `${cur} ${w}` : w;
+        if (primaryFontBold.widthOfTextAtSize(test, projSize) <= maxWidthPts) {
+          cur = test;
+        } else {
+          if (cur) lines.push(cur);
+          cur = w;
+        }
+      }
+      if (cur) lines.push(cur);
+
+      for (const line of lines) {
+        page.drawText(line, { x: xr, y: rightY, size: projSize, font: primaryFontBold, color });
+        rightY -= (projSize * 1.2);
+      }
+    }
   }
   
   let paymentType = "Partial Payment";
@@ -200,11 +224,9 @@ export async function generateReceiptPDF(receiptData: any): Promise<Uint8Array> 
     paymentType = "Full Payment";
   }
 
-  // Draw values only, aligned with the template's built-in labels
-  // X: ~2050 to be to the right of the colon
-  // Y: ~1315 for Payment Type, ~1380 for Status
-  drawTextAligned(paymentType, 2050, 1175, 38, primaryFont, "#222222");
-  drawTextAligned(work_status || 'In Progress', 2050, 1240, 38, primaryFont, "#222222");
+  // Payment Type & Status values (bold to match the template's label weight)
+  drawTextAligned(paymentType, 2050, 1175, 38, primaryFontBold, "#222222");
+  drawTextAligned(work_status || 'In Progress', 2050, 1205, 38, primaryFontBold, "#222222");
 
   // 4. AMOUNT RECEIVED & Deposited To
   const amountStr = formatMoney(amount, currency);
@@ -236,13 +258,31 @@ export async function generateReceiptPDF(receiptData: any): Promise<Uint8Array> 
     }
   }
 
-  // 5. Table
-  drawTextAligned("Total Project Value", 190, 2150, 42, primaryFont, "#222222");
-  drawTextAligned(formatMoney(totalVal, currency), 2280, 2150, 42, primaryFont, "#222222", "right");
+  // 5. Table — total row + all payments (current one highlighted)
+  const tableRowHeightPx = 62; // vertical spacing between rows in template px units
+  const tableStartTopPx  = 2150;
 
-  if (description) {
-    drawTextAligned(`Payment Received: ${description}`, 190, 2200, 42, primaryFont, "#222222");
-    drawTextAligned(`- ${formatMoney(amount, currency)}`, 2280, 2200, 42, primaryFont, "#222222", "right");
+  drawTextAligned("Total Project Value", 190, tableStartTopPx, 42, primaryFont, "#222222");
+  drawTextAligned(formatMoney(totalVal, currency), 2280, tableStartTopPx, 42, primaryFont, "#222222", "right");
+
+  // Only show payments up to and including the current one (exclude future payments)
+  const relevantPayments = paymentsList.filter((p: any) => Number(p.id) <= Number(incomeId));
+  // Sort oldest-first so they appear in chronological order
+  const sortedPayments = [...relevantPayments].reverse();
+
+  let rowTopPx = tableStartTopPx + tableRowHeightPx;
+
+  for (const p of sortedPayments) {
+    const isCurrent = p.id === incomeId || String(p.id) === String(incomeId);
+    const payDesc = p.description || "";
+    const payAmount = parseFloat(p.amount) || 0;
+    const label = `${payDesc} (${p.date})`;
+    const valueStr = `- ${formatMoney(payAmount, currency)}`;
+
+    drawTextAligned(label,    190,  rowTopPx, 42, primaryFont, "#222222");
+    drawTextAligned(valueStr, 2280, rowTopPx, 42, primaryFont, "#222222", "right");
+
+    rowTopPx += tableRowHeightPx;
   }
 
   // 6. DUE
