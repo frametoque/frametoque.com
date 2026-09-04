@@ -111,7 +111,7 @@ export async function generateReceiptPDF(receiptData: any): Promise<Uint8Array> 
 
   let bgImage: any = null;
   try {
-    const bgBytes = await fetchImageAsPngBytes("/Reciept.png");
+    const bgBytes = await fetchImageAsPngBytes(`/Reciept.png?v=${Date.now()}`);
     bgImage = await pdfDoc.embedPng(bgBytes);
     page.drawImage(bgImage, { x: 0, y: 0, width, height });
   } catch (err) {

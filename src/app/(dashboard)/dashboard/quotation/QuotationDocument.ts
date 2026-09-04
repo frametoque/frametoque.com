@@ -90,7 +90,7 @@ export async function generateQuotationPDF(quotation: any) {
 
   // ── Background template ────────────────────────────────────────────────────
   try {
-    const bgBytes = await fetchImageAsPngBytes("/quotation.png");
+    const bgBytes = await fetchImageAsPngBytes(`/quotation.png?v=${Date.now()}`);
     const bgImage = await pdfDoc.embedPng(bgBytes);
     page.drawImage(bgImage, { x: 0, y: 0, width: 595.276, height: 841.89 });
   } catch (error) {
