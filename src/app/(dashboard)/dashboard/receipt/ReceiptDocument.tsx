@@ -226,7 +226,7 @@ export async function generateReceiptPDF(receiptData: any): Promise<Uint8Array> 
 
   // Payment Type & Status values (bold to match the template's label weight)
   drawTextAligned(paymentType, 2050, 1175, 38, primaryFontBold, "#222222");
-  drawTextAligned(work_status || 'In Progress', 2050, 1205, 38, primaryFontBold, "#222222");
+  drawTextAligned(work_status || 'In Progress', 2050, 1215, 38, primaryFontBold, "#222222");
 
   // 4. AMOUNT RECEIVED & Deposited To
   const amountStr = formatMoney(amount, currency);
@@ -237,8 +237,8 @@ export async function generateReceiptPDF(receiptData: any): Promise<Uint8Array> 
   if (act) {
     // try account properties or fallback to invoice properties
     const accName = act.name || act.bank_acc_name || '';
-    const accNum = act.account_number || act.bank_acc_number || '';
-    const bName = act.bank_name || act.bank_acc_bank || '';
+    const accNum = act.accountNumber || act.account_number || act.bank_acc_number || '';
+    const bName = act.bankName || act.bank_name || act.bank_acc_bank || '';
     const branch = act.branch || act.bank_acc_branch || '';
     
     const partsLeft = [accName, accNum].filter(Boolean).join(" - ");
