@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { FileText, CheckCircle, Clock, AlertCircle, Search, Eye, Edit2, Send, Download, Trash2, DollarSign, X, Loader2, Upload, Image as ImageIcon, FileText as FileIcon } from "lucide-react";
 import Link from "next/link";
 import { getInvoices, deleteInvoice, recordInvoicePayment, adminUploadPaymentSlip, getInvoiceByIdAdmin } from "../actions/actions";
+import { getAccounts } from "../actions/accounts";
 import AnimatedNumber from "../components/AnimatedNumber";
 
 const filters = ["All", "Fully Paid", "Partially Paid", "On Review", "Overdue", "Advance-Paid", "Unpaid"];
@@ -55,6 +56,8 @@ export default function InvoicesPage() {
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [isAdvance, setIsAdvance] = useState(false);
   const [savingPayment, setSavingPayment] = useState(false);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState("");
 
   // Payment slip upload states
   const [slipFile, setSlipFile] = useState<File | null>(null);
@@ -72,6 +75,15 @@ export default function InvoicesPage() {
     setSlipFile(null);
     setSlipPreview(null);
     setIncludeSlip(false);
+    const bankAccounts = accounts.filter(acc => acc.type === 'Bank Account');
+    
+    // First try the invoice's bank account, then default account, then first bank account
+    let defaultAcc = bankAccounts.find(acc => acc.id === invoice.bankAccountId);
+    if (!defaultAcc) {
+      defaultAcc = bankAccounts.find(acc => acc.isDefault) || bankAccounts[0];
+    }
+    
+    setSelectedAccount(defaultAcc ? defaultAcc.id.toString() : "");
     setPaymentModalOpen(true);
   };
 
@@ -187,7 +199,9 @@ export default function InvoicesPage() {
         parseFloat(paidAmount) || 0,
         paymentMethod,
         paymentDate,
-        isAdvance
+        isAdvance,
+        undefined,
+        selectedAccount ? parseInt(selectedAccount, 10) : null
       );
 
       // Step 2: Upload slip if included (only for Bank Transfer)
@@ -232,8 +246,9 @@ export default function InvoicesPage() {
 
   const loadData = async () => {
     try {
-      const res = await getInvoices();
+      const [res, accRes] = await Promise.all([getInvoices(), getAccounts()]);
       setData(res);
+      setAccounts(accRes || []);
     } catch (e) {
       console.error("Failed to load invoices", e);
     } finally {
@@ -245,9 +260,10 @@ export default function InvoicesPage() {
     let cancelled = false;
     async function load() {
       try {
-        const res = await getInvoices();
+        const [res, accRes] = await Promise.all([getInvoices(), getAccounts()]);
         if (!cancelled) {
           setData(res);
+          setAccounts(accRes || []);
           setLoading(false);
         }
       } catch (e) {
@@ -577,6 +593,23 @@ export default function InvoicesPage() {
                   <option value="Cash" className="bg-black text-white">Cash</option>
                 </select>
               </div>
+
+              {paymentMethod === "Bank Transfer" && (
+                <div className="space-y-1">
+                  <label className="text-sm text-gray-400 block font-medium">Account</label>
+                  <select
+                    value={selectedAccount}
+                    onChange={(e) => setSelectedAccount(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white appearance-none"
+                  >
+                    {accounts.filter(acc => acc.type === 'Bank Account').map(acc => (
+                      <option key={acc.id} value={acc.id} className="bg-black text-white">
+                        {acc.name} {acc.bankName ? `(${acc.bankName})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="flex items-center gap-2 pt-2 pb-2">
                 <input

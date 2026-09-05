@@ -776,7 +776,7 @@ export async function getInvoices() {
   const [totalIssuedCount, rows, nonAdvancePaymentsRows] = await Promise.all([
     sql`SELECT COUNT(*) as count FROM invoices`,
     sql`
-      SELECT i.invoice_id as id, i.user_email as client_email, c.id as client_id, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.advance, i.tax_rate, i.total_due, i.date, i.due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at
+      SELECT i.invoice_id as id, i.user_email as client_email, c.id as client_id, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.advance, i.tax_rate, i.total_due, i.date, i.due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at, i.bank_account_id
       FROM invoices i
       LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
       ORDER BY i.date DESC, i.created_at DESC
@@ -835,6 +835,7 @@ export async function getInvoices() {
       dueDate: r.due_date ? new Date(r.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Colombo' }) : '',
       status: status,
       work_status: r.work_status,
+      bankAccountId: r.bank_account_id,
       overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && status !== 'paid' && status !== 'fully paid')
     };
   });
@@ -1885,12 +1886,13 @@ export async function recordInvoicePayment(
   paymentMethod: string,
   paymentDate: string,
   isAdvance: boolean,
-  customDescription?: string
+  customDescription?: string,
+  accountId?: number | null
 ) {
   try {
     // 1. Fetch invoice info
     const invoiceRows = await sql`
-      SELECT user_email, project_name, total, currency, category, payment_status, advance, total_due
+      SELECT user_email, project_name, total, currency, category, payment_status, advance, total_due, bank_account_id, bank_slip
       FROM invoices
       WHERE invoice_id = ${invoiceId}
     `;
@@ -1938,7 +1940,7 @@ export async function recordInvoicePayment(
     const nextId = await getAvailableReceiptId();
     await sql`
       INSERT INTO admin_incomes (id, date, amount, description, category, payment_method, invoice_id, client_id, receipt_url, account_id)
-      VALUES (${nextId}, ${paymentDate}, ${paidAmount}, ${description}, ${category}, ${paymentMethod}, ${invoiceId}, ${clientId}, ${receiptUrlToAttach}, ${paymentMethod === 'Bank Transfer' ? invoice.bank_account_id : null})
+      VALUES (${nextId}, ${paymentDate}, ${paidAmount}, ${description}, ${category}, ${paymentMethod}, ${invoiceId}, ${clientId}, ${receiptUrlToAttach}, ${accountId != null ? accountId : (paymentMethod === 'Bank Transfer' ? invoice.bank_account_id : null)})
     `;
 
     // 5. Update invoice payment fields
