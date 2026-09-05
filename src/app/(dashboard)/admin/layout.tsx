@@ -16,7 +16,6 @@ import { AdminDateRangeProvider, useAdminDateRange } from "./context/AdminDateRa
 import { AnalyticsDateRangeProvider, useAnalyticsDateRange } from "./context/AnalyticsDateRangeContext";
 import { getCalendarEvents } from "./actions/bookings";
 import {
-  Bell,
   Menu,
   Search,
   LayoutDashboard,
@@ -51,7 +50,8 @@ import {
   Cloud,
   Megaphone,
   BookOpen,
-  Landmark
+  Landmark,
+  Terminal,
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -173,7 +173,9 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isDashboard = pathname === "/admin/dashboard";
   const isAccounts = pathname.startsWith("/admin/accounts");
   const isCreateOrEdit = pathname.endsWith("/new") || pathname.endsWith("/edit");
-  const hideSelector = isServices || isPortfolio || isBookings || isWebServices || isInvoiceDetail || isSocialMedia || isDashboard || isAccounts || isCreateOrEdit;
+  const isSystemLogs = pathname === "/admin/system-logs";
+  const hideSelector = isServices || isPortfolio || isBookings || isWebServices || isInvoiceDetail || isSocialMedia || isDashboard || isAccounts || isCreateOrEdit || isSystemLogs;
+  const hasCustomAction = isInvoiceDetail || isWebServices || isSocialMedia || isBookings || isAccounts || isSystemLogs;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [currentTime, setCurrentTime] = useState("");
@@ -345,15 +347,14 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
             <Menu className="w-6 h-6" />
           </button>
           {/* Page Title */}
-          <h1 className="text-xl font-bold text-white tracking-tight">
-
-            {dynamicTitle || getPageTitle(pathname)}
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            {dynamicTitle || getPageTitle(pathname)}<span className="text-[#3fc7ed]">.</span>
           </h1>
 
           {/* View Page button / Refresh button */}
           {hideSelector && (
             <>
-              {!isCreateOrEdit && (
+              {hasCustomAction && (
                 <span className="hidden sm:block w-[1px] h-5 bg-white/15" />
               )}
 
@@ -437,17 +438,22 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                     <span>Add Account</span>
                   </button>
                 </div>
-              ) : isCreateOrEdit ? null : (
-                <a
-                  href={isDashboard ? "/" : isServices ? "/services" : "/work"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors text-sm"
-                >
-                  <ExternalLink className="w-4 h-4 text-brand-400" />
-                  View Page
-                </a>
-              )}
+              ) : isSystemLogs ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("system-logs:clear"))}
+                    className="px-4 py-2 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-3xl transition-colors cursor-pointer font-medium"
+                  >
+                    Clear Logs
+                  </button>
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("system-logs:refresh"))}
+                    className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 text-white rounded-3xl transition-colors cursor-pointer font-medium"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              ) : null}
             </>
           )}
 
@@ -573,22 +579,17 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
 
           <span className="w-1 h-1 rounded-full bg-white/20" />
 
-          {/* Current Date (showing Day Name e.g. Fri, Sat, Sun) */}
-          <div className="flex items-center gap-1.5 text-gray-300">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <span className="font-medium text-sm">{currentDate || "Loading..."}</span>
-          </div>
-
-          <span className="w-1 h-1 rounded-full bg-white/20" />
-
-          {/* Upcoming Events Dropdown */}
-          <div className="relative group flex items-center">
-            <button className="relative p-2 hover:bg-white/10 rounded-full transition-colors">
-              <Bell className="w-4 h-4 text-gray-300 group-hover:text-white" />
-              {upcomingEvents.length > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-brand-500 rounded-full border border-black"></span>
-              )}
-            </button>
+          {/* Current Date & Upcoming Events Dropdown */}
+          <div className="relative group flex items-center gap-1.5 cursor-pointer text-gray-300 hover:text-white transition-colors">
+            <div className="relative flex items-center gap-1.5">
+              <div className="relative">
+                <Calendar className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
+                {upcomingEvents.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand-500 rounded-full border border-black"></span>
+                )}
+              </div>
+              <span className="font-medium text-sm">{currentDate || "Loading..."}</span>
+            </div>
 
             <div className="absolute right-0 top-full mt-2 w-80 bg-[#0c0c0e] border border-white/10 rounded-3xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 invisible scale-95 group-hover:opacity-100 group-hover:visible group-hover:scale-100 transition-all duration-300 z-50 pointer-events-none group-hover:pointer-events-auto before:absolute before:-top-3 before:left-0 before:right-0 before:h-3">
               <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
@@ -652,6 +653,18 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
               </div>
             </div>
           </div>
+          <span className="w-1 h-1 rounded-full bg-white/20" />
+          <div className="flex items-center gap-1.5">
+            <Link href="/admin/system-logs" className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-white" title="System Logs">
+              <Terminal className="w-4 h-4" />
+            </Link>
+            <SignOutButton redirectUrl="/login">
+              <button className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-red-400" title="Logout">
+                <LogOut className="w-4 h-4" />
+              </button>
+            </SignOutButton>
+          </div>
+
         </div>
       </div>
     </header>
@@ -682,7 +695,6 @@ const Sidebar = ({
 }) => {
   const pathname = usePathname();
   const { user, isLoaded } = useUser();
-  const isSettingsActive = pathname.startsWith("/admin/settings");
 
   const links: { name: string; href: string; icon: any; divider?: boolean; newtab?: boolean }[] = [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -793,9 +805,9 @@ const Sidebar = ({
                   <Image
                     src="/logos/ft/logo.png"
                     alt="Logo"
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 flex-shrink-0 object-contain"
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 flex-shrink-0 object-contain"
                   />
                 </div>
                 {/* Hover collapsed: lock toggle button */}
@@ -857,34 +869,6 @@ const Sidebar = ({
               );
             })}
           </nav>
-
-          {/* User section */}
-          <div className="p-4 border-t border-white/10 flex items-center justify-between gap-2">
-            <Link href="/admin/settings" className="flex-1 min-w-0">
-              <div
-                className={`flex items-center gap-3 py-2.5 px-3 rounded-2xl w-full transition-colors duration-150
-                  ${isSettingsActive
-                    ? "text-brand-400 font-semibold"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                  }`}
-              >
-                <Settings className="w-5 h-5 flex-shrink-0" />
-                {desktopExpanded && (
-                  <span className="hidden lg:block text-sm truncate">Settings</span>
-                )}
-                <span className="lg:hidden text-sm truncate">Settings</span>
-              </div>
-            </Link>
-
-            <SignOutButton redirectUrl="/login">
-              <button
-                className={`flex items-center justify-center p-2.5 text-gray-400 hover:text-red-400 rounded-xl transition-colors hover:bg-red-500/10 flex-shrink-0 ${desktopExpanded ? "" : "lg:hidden"}`}
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </SignOutButton>
-          </div>
         </div>
       </motion.aside>
     </>

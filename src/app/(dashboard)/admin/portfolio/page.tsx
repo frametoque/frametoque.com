@@ -542,7 +542,7 @@ export default function PortfolioAdminPage() {
   const handleDeleteEvent = async (eventName: string, imageCount: number) => {
     if (!confirm(`Delete event "${eventName}" and all its ${imageCount} photos? This cannot be undone.`)) return;
 
-    setLoading(true);
+    setSaving(true);
     try {
       const eventImages = items.filter(img => img.event_name === eventName);
       for (const img of eventImages) {
@@ -553,7 +553,7 @@ export default function PortfolioAdminPage() {
       console.error("Failed to delete event:", err);
       alert("Failed to delete event photos.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 

@@ -139,7 +139,7 @@ export default function InventoryPage() {
 
   const totalItems = data.length;
   const availableItems = data.filter(d => d.status === 'Available').length;
-  const totalValue = data.reduce((acc, curr) => acc + (parseFloat(curr.purchase_price) || 0), 0);
+  const totalValue = (data as any[]).reduce((acc: number, curr: any) => acc + (parseFloat(curr.purchase_price) || 0), 0);
   const categories = new Set(data.map(d => d.category)).size;
 
   if (loading) {
