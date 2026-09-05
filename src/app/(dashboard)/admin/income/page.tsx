@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import useSWR from "swr";
 import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2, Eye, FilePlus, Trash } from "lucide-react";
 import ClientCombobox from "../components/ClientCombobox";
 import Link from "next/link";
@@ -83,18 +84,26 @@ const convertPdfToImage = async (file: File): Promise<File> => {
 export default function IncomePage() {
   const [activeFilter, setActiveFilter] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const { startDate, endDate } = useAdminDateRange();
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [convertingPdf, setConvertingPdf] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
-  const [clients, setClients] = useState<any[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
-  const [invoicesList, setInvoicesList] = useState<any[]>([]);
+
+  const fetcher = async () => {
+    const [res, cls, accs, invsData] = await Promise.all([getIncomes(startDate, endDate), getClients(), getAccounts(), getInvoices()]);
+    return { data: res, clients: cls, bankAccounts: accs, invoicesList: invsData?.items || [] };
+  };
+
+  const { data: swrData, isLoading: loading, mutate: loadData } = useSWR(
+    ['income', startDate, endDate],
+    fetcher,
+    { keepPreviousData: true, revalidateOnFocus: false }
+  );
+
+  const { data = null as any, clients = [] as any[], bankAccounts = [] as any[], invoicesList = [] as any[] } = swrData || {};
 
   const [downloadingReceiptId, setDownloadingReceiptId] = useState<number | null>(null);
 
@@ -186,43 +195,6 @@ export default function IncomePage() {
     advance: 0,
     bankAccountId: '',
   });
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [res, cls, accs, invsData] = await Promise.all([getIncomes(startDate, endDate), getClients(), getAccounts(), getInvoices()]);
-      setData(res);
-      setClients(cls);
-      setBankAccounts(accs);
-      setInvoicesList(invsData?.items || []);
-    } catch (e) {
-      console.error("Failed to load incomes", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const [res, cls, accs, invsData] = await Promise.all([getIncomes(startDate, endDate), getClients(), getAccounts(), getInvoices()]);
-        if (!cancelled) {
-          setData(res);
-          setClients(cls);
-          setBankAccounts(accs);
-          setInvoicesList(invsData?.items || []);
-        }
-      } catch (e) {
-        console.error("Failed to load incomes", e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [startDate, endDate]);
 
   const openNew = () => {
     setEditingId(null);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import useSWR from 'swr';
 import { TrendingUp, TrendingDown, DollarSign, Percent, Download, FileText, Calendar, Users, BookOpen, Search, ArrowUpRight, ArrowDownRight, Link as LinkIcon } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getReports, getClients } from "../actions/actions";
@@ -16,14 +17,10 @@ const formatLKR = (amount: number) => {
 };
 
 export default function ReportsPage() {
-  const [data, setData] = useState<any>(null);
-  const [clients, setClients] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const { dateRange, startDate, endDate, setStartDate, setEndDate, setDateRange } = useAdminDateRange();
   const [activeTab, setActiveTab] = useState<"overview" | "profit_loss" | "trial_balance" | "general_ledger" | "account_ledger">("overview");
 
   // Ledger specific state
-  const [accounts, setAccounts] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
 
@@ -44,30 +41,17 @@ export default function ReportsPage() {
 
   const [ledgerLoading, setLedgerLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function loadMain() {
-      setLoading(true);
-      try {
-        const [res, cls, accs] = await Promise.all([
-          getReports(startDate, endDate),
-          getClients(),
-          import("../actions/accounts").then(m => m.getAccounts(startDate, endDate))
-        ]);
-        if (!cancelled) {
-          setData(res);
-          setClients(cls);
-          setAccounts(accs);
-        }
-      } catch (e) {
-        console.error("Failed to load reports", e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    loadMain();
-    return () => { cancelled = true; };
-  }, [startDate, endDate]);
+  const fetcher = async () => {
+    const [res, cls, accs] = await Promise.all([
+      getReports(startDate, endDate),
+      getClients(),
+      import("../actions/accounts").then(m => m.getAccounts(startDate, endDate))
+    ]);
+    return { data: res, clients: cls, accounts: accs };
+  };
+
+  const { data: swrData, isLoading: loading } = useSWR(['reports-main', startDate, endDate], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { data, clients = [], accounts = [] } = swrData || {};
 
   useEffect(() => {
     let cancelled = false;

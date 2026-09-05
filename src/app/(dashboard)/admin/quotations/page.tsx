@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import useSWR from "swr";
 import { Wallet, TrendingUp, Plus, Edit2, Trash2, Eye, Loader2, CheckCircle2, FolderOpen, X, Download } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -26,8 +27,6 @@ const formatLKR = (amount: number) => {
 export default function QuotationsPage() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState("All");
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [confirmingLoading, setConfirmingLoading] = useState(false);
@@ -37,7 +36,6 @@ export default function QuotationsPage() {
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [pendingConfirmRow, setPendingConfirmRow] = useState<any | null>(null);
   const [projectNameInput, setProjectNameInput] = useState("");
-  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [selectedBankAccountId, setSelectedBankAccountId] = useState<string>("");
 
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
@@ -68,50 +66,28 @@ export default function QuotationsPage() {
     }
   };
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const res = await getQuotations(startDate, endDate);
-      setData(res);
-    } catch (e) {
-      console.error("Failed to load quotations", e);
-    } finally {
-      setLoading(false);
-    }
+  const fetcher = async () => {
+    const [res, banks] = await Promise.all([
+      getQuotations(startDate, endDate),
+      getBankAccounts()
+    ]);
+    return { data: res, bankAccounts: banks };
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const res = await getQuotations(startDate, endDate);
-        if (!cancelled) setData(res);
-      } catch (e) {
-        console.error("Failed to load quotations", e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [startDate, endDate]);
+  const { data: swrData, isLoading: loading, mutate: loadData } = useSWR(
+    ['quotations', startDate, endDate],
+    fetcher,
+    { keepPreviousData: true, revalidateOnFocus: false }
+  );
+
+  const { data = null as any, bankAccounts = [] as any[] } = swrData || {};
 
   useEffect(() => {
-    async function loadBanks() {
-      try {
-        const banks = await getBankAccounts();
-        setBankAccounts(banks);
-        if (banks.length > 0) {
-          const def = banks.find((a: any) => a.is_default === 1) || banks[0];
-          setSelectedBankAccountId(def.id.toString());
-        }
-      } catch (e) {
-        console.error("Failed to load bank accounts", e);
-      }
+    if (bankAccounts.length > 0 && !selectedBankAccountId) {
+      const def = bankAccounts.find((a: any) => a.is_default === 1) || bankAccounts[0];
+      setSelectedBankAccountId(def.id.toString());
     }
-    loadBanks();
-  }, []);
+  }, [bankAccounts, selectedBankAccountId]);
 
   // Step 1: open modal to ask for project name
   const handleConfirmProject = (quotationId: number, quotationData: any) => {

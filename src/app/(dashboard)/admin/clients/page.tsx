@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import useSWR from 'swr';
 import { Search, Plus, Edit2, Trash2, X, Loader2, ChevronRight, Users, Crown, Sparkles, Clock } from "lucide-react";
 import Link from "next/link";
 import ClientAvatar from "@/components/ClientAvatar";
@@ -15,8 +16,6 @@ const emptyForm = { name: '', email: '', phone: '', address: '', legalName: '' }
 export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -25,34 +24,13 @@ export default function ClientsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyForm);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const res = await getClients();
-      setData(res);
-    } catch (e) {
-      console.error("Failed to load clients", e);
-    } finally {
-      setLoading(false);
-    }
+  const fetcher = async () => {
+    const res = await getClients();
+    return { data: res };
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const res = await getClients();
-        if (!cancelled) setData(res);
-      } catch (e) {
-        console.error("Failed to load clients", e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, []);
+  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-clients'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { data = [] } = swrData || {};
 
   useEffect(() => {
     const handleSearch = (e: Event) => {
@@ -113,7 +91,7 @@ export default function ClientsPage() {
         });
       }
       setIsModalOpen(false);
-      await loadData();
+      await mutate();
     } catch (e) {
       console.error(e);
       alert("Failed to save client.");
@@ -127,7 +105,7 @@ export default function ClientsPage() {
     setDeletingId(client.id);
     try {
       await deleteClient(client.id);
-      await loadData();
+      await mutate();
     } catch (e) {
       console.error(e);
       alert("Failed to delete client.");

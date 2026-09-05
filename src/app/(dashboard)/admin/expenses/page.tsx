@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import useSWR from "swr";
 import { Receipt, Calendar, CreditCard, Plus, Edit2, Trash2, X, UploadCloud, Loader2, Eye, RefreshCw } from "lucide-react";
 import { 
   getExpenses, createExpense, deleteExpense, updateExpense, uploadReceipt,
@@ -77,10 +78,6 @@ export default function ExpensesPage() {
   const [activeFilter, setActiveFilter] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Data loading state
-  const [data, setData] = useState<any>(null);
-  const [scheduledExpenses, setScheduledExpenses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
   // Edit state
@@ -93,7 +90,6 @@ export default function ExpensesPage() {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [convertingPdf, setConvertingPdf] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
-  const [accounts, setAccounts] = useState<any[]>([]);
 
   // Form states
   const [selectedCategories, setSelectedCategories] = useState<string[]>([filters[1]]);
@@ -108,48 +104,22 @@ export default function ExpensesPage() {
     frequency: 'monthly'
   });
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [res, schedRes, accs] = await Promise.all([
-          getExpenses(startDate, endDate),
-          getScheduledExpenses().catch(() => []),
-          getAccounts()
-        ]);
-        setAccounts(accs);
-      setData(res);
-      setScheduledExpenses(schedRes);
-    } catch (e) {
-      console.error("Failed to load expenses data:", e);
-    } finally {
-      setLoading(false);
-    }
+  const fetcher = async () => {
+    const [res, schedRes, accs] = await Promise.all([
+      getExpenses(startDate, endDate),
+      getScheduledExpenses().catch(() => []),
+      getAccounts()
+    ]);
+    return { data: res, scheduledExpenses: schedRes, accounts: accs };
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const [res, schedRes, accs] = await Promise.all([
-          getExpenses(startDate, endDate),
-          getScheduledExpenses().catch(() => []),
-          getAccounts()
-        ]);
-        setAccounts(accs);
-        if (!cancelled) {
-          setData(res);
-          setScheduledExpenses(schedRes);
-        }
-      } catch (e) {
-        console.error("Failed to load expenses data:", e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [startDate, endDate]);
+  const { data: swrData, isLoading: loading, mutate: loadData } = useSWR(
+    ['expenses', startDate, endDate],
+    fetcher,
+    { keepPreviousData: true, revalidateOnFocus: false }
+  );
+
+  const { data = null as any, scheduledExpenses = [] as any[], accounts = [] as any[] } = swrData || {};
 
   // Handle actual expense save
   const handleSave = async () => {

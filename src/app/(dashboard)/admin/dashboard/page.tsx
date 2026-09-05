@@ -1,4 +1,5 @@
 "use client";
+import useSWR from "swr";
 
 import { useEffect, useState } from "react";
 import { Landmark, Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, ArrowDownLeft, FileText, Users, Eye, Calendar, Folder, MapPin, CheckSquare, Droplets, ChevronLeft, ChevronRight } from "lucide-react";
@@ -21,62 +22,48 @@ const formatLKR = (amount: number) => {
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 export default function DashboardPage() {
-  const [data, setData] = useState<any>(null);
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
-  const [bookingForecasts, setBookingForecasts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const { startDate, endDate } = useAdminDateRange();
   const [chartYear, setChartYear] = useState<number>(new Date().getFullYear());
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const [res, analyticsRes, eventsRes, weatherRes] = await Promise.all([
-          getDashboardData(startDate, endDate),
-          getAnalyticsData("all time").catch(() => null),
-          getCalendarEvents().catch(() => []),
-          fetch("/api/admin/weather").then(r => r.ok ? r.json() : null).catch(() => null),
-        ]);
-        if (cancelled) return;
-        setData(res);
-        setAnalytics(analyticsRes);
-        if (weatherRes && weatherRes.bookingForecasts) {
-          setBookingForecasts(weatherRes.bookingForecasts);
-        }
+  const fetcher = async ([key, startDate, endDate]: [string, string, string]) => {
+    const [res, analyticsRes, eventsRes, weatherRes] = await Promise.all([
+      getDashboardData(startDate, endDate),
+      getAnalyticsData("all time").catch(() => null),
+      getCalendarEvents().catch(() => []),
+      fetch("/api/admin/weather").then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
 
-        const now = new Date();
-        const upcoming = eventsRes
-          .filter((e: any) => {
-            if (e.type !== 'booking' || e.status === 'cancelled') return false;
-            // Parse event start date and time
-            const eventDateTime = new Date(`${e.date}T${e.time || '00:00'}:00`);
-            // If start_time was provided, filter out events whose start time has passed.
-            // If no start_time, keep the event until the end of that day (23:59:59).
-            if (e.time) {
-              return eventDateTime >= now;
-            }
-            const endOfDay = new Date(`${e.date}T23:59:59`);
-            return endOfDay >= now;
-          })
-          .sort((a: any, b: any) => {
-            const dateA = `${a.date}T${a.time || '00:00'}:00`;
-            const dateB = `${b.date}T${b.time || '00:00'}:00`;
-            return dateA.localeCompare(dateB);
-          })
-          .slice(0, 5);
-        setUpcomingEvents(upcoming);
-      } catch (e) {
-        console.error("Failed to load dashboard data", e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [startDate, endDate]);
+    const now = new Date();
+    const upcoming = (eventsRes || [])
+      .filter((e: any) => {
+        if (e.type !== 'booking' || e.status === 'cancelled') return false;
+        const eventDateTime = new Date(`${e.date}T${e.time || '00:00'}:00`);
+        if (e.time) return eventDateTime >= now;
+        const endOfDay = new Date(`${e.date}T23:59:59`);
+        return endOfDay >= now;
+      })
+      .sort((a: any, b: any) => {
+        const dateA = `${a.date}T${a.time || '00:00'}:00`;
+        const dateB = `${b.date}T${b.time || '00:00'}:00`;
+        return dateA.localeCompare(dateB);
+      })
+      .slice(0, 5);
+
+    return {
+      data: res,
+      analytics: analyticsRes,
+      upcomingEvents: upcoming,
+      bookingForecasts: weatherRes?.bookingForecasts || []
+    };
+  };
+
+  const { data: swrData, isLoading: loading } = useSWR(
+    ['dashboard', startDate, endDate],
+    fetcher,
+    { keepPreviousData: true, revalidateOnFocus: false }
+  );
+
+  const { data, analytics, upcomingEvents, bookingForecasts } = swrData || {};
 
   if (loading || !data) {
     return (

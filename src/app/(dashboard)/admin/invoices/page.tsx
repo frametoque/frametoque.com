@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import useSWR from "swr";
 import { FileText, CheckCircle, Clock, AlertCircle, Search, Eye, Edit2, Send, Download, Trash2, DollarSign, X, Loader2, Upload, Image as ImageIcon, FileText as FileIcon } from "lucide-react";
 import Link from "next/link";
 import { getInvoices, deleteInvoice, recordInvoicePayment, adminUploadPaymentSlip, getInvoiceByIdAdmin } from "../actions/actions";
@@ -18,8 +19,6 @@ const formatLKR = (amount: number) => {
 
 export default function InvoicesPage() {
   const [activeFilter, setActiveFilter] = useState("All");
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
@@ -56,7 +55,6 @@ export default function InvoicesPage() {
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [isAdvance, setIsAdvance] = useState(false);
   const [savingPayment, setSavingPayment] = useState(false);
-  const [accounts, setAccounts] = useState<any[]>([]);
   const [selectedAccount, setSelectedAccount] = useState("");
 
   // Payment slip upload states
@@ -244,36 +242,18 @@ export default function InvoicesPage() {
     }
   };
 
-  const loadData = async () => {
-    try {
-      const [res, accRes] = await Promise.all([getInvoices(), getAccounts()]);
-      setData(res);
-      setAccounts(accRes || []);
-    } catch (e) {
-      console.error("Failed to load invoices", e);
-    } finally {
-      setLoading(false);
-    }
+  const fetcher = async () => {
+    const [res, accRes] = await Promise.all([getInvoices(), getAccounts()]);
+    return { data: res, accounts: accRes || [] };
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        const [res, accRes] = await Promise.all([getInvoices(), getAccounts()]);
-        if (!cancelled) {
-          setData(res);
-          setAccounts(accRes || []);
-          setLoading(false);
-        }
-      } catch (e) {
-        console.error("Failed to load invoices", e);
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, []);
+  const { data: swrData, isLoading: loading, mutate: loadData } = useSWR(
+    'invoices',
+    fetcher,
+    { keepPreviousData: true, revalidateOnFocus: false }
+  );
+
+  const { data = null as any, accounts = [] as any[] } = swrData || {};
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this invoice?")) {

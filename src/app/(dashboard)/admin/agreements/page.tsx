@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import useSWR from 'swr';
 import {
   FilePenLine, Plus, Eye, Download, Trash2, Edit2,
   Clock, CheckCircle2, AlertCircle, X,
@@ -36,42 +37,19 @@ const formatDate = (d: string) => {
 
 export default function AgreementsPage() {
   const router = useRouter();
-  const [agreements, setAgreements] = useState<AgreementData[]>([]);
-  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("All");
   const [typeFilter, setTypeFilter] = useState("All Types");
   const [viewingId, setViewingId] = useState<number | null>(null);
   const [exportingId, setExportingId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
-  const fetchAgreements = async () => {
-    try {
-      setLoading(true);
-      const data = await getAgreements();
-      setAgreements(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+  const fetcher = async () => {
+    const data = await getAgreements();
+    return { agreements: data };
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        setLoading(true);
-        const data = await getAgreements();
-        if (!cancelled) setAgreements(data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, []);
+  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-agreements'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { agreements = [] } = swrData || {};
 
   // Derived stats
   const { totalValue, activeCount, pendingCount, expiredCount } = useMemo(() => ({
@@ -101,7 +79,7 @@ export default function AgreementsPage() {
       setIsDeleting(id);
       try {
         await deleteAgreement(id);
-        setAgreements(prev => prev.filter(a => a.id !== id));
+        mutate();
         if (viewingId === id) setViewingId(null);
       } catch (error) {
         alert("Failed to delete agreement.");

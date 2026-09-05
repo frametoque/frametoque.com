@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 import { Plus, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Wallet, Landmark, RefreshCw, Star, Undo2 } from "lucide-react";
 import { getAccounts, createAccount, updateAccount, deleteAccount, transferCash, setDefaultAccount, getTransfers, updateTransfer, deleteTransfer } from "../actions/accounts";
 import AnimatedNumber from "../components/AnimatedNumber";
@@ -10,9 +11,6 @@ const formatLKR = (amount: number) => {
 };
 
 export default function AccountsPage() {
-  const [accounts, setAccounts] = useState<any[]>([]);
-  const [transfers, setTransfers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -21,21 +19,20 @@ export default function AccountsPage() {
   const [formData, setFormData] = useState({ name: "", type: "Cash Account", bankName: "", accountNumber: "", branch: "", initialBalance: 0, isCompanyAccount: true });
   const [transferData, setTransferData] = useState({ date: new Date().toISOString().split("T")[0], sourceAccountId: 0, destinationAccountId: 0, amount: 0, description: "" });
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      const [accs, trans] = await Promise.all([getAccounts(), getTransfers()]);
-      setAccounts(accs);
-      setTransfers(trans);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+  const fetcher = async () => {
+    const [accs, trans] = await Promise.all([getAccounts(), getTransfers()]);
+    return { accounts: accs, transfers: trans };
   };
 
+  const { data: swrData, isLoading: loading, mutate: load } = useSWR(
+    'accounts',
+    fetcher,
+    { keepPreviousData: true, revalidateOnFocus: false }
+  );
+
+  const { accounts = [] as any[], transfers = [] as any[] } = swrData || {};
+
   useEffect(() => {
-    load();
     const handleCreate = () => { setEditingId(null); setFormData({ name: "", type: "Cash Account", bankName: "", accountNumber: "", branch: "", initialBalance: 0, isCompanyAccount: true }); setShowCreate(true); };
     const handleTransfer = () => setShowTransfer(true);
     window.addEventListener("accounts:open-create", handleCreate);

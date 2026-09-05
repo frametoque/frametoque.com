@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useMemo } from "react";
+import useSWR from 'swr';
 import { 
   Calendar as CalendarIcon, Plus, Trash2, Edit2, ChevronLeft, ChevronRight,
   Clock, FileText, Folder, CalendarPlus, X, Apple, MapPin, Droplets
@@ -29,11 +30,6 @@ const formatLKR = (amount: number) => {
 };
 
 export default function BookingsAdminPage() {
-  const [bookings, setBookings] = useState<BookingData[]>([]);
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
-  const [sriLankaHolidays, setSriLankaHolidays] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
-  
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -102,59 +98,24 @@ export default function BookingsAdminPage() {
 
   // Calendar month/year navigation state
   const [currentDate, setCurrentDate] = useState(new Date());
-  
-  const [bookingForecasts, setBookingForecasts] = useState<any[]>([]);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [bList, eList, hList, weatherRes] = await Promise.all([
-        getBookings(),
-        getCalendarEvents(),
-        getSriLankaHolidays().catch(() => ({})),
-        fetch("/api/admin/weather").then(r => r.ok ? r.json() : null).catch(() => null)
-      ]);
-      setBookings(bList);
-      setCalendarEvents(eList);
-      setSriLankaHolidays(hList);
-      if (weatherRes && weatherRes.bookingForecasts) {
-        setBookingForecasts(weatherRes.bookingForecasts);
-      }
-    } catch (e) {
-      console.error("Failed to load bookings data:", e);
-    } finally {
-      setLoading(false);
-    }
+  const fetcher = async () => {
+    const [bList, eList, hList, weatherRes] = await Promise.all([
+      getBookings(),
+      getCalendarEvents(),
+      getSriLankaHolidays().catch(() => ({})),
+      fetch("/api/admin/weather").then(r => r.ok ? r.json() : null).catch(() => null)
+    ]);
+    return {
+      bookings: bList,
+      calendarEvents: eList,
+      sriLankaHolidays: hList,
+      bookingForecasts: weatherRes?.bookingForecasts || []
+    };
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        setLoading(true);
-        const [bList, eList, hList, weatherRes] = await Promise.all([
-          getBookings(),
-          getCalendarEvents(),
-          getSriLankaHolidays().catch(() => ({})),
-          fetch("/api/admin/weather").then(r => r.ok ? r.json() : null).catch(() => null)
-        ]);
-        if (!cancelled) {
-          setBookings(bList);
-          setCalendarEvents(eList);
-          setSriLankaHolidays(hList);
-          if (weatherRes && weatherRes.bookingForecasts) {
-            setBookingForecasts(weatherRes.bookingForecasts);
-          }
-        }
-      } catch (e) {
-        console.error("Failed to load bookings data:", e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, []);
+  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-bookings'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { bookings = [], calendarEvents = [], sriLankaHolidays = {}, bookingForecasts = [] } = swrData || {};
 
   const openNewModal = (dateStr?: string) => {
     setEditingBooking(null);
@@ -228,7 +189,7 @@ export default function BookingsAdminPage() {
         await createBooking(payload);
       }
       setIsModalOpen(false);
-      await loadData();
+      await mutate();
     } catch (err) {
       console.error("Failed to save booking:", err);
       alert("Error saving booking.");
@@ -239,7 +200,7 @@ export default function BookingsAdminPage() {
     if (confirm("Are you sure you want to delete this booking?")) {
       try {
         await deleteBooking(id);
-        await loadData();
+        await mutate();
       } catch (err) {
         console.error("Failed to delete booking:", err);
         alert("Failed to delete booking.");

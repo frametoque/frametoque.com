@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import useSWR from "swr";
 import {
   getHostingOrders,
   addHostingOrder,
@@ -111,9 +112,34 @@ function PricePair({
 }
 
 export default function HostingPage() {
-  const [orders, setOrders] = useState<HostingOrder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const fetcher = async () => {
+    const [rateRes, data] = await Promise.all([
+      fetch("https://open.er-api.com/v6/latest/USD").then(r => r.json()).catch(() => null),
+      getHostingOrders(),
+    ]);
+    return {
+      orders: data,
+      lkrRate: rateRes?.rates?.LKR || 300.0,
+    };
+  };
+
+  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-hosting'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { orders = [], lkrRate = 300.0 } = swrData || {};
+
+  const loadOrders = async () => {
+    await mutate();
+  };
+
+  useEffect(() => {
+    const handleOpenAdd = () => handleOpenAddModal();
+    window.addEventListener("hosting:open-add", handleOpenAdd);
+    return () => {
+      window.removeEventListener("hosting:open-add", handleOpenAdd);
+    };
+  }, []);
+
   const [activeFilter, setActiveFilter] = useState("All");
   const [viewingInvoice, setViewingInvoice] = useState<any | null>(null);
 
@@ -168,48 +194,10 @@ export default function HostingPage() {
   const [uploadingEditInvoice, setUploadingEditInvoice] = useState(false);
 
   const [saving, setSaving] = useState(false);
-  const [lkrRate, setLkrRate] = useState(300.0);
 
   const fetchOrders = async () => {
-    setLoading(true);
-    try {
-      // Fetch LKR rate and orders in parallel
-      const [rateRes, data] = await Promise.all([
-        fetch("https://open.er-api.com/v6/latest/USD").then(r => r.json()).catch(() => null),
-        getHostingOrders(),
-      ]);
-      if (rateRes?.rates?.LKR) setLkrRate(rateRes.rates.LKR);
-      setOrders(data);
-    } catch (_) {}
-    setLoading(false);
+    await mutate();
   };
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const [rateRes, data] = await Promise.all([
-          fetch("https://open.er-api.com/v6/latest/USD").then(r => r.json()).catch(() => null),
-          getHostingOrders(),
-        ]);
-        if (!cancelled) {
-          if (rateRes?.rates?.LKR) setLkrRate(rateRes.rates.LKR);
-          setOrders(data);
-        }
-      } catch (_) {}
-      if (!cancelled) setLoading(false);
-    }
-    load();
-
-    const handleOpenAdd = () => handleOpenAddModal();
-    window.addEventListener("hosting:open-add", handleOpenAdd);
-    return () => {
-      cancelled = true;
-      window.removeEventListener("hosting:open-add", handleOpenAdd);
-    };
-  }, []);
-
   const handleOpenAddModal = () => {
     setAddEmail("");
     setAddDomain("");
@@ -1206,7 +1194,7 @@ export default function HostingPage() {
         onRenewalInvoiceAdded={(url, note) => {
           addHostingRenewalInvoiceUrl(viewingInvoice.order.id, url, note).then(() => {
             // Refresh orders
-            getHostingOrders().then(data => setOrders(data));
+            mutate();
             setViewingInvoice(null);
           });
         }}

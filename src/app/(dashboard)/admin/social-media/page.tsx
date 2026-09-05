@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import useSWR from 'swr';
 import { getSocialPosts, deletePlatformPost, finalizeDelete, getSocialPostById } from "../actions/social-media";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import SocialViews from "./components/SocialViews";
@@ -16,15 +17,22 @@ const PROFILE_LINKS: Record<string, string> = {
 };
 
 export default function SocialMediaPage() {
-    const [posts, setPosts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const fetcher = async () => {
+    const fetchedPosts = await getSocialPosts();
+    return { posts: fetchedPosts };
+  };
+
+  const { data: swrData, isLoading: loading, mutate: reloadPosts } = useSWR(['social-media-posts'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { posts = [] } = swrData || {};
+
+  const deleteStateDefault = { isOpen: false, currentPlatform: '', platforms: [], results: {}, done: false };
   const [deleteState, setDeleteState] = useState<{
     isOpen: boolean;
     currentPlatform: string;
     platforms: string[];
     results: Record<string, { status: 'loading' | 'success' | 'error' | 'warning', error?: string; warning?: string }>;
     done: boolean;
-  }>({ isOpen: false, currentPlatform: '', platforms: [], results: {}, done: false });
+  }>(deleteStateDefault);
 
   const handleDelete = async (id: number) => {
     const post = await getSocialPostById(id);
@@ -54,24 +62,14 @@ export default function SocialMediaPage() {
     if (Object.values(results).every((r: any) => r.status === 'success')) {
        setTimeout(() => {
          setDeleteState(prev => ({ ...prev, isOpen: false }));
-         loadData();
+         reloadPosts();
        }, 2000);
     }
   };
 
   const loadData = async () => {
-    setLoading(true);
-
-    const fetchedPosts = await getSocialPosts();
-    setPosts(fetchedPosts);
-    setLoading(false);
+    await reloadPosts();
   };
-
-  useEffect(() => {
-    loadData();
-            return () => {
-          };
-  }, []);
 
   return (
     <div className="space-y-10 pb-10 mt-2">

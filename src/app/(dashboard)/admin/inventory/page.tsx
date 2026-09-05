@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import useSWR from 'swr';
 import { Search, Plus, Edit2, Trash2, X, Loader2, Package, CheckCircle2, Box, Info, Download, FileText, Eye, Upload, Link2 } from "lucide-react";
 import { getInventoryItems, createInventoryItem, updateInventoryItem, deleteInventoryItem, uploadInventoryDocument, getExpensesForLinking } from "../actions/inventory";
 import AnimatedNumber from "../components/AnimatedNumber";
@@ -12,49 +13,24 @@ const emptyForm = { item_name: '', category: '', serial_number: '', quantity: 1,
 
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
   const [viewingItem, setViewingItem] = useState<any | null>(null);
   const [viewingItemTab, setViewingItemTab] = useState<'invoice' | 'warranty'>('invoice');
-  const [expenses, setExpenses] = useState<any[]>([]);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyForm);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [res, exp] = await Promise.all([getInventoryItems(), getExpensesForLinking()]);
-      setData(res);
-      setExpenses(exp);
-    } catch (e) {
-      console.error("Failed to load inventory", e);
-    } finally {
-      setLoading(false);
-    }
+  const fetcher = async () => {
+    const [res, exp] = await Promise.all([getInventoryItems(), getExpensesForLinking()]);
+    return { data: res, expenses: exp };
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const [res, exp] = await Promise.all([getInventoryItems(), getExpensesForLinking()]);
-        if (!cancelled) { setData(res); setExpenses(exp); }
-      } catch (e) {
-        console.error("Failed to load inventory", e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, []);
+  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-inventory'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { data = [], expenses = [] } = swrData || {};
 
 
   useEffect(() => {
@@ -128,7 +104,7 @@ export default function InventoryPage() {
         await createInventoryItem(payload);
       }
       setIsModalOpen(false);
-      await loadData();
+      await mutate();
     } catch (e) {
       console.error(e);
       alert("Failed to save item.");
@@ -142,7 +118,7 @@ export default function InventoryPage() {
     setDeletingId(item.id);
     try {
       await deleteInventoryItem(item.id, item.item_name);
-      await loadData();
+      await mutate();
     } catch (e) {
       console.error(e);
       alert("Failed to delete item.");

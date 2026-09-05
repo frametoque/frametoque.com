@@ -1,4 +1,5 @@
 "use client";
+import useSWR from "swr";
 
 import { useEffect, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
@@ -136,10 +137,7 @@ function LogoIcon({ src, fallback }: { src: string | null; fallback: React.React
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function AnalyticsPage() {
-  const [data, setData]           = useState<any>(null);
-  const [loading, setLoading]     = useState(true);
   const { dateRange }             = useAnalyticsDateRange();
-  const [activeVisitors, setActiveVisitors] = useState<number>(0);
 
   const [pageTab,   setPageTab]   = useState("path");
   const [sourceTab, setSourceTab] = useState("referrers");
@@ -149,52 +147,29 @@ export default function AnalyticsPage() {
   // Chart X-axis zoom level: index into CHART_ZOOM_LEVELS
   // 0 = year (most zoomed out) ... 4 = time (most zoomed in)
   const [chartZoomIndex, setChartZoomIndex] = useState(2); // default to "week"
-  const [chartData, setChartData] = useState<any[] | null>(null);
-  const [chartLoading, setChartLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try { 
-        const result = await getAnalyticsData(dateRange);
-        if (!cancelled) setData(result);
-      }
-      catch (e) { console.error(e); }
-      finally { if (!cancelled) setLoading(false); }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [dateRange]);
+  const { data, isLoading: loading } = useSWR(
+    ['analytics', dateRange],
+    async ([_, range]) => await getAnalyticsData(range),
+    { keepPreviousData: true, revalidateOnFocus: false }
+  );
 
   // Fetch chart-specific data whenever the zoom level changes. This is
   // independent of the page-wide `dateRange` selector so zooming the chart
   // doesn't affect the other widgets (stat cards, pages, sources, etc).
-  useEffect(() => {
-    const zoomLevel = CHART_ZOOM_LEVELS[chartZoomIndex];
-    let cancelled = false;
-    async function loadChart() {
-      setChartLoading(true);
-      try {
-        const points = await getChartData(zoomLevel.key);
-        if (!cancelled) setChartData(Array.isArray(points) ? points : []);
-      } catch (e) {
-        console.error(e);
-        if (!cancelled) setChartData([]);
-      } finally {
-        if (!cancelled) setChartLoading(false);
-      }
-    }
-    loadChart();
-    return () => { cancelled = true; };
-  }, [chartZoomIndex]);
+  const { data: chartDataRaw, isLoading: chartLoading } = useSWR(
+    ['analytics-chart', CHART_ZOOM_LEVELS[chartZoomIndex].key],
+    async ([_, key]) => await getChartData(key),
+    { keepPreviousData: true, revalidateOnFocus: false }
+  );
 
-  useEffect(() => {
-    const fetch_ = async () => setActiveVisitors(await getActiveVisitors());
-    fetch_();
-    const id = setInterval(fetch_, 30000);
-    return () => clearInterval(id);
-  }, []);
+  const chartData = Array.isArray(chartDataRaw) ? chartDataRaw : [];
+
+  const { data: activeVisitors = 0 } = useSWR(
+    'active-visitors',
+    async () => await getActiveVisitors(),
+    { refreshInterval: 30000, keepPreviousData: true }
+  );
 
   const chartZoomLevel = CHART_ZOOM_LEVELS[chartZoomIndex];
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import useSWR from "swr";
 import {
   getDomainOrders,
   getDomainRenewalHistory,
@@ -369,18 +370,57 @@ function RenewalHistoryRow({
 // Main page
 // ---------------------------------------------------------------------------
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<DomainOrder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const fetcher = async () => {
+    const [rateRes, data, renewals] = await Promise.all([
+      fetch("https://open.er-api.com/v6/latest/USD").then(r => r.json()).catch(() => null),
+      getDomainOrders(),
+      getAllRenewalHistory(),
+    ]);
+    return {
+      orders: data,
+      allRenewals: renewals,
+      lkrRate: rateRes?.rates?.LKR || 300,
+    };
+  };
+
+  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-domains'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { orders = [], allRenewals = [], lkrRate = 300 } = swrData || {};
+
+  const loadData = async () => {
+    await mutate();
+  };
+
+  useEffect(() => {
+    const handleOpenAdd = () => {
+      setAddEmail("");
+      setAddDomainName("");
+      setAddActualPriceCurrency("USD");
+      setAddRegCost("");
+      setAddRegPrice("");
+      setAddRenewCost("");
+      setAddRenewPrice("");
+      setAddRegistrar("Internet.bs");
+      setAddExpiry("");
+      setAddStatus("active");
+      setAddProviderInvoiceUrl(null);
+      setSearchResults(null);
+      setIsAddModalOpen(true);
+    };
+    window.addEventListener("domains:open-add", handleOpenAdd);
+    return () => {
+      window.removeEventListener("domains:open-add", handleOpenAdd);
+    };
+  }, []);
+
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [activeFilter, setActiveFilter] = useState("All");
-  const [lkrRate, setLkrRate] = useState(300);
 
   // Renewal history state per domain id
   const [expandedHistory, setExpandedHistory] = useState<Record<number, boolean>>({});
   const [historyData, setHistoryData] = useState<Record<number, DomainRenewalHistoryRow[]>>({});
   const [historyLoading, setHistoryLoading] = useState<Record<number, boolean>>({});
-  const [allRenewals, setAllRenewals] = useState<DomainRenewalHistoryRow[]>([]);
 
   // Activation & Invoice Modal States
   const [activationModalOpen, setActivationModalOpen] = useState(false);
@@ -447,77 +487,8 @@ export default function AdminOrdersPage() {
   const usdToLkr = (usd: number) => usd * lkrRate;
 
   const fetchOrders = async () => {
-    setLoading(true);
-    try {
-      // Run both fetches in parallel — server already handles auto-expire in batch
-      const [data, renewals] = await Promise.all([
-        getDomainOrders(),
-        getAllRenewalHistory(),
-      ]);
-      setOrders(data);
-      setAllRenewals(renewals);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    await mutate();
   };
-
-  useEffect(() => {
-    let cancelled = false;
-
-    // Fetch LKR rate (no cancel needed — just state update, low stakes)
-    fetch("https://open.er-api.com/v6/latest/USD")
-      .then((res) => res.json())
-      .then((data) => { if (!cancelled && data?.rates?.LKR) setLkrRate(data.rates.LKR); })
-      .catch((e) => console.error("Failed to load LKR exchange rate", e));
-
-    async function load() {
-      setLoading(true);
-      try {
-        const [data, renewals] = await Promise.all([
-          getDomainOrders(),
-          getAllRenewalHistory(),
-        ]);
-        if (!cancelled) {
-          setOrders(data);
-          setAllRenewals(renewals);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-
-    const handleOpenAdd = () => {
-      setAddEmail("");
-      setAddDomainName("");
-      setAddActualPriceCurrency("USD");
-      setAddRegCost("");
-      setAddRegPrice("");
-      setAddRenewCost("");
-      setAddRenewPrice("");
-      setAddRegistrar("Internet.bs");
-      setAddExpiry("");
-      setAddStatus("active");
-      setAddProviderInvoiceUrl(null);
-      setSearchResults(null);
-      setIsAddModalOpen(true);
-    };
-
-    const handleRefreshEvent = () => { fetchOrders(); };
-
-    window.addEventListener("domains:open-add", handleOpenAdd);
-    window.addEventListener("domains:refresh", handleRefreshEvent);
-    return () => {
-      cancelled = true;
-      window.removeEventListener("domains:open-add", handleOpenAdd);
-      window.removeEventListener("domains:refresh", handleRefreshEvent);
-    };
-  }, []);
-
   const checkDomainAvailability = async () => {
     if (!addDomainName || !addDomainName.includes(".")) {
       alert("Please enter a valid domain name");
@@ -608,9 +579,7 @@ export default function AdminOrdersPage() {
     try {
       const res = await updateDomainOrderStatus(id, newStatus);
       if (res.success) {
-        setOrders((prev) =>
-          prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o))
-        );
+        await mutate();
         fetchOrders();
       } else {
         alert("Failed to update status: " + extractError(res));
@@ -655,7 +624,7 @@ export default function AdminOrdersPage() {
     try {
       const res = await deleteDomainOrder(deletingOrderId, deletingWithInvoices);
       if (res.success) {
-        setOrders((prev) => prev.filter((o) => o.id !== deletingOrderId));
+        await mutate();
         setDeleteModalOpen(false);
         setDeletingOrderId(null);
         alert("Domain order deleted successfully!");

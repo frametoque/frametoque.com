@@ -1,6 +1,8 @@
 "use client";
+const EMPTY_ITEMS: any[] = [];
 
 import { useEffect, useState, useRef, useMemo } from "react";
+import useSWR from 'swr';
 import {
   Plus,
   Edit2,
@@ -159,8 +161,6 @@ function YouTubeVideoTitle({ url }: { url: string }) {
 
 export default function PortfolioAdminPage() {
   const [activeCategory, setActiveCategory] = useState("photography");
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Modals controls
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -187,6 +187,18 @@ export default function PortfolioAdminPage() {
   type BulkFileEntry = { name: string; status: BulkFileStatus; error?: string };
   const [bulkQueue, setBulkQueue] = useState<BulkFileEntry[]>([]);
   const [bulkUploading, setBulkUploading] = useState(false);
+  const fetcher = async () => {
+    const res = await getPortfolioByCategory(activeCategory);
+    return { items: res };
+  };
+
+  const { data: swrData, isLoading: loading, mutate: reloadItems } = useSWR(["portfolio", activeCategory], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { items = EMPTY_ITEMS } = swrData || {};
+
+  const loadItems = async () => {
+    await reloadItems();
+  };
+
 
   // New photography event staging state
   type StagedPhoto = { file: File; previewUrl: string; width?: number; height?: number; name: string; hash?: string };
@@ -294,70 +306,24 @@ export default function PortfolioAdminPage() {
     }
   };
 
-  // Fetch portfolio items
-  const loadItems = async () => {
-    setLoading(true);
-    try {
-      const res = await getPortfolioByCategory(activeCategory);
-      setItems(res);
-      setDragItems(res);
-      
-      // Compute events list for photography category
-      if (activeCategory === "photography") {
-        const groups = new Map<string, any[]>();
-        for (const item of res) {
-          const name = item.event_name || "Uncategorized";
-          if (!groups.has(name)) groups.set(name, []);
-          groups.get(name)!.push(item);
-        }
-        const eventList = Array.from(groups.entries()).map(([name, images]) => ({
-          name,
-          images,
-          id: images[0]?.event_id
-        }));
-        setDragEvents(eventList);
-      }
-    } catch (err) {
-      console.error("Failed to load portfolio items:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     setIsReorderMode(false);
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const res = await getPortfolioByCategory(activeCategory);
-        if (!cancelled) {
-          setItems(res);
-          setDragItems(res);
-          if (activeCategory === "photography") {
-            const groups = new Map<string, any[]>();
-            for (const item of res) {
-              const name = item.event_name || "Uncategorized";
-              if (!groups.has(name)) groups.set(name, []);
-              groups.get(name)!.push(item);
-            }
-            const eventList = Array.from(groups.entries()).map(([name, images]) => ({
-              name,
-              images,
-              id: images[0]?.event_id
-            }));
-            setDragEvents(eventList);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to load portfolio items:", err);
-      } finally {
-        if (!cancelled) setLoading(false);
+    setDragItems(items);
+    if (activeCategory === "photography") {
+      const groups = new Map<string, any[]>();
+      for (const item of items) {
+        const name = item.event_name || "Uncategorized";
+        if (!groups.has(name)) groups.set(name, []);
+        groups.get(name)!.push(item);
       }
+      const eventList = Array.from(groups.entries()).map(([name, images]) => ({
+        name,
+        images,
+        id: images[0]?.event_id
+      }));
+      setDragEvents(eventList);
     }
-    load();
-    return () => { cancelled = true; };
-  }, [activeCategory]);
+  }, [items, activeCategory]);
 
   const handleGenerateScreenshots = () => {
     if (!formData.url.trim()) {

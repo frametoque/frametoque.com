@@ -1,6 +1,8 @@
 "use client";
+const EMPTY_SERVICES: any[] = [];
 
 import { useEffect, useState, useRef } from "react";
+import useSWR from 'swr';
 import {
   Search,
   Plus,
@@ -102,8 +104,6 @@ const defaultServiceForm = {
 
 export default function ServicesAdminPage() {
   const [activeCategory, setActiveCategory] = useState("photo-video");
-  const [services, setServices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Modal control
@@ -126,40 +126,22 @@ export default function ServicesAdminPage() {
   // Icon dropdown control
   const [openIconDropdownIdx, setOpenIconDropdownIdx] = useState<number | null>(null);
 
-  // Load services
   const loadServices = async () => {
-    setLoading(true);
-    try {
-      const data = await getServicesByCategory(activeCategory);
-      setServices(data);
-      setDragItems(data);
-    } catch (err) {
-      console.error("Failed to load services:", err);
-    } finally {
-      setLoading(false);
-    }
+    await reloadServices();
   };
+
+  const fetcher = async () => {
+    const data = await getServicesByCategory(activeCategory);
+    return { services: data };
+  };
+
+  const { data: swrData, isLoading: loading, mutate: reloadServices } = useSWR(['services', activeCategory], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { services = EMPTY_SERVICES } = swrData || {};
 
   useEffect(() => {
     setIsReorderMode(false);
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const data = await getServicesByCategory(activeCategory);
-        if (!cancelled) {
-          setServices(data);
-          setDragItems(data);
-        }
-      } catch (err) {
-        console.error("Failed to load services:", err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [activeCategory]);
+    setDragItems(services);
+  }, [services]);
 
   // Lock body & document scroll when modal is open
   useEffect(() => {
