@@ -116,7 +116,7 @@ export default function ExpensesPage() {
   const { data: swrData, isLoading: loading, mutate: loadData } = useSWR(
     ['expenses', startDate, endDate],
     fetcher,
-    { keepPreviousData: true, revalidateOnFocus: false }
+    { revalidateOnFocus: true, dedupingInterval: 0 }
   );
 
   const { data = null as any, scheduledExpenses = [] as any[], accounts = [] as any[] } = swrData || {};

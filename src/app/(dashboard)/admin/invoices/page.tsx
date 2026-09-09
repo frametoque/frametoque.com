@@ -250,7 +250,7 @@ export default function InvoicesPage() {
   const { data: swrData, isLoading: loading, mutate: loadData } = useSWR(
     'invoices',
     fetcher,
-    { keepPreviousData: true, revalidateOnFocus: false }
+    { revalidateOnFocus: true, dedupingInterval: 0 }
   );
 
   const { data = null as any, accounts = [] as any[] } = swrData || {};

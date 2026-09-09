@@ -100,7 +100,7 @@ export default function IncomePage() {
   const { data: swrData, isLoading: loading, mutate: loadData } = useSWR(
     ['income', startDate, endDate],
     fetcher,
-    { keepPreviousData: true, revalidateOnFocus: false }
+    { revalidateOnFocus: true, dedupingInterval: 0 }
   );
 
   const { data = null as any, clients = [] as any[], bankAccounts = [] as any[], invoicesList = [] as any[] } = swrData || {};
