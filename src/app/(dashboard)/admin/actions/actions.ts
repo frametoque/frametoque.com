@@ -45,7 +45,8 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     expenseBreakdownRange,
     incomeBreakdownRange,
     clientsCountRows,
-    accounts
+    accounts,
+    clientDueAmountRows
   ] = await Promise.all([
     sql`
       SELECT 
@@ -137,7 +138,18 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
       ORDER BY value DESC
     `,
     sql`SELECT COUNT(*) as count FROM admin_clients`,
-    import('./accounts').then(m => m.getAccounts(start, end))
+    import('./accounts').then(m => m.getAccounts(start, end)),
+    sql`
+      SELECT 
+        COALESCE(c.full_name, i.user_email) as client_name,
+        SUM(i.total_due) as due_amount
+      FROM invoices i
+      LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
+      WHERE LOWER(i.payment_status) IN ('unpaid', 'pending', 'partially paid', 'advance paid', 'advance-paid')
+      GROUP BY COALESCE(c.full_name, i.user_email)
+      HAVING SUM(i.total_due) > 0
+      ORDER BY due_amount DESC
+    `
   ]);
 
   const incomesStats = incomesStatsRow[0] || {};
@@ -162,7 +174,7 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
 
   let unpaidCount = 0;
   let unpaidAmount = 0;
-  const targetStatuses = ['unpaid', 'pending', 'partially paid'];
+  const targetStatuses = ['unpaid', 'pending', 'partially paid', 'advance paid', 'advance-paid'];
   invoiceAging.forEach(row => {
     if (targetStatuses.includes(row.status?.toLowerCase())) {
       unpaidCount += parseInt(row.count || 0);
@@ -191,6 +203,11 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     };
   });
 
+  const clientDueAmounts = clientDueAmountRows.map(r => ({
+    client: r.client_name || 'Unknown',
+    due_amount: parseFloat(r.due_amount || 0)
+  }));
+
   return {
     totalIncome,
     totalExpenses,
@@ -202,6 +219,7 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     totalClients: parseInt(clientsCountRows[0]?.count || 0, 10),
     unpaidCount,
     unpaidAmount,
+    clientDueAmounts,
     currentMonthStats: {
       income: parseFloat(incomesStats.this_month || 0),
       expenses: parseFloat(expensesStats.this_month || 0),

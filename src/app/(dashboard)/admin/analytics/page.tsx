@@ -168,7 +168,7 @@ export default function AnalyticsPage() {
   const { data: activeVisitors = 0 } = useSWR(
     'active-visitors',
     async () => await getActiveVisitors(),
-    { refreshInterval: 30000, keepPreviousData: true }
+    { keepPreviousData: true, revalidateOnFocus: false }
   );
 
   const chartZoomLevel = CHART_ZOOM_LEVELS[chartZoomIndex];

@@ -326,11 +326,9 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
       }
     };
     fetchWeatherData();
-    const weatherInterval = setInterval(fetchWeatherData, 5 * 60 * 1000);
 
     return () => {
       clearInterval(clockInterval);
-      clearInterval(weatherInterval);
     };
   }, []);
 

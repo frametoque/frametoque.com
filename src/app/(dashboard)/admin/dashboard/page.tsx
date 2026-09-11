@@ -161,7 +161,7 @@ export default function DashboardPage() {
           </div>
         ))}
         {/* Unpaid Invoices */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors">
+        <div className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors cursor-default hover:z-50">
           <div className="w-14 h-14 rounded-2xl bg-amber-400/10 flex items-center justify-center flex-shrink-0">
             <span className="text-xl font-bold text-amber-400">
               <AnimatedNumber value={data.unpaidCount || 0} />
@@ -173,6 +173,19 @@ export default function DashboardPage() {
               <AnimatedNumber value={formatLKR(data.unpaidAmount || 0)} />
             </p>
           </div>
+          {data.clientDueAmounts && data.clientDueAmounts.length > 0 && (
+            <div className="absolute top-full left-0 mt-2 w-72 bg-[#0c0c0e] border border-white/10 rounded-2xl p-4 shadow-2xl opacity-0 invisible scale-95 group-hover:opacity-100 group-hover:visible group-hover:scale-100 transition-all duration-200 z-50 pointer-events-none before:absolute before:-top-2 before:left-0 before:right-0 before:h-2">
+              <p className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Due by Client</p>
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                {data.clientDueAmounts.map((c: any, idx: number) => (
+                  <div key={idx} className="flex justify-between items-center text-sm border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                    <span className="text-gray-300 truncate pr-3">{c.client}</span>
+                    <span className="text-amber-400 font-semibold shrink-0">{formatLKR(c.due_amount)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
