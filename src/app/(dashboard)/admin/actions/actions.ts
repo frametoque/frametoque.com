@@ -280,7 +280,7 @@ function getCutoffDate(range: string) {
 }
 
 // -- INCOMES --
-export async function getIncomes(startDate?: string, endDate?: string) {
+export async function getIncomes(startDate?: string, endDate?: string, limit: number = 1000, offset: number = 0) {
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
 
@@ -304,6 +304,7 @@ export async function getIncomes(startDate?: string, endDate?: string) {
       LEFT JOIN invoices inv ON i.invoice_id = inv.invoice_id
       WHERE i.date >= ${start}::timestamp AND i.date <= (${end} || ' 23:59:59.999')::timestamp
       ORDER BY i.date DESC, i.created_at DESC, i.id DESC
+      LIMIT ${limit} OFFSET ${offset}
     `
   ]);
 
@@ -560,7 +561,7 @@ export async function deleteIncome(id: number) {
 }
 
 // -- EXPENSES --
-export async function getExpenses(startDate?: string, endDate?: string) {
+export async function getExpenses(startDate?: string, endDate?: string, limit: number = 1000, offset: number = 0) {
   await processRecurringExpenses();
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
@@ -574,6 +575,7 @@ export async function getExpenses(startDate?: string, endDate?: string) {
       FROM admin_expenses
       WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
       ORDER BY date DESC, created_at DESC, id DESC
+      LIMIT ${limit} OFFSET ${offset}
     `
   ]);
 
@@ -790,7 +792,7 @@ export async function payScheduledExpense(id: number) {
 }
 
 // -- INVOICES --
-export async function getInvoices() {
+export async function getInvoices(limit: number = 1000, offset: number = 0) {
   const [totalIssuedCount, rows, nonAdvancePaymentsRows] = await Promise.all([
     sql`SELECT COUNT(*) as count FROM invoices`,
     sql`
@@ -798,6 +800,7 @@ export async function getInvoices() {
       FROM invoices i
       LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
       ORDER BY i.date DESC, i.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
     `,
     sql`
       SELECT invoice_id, SUM(amount) as paid_sum

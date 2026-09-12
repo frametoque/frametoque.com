@@ -106,7 +106,7 @@ export default function ExpensesPage() {
 
   const fetcher = async () => {
     const [res, schedRes, accs] = await Promise.all([
-      getExpenses(startDate, endDate),
+      getExpenses(startDate, endDate, 10, 0),
       getScheduledExpenses().catch(() => []),
       getAccounts()
     ]);
@@ -120,6 +120,48 @@ export default function ExpensesPage() {
   );
 
   const { data = null as any, scheduledExpenses = [] as any[], accounts = [] as any[] } = swrData || {};
+
+  const [extraItems, setExtraItems] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  useEffect(() => {
+    setExtraItems([]);
+    setPage(1);
+    setHasMore(true);
+  }, [startDate, endDate]);
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await getExpenses(startDate, endDate, 10, page * 10);
+      if (res.items.length < 10) setHasMore(false);
+      setExtraItems(prev => [...prev, ...res.items]);
+      setPage(p => p + 1);
+    } catch (e) {
+      console.error("Failed to load more:", e);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 500) {
+        if (!loadingMore && hasMore) {
+          loadMore();
+        }
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loadingMore, hasMore, page, startDate, endDate]);
+
+  const allExpenseItems = useMemo(() => {
+    return [...(data?.items || []), ...extraItems];
+  }, [data?.items, extraItems]);
 
   // Handle actual expense save
   const handleSave = async () => {
@@ -224,13 +266,13 @@ export default function ExpensesPage() {
   };
 
   const dynamicCategories = useMemo(() => {
-    if (!data?.items) return filters.filter(f => f !== "All");
+    if (!allExpenseItems) return filters.filter(f => f !== "All");
     const all = new Set(filters.filter(f => f !== "All"));
-    data.items.forEach((item: any) => {
+    allExpenseItems.forEach((item: any) => {
       parseCategories(item.category).forEach(c => all.add(c));
     });
     return Array.from(all);
-  }, [data?.items]);
+  }, [allExpenseItems]);
 
   if (loading || !data) {
     return (
@@ -271,7 +313,7 @@ export default function ExpensesPage() {
 
   const dynamicFilters = ["All", ...dynamicCategories];
 
-  const filteredExpenses = data.items.filter((row: any) => {
+  const filteredExpenses = allExpenseItems.filter((row: any) => {
     if (activeFilter === "All") return true;
     return parseCategories(row.category).includes(activeFilter);
   });
@@ -387,7 +429,9 @@ export default function ExpensesPage() {
                 <tr key={row.id} className="hover:bg-white/5 transition-colors">
                   <td className="p-4 text-sm">{row.date}</td>
                   <td className="p-4 font-semibold text-red-400">{formatLKR(row.amount)}</td>
-                  <td className="p-4 text-sm text-gray-300">{row.desc}</td>
+                  <td className="p-4 text-sm text-gray-300 max-w-[200px]">
+                    <div className="truncate" title={row.desc}>{row.desc}</div>
+                  </td>
                   <td className="p-4 w-36">
                     <div className="flex flex-wrap gap-1 max-w-[144px]">
                       {parseCategories(row.category).map((cat) => (
@@ -417,6 +461,12 @@ export default function ExpensesPage() {
                 <tr>
                   <td colSpan={6} className="p-6 text-center text-gray-500">No expense records found.</td>
                 </tr>
+              )}
+              {loadingMore && (
+                <tr><td colSpan={6} className="p-4 text-center text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></td></tr>
+              )}
+              {!hasMore && filteredExpenses.length > 0 && (
+                <tr><td colSpan={6} className="p-4 text-center text-gray-500 text-sm">No more records</td></tr>
               )}
             </tbody>
           </table>

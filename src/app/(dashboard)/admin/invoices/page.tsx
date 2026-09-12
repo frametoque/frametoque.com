@@ -243,7 +243,7 @@ export default function InvoicesPage() {
   };
 
   const fetcher = async () => {
-    const [res, accRes] = await Promise.all([getInvoices(), getAccounts()]);
+    const [res, accRes] = await Promise.all([getInvoices(10, 0), getAccounts()]);
     return { data: res, accounts: accRes || [] };
   };
 
@@ -254,6 +254,48 @@ export default function InvoicesPage() {
   );
 
   const { data = null as any, accounts = [] as any[] } = swrData || {};
+
+  const [extraItems, setExtraItems] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  useEffect(() => {
+    setExtraItems([]);
+    setPage(1);
+    setHasMore(true);
+  }, []);
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await getInvoices(10, page * 10);
+      if (res.items.length < 10) setHasMore(false);
+      setExtraItems(prev => [...prev, ...res.items]);
+      setPage(p => p + 1);
+    } catch (e) {
+      console.error("Failed to load more:", e);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 500) {
+        if (!loadingMore && hasMore) {
+          loadMore();
+        }
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loadingMore, hasMore, page]);
+
+  const allInvoiceItems = useMemo(() => {
+    return [...(data?.items || []), ...extraItems];
+  }, [data?.items, extraItems]);
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this invoice?")) {
@@ -268,7 +310,7 @@ export default function InvoicesPage() {
 
   
 
-  const filteredInvoices = useMemo(() => data?.items?.filter((row: any) => {
+  const filteredInvoices = useMemo(() => allInvoiceItems.filter((row: any) => {
     let statusMatch = false;
     const rowStatus = row.status?.toLowerCase() || '';
     if (activeFilter === "All") {
@@ -288,7 +330,7 @@ export default function InvoicesPage() {
       row.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
       row.id.toLowerCase().includes(searchTerm.toLowerCase());
     return statusMatch && searchMatch;
-  }) ?? [], [data, activeFilter, searchTerm]);
+  }), [allInvoiceItems, activeFilter, searchTerm]);
 
   if (loading || !data) {
     return (
@@ -453,7 +495,9 @@ export default function InvoicesPage() {
                         </div>
                       )}
                     </td>
-                    <td className="p-4 text-sm text-gray-300">{row.service}</td>
+                    <td className="p-4 text-sm text-gray-300 max-w-[200px]">
+                      <div className="truncate" title={row.service}>{row.service}</div>
+                    </td>
                     <td className="p-4 text-center">
                       <span className={`px-2.5 py-1 text-[10px] uppercase font-bold rounded-full border ${workColor}`}>
                         {row.work_status || '—'}
@@ -513,6 +557,12 @@ export default function InvoicesPage() {
                 <tr>
                   <td colSpan={8} className="p-6 text-center text-gray-500">No invoices found.</td>
                 </tr>
+              )}
+              {loadingMore && (
+                <tr><td colSpan={8} className="p-4 text-center text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></td></tr>
+              )}
+              {!hasMore && filteredInvoices.length > 0 && (
+                <tr><td colSpan={8} className="p-4 text-center text-gray-500 text-sm">No more records</td></tr>
               )}
             </tbody>
           </table>

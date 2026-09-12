@@ -93,7 +93,7 @@ export default function IncomePage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const fetcher = async () => {
-    const [res, cls, accs, invsData] = await Promise.all([getIncomes(startDate, endDate), getClients(), getAccounts(), getInvoices()]);
+    const [res, cls, accs, invsData] = await Promise.all([getIncomes(startDate, endDate, 10, 0), getClients(), getAccounts(), getInvoices()]);
     return { data: res, clients: cls, bankAccounts: accs, invoicesList: invsData?.items || [] };
   };
 
@@ -104,6 +104,48 @@ export default function IncomePage() {
   );
 
   const { data = null as any, clients = [] as any[], bankAccounts = [] as any[], invoicesList = [] as any[] } = swrData || {};
+
+  const [extraItems, setExtraItems] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  useEffect(() => {
+    setExtraItems([]);
+    setPage(1);
+    setHasMore(true);
+  }, [startDate, endDate]);
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await getIncomes(startDate, endDate, 10, page * 10);
+      if (res.items.length < 10) setHasMore(false);
+      setExtraItems(prev => [...prev, ...res.items]);
+      setPage(p => p + 1);
+    } catch (e) {
+      console.error("Failed to load more:", e);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 500) {
+        if (!loadingMore && hasMore) {
+          loadMore();
+        }
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loadingMore, hasMore, page, startDate, endDate]);
+
+  const allIncomeItems = useMemo(() => {
+    return [...(data?.items || []), ...extraItems];
+  }, [data?.items, extraItems]);
 
   const [downloadingReceiptId, setDownloadingReceiptId] = useState<number | null>(null);
 
@@ -394,13 +436,13 @@ export default function IncomePage() {
   };
 
   const dynamicCategories = useMemo(() => {
-    if (!data?.items) return ALL_CATEGORIES;
+    if (!allIncomeItems) return ALL_CATEGORIES;
     const all = new Set(ALL_CATEGORIES);
-    data.items.forEach((item: any) => {
+    allIncomeItems.forEach((item: any) => {
       parseCategories(item.category).forEach(c => all.add(c));
     });
     return Array.from(all);
-  }, [data?.items]);
+  }, [allIncomeItems]);
 
   if (loading || !data) {
     return (
@@ -444,7 +486,7 @@ export default function IncomePage() {
   const dynamicFilters = ["All", ...dynamicCategories];
 
   // Filter: match if any of the row's categories includes the active filter
-  const filteredIncome = data.items.filter((row: any) => {
+  const filteredIncome = allIncomeItems.filter((row: any) => {
     if (activeFilter === "All") return true;
     return parseCategories(row.category).includes(activeFilter);
   });
@@ -510,7 +552,9 @@ export default function IncomePage() {
                       <span title={row.clientEmail || ''}>{row.client || '-'}</span>
                     )}
                   </td>
-                  <td className="p-4 text-sm text-gray-300">{row.desc}</td>
+                  <td className="p-4 text-sm text-gray-300 max-w-[200px]">
+                    <div className="truncate" title={row.desc}>{row.desc}</div>
+                  </td>
                   <td className="p-4 w-36">
                     <div className="flex flex-wrap gap-1 max-w-[144px]">
                       {parseCategories(row.category).map((cat) => (
@@ -582,6 +626,12 @@ export default function IncomePage() {
               ))}
               {filteredIncome.length === 0 && (
                 <tr><td colSpan={7} className="p-6 text-center text-gray-500">No income records found.</td></tr>
+              )}
+              {loadingMore && (
+                <tr><td colSpan={7} className="p-4 text-center text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></td></tr>
+              )}
+              {!hasMore && filteredIncome.length > 0 && (
+                <tr><td colSpan={7} className="p-4 text-center text-gray-500 text-sm">No more records</td></tr>
               )}
             </tbody>
           </table>
