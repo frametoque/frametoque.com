@@ -62,13 +62,16 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
   const [priority, setPriority] = useState("Medium");
   const [tags, setTags] = useState("");
   const [category, setCategory] = useState("");
+  const [customCategory, setCustomCategory] = useState("");
+  
+  const PREDEFINED_CATEGORIES = ["Graphics Design", "Video Editing", "Web dev", "Photography", "Videography"];
   
   const [moodboardTitle, setMoodboardTitle] = useState("");
   const [moodboardImages, setMoodboardImages] = useState("");
 
   const openNewModal = () => {
     setSelectedTask(null);
-    setName(""); setStatus("Not Started"); setAssigneeId(""); setDueDate(new Date().toISOString().split("T")[0]); setPriority("Medium"); setTags(""); setCategory("");
+    setName(""); setStatus("Not Started"); setAssigneeId(""); setDueDate(new Date().toISOString().split("T")[0]); setPriority("Medium"); setTags(""); setCategory(""); setCustomCategory("");
     setIsModalOpen(true);
   };
 
@@ -77,7 +80,16 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
     setName(task.name); setStatus(task.status);
     setAssigneeId(task.assignee_id?.toString() || ""); setDueDate(task.due_date || "");
     setPriority(task.priority || "Medium");
-    setCategory(task.category || "");
+    
+    const taskCat = task.category || "";
+    if (taskCat && !PREDEFINED_CATEGORIES.includes(taskCat)) {
+      setCategory("Custom");
+      setCustomCategory(taskCat);
+    } else {
+      setCategory(taskCat);
+      setCustomCategory("");
+    }
+    
     setTags((Array.isArray(task.tags) ? task.tags : (typeof task.tags === 'string' && task.tags.startsWith('[') ? JSON.parse(task.tags) : [])).join(", "));
     setIsModalOpen(true);
   };
@@ -105,7 +117,7 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
         assignee_id: assigneeId ? assigneeId : null,
         due_date: dueDate || null,
         priority,
-        category: category || null,
+        category: category === "Custom" ? customCategory : (category || null),
         tags: tags.split(",").map(t => t.trim()).filter(Boolean)
       };
       if (!selectedTask) {
@@ -385,12 +397,16 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
                   <option value="Web dev">Web dev</option>
                   <option value="Photography">Photography</option>
                   <option value="Videography">Videography</option>
+                  <option value="Custom">Custom...</option>
                 </select>
+                {category === "Custom" && (
+                  <input type="text" placeholder="Enter custom category" value={customCategory} onChange={e => setCustomCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white mt-2" />
+                )}
               </div>
               
               <div className="space-y-1">
                   <label className="text-xs text-gray-400 font-semibold uppercase">Assigned To</label>
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 max-h-48 overflow-y-auto space-y-2">
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 max-h-64 overflow-y-auto custom-scrollbar space-y-2">
                     <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/5 rounded-lg transition-colors overflow-hidden">
                       <input type="radio" name="assignee" checked={!assigneeId} onChange={() => setAssigneeId("")} className="rounded-full border-gray-600 bg-black shrink-0" />
                       <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs text-white shrink-0">?</div>

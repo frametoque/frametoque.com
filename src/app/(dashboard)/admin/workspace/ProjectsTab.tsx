@@ -55,7 +55,7 @@ const PROJECT_CATEGORIES = ["Graphics Design", "Video Editing", "Web dev", "Phot
 export default function ProjectsTab() {
   const { data: projects = [], isLoading, mutate } = useSWR("workspace-projects", getProjects);
   const { data: team = [] } = useSWR("workspace-team", getTeamMembers);
-  const { data: tasks = [] } = useSWR("workspace-tasks", getTasks);
+  const { data: tasks = [], mutate: mutateTasks } = useSWR("workspace-tasks", getTasks);
   
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"projects" | "board" | "tasks">("projects");
@@ -73,6 +73,7 @@ export default function ProjectsTab() {
   const [taskDue, setTaskDue] = useState("");
   const [taskTags, setTaskTags] = useState("");
   const [taskCategory, setTaskCategory] = useState("");
+  const [taskCustomCategory, setTaskCustomCategory] = useState("");
 
   const openTaskEdit = (task: any) => {
     setTaskToEdit(task);
@@ -82,7 +83,15 @@ export default function ProjectsTab() {
     setTaskAssignee(task.assignee_id || "");
     setTaskDue(task.due_date || "");
     setTaskTags((Array.isArray(task.tags) ? task.tags : (typeof task.tags === 'string' && task.tags.startsWith('[') ? JSON.parse(task.tags) : [])).join(", "));
-    setTaskCategory(task.category || "");
+    
+    const tCat = task.category || "";
+    if (tCat && !PROJECT_CATEGORIES.includes(tCat)) {
+      setTaskCategory("Custom");
+      setTaskCustomCategory(tCat);
+    } else {
+      setTaskCategory(tCat);
+      setTaskCustomCategory("");
+    }
   };
 
   const saveTaskEdit = async (e: any) => {
@@ -95,17 +104,17 @@ export default function ProjectsTab() {
       priority: taskPriority,
       assignee_id: taskAssignee || null,
       due_date: taskDue || null,
-      category: taskCategory || null,
+      category: taskCategory === "Custom" ? taskCustomCategory : (taskCategory || null),
       tags: taskTags.split(",").map((t: string) => t.trim()).filter(Boolean)
     });
     setTaskToEdit(null);
-    mutate();
+    mutateTasks();
   };
 
   const deleteSingleTask = async (id: number) => {
     if (confirm("Are you sure?")) {
       await deleteTask(id);
-      mutate();
+      mutateTasks();
     }
   };
 
@@ -522,7 +531,11 @@ export default function ProjectsTab() {
                   <option value="Web dev">Web dev</option>
                   <option value="Photography">Photography</option>
                   <option value="Videography">Videography</option>
+                  <option value="Custom">Custom...</option>
                 </select>
+                {taskCategory === "Custom" && (
+                  <input type="text" placeholder="Enter custom category" value={taskCustomCategory} onChange={e => setTaskCustomCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white mt-2" />
+                )}
               </div>
               
               <div className="space-y-1">
@@ -571,6 +584,29 @@ export default function ProjectsTab() {
                       </button>
                     ))}
                   </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {categories.filter(c => !PROJECT_CATEGORIES.includes(c)).map(c => (
+                      <button type="button" key={c} onClick={() => setCategories(prev => prev.filter(x => x !== c))} className="px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-colors bg-brand-500/20 text-brand-400 border-brand-500/50">
+                        <FolderOpen className="w-3.5 h-3.5" />
+                        {c}
+                      </button>
+                    ))}
+                    <input 
+                      type="text" 
+                      placeholder="+ Custom Category (Press Enter)" 
+                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-brand-500 min-w-[200px]"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const val = e.currentTarget.value.trim();
+                          if (val && !categories.includes(val)) {
+                            setCategories(prev => [...prev, val]);
+                          }
+                          e.currentTarget.value = "";
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs text-gray-400 font-semibold uppercase">Status</label>
@@ -601,7 +637,7 @@ export default function ProjectsTab() {
 
               <div className="space-y-1">
                 <label className="text-xs text-gray-400 font-semibold uppercase">Assign Team Members</label>
-                <div className="bg-white/5 border border-white/10 rounded-xl p-3 max-h-48 overflow-y-auto space-y-2">
+                <div className="bg-white/5 border border-white/10 rounded-xl p-3 max-h-64 overflow-y-auto custom-scrollbar space-y-2">
                   {team.length === 0 ? <p className="text-xs text-gray-500">No team members available.</p> : team.map((t: any) => (
                     <label key={t.id} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/5 rounded-lg transition-colors">
                       <input type="checkbox" checked={ownerIds.includes(t.id)} onChange={() => toggleOwner(t.id)} className="rounded border-gray-600 bg-black" />
