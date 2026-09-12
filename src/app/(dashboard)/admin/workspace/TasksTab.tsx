@@ -65,6 +65,7 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
   const [customCategory, setCustomCategory] = useState("");
   
   const PREDEFINED_CATEGORIES = ["Graphics Design", "Video Editing", "Web dev", "Photography", "Videography"];
+  const existingCustomCategories = Array.from(new Set(allTasks.map((t: any) => t.category).filter((c: string) => c && !PREDEFINED_CATEGORIES.includes(c))));
   
   const [moodboardTitle, setMoodboardTitle] = useState("");
   const [moodboardImages, setMoodboardImages] = useState("");
@@ -397,6 +398,7 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
                   <option value="Web dev">Web dev</option>
                   <option value="Photography">Photography</option>
                   <option value="Videography">Videography</option>
+                  {existingCustomCategories.map(c => <option key={c as string} value={c as string}>{c as string}</option>)}
                   <option value="Custom">Custom...</option>
                 </select>
                 {category === "Custom" && (

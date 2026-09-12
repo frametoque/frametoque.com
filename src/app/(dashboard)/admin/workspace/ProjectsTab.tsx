@@ -57,6 +57,11 @@ export default function ProjectsTab() {
   const { data: team = [] } = useSWR("workspace-team", getTeamMembers);
   const { data: tasks = [], mutate: mutateTasks } = useSWR("workspace-tasks", getTasks);
   
+  const existingProjectCategories = Array.from(new Set(projects.flatMap((p: any) => {
+    return (Array.isArray(p.categories) ? p.categories : (typeof p.categories === 'string' && p.categories.startsWith('[') ? JSON.parse(p.categories) : [])) || [];
+  }).filter((c: string) => c && !PROJECT_CATEGORIES.includes(c))));
+  const existingTaskCategories = Array.from(new Set(tasks.map((t: any) => t.category).filter((c: string) => c && !PROJECT_CATEGORIES.includes(c))));
+  
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"projects" | "board" | "tasks">("projects");
   const [expandedProjects, setExpandedProjects] = useState<Record<number, boolean>>({});
@@ -531,6 +536,7 @@ export default function ProjectsTab() {
                   <option value="Web dev">Web dev</option>
                   <option value="Photography">Photography</option>
                   <option value="Videography">Videography</option>
+                  {existingTaskCategories.map(c => <option key={c as string} value={c as string}>{c as string}</option>)}
                   <option value="Custom">Custom...</option>
                 </select>
                 {taskCategory === "Custom" && (
@@ -583,14 +589,14 @@ export default function ProjectsTab() {
                         {c}
                       </button>
                     ))}
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {categories.filter(c => !PROJECT_CATEGORIES.includes(c)).map(c => (
-                      <button type="button" key={c} onClick={() => setCategories(prev => prev.filter(x => x !== c))} className="px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-colors bg-brand-500/20 text-brand-400 border-brand-500/50">
+                    {Array.from(new Set([...existingProjectCategories, ...categories.filter(c => !PROJECT_CATEGORIES.includes(c))])).map((c: string) => (
+                      <button type="button" key={c} onClick={() => setCategories(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])} className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-colors ${categories.includes(c) ? 'bg-brand-500/20 text-brand-400 border-brand-500/50' : 'bg-white/5 text-gray-400 border-white/10 hover:border-white/20'}`}>
                         <FolderOpen className="w-3.5 h-3.5" />
                         {c}
                       </button>
                     ))}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
                     <input 
                       type="text" 
                       placeholder="+ Custom Category (Press Enter)" 
