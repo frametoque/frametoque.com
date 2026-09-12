@@ -375,6 +375,18 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
                   <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white" />
                 </div>
               </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-gray-400 font-semibold uppercase">Category</label>
+                <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white">
+                  <option value="">Default (Project Category)</option>
+                  <option value="Graphics Design">Graphics Design</option>
+                  <option value="Video Editing">Video Editing</option>
+                  <option value="Web dev">Web dev</option>
+                  <option value="Photography">Photography</option>
+                  <option value="Videography">Videography</option>
+                </select>
+              </div>
               
               <div className="space-y-1">
                   <label className="text-xs text-gray-400 font-semibold uppercase">Assigned To</label>
