@@ -72,6 +72,7 @@ export default function ProjectsTab() {
   const [taskAssignee, setTaskAssignee] = useState("");
   const [taskDue, setTaskDue] = useState("");
   const [taskTags, setTaskTags] = useState("");
+  const [taskCategory, setTaskCategory] = useState("");
 
   const openTaskEdit = (task: any) => {
     setTaskToEdit(task);
@@ -81,6 +82,7 @@ export default function ProjectsTab() {
     setTaskAssignee(task.assignee_id || "");
     setTaskDue(task.due_date || "");
     setTaskTags((Array.isArray(task.tags) ? task.tags : (typeof task.tags === 'string' && task.tags.startsWith('[') ? JSON.parse(task.tags) : [])).join(", "));
+    setTaskCategory(task.category || "");
   };
 
   const saveTaskEdit = async (e: any) => {
@@ -93,6 +95,7 @@ export default function ProjectsTab() {
       priority: taskPriority,
       assignee_id: taskAssignee || null,
       due_date: taskDue || null,
+      category: taskCategory || null,
       tags: taskTags.split(",").map((t: string) => t.trim()).filter(Boolean)
     });
     setTaskToEdit(null);
@@ -508,6 +511,18 @@ export default function ProjectsTab() {
                   <label className="text-xs text-gray-400 font-semibold uppercase">Due Date</label>
                   <input type="date" value={taskDue} onChange={e => setTaskDue(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white" />
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-gray-400 font-semibold uppercase">Category</label>
+                <select value={taskCategory} onChange={e => setTaskCategory(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white">
+                  <option value="">Default (Project Category)</option>
+                  <option value="Graphics Design">Graphics Design</option>
+                  <option value="Video Editing">Video Editing</option>
+                  <option value="Web dev">Web dev</option>
+                  <option value="Photography">Photography</option>
+                  <option value="Videography">Videography</option>
+                </select>
               </div>
               
               <div className="space-y-1">
