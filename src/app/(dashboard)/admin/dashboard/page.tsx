@@ -6,7 +6,7 @@ import { Landmark, Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, Arrow
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { getDashboardData } from "../actions/actions";
 import { getAnalyticsData } from "../actions/analytics";
-import { getCalendarEvents } from "../actions/bookings";
+import { getCalendarEvents } from "../actions/workspace";
 import ExpenseBreakdownWidget from "../components/ExpenseBreakdownWidget";
 import TopClientsWidget from "../components/TopClientsWidget";
 import AnimatedNumber from "../components/AnimatedNumber";

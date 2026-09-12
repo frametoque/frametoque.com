@@ -186,3 +186,28 @@ html {
 @utility animate-hero-zoom {
   animation: hero-zoom 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
+/* Fix date picker icons for dark mode site-wide */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:focus,
+input[type="time"]::-webkit-calendar-picker-indicator:focus,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:focus {
+  outline: none;
+}
+
+/* Global color scheme for dark mode native inputs */
+:root {
+  color-scheme: dark;
+}

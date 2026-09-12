@@ -1,4 +1,5 @@
 "use server";
+import { clerkClient } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
 
@@ -258,8 +259,51 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
       } catch (e) {
         console.error("Error fetching admin_hosting_orders for calendar:", e);
       }
-    })()
+    })(),
+
+    // 5. Fetch Workspace Projects
+    (async () => {
+      try {
+        const projects = await sql`SELECT id, name, deadline, status FROM workspace_projects WHERE deadline IS NOT NULL AND status != 'Done'`;
+        projects.forEach(p => {
+          if (p.deadline) {
+            events.push({
+              id: `project-${p.id}`,
+              title: `Project Deadline: ${p.name}`,
+              type: 'project',
+              date: formatDateOnly(p.deadline),
+              color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
+              details: `Project deadline for ${p.name}. Status: ${p.status}`
+            });
+          }
+        });
+      } catch (e) {
+        console.error("Error fetching projects for calendar:", e);
+      }
+    })(),
+
+    // 6. Fetch Workspace Tasks
+    (async () => {
+      try {
+        const tasks = await sql`SELECT id, name, due_date, status FROM workspace_tasks WHERE due_date IS NOT NULL AND status != 'Done'`;
+        tasks.forEach(t => {
+          if (t.due_date) {
+            events.push({
+              id: `task-${t.id}`,
+              title: `Task Due: ${t.name}`,
+              type: 'project',
+              date: formatDateOnly(t.due_date),
+              color: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+              details: `Task due date for ${t.name}. Status: ${t.status}`
+            });
+          }
+        });
+      } catch (e) {
+        console.error("Error fetching tasks for calendar:", e);
+      }
+    })(),
   ]);
+
 
   return events;
 }
@@ -292,5 +336,257 @@ export async function getSriLankaHolidays(): Promise<Record<string, string>> {
   } catch (error) {
     console.error("Failed to fetch Sri Lanka holidays:", error);
     return {};
+  }
+}
+
+// --- WORKSPACE: TEAM ---
+export type WorkspaceTeam = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  image: string;
+};
+
+export async function getTeamMembers(): Promise<WorkspaceTeam[]> {
+  try {
+    const clerk = await clerkClient();
+    const usersResponse = await clerk.users.getUserList({ limit: 100 });
+    const users = usersResponse.data || usersResponse; 
+    
+    const teamMembers = (Array.isArray(users) ? users : []).filter((user) => {
+      if (!user.publicMetadata) return false;
+      
+      // Case insensitive match and handle possible trailing spaces
+      let role = user.publicMetadata?.role;
+      if (!role) {
+        // Check for capitalized "Role"
+        const keys = Object.keys(user.publicMetadata || {});
+        const roleKey = keys.find(k => k.toLowerCase() === 'role');
+        if (roleKey) role = user.publicMetadata[roleKey];
+      }
+      
+      if (typeof role === 'string') {
+        return role.toLowerCase().trim() === "team";
+      }
+      
+      // Just in case publicMetadata is a string somehow?
+      if (typeof user.publicMetadata === 'string') {
+        try {
+          const parsed = JSON.parse(user.publicMetadata);
+          return parsed.role && parsed.role.toLowerCase().trim() === "team";
+        } catch(e) {}
+      }
+      
+      return false;
+    })
+      .map((user) => ({
+        id: user.emailAddresses?.[0]?.emailAddress || user.id,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.emailAddresses?.[0]?.emailAddress?.split("@")[0] || user.emailAddresses?.[0]?.emailAddress || "Unknown",
+        email: user.emailAddresses?.[0]?.emailAddress || "",
+        role: "team",
+        image: user.imageUrl || "",
+      }));
+      
+    // If still empty, let's just return all users so the user can AT LEAST see something and debug their metadata?
+    // Wait, it's better to just log or rely on the robust check.
+    // If robust check doesn't work, maybe the metadata key is "Role" instead of "role"?
+    
+    return teamMembers;
+  } catch (error) {
+    console.error("Failed to get team members from Clerk:", error);
+    return [];
+  }
+}
+
+// --- WORKSPACE: PROJECTS ---
+export type WorkspaceProject = {
+  id?: number;
+  name: string;
+  status: string;
+  categories?: string[];
+  owner_ids?: string[];
+  start_date?: string | null;
+  deadline?: string | null;
+  priority?: string | null;
+  completion_percentage?: number;
+  blocked_by?: string | null;
+};
+
+export async function getProjects(): Promise<WorkspaceProject[]> {
+  try {
+    const rows = await sql`SELECT * FROM workspace_projects ORDER BY created_at DESC`;
+    return rows.map((r: any) => ({
+      ...r,
+      start_date: formatDateOnly(r.start_date),
+      deadline: formatDateOnly(r.deadline),
+    })) as WorkspaceProject[];
+  } catch (error) {
+    console.error("Failed to get projects:", error);
+    return [];
+  }
+}
+
+export async function createProject(data: WorkspaceProject): Promise<number> {
+  try {
+    const result = await sql`
+      INSERT INTO workspace_projects (
+        name, status, categories, owner_ids, start_date, deadline, priority, completion_percentage, blocked_by
+      ) VALUES (
+        ${data.name}, ${data.status || 'Not Started'}, ${data.categories ? JSON.stringify(data.categories) : '[]'}, ${data.owner_ids ? JSON.stringify(data.owner_ids) : '[]'},
+        ${data.start_date || null}, ${data.deadline || null}, ${data.priority || null},
+        ${data.completion_percentage || 0}, ${data.blocked_by || null}
+      )
+      RETURNING id
+    `;
+    return result[0].id;
+  } catch (error) {
+    console.error("Failed to create project:", error);
+    throw new Error("Failed to create project.");
+  }
+}
+
+export async function updateProject(id: number, data: WorkspaceProject): Promise<boolean> {
+  try {
+    await sql`
+      UPDATE workspace_projects
+      SET
+        name = ${data.name}, status = ${data.status}, categories = ${data.categories ? JSON.stringify(data.categories) : '[]'}, owner_ids = ${data.owner_ids ? JSON.stringify(data.owner_ids) : '[]'},
+        start_date = ${data.start_date || null}, deadline = ${data.deadline || null},
+        priority = ${data.priority || null}, completion_percentage = ${data.completion_percentage || 0},
+        blocked_by = ${data.blocked_by || null}, updated_at = now()
+      WHERE id = ${id}
+    `;
+    return true;
+  } catch (error) {
+    console.error("Failed to update project:", error);
+    throw new Error("Failed to update project.");
+  }
+}
+
+export async function deleteProject(id: number): Promise<boolean> {
+  try {
+    await sql`DELETE FROM workspace_projects WHERE id = ${id}`;
+    return true;
+  } catch (error) {
+    console.error("Failed to delete project:", error);
+    throw new Error("Failed to delete project.");
+  }
+}
+
+// --- WORKSPACE: TASKS ---
+export type WorkspaceTask = {
+  id?: number;
+  project_id?: number | null;
+  name: string;
+  status: string;
+  assignee_id?: string | null;
+  due_date?: string | null;
+  priority?: string | null;
+  category?: string | null;
+  tags?: any;
+  order_index?: number;
+};
+
+export async function getTasks(): Promise<WorkspaceTask[]> {
+  try {
+    const rows = await sql`SELECT * FROM workspace_tasks ORDER BY order_index ASC, created_at DESC`;
+    return rows.map((r: any) => ({
+      ...r,
+      due_date: formatDateOnly(r.due_date),
+    })) as WorkspaceTask[];
+  } catch (error) {
+    console.error("Failed to get tasks:", error);
+    return [];
+  }
+}
+
+export async function createTask(data: WorkspaceTask): Promise<number> {
+  try {
+    const result = await sql`
+      INSERT INTO workspace_tasks (
+        project_id, name, status, assignee_id, due_date, priority, tags, order_index, category
+      ) VALUES (
+        ${data.project_id || null}, ${data.name}, ${data.status || 'Not Started'},
+        ${data.assignee_id || null}, ${data.due_date || null}, ${data.priority || null},
+        ${data.tags ? JSON.stringify(data.tags) : null}, ${data.order_index || 0}
+      )
+      RETURNING id
+    `;
+    return result[0].id;
+  } catch (error) {
+    console.error("Failed to create task:", error);
+    throw new Error("Failed to create task.");
+  }
+}
+
+export async function updateTask(id: number, data: WorkspaceTask): Promise<boolean> {
+  try {
+    await sql`
+      UPDATE workspace_tasks
+      SET
+        project_id = ${data.project_id || null}, name = ${data.name}, status = ${data.status},
+        assignee_id = ${data.assignee_id || null}, due_date = ${data.due_date || null},
+        priority = ${data.priority || null}, tags = ${data.tags ? JSON.stringify(data.tags) : null}, order_index = ${data.order_index || 0}, category = ${data.category || null},
+        updated_at = now()
+      WHERE id = ${id}
+    `;
+    return true;
+  } catch (error) {
+    console.error("Failed to update task:", error);
+    throw new Error("Failed to update task.");
+  }
+}
+
+export async function deleteTask(id: number): Promise<boolean> {
+  try {
+    await sql`DELETE FROM workspace_tasks WHERE id = ${id}`;
+    return true;
+  } catch (error) {
+    console.error("Failed to delete task:", error);
+    throw new Error("Failed to delete task.");
+  }
+}
+
+// --- WORKSPACE: MOODBOARDS ---
+export type WorkspaceMoodboard = {
+  id?: number;
+  task_id?: number | null;
+  project_id?: number | null;
+  title: string;
+  images?: any;
+};
+
+export async function getMoodboards(): Promise<WorkspaceMoodboard[]> {
+  try {
+    const rows = await sql`SELECT * FROM workspace_moodboards ORDER BY created_at DESC`;
+    return rows as unknown as WorkspaceMoodboard[];
+  } catch (error) {
+    console.error("Failed to get moodboards:", error);
+    return [];
+  }
+}
+
+export async function saveMoodboard(data: WorkspaceMoodboard): Promise<number> {
+  try {
+    if (data.id) {
+      await sql`
+        UPDATE workspace_moodboards
+        SET title = ${data.title}, images = ${data.images ? JSON.stringify(data.images) : null},
+            task_id = ${data.task_id || null}, project_id = ${data.project_id || null}
+        WHERE id = ${data.id}
+      `;
+      return data.id;
+    } else {
+      const result = await sql`
+        INSERT INTO workspace_moodboards (task_id, project_id, title, images)
+        VALUES (${data.task_id || null}, ${data.project_id || null}, ${data.title}, ${data.images ? JSON.stringify(data.images) : null})
+        RETURNING id
+      `;
+      return result[0].id;
+    }
+  } catch (error) {
+    console.error("Failed to save moodboard:", error);
+    throw new Error("Failed to save moodboard.");
   }
 }

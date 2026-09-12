@@ -14,7 +14,7 @@ import {
 import DateRangeSelector from "./components/DateRangeSelector";
 import { AdminDateRangeProvider, useAdminDateRange } from "./context/AdminDateRangeContext";
 import { AnalyticsDateRangeProvider, useAnalyticsDateRange } from "./context/AnalyticsDateRangeContext";
-import { getCalendarEvents } from "./actions/bookings";
+import { getCalendarEvents } from "./actions/workspace";
 import {
   Menu,
   Search,
@@ -161,7 +161,7 @@ export default function DashboardLayout({ children }) {
 const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const pathname = usePathname();
   const isAnalytics = pathname === "/admin/analytics";
-  const isBookings = pathname === "/admin/bookings";
+  const isWorkspace = pathname === "/admin/workspace";
   const isClients = pathname === "/admin/clients";
   const isInventory = pathname === "/admin/inventory";
   const isInvoiceDetail = pathname.startsWith("/admin/invoice/");
@@ -174,13 +174,19 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isAccounts = pathname.startsWith("/admin/accounts");
   const isCreateOrEdit = pathname.endsWith("/new") || pathname.endsWith("/edit");
   const isSystemLogs = pathname === "/admin/system-logs";
-  const hideSelector = isServices || isPortfolio || isBookings || isWebServices || isInvoiceDetail || isSocialMedia || isDashboard || isAccounts || isCreateOrEdit || isSystemLogs;
-  const hasCustomAction = isInvoiceDetail || isWebServices || isSocialMedia || isBookings || isAccounts || isSystemLogs;
+  const hideSelector = isServices || isPortfolio || isWorkspace || isWebServices || isInvoiceDetail || isSocialMedia || isDashboard || isAccounts || isCreateOrEdit || isSystemLogs;
+  const hasCustomAction = isInvoiceDetail || isWebServices || isSocialMedia || isWorkspace || isAccounts || isSystemLogs;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");
   const [activeVisitors, setActiveVisitors] = useState(0);
+  const [workspaceTab, setWorkspaceTab] = useState("events");
+  useEffect(() => {
+    const handleTabChanged = (e) => setWorkspaceTab(e.detail);
+    window.addEventListener("workspace:tab-changed", handleTabChanged);
+    return () => window.removeEventListener("workspace:tab-changed", handleTabChanged);
+  }, []);
   const [weather, setWeather] = useState<{ city: string; temp: string; condition: string; iconUrl: string } | null>(null);
   const [bookingForecasts, setBookingForecasts] = useState<any[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
@@ -225,7 +231,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const getPageTitle = (path: string): string => {
     if (path === "/admin" || path === "/admin/dashboard") return "Dashboard";
     if (path.startsWith("/admin/analytics")) return "Analytics";
-    if (path.startsWith("/admin/bookings")) return "Bookings";
+    if (path.startsWith("/admin/workspace")) return "Workspace";
     if (path === "/admin/clients") return "Clients";
     if (path === "/admin/inventory") return "Inventory";
     if (path.startsWith("/admin/clients/")) return "Client Details";
@@ -402,22 +408,10 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     
     </>)}
   </div>
-              ) : isBookings ? (
+              ) : isWorkspace ? (
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => window.dispatchEvent(new CustomEvent("bookings:open-new-event"))}
-                    className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Booking</span>
-                  </button>
-                  <button
-                    onClick={() => window.dispatchEvent(new CustomEvent("bookings:open-subscribe"))}
-                    className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
-                  >
-                    <CalendarPlus className="w-4 h-4 text-brand-400" />
-                    <span>Sync with your calendar</span>
-                  </button>
+                  <button onClick={() => window.dispatchEvent(new CustomEvent("workspace:set-tab", { detail: "projects" }))} className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${workspaceTab === 'projects' ? 'bg-white text-black shadow-lg' : 'bg-[#111] border border-white/10 text-gray-400 hover:text-white hover:bg-white/5'}`}>Projects</button>
+                  <button onClick={() => window.dispatchEvent(new CustomEvent("workspace:set-tab", { detail: "events" }))} className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${workspaceTab === 'events' ? 'bg-white text-black shadow-lg' : 'bg-[#111] border border-white/10 text-gray-400 hover:text-white hover:bg-white/5'}`}>Calendar & Events</button>
                 </div>
               ) : isAccounts ? (
                 <div className="flex items-center gap-2">
@@ -483,24 +477,11 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                       </svg>
                     </span>
                   </div>
-                ) : isBookings ? (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("bookings:open-subscribe"))}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
-                >
-                  <CalendarPlus className="w-4 h-4 text-brand-500" />
-                  <span className="hidden sm:inline">Sync with Your Calendar</span>
-                </button>
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("bookings:open-new-event"))}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors active:scale-95 duration-200 cursor-pointer text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span className="hidden sm:inline">Add Event</span>
-                  <span className="sm:hidden">Add</span>
-                </button>
-              </div>
+                ) : isWorkspace ? (
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => window.dispatchEvent(new CustomEvent("workspace:set-tab", { detail: "events" }))} className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${workspaceTab === 'events' ? 'bg-white text-black shadow-lg' : 'bg-[#111] border border-white/10 text-gray-400 hover:text-white hover:bg-white/5'}`}>Events</button>
+                    <button onClick={() => window.dispatchEvent(new CustomEvent("workspace:set-tab", { detail: "projects" }))} className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${workspaceTab === 'projects' ? 'bg-white text-black shadow-lg' : 'bg-[#111] border border-white/10 text-gray-400 hover:text-white hover:bg-white/5'}`}>Projects</button>
+                  </div>
                 ) : isInventory ? (
                   <div className="flex items-center gap-3">
                     <div className="relative w-32 sm:w-64">
@@ -702,15 +683,15 @@ const Sidebar = ({
     { name: "Invoices", href: "/admin/invoices", icon: FileText, divider: true },
     { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
     { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
-    { name: "Bookings", href: "/admin/bookings", icon: Calendar },
     { name: "Web Services", href: "/admin/web-services", icon: Globe, divider: false },
     { name: "Clients", href: "/admin/clients", icon: Users },
     { name: "Inventory", href: "/admin/inventory", icon: Package },
     { name: "Reports", href: "/admin/reports", icon: BarChart3, divider: true },
     { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
+    { name: "Workspace", href: "/admin/workspace", icon: FolderOpenDot, divider: true },
     { name: "Services", href: "/admin/services", icon: Briefcase },
     { name: "Portfolio", href: "/admin/portfolio", icon: Layers },
-    { name: "Social Media", href: "/admin/social-media", icon: Megaphone, divider: false },
+    { name: "Social Media", href: "/admin/social-media", icon: Megaphone },
   ];
 
   const isActive = (href: string) => {
@@ -838,9 +819,7 @@ const Sidebar = ({
                   {item.divider && (
                     <div className="my-2 border-t border-white/10" />
                   )}
-                  {item.name === "Services" && (
-                    <div className="my-4 border-t border-white/10" />
-                  )}
+                  
                   <Link
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}

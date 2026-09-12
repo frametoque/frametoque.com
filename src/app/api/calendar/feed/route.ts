@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import sql from "@/lib/db";
-import { getSriLankaHolidays } from "@/app/(dashboard)/admin/actions/bookings";
+import { getSriLankaHolidays } from "@/app/(dashboard)/admin/actions/workspace";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;

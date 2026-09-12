@@ -9,7 +9,7 @@ import {
 import { 
   getBookings, createBooking, updateBooking, deleteBooking, getCalendarEvents,
   getSriLankaHolidays, BookingData, CalendarEvent 
-} from "../actions/bookings";
+} from "../actions/workspace";
 
 const statusStyles: Record<string, string> = {
   "confirmed": "bg-green-500/20 text-green-400 border-green-500/30",
@@ -29,7 +29,7 @@ const formatLKR = (amount: number) => {
   }).format(amount || 0);
 };
 
-export default function BookingsAdminPage() {
+export default function CalendarTab() {
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -284,10 +284,24 @@ export default function BookingsAdminPage() {
         {/* Calendar Section - Column Span 8 */}
         <div className="xl:col-span-8 bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4 xl:min-h-[730px] flex flex-col">
           <div className="flex items-center justify-between flex-wrap gap-4 flex-shrink-0">
-            <div>
-              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-semibold text-white flex items-center gap-2 mr-2">
                 Event Calendar
               </h2>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("bookings:open-new-event"))}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Add Booking</span>
+              </button>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("bookings:open-subscribe"))}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
+              >
+                <CalendarPlus className="w-4 h-4 text-brand-400" />
+                <span className="hidden sm:inline">Sync</span>
+              </button>
             </div>
 
             <div className="flex items-center gap-2 bg-white/[0.02] border border-white/10 rounded-full p-1">
