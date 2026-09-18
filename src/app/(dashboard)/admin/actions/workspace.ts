@@ -1,5 +1,6 @@
 "use server";
 import { clerkClient } from "@clerk/nextjs/server";
+import { logSystemAction } from "@/lib/logger";
 
 import sql from "@/lib/db";
 
@@ -77,6 +78,7 @@ export async function createBooking(data: BookingData): Promise<number> {
       )
       RETURNING id
     `;
+    await logSystemAction(`Created booking for: ${data.customer_name}`);
     return result[0].id;
   } catch (error) {
     console.error("Failed to create booking:", error);
@@ -105,6 +107,7 @@ export async function updateBooking(id: number, data: BookingData): Promise<bool
         updated_at = now()
       WHERE id = ${id}
     `;
+    await logSystemAction(`Updated booking for: ${data.customer_name}`);
     return true;
   } catch (error) {
     console.error("Failed to update booking:", error);
@@ -117,6 +120,7 @@ export async function deleteBooking(id: number): Promise<boolean> {
     await sql`
       DELETE FROM admin_bookings WHERE id = ${id}
     `;
+    await logSystemAction(`Deleted booking ID: ${id}`);
     return true;
   } catch (error) {
     console.error("Failed to delete booking:", error);
@@ -439,6 +443,7 @@ export async function createProject(data: WorkspaceProject): Promise<number> {
       )
       RETURNING id
     `;
+    await logSystemAction(`Created workspace project: ${data.name}`);
     return result[0].id;
   } catch (error) {
     console.error("Failed to create project:", error);
@@ -457,6 +462,7 @@ export async function updateProject(id: number, data: WorkspaceProject): Promise
         blocked_by = ${data.blocked_by || null}, updated_at = now()
       WHERE id = ${id}
     `;
+    await logSystemAction(`Updated workspace project: ${data.name}`);
     return true;
   } catch (error) {
     console.error("Failed to update project:", error);
@@ -467,6 +473,7 @@ export async function updateProject(id: number, data: WorkspaceProject): Promise
 export async function deleteProject(id: number): Promise<boolean> {
   try {
     await sql`DELETE FROM workspace_projects WHERE id = ${id}`;
+    await logSystemAction(`Deleted workspace project ID: ${id}`);
     return true;
   } catch (error) {
     console.error("Failed to delete project:", error);
@@ -509,10 +516,11 @@ export async function createTask(data: WorkspaceTask): Promise<number> {
       ) VALUES (
         ${data.project_id || null}, ${data.name}, ${data.status || 'Not Started'},
         ${data.assignee_id || null}, ${data.due_date || null}, ${data.priority || null},
-        ${data.tags ? JSON.stringify(data.tags) : null}, ${data.order_index || 0}
+        ${data.tags ? JSON.stringify(data.tags) : null}, ${data.order_index || 0}, ${data.category || null}
       )
       RETURNING id
     `;
+    await logSystemAction(`Created workspace task: ${data.name}`);
     return result[0].id;
   } catch (error) {
     console.error("Failed to create task:", error);
@@ -531,6 +539,7 @@ export async function updateTask(id: number, data: WorkspaceTask): Promise<boole
         updated_at = now()
       WHERE id = ${id}
     `;
+    await logSystemAction(`Updated workspace task: ${data.name}`);
     return true;
   } catch (error) {
     console.error("Failed to update task:", error);
@@ -541,6 +550,7 @@ export async function updateTask(id: number, data: WorkspaceTask): Promise<boole
 export async function deleteTask(id: number): Promise<boolean> {
   try {
     await sql`DELETE FROM workspace_tasks WHERE id = ${id}`;
+    await logSystemAction(`Deleted workspace task ID: ${id}`);
     return true;
   } catch (error) {
     console.error("Failed to delete task:", error);
@@ -576,6 +586,7 @@ export async function saveMoodboard(data: WorkspaceMoodboard): Promise<number> {
             task_id = ${data.task_id || null}, project_id = ${data.project_id || null}
         WHERE id = ${data.id}
       `;
+      await logSystemAction(`Updated moodboard: ${data.title}`);
       return data.id;
     } else {
       const result = await sql`
@@ -583,6 +594,7 @@ export async function saveMoodboard(data: WorkspaceMoodboard): Promise<number> {
         VALUES (${data.task_id || null}, ${data.project_id || null}, ${data.title}, ${data.images ? JSON.stringify(data.images) : null})
         RETURNING id
       `;
+      await logSystemAction(`Created moodboard: ${data.title}`);
       return result[0].id;
     }
   } catch (error) {
