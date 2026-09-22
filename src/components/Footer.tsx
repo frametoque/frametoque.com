@@ -91,13 +91,13 @@ export default function Footer() {
                 </Link>
                 <span className="mx-2 text-gray-600">|</span>
                 <Link
-                  href="tel:+94778609356"
+                  href="tel:+94758609356"
                   aria-label="Telephone"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-brand-400 transition inline-block py-2"
                 >
-                  +94 77 860 9356
+                  +94 75 860 9356
                 </Link>
               </span>
             </p>

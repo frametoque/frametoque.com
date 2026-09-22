@@ -50,7 +50,7 @@ export default function Alert() {
                   </Link>
 
                   <Link
-                    href="https://wa.me/94778609356"
+                    href="https://wa.me/94758609356"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-slate-700 to-slate-700 hover:from-slate-600 hover:to-slate-600 text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-brand-900/40 border border-slate-500/40 group transform hover:-translate-y-0.5"

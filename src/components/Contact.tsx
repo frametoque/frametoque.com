@@ -189,7 +189,7 @@ export default function ContactPage() {
               </Link>
 
               <Link
-                href="https://wa.me/94778609356"
+                href="https://wa.me/94758609356"
                 target="_blank"
                 className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group"
               >
@@ -201,7 +201,7 @@ export default function ContactPage() {
                     WhatsApp (Secondary)
                   </p>
                   <p className="text-sm text-slate-200 group-hover:text-brand-400 transition-colors">
-                    +94 77 860 9356
+                    +94 75 860 9356
                   </p>
                 </div>
               </Link>

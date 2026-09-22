@@ -460,8 +460,8 @@ if (success) {
                         +94 70 277 1361
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
-                        <input type="radio" name="targetWa" value="94778609356" checked={targetWa === "94778609356"} onChange={(e) => setTargetWa(e.target.value)} className="accent-brand-500" />
-                        +94 77 860 9356
+                        <input type="radio" name="targetWa" value="94758609356" checked={targetWa === "94758609356"} onChange={(e) => setTargetWa(e.target.value)} className="accent-brand-500" />
+                        +94 75 860 9356
                       </label>
                     </div>
                   </div>
