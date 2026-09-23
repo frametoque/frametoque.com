@@ -69,16 +69,16 @@ export default function SocialViews({ posts, loading, onRefresh, onDelete }: any
 
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
         {posts.map((p: any) => (
-          <div key={p.id} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden flex flex-col relative group hover:border-white/20 transition-all">
-            <div className="w-full aspect-square bg-black relative">
+          <div key={p.id} className="break-inside-avoid mb-4 bg-white/5 border border-white/10 rounded-2xl overflow-hidden flex flex-col relative group hover:border-white/20 transition-all">
+            <div className="w-full bg-black relative">
               {p.media_urls?.length > 0 ? (
                 p.media_urls[0].match(/\.(mp4|mov|webm|mkv|avi)$/i) 
-                  ? <video src={p.media_urls[0]} autoPlay muted loop playsInline className="w-full h-full object-cover opacity-80" />
-                  : <img src={p.media_urls[0]} alt="Media" className="w-full h-full object-cover opacity-80" />
+                  ? <video src={p.media_urls[0]} autoPlay muted loop playsInline className="w-full h-auto opacity-80" />
+                  : <img src={p.media_urls[0]} alt="Media" className="w-full h-auto opacity-80" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
+                <div className="w-full aspect-square flex items-center justify-center">
                   <ImageIcon className="w-8 h-8 text-gray-600" />
                 </div>
               )}
@@ -153,10 +153,10 @@ export default function SocialViews({ posts, loading, onRefresh, onDelete }: any
                   {viewingPost.media_urls.map((url: string, idx: number) => {
                     const isVideo = url.match(/\.(mp4|mov|webm|mkv|avi)$/i);
                     return (
-                      <div key={idx} className="rounded-xl overflow-hidden border border-white/10 bg-black aspect-square">
+                      <div key={idx} className="rounded-xl overflow-hidden border border-white/10 bg-black">
                         {isVideo 
-                          ? <video src={url} autoPlay muted loop playsInline controls className="w-full h-full object-cover" />
-                          : <img src={url} alt="Media" className="w-full h-full object-cover" />
+                          ? <video src={url} autoPlay muted loop playsInline controls className="w-full h-auto" />
+                          : <img src={url} alt="Media" className="w-full h-auto" />
                         }
                       </div>
                     );
