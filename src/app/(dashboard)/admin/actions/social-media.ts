@@ -6,6 +6,45 @@ import { put } from "@vercel/blob";
 import { google } from "googleapis";
 import { Readable } from "stream";
 
+export async function processDueScheduledPosts() {
+  try {
+    const duePosts = await sql`
+      SELECT * FROM social_posts 
+      WHERE (status = 'scheduled' OR status = 'failed') 
+      AND scheduled_time <= NOW()
+      LIMIT 5
+    `;
+
+    if (duePosts.length === 0) return { success: true, processed: 0 };
+
+    let processedCount = 0;
+    for (const post of duePosts) {
+      try {
+        await sql`UPDATE social_posts SET status = 'processing' WHERE id = ${post.id}`;
+        let anySuccess = false;
+        for (const platform of post.platforms || []) {
+           const publishPromise = publishToPlatform(post.id, platform);
+           const timeoutPromise = new Promise<{success: boolean, error: string}>((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000));
+           try {
+               const res = await Promise.race([publishPromise, timeoutPromise]);
+               if (res.success) anySuccess = true;
+           } catch (e: any) {}
+           await new Promise(r => setTimeout(r, 1000));
+        }
+        const finalStatus = anySuccess ? 'published' : 'failed';
+        await sql`UPDATE social_posts SET status = ${finalStatus} WHERE id = ${post.id}`;
+        if (anySuccess) await logSystemAction("publish_social_post");
+        processedCount++;
+      } catch (err: any) {
+        await sql`UPDATE social_posts SET status = 'failed' WHERE id = ${post.id}`;
+      }
+    }
+    return { success: true, processed: processedCount };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 export interface SocialPost {
   id: number;
   platforms: string[];

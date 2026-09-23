@@ -8,7 +8,6 @@ import { publishToPlatform } from "@/app/(dashboard)/admin/actions/social-media"
 // In Vercel, setup vercel.json with:
 // "crons": [{ "path": "/api/cron/social-publisher", "schedule": "*/5 * * * *" }]
 export async function GET(request: Request) {
-  // Validate Vercel cron request (auth header)
   const authHeader = request.headers.get('authorization');
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return new NextResponse('Unauthorized', { status: 401 });
@@ -18,8 +17,9 @@ export async function GET(request: Request) {
     // 1. Fetch all scheduled posts that are due
     const duePosts = await sql`
       SELECT * FROM social_posts 
-      WHERE status = 'scheduled' 
+      WHERE (status = 'scheduled' OR status = 'failed') 
       AND scheduled_time <= NOW()
+      LIMIT 5
     `;
 
     if (duePosts.length === 0) {
@@ -31,14 +31,31 @@ export async function GET(request: Request) {
     // 2. Process each post
     for (const post of duePosts) {
       try {
+        // Mark as processing so a timeout doesn't create an infinite loop
+        await sql`
+          UPDATE social_posts 
+          SET status = 'processing'
+          WHERE id = ${post.id}
+        `;
+        
         let anySuccess = false;
         
         for (const platform of post.platforms || []) {
-           const res = await publishToPlatform(post.id, platform);
-           if (!res.success) {
-               console.error(`Failed to publish scheduled post ${post.id} to ${platform}:`, res.error);
-           } else {
-               anySuccess = true;
+           // Timeout wrapper for each platform publish
+           const publishPromise = publishToPlatform(post.id, platform);
+           const timeoutPromise = new Promise<{success: boolean, error: string}>((_, reject) => 
+               setTimeout(() => reject(new Error('Platform publish timeout')), 10000)
+           );
+           
+           try {
+               const res = await Promise.race([publishPromise, timeoutPromise]);
+               if (!res.success) {
+                   console.error(`Failed to publish scheduled post ${post.id} to ${platform}:`, res.error);
+               } else {
+                   anySuccess = true;
+               }
+           } catch (e: any) {
+               console.error(`Timeout/Error publishing scheduled post ${post.id} to ${platform}:`, e.message);
            }
            
            // Small delay between platform API calls to prevent rate limits

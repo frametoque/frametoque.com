@@ -172,7 +172,7 @@ export async function generateReceiptPDF(receiptData: any): Promise<Uint8Array> 
       currentY -= (nameSize * 1.15);
     }
 
-    if (addressToUse) {
+    if (addressToUse && addressToUse.trim().toLowerCase() !== emailToUse.toLowerCase()) {
       const parts = addressToUse.split(",").map((s: string) => s.trim()).filter(Boolean);
       for (let i = 0; i < parts.length; i += 2) {
          const chunk = parts.slice(i, i + 2).join(", ");

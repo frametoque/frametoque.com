@@ -239,7 +239,10 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
       currentY -= (nameSize * 1.15);
     }
 
-    if (billing_address) {
+    const emailStr = client?.email || invoice.user_email || "";
+    const phoneStr = client?.phone || "";
+
+    if (billing_address && billing_address.trim().toLowerCase() !== emailStr.toLowerCase()) {
       const parts = billing_address.split(",").map((s: string) => s.trim()).filter(Boolean);
       for (let i = 0; i < parts.length; i += 2) {
          const chunk = parts.slice(i, i + 2).join(", ");
@@ -250,8 +253,6 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
     }
     
     // Contact line
-    const emailStr = client?.email || invoice.user_email || "";
-    const phoneStr = client?.phone || "";
     const contactStr = [phoneStr, emailStr].filter(Boolean).join(" | ");
     if (contactStr) {
       page.drawText(contactStr, { x, y: currentY, size: detailSize, font: primaryFont, color });

@@ -238,7 +238,10 @@ export async function generateQuotationPDF(quotation: any) {
       currentY -= (size * 1.2);
     }
 
-    if (billing_address) {
+    const emailStr = quotation.client?.email || userEmail || "";
+    const phoneStr = phone || quotation.client?.phone || "";
+
+    if (billing_address && billing_address.trim().toLowerCase() !== emailStr.toLowerCase()) {
       const parts = billing_address.split(",").map((s: string) => s.trim()).filter(Boolean);
       for (let i = 0; i < parts.length; i += 2) {
          const chunk = parts.slice(i, i + 2).join(", ");
@@ -249,8 +252,6 @@ export async function generateQuotationPDF(quotation: any) {
     }
     
     // Contact line
-    const emailStr = quotation.client?.email || userEmail || "";
-    const phoneStr = phone || quotation.client?.phone || "";
     const contactStr = [phoneStr, emailStr].filter(Boolean).join(" | ");
     if (contactStr) {
       page.drawText(contactStr, { x, y: currentY, size: normalSize, font: primaryFont, color });
