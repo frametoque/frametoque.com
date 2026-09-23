@@ -377,7 +377,7 @@ export async function generateInvoicePDF(invoice: any): Promise<Uint8Array> {
   }
 
   // ── 7. PAID Stamp ────────────────────────────────────────────────────────────
-  if (payment_status === "fully paid") {
+  if (payment_status?.toLowerCase() === "fully paid") {
     try {
       const stampBytes = await fetchImageAsPngBytes("/paid-stamp.png");
       const stampImage = await pdfDoc.embedPng(stampBytes);
