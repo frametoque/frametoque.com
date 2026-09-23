@@ -1063,22 +1063,30 @@ export async function getInvoiceByIdAdmin(invoiceId: string) {
 }
 
 // -- CLIENTS --
-export async function getClients() {
-  const clerk = await clerkClient();
+let _clerkUsersCache: any = null;
+let _clerkUsersCacheTime = 0;
 
+export async function getClients() {
   let clerkUsersMap: Record<string, string> = {};
   let clerkEmailSet: Set<string> = new Set();
   let clerkIdSet: Set<string> = new Set();
   try {
-    const { data: users } = await clerk.users.getUserList({ limit: 500 });
-    users.forEach((u) => {
+    let users = _clerkUsersCache;
+    if (!users || Date.now() - _clerkUsersCacheTime > 5 * 60 * 1000) {
+      const clerk = await clerkClient();
+      const res = await clerk.users.getUserList({ limit: 500 });
+      users = res.data;
+      _clerkUsersCache = users;
+      _clerkUsersCacheTime = Date.now();
+    }
+    users.forEach((u: any) => {
       clerkIdSet.add(u.id);
-      u.emailAddresses.forEach((e) => {
+      u.emailAddresses.forEach((e: any) => {
         clerkEmailSet.add(e.emailAddress.toLowerCase());
       });
       if (u.imageUrl) {
         clerkUsersMap[u.id] = u.imageUrl;
-        u.emailAddresses.forEach((e) => {
+        u.emailAddresses.forEach((e: any) => {
           clerkUsersMap[e.emailAddress.toLowerCase()] = u.imageUrl;
         });
       }
