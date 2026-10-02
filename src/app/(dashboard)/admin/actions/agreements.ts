@@ -1,4 +1,5 @@
 "use server";
+import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
 import { PREDEFINED_REPRESENTATIVES } from "@/lib/representatives";
@@ -46,6 +47,9 @@ function formatDateOnly(d: any): string {
 }
 
 export async function getAgreements(): Promise<AgreementData[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`
       SELECT * FROM admin_agreements
@@ -71,6 +75,9 @@ export async function getAgreements(): Promise<AgreementData[]> {
 }
 
 export async function getAgreementsByClient(email: string): Promise<AgreementData[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`
       SELECT * FROM admin_agreements
@@ -97,6 +104,9 @@ export async function getAgreementsByClient(email: string): Promise<AgreementDat
 }
 
 export async function getAgreementById(id: number): Promise<AgreementData | null> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`
       SELECT * FROM admin_agreements
@@ -125,6 +135,9 @@ export async function getAgreementById(id: number): Promise<AgreementData | null
 }
 
 export async function createAgreement(data: any) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     // Check client existence
     let existingClient: any[] = [];
@@ -186,6 +199,9 @@ export async function createAgreement(data: any) {
 }
 
 export async function updateAgreement(id: number, data: any) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     await sql`
       UPDATE admin_agreements SET
@@ -225,6 +241,9 @@ export async function signAgreement(
   clientSigDate: string,
   clientSigImage: string
 ) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     await sql`
       UPDATE admin_agreements SET
@@ -243,6 +262,9 @@ export async function signAgreement(
 }
 
 export async function deleteAgreement(id: number) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     await sql`
       DELETE FROM admin_agreements

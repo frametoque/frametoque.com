@@ -1,5 +1,5 @@
 "use server";
-import { clerkClient } from "@clerk/nextjs/server";
+import { clerkClient, auth } from "@clerk/nextjs/server";
 import { logSystemAction } from "@/lib/logger";
 
 import sql from "@/lib/db";
@@ -34,6 +34,9 @@ export type BookingData = {
 };
 
 export async function getBookings(): Promise<BookingData[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`
       SELECT * FROM admin_bookings
@@ -55,6 +58,9 @@ export async function getBookings(): Promise<BookingData[]> {
 }
 
 export async function createBooking(data: BookingData): Promise<number> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const result = await sql`
       INSERT INTO admin_bookings (
@@ -87,6 +93,9 @@ export async function createBooking(data: BookingData): Promise<number> {
 }
 
 export async function updateBooking(id: number, data: BookingData): Promise<boolean> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     await sql`
       UPDATE admin_bookings
@@ -116,6 +125,9 @@ export async function updateBooking(id: number, data: BookingData): Promise<bool
 }
 
 export async function deleteBooking(id: number): Promise<boolean> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     await sql`
       DELETE FROM admin_bookings WHERE id = ${id}
@@ -143,6 +155,9 @@ export type CalendarEvent = {
 };
 
 export async function getCalendarEvents(): Promise<CalendarEvent[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const events: CalendarEvent[] = [];
 
   await Promise.all([
@@ -353,6 +368,9 @@ export type WorkspaceTeam = {
 };
 
 export async function getTeamMembers(): Promise<WorkspaceTeam[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const clerk = await clerkClient();
     const usersResponse = await clerk.users.getUserList({ limit: 100 });
@@ -418,6 +436,9 @@ export type WorkspaceProject = {
 };
 
 export async function getProjects(): Promise<WorkspaceProject[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`SELECT * FROM workspace_projects ORDER BY created_at DESC`;
     return rows.map((r: any) => ({
@@ -432,6 +453,9 @@ export async function getProjects(): Promise<WorkspaceProject[]> {
 }
 
 export async function createProject(data: WorkspaceProject): Promise<number> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const result = await sql`
       INSERT INTO workspace_projects (
@@ -452,6 +476,9 @@ export async function createProject(data: WorkspaceProject): Promise<number> {
 }
 
 export async function updateProject(id: number, data: WorkspaceProject): Promise<boolean> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     await sql`
       UPDATE workspace_projects
@@ -471,6 +498,9 @@ export async function updateProject(id: number, data: WorkspaceProject): Promise
 }
 
 export async function deleteProject(id: number): Promise<boolean> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     await sql`DELETE FROM workspace_projects WHERE id = ${id}`;
     await logSystemAction(`Deleted workspace project ID: ${id}`);
@@ -496,6 +526,9 @@ export type WorkspaceTask = {
 };
 
 export async function getTasks(): Promise<WorkspaceTask[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`SELECT * FROM workspace_tasks ORDER BY order_index ASC, created_at DESC`;
     return rows.map((r: any) => ({
@@ -509,6 +542,9 @@ export async function getTasks(): Promise<WorkspaceTask[]> {
 }
 
 export async function createTask(data: WorkspaceTask): Promise<number> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const result = await sql`
       INSERT INTO workspace_tasks (
@@ -529,6 +565,9 @@ export async function createTask(data: WorkspaceTask): Promise<number> {
 }
 
 export async function updateTask(id: number, data: WorkspaceTask): Promise<boolean> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     await sql`
       UPDATE workspace_tasks
@@ -548,6 +587,9 @@ export async function updateTask(id: number, data: WorkspaceTask): Promise<boole
 }
 
 export async function deleteTask(id: number): Promise<boolean> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     await sql`DELETE FROM workspace_tasks WHERE id = ${id}`;
     await logSystemAction(`Deleted workspace task ID: ${id}`);
@@ -568,6 +610,9 @@ export type WorkspaceMoodboard = {
 };
 
 export async function getMoodboards(): Promise<WorkspaceMoodboard[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`SELECT * FROM workspace_moodboards ORDER BY created_at DESC`;
     return rows as unknown as WorkspaceMoodboard[];
@@ -578,6 +623,9 @@ export async function getMoodboards(): Promise<WorkspaceMoodboard[]> {
 }
 
 export async function saveMoodboard(data: WorkspaceMoodboard): Promise<number> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     if (data.id) {
       await sql`

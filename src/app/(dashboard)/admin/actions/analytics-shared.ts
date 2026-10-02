@@ -7,7 +7,7 @@ let cachedToken: string | null = null;
 let tokenExpiry: number = 0;
 
 async function getBearerToken(): Promise<string> {
-  const now = Date.now();
+  const now = Math.floor(Date.now() / 300000) * 300000;
 
   if (cachedToken && now < tokenExpiry) {
     return cachedToken;
@@ -42,7 +42,7 @@ async function getHeaders() {
 }
 
 function getDateRange(range: string): { startAt: number; endAt: number } {
-  const now = Date.now();
+  const now = Math.floor(Date.now() / 300000) * 300000;
   const day = 86400000;
   const ranges: Record<string, number> = {
     "today":        new Date().setHours(0, 0, 0, 0),
@@ -249,7 +249,7 @@ function formatChartZoomLabel(dateStr: string, unit: string): string {
 
 export async function getChartData(zoomLevel: string) {
   const config = CHART_ZOOM_CONFIG[zoomLevel] ?? CHART_ZOOM_CONFIG.day;
-  const now = Date.now();
+  const now = Math.floor(Date.now() / 300000) * 300000;
   const startAt = now - config.spanMs;
   const endAt = now;
 

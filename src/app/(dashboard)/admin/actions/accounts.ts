@@ -1,10 +1,14 @@
 "use server";
+import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 
 // Fetch all accounts and calculate running balances
 export async function getAccounts(startDate?: string, endDate?: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
 
@@ -82,6 +86,9 @@ export async function getAccounts(startDate?: string, endDate?: string) {
 }
 
 export async function createAccount(data: { name: string; type: string; bankName?: string; accountNumber?: string; branch?: string; initialBalance: number; isCompanyAccount?: boolean }) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   await sql`
     INSERT INTO admin_accounts (name, type, bank_name, account_number, branch, initial_balance, is_company_account)
     VALUES (${data.name}, ${data.type}, ${data.bankName || null}, ${data.accountNumber || null}, ${data.branch || null}, ${data.initialBalance || 0}, ${data.isCompanyAccount !== false})
@@ -90,6 +97,9 @@ export async function createAccount(data: { name: string; type: string; bankName
 }
 
 export async function updateAccount(id: number, data: { name: string; type: string; bankName?: string; accountNumber?: string; branch?: string; isCompanyAccount?: boolean }) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   await sql`
     UPDATE admin_accounts 
     SET name = ${data.name}, type = ${data.type}, bank_name = ${data.bankName || null}, account_number = ${data.accountNumber || null}, branch = ${data.branch || null}, is_company_account = ${data.isCompanyAccount !== false}
@@ -99,6 +109,9 @@ export async function updateAccount(id: number, data: { name: string; type: stri
 }
 
 export async function deleteAccount(id: number) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   // Soft delete by hiding it from the UI.
   // Add 'is_hidden' column if it doesn't exist.
   try {
@@ -112,6 +125,9 @@ export async function deleteAccount(id: number) {
 }
 
 export async function transferCash(data: { date: string; sourceAccountId: number; destinationAccountId: number; amount: number; description: string }) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   await sql`
     INSERT INTO admin_transfers (date, source_account_id, destination_account_id, amount, description)
     VALUES (${data.date}, ${data.sourceAccountId}, ${data.destinationAccountId}, ${data.amount}, ${data.description})
@@ -120,6 +136,9 @@ export async function transferCash(data: { date: string; sourceAccountId: number
 }
 
 export async function getTransfers() {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const rows = await sql`
     SELECT t.id, t.date, t.amount, t.description, 
            t.source_account_id, t.destination_account_id,
@@ -144,6 +163,9 @@ export async function getTransfers() {
 }
 
 export async function updateTransfer(id: number, data: { date: string; sourceAccountId: number; destinationAccountId: number; amount: number; description: string }) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   await sql`
     UPDATE admin_transfers
     SET date = ${data.date}, source_account_id = ${data.sourceAccountId}, destination_account_id = ${data.destinationAccountId}, amount = ${data.amount}, description = ${data.description}
@@ -153,11 +175,17 @@ export async function updateTransfer(id: number, data: { date: string; sourceAcc
 }
 
 export async function deleteTransfer(id: number) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   await sql`DELETE FROM admin_transfers WHERE id = ${id}`;
   await logSystemAction(`Undid a cash transfer`);
 }
 
 export async function getLedger(accountId: number | null, startDate?: string, endDate?: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
 
@@ -216,6 +244,9 @@ export async function getLedger(accountId: number | null, startDate?: string, en
 }
 
 export async function setDefaultAccount(id: number) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   await sql`UPDATE admin_accounts SET is_default = FALSE`;
   await sql`UPDATE admin_accounts SET is_default = TRUE WHERE id = ${id}`;
   await logSystemAction(`Set account ID ${id} as default`);

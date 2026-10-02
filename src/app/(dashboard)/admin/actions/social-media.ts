@@ -1,4 +1,5 @@
 "use server";
+import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
@@ -7,6 +8,9 @@ import { google } from "googleapis";
 import { Readable } from "stream";
 
 export async function processDueScheduledPosts() {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const duePosts = await sql`
       SELECT * FROM social_posts 
@@ -60,6 +64,9 @@ export interface SocialPost {
 
 
 export async function uploadSocialMedia(formData: FormData) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const file = formData.get("file") as File;
   const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
   const blob = await put(`social/${Date.now()}-${safeName}`, file, { access: 'public' });
@@ -67,6 +74,9 @@ export async function uploadSocialMedia(formData: FormData) {
 }
 
 export async function getSocialPosts() {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const result = await sql`SELECT * FROM social_posts ORDER BY created_at DESC`;
     return result.map(post => {
@@ -81,6 +91,9 @@ export async function getSocialPosts() {
 }
 
 export async function getSocialPostById(id: number) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const result = await sql`SELECT * FROM social_posts WHERE id = ${id}`;
     if (result.length === 0) return null;
@@ -94,6 +107,9 @@ export async function getSocialPostById(id: number) {
 }
 
 export async function createSocialPostRecord(platforms: string[], default_caption: string, custom_captions: any, media_urls: string[], scheduled_time: Date | null, status: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const res = await sql`
       INSERT INTO social_posts (platforms, default_caption, custom_captions, media_urls, scheduled_time, status)
@@ -105,6 +121,9 @@ export async function createSocialPostRecord(platforms: string[], default_captio
 }
 
 export async function updateSocialPostRecord(id: number, platforms: string[], default_caption: string, custom_captions: any, media_urls: string[], scheduled_time: Date | null, status: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     await sql`
       UPDATE social_posts SET platforms = ${JSON.stringify(platforms)}, default_caption = ${default_caption}, custom_captions = ${JSON.stringify(custom_captions)}, media_urls = ${JSON.stringify(media_urls)}, scheduled_time = ${scheduled_time ? scheduled_time.toISOString() : null}, status = ${status}
@@ -115,6 +134,9 @@ export async function updateSocialPostRecord(id: number, platforms: string[], de
 }
 
 export async function publishToPlatform(postId: number, platform: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const res = await sql`SELECT * FROM social_posts WHERE id = ${postId}`;
     if (res.length === 0) return { success: false, error: "Not found" };
@@ -319,6 +341,9 @@ export async function publishToPlatform(postId: number, platform: string) {
 }
 
 export async function updatePlatformPost(postId: number, platform: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const res = await sql`SELECT * FROM social_posts WHERE id = ${postId}`;
     if (res.length === 0) return { success: false, error: "Not found" };
@@ -396,6 +421,9 @@ export async function updatePlatformPost(postId: number, platform: string) {
 }
 
 export async function deletePlatformPost(postId: number, platform: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const res = await sql`SELECT * FROM social_posts WHERE id = ${postId}`;
     if (res.length === 0) return { success: false, error: "Not found" };
@@ -451,11 +479,17 @@ export async function deletePlatformPost(postId: number, platform: string) {
 }
 
 export async function finalizeSocialPost(postId: number, status: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   await sql`UPDATE social_posts SET status = ${status} WHERE id = ${postId}`;
   return { success: true };
 }
 
 export async function finalizeDelete(postId: number) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   await sql`DELETE FROM social_posts WHERE id = ${postId}`;
   return { success: true };
 }

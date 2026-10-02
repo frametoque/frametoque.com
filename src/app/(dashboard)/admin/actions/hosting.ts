@@ -1,4 +1,5 @@
 "use server";
+import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
@@ -29,6 +30,9 @@ export interface HostingOrder {
 }
 
 export async function getHostingOrders(): Promise<HostingOrder[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`
       SELECT * FROM admin_hosting_orders
@@ -144,6 +148,9 @@ export async function deleteHostingOrder(id: number): Promise<{ success: boolean
 }
 
 export async function uploadProviderInvoice(formData: FormData): Promise<string> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const file = formData.get('file') as File;
   if (!file) throw new Error('No file uploaded');
   try {
@@ -158,6 +165,9 @@ export async function uploadProviderInvoice(formData: FormData): Promise<string>
 }
 
 export async function uploadRenewalInvoiceForHosting(formData: FormData): Promise<string> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const file = formData.get('file') as File;
   if (!file) throw new Error('No file uploaded');
   try {

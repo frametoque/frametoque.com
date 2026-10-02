@@ -1,4 +1,5 @@
 "use server";
+import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
@@ -20,6 +21,9 @@ export interface SaaSOrder {
 }
 
 export async function getSaaSOrders(): Promise<SaaSOrder[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`
       SELECT * FROM admin_saas_orders
@@ -45,6 +49,9 @@ export async function getSaaSOrders(): Promise<SaaSOrder[]> {
 }
 
 export async function getSaaSOrderById(id: number): Promise<SaaSOrder | null> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`SELECT * FROM admin_saas_orders WHERE id = ${id}`;
     if (rows.length === 0) return null;
@@ -56,6 +63,9 @@ export async function getSaaSOrderById(id: number): Promise<SaaSOrder | null> {
 }
 
 export async function getClientSaaSOrders(email: string): Promise<any[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`
       SELECT o.*, i.payment_status, i.total_due, i.currency
@@ -226,6 +236,9 @@ export async function createSaaSInvoice(
   }
 }
 export async function getSaaSProducts(): Promise<string[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`
       SELECT DISTINCT product_name FROM admin_saas_orders WHERE product_name IS NOT NULL AND product_name != '' ORDER BY product_name ASC
@@ -238,6 +251,9 @@ export async function getSaaSProducts(): Promise<string[]> {
 }
 
 export async function getTotalSaaSRevenueSoFar(): Promise<number> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`
       SELECT SUM(total) as total_sum 
@@ -252,6 +268,9 @@ export async function getTotalSaaSRevenueSoFar(): Promise<number> {
 }
 
 export async function getSaaSInvoices(): Promise<any[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     return await sql`
       SELECT invoice_id, project_name, total, date, payment_status, user_email, currency

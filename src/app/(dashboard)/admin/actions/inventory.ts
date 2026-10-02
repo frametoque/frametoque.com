@@ -1,9 +1,13 @@
 "use server";
+import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 
 export async function getInventoryItems() {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS purchase_invoice_url TEXT`;
     await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS warranty_letter_url TEXT`;
@@ -26,6 +30,9 @@ export async function getInventoryItems() {
 }
 
 export async function getInventoryItem(id: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const items = await sql`
     SELECT * FROM admin_inventory
     WHERE id = ${id}
@@ -34,6 +41,9 @@ export async function getInventoryItem(id: string) {
 }
 
 export async function getExpensesForLinking() {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const rows = await sql`
     SELECT id, description, amount, date, receipt_url, category
     FROM admin_expenses
@@ -51,6 +61,9 @@ export async function getExpensesForLinking() {
 }
 
 export async function createInventoryItem(data: any) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const result = await sql`
     INSERT INTO admin_inventory (
       item_name, category, serial_number, quantity, status, purchase_date, purchase_price, notes, warranty_letter_url, expense_id
@@ -66,6 +79,9 @@ export async function createInventoryItem(data: any) {
 }
 
 export async function updateInventoryItem(id: string, data: any) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   await sql`
     UPDATE admin_inventory SET
       item_name = ${data.item_name},
@@ -85,11 +101,17 @@ export async function updateInventoryItem(id: string, data: any) {
 }
 
 export async function deleteInventoryItem(id: string, itemName: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   await sql`DELETE FROM admin_inventory WHERE id = ${id}`;
   await logSystemAction(`Deleted inventory item: "${itemName}" (ID: ${id})`);
 }
 
 export async function uploadInventoryDocument(formData: FormData): Promise<string> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const { put } = await import('@vercel/blob');
   const file = formData.get('file') as File;
   if (!file) throw new Error("No file uploaded");

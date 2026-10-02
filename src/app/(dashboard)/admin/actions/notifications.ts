@@ -1,4 +1,5 @@
 "use server";
+import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
 import { getAnalyticsData, getActiveVisitors } from "./analytics";
@@ -14,6 +15,9 @@ export interface NotificationItem {
 }
 
 export async function fetchLiveNotifications(): Promise<NotificationItem[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   return [];
   const notifications: NotificationItem[] = [];
   const now = Date.now();

@@ -1,4 +1,5 @@
 "use server";
+import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
 import { promises as fs } from "fs";
@@ -21,6 +22,9 @@ const TABLE_MAP: Record<string, string> = {
  * Fetch portfolio items for a specific category
  */
 export async function getPortfolioByCategory(categorySlug: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   if (categorySlug === "photography") {
     const rows = await sql.unsafe(
       `SELECT p.id, e.id as event_id, e.event_name, p.src, p.width, p.height, p.sort_order, e.sort_order as event_sort_order
@@ -44,6 +48,9 @@ export async function getPortfolioByCategory(categorySlug: string) {
  * Create a new portfolio item under a specific category
  */
 export async function createPortfolioItem(categorySlug: string, data: any) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const table = TABLE_MAP[categorySlug];
   if (!table) {
     throw new Error(`Invalid portfolio category: ${categorySlug}`);
@@ -120,6 +127,9 @@ export async function createPortfolioItem(categorySlug: string, data: any) {
  * Update an existing portfolio item in a specific category
  */
 export async function updatePortfolioItem(categorySlug: string, id: number, data: any) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const table = TABLE_MAP[categorySlug];
   if (!table) {
     throw new Error(`Invalid portfolio category: ${categorySlug}`);
@@ -185,6 +195,9 @@ export async function updatePortfolioItem(categorySlug: string, id: number, data
  * Delete a portfolio item from a specific category
  */
 export async function deletePortfolioItem(categorySlug: string, id: number) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   if (categorySlug === "photography") {
     // 1. Fetch event_id and src first before deleting photo
     const photoRes = await sql.unsafe(`SELECT event_id, src FROM work_photography_photos WHERE id = $1`, [id]);
@@ -255,6 +268,9 @@ export async function reorderPortfolioItems(
   idA: number,
   idB: number
 ) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const table = TABLE_MAP[categorySlug];
   if (!table) {
     throw new Error(`Invalid portfolio category: ${categorySlug}`);
@@ -289,6 +305,9 @@ export async function reorderPortfolioItemsBatch(
   categorySlug: string,
   orderedIds: number[]
 ) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   if (!orderedIds || orderedIds.length === 0) return;
 
   const table = categorySlug === "photography" ? "work_photography_events" : TABLE_MAP[categorySlug];
@@ -319,6 +338,9 @@ export async function reorderPortfolioItemsBatch(
  * Batch-assign sort_order to photos inside a photography event in a single database query.
  */
 export async function reorderEventPhotosBatch(orderedPhotoIds: number[]) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   if (!orderedPhotoIds || orderedPhotoIds.length === 0) return;
 
   const valuePairs: string[] = [];
@@ -344,6 +366,9 @@ export async function reorderEventPhotosBatch(orderedPhotoIds: number[]) {
  * Upload portfolio media files
  */
 export async function uploadPortfolioMedia(formData: FormData, categorySlug?: string): Promise<string> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const file = formData.get("file") as File;
   if (!file) {
     throw new Error("No file uploaded");
@@ -365,6 +390,9 @@ export async function uploadPortfolioMedia(formData: FormData, categorySlug?: st
  * Download portfolio media files from an external URL or internal route and save them to Vercel Blob
  */
 export async function uploadPortfolioMediaFromUrl(url: string): Promise<string> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   if (!url) {
     throw new Error("No URL provided");
   }
@@ -449,6 +477,9 @@ export async function createBatchPortfolioPhotos(
   eventName: string,
   photos: { src: string; width: number; height: number; hash?: string; filename?: string }[]
 ) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   if (!photos || photos.length === 0) return;
   const cleanEvent = eventName.trim();
 

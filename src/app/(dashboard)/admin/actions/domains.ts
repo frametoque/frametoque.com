@@ -1,4 +1,5 @@
 "use server";
+import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
@@ -6,6 +7,9 @@ import { generateUniqueInvoiceId } from "./actions";
 import { put } from '@vercel/blob';
 
 export async function uploadProviderInvoice(formData: FormData): Promise<string> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const file = formData.get('file') as File;
   if (!file) {
     throw new Error("No file uploaded");
@@ -81,6 +85,9 @@ type CreateInvoiceResult =
 // ---------------------------------------------------------------------------
 
 export async function uploadRenewalInvoiceForDomain(formData: FormData): Promise<string> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   const file = formData.get('file') as File;
   if (!file) throw new Error('No file uploaded');
   try {
@@ -143,6 +150,9 @@ function countsTowardProfit(o: DomainOrder): boolean {
 // ---------------------------------------------------------------------------
 
 export async function getDomainOrders(): Promise<DomainOrder[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     // Batch-expire all overdue active domains in a single SQL statement
     const now = new Date().toISOString();
@@ -182,6 +192,9 @@ export async function getDomainOrders(): Promise<DomainOrder[]> {
 }
 
 export async function getDomainRenewalHistory(domainOrderId: number): Promise<DomainRenewalHistoryRow[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`
       SELECT h.*, i.payment_status
@@ -252,6 +265,9 @@ export async function getDomainRenewalHistory(domainOrderId: number): Promise<Do
 }
 
 export async function getAllRenewalHistory(): Promise<DomainRenewalHistoryRow[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const rows = await sql`
       SELECT h.*, i.payment_status
@@ -283,6 +299,9 @@ export async function getAllRenewalHistory(): Promise<DomainRenewalHistoryRow[]>
 export async function addDomainOrder(
   order: Omit<DomainOrder, "id" | "created_at" | "purchase_date">
 ): Promise<SimpleActionResult> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     await sql`
       INSERT INTO admin_domain_orders (
@@ -310,6 +329,9 @@ type DomainExpiryResult =
   | { success: true; invoiceId: string | null; skippedInvoice?: boolean; alreadyExists?: boolean };
 
 export async function createDomainRenewalInvoice(id: number, currency: "USD" | "LKR" = "USD"): Promise<DomainExpiryResult> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const orders = await sql`SELECT * FROM admin_domain_orders WHERE id = ${id}`;
     if (orders.length === 0) return { success: false, error: "Order not found" };
@@ -411,6 +433,9 @@ export async function updateDomainOrderStatus(
   status: string,
   options?: DomainExpiryOptions
 ): Promise<StatusUpdateResult> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const normalizedStatus = status.toLowerCase();
 
@@ -454,6 +479,9 @@ export async function updateDomainOrderStatus(
 }
 
 export async function deleteDomainOrder(id: number, deleteInvoices: boolean = false): Promise<SimpleActionResult> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     // 1. Fetch domain order details first
     const orders = await sql`SELECT domain_name, invoice_id FROM admin_domain_orders WHERE id = ${id}`;
@@ -524,6 +552,9 @@ export async function updateDomainOrder(
   order: Partial<DomainOrder>,
   options?: DomainExpiryOptions
 ): Promise<StatusUpdateResult> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const currentRows = await sql`SELECT status FROM admin_domain_orders WHERE id = ${id}`;
     if (currentRows.length === 0) return { success: false, error: "Order not found" };
@@ -578,6 +609,9 @@ export async function createDomainInvoice(
   id: number,
   currency: 'USD' | 'LKR'
 ): Promise<CreateInvoiceResult> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     // 1. Fetch domain order details
     const orders = await sql`SELECT * FROM admin_domain_orders WHERE id = ${id}`;
@@ -642,6 +676,9 @@ export async function createDomainInvoice(
 }
 
 export async function renewExpiredDomain(id: number): Promise<CreateInvoiceResult> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
   try {
     const orders = await sql`SELECT * FROM admin_domain_orders WHERE id = ${id}`;
     if (orders.length === 0) return { success: false, error: "Order not found" };
