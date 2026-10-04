@@ -88,7 +88,7 @@ export default function EditAgreementPage() {
           });
         } else {
           alert("Agreement not found");
-          router.push("/admin/agreements");
+          router.push(`/admin/agreements?optimistic=update&id=${agreement_id}`);
         }
       } catch (error) {
         console.error("Failed to load edit data:", error);
@@ -192,7 +192,7 @@ export default function EditAgreementPage() {
     setIsSubmitting(true);
     try {
       await updateAgreement(parseInt(agreement_id as string), formData);
-      router.push("/admin/agreements");
+      router.push(`/admin/agreements?optimistic=update&id=${agreement_id}`);
     } catch (e) {
       console.error(e);
       alert("Failed to update agreement");

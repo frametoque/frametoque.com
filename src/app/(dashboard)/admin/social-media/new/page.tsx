@@ -139,7 +139,7 @@ function CreateNewPostForm() {
        const resObj: any = {};
        for (const p of [...platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(b))) resObj[p] = { status: 'scheduled' };
        setPublishingState(prev => ({ ...prev, results: resObj, done: true }));
-       setTimeout(() => router.push("/admin/social-media"), 1500);
+       setTimeout(() => router.push("/admin/social-media?optimistic=new"), 1500);
        return;
     }
 
@@ -187,7 +187,7 @@ function CreateNewPostForm() {
     
     // Auto redirect after 2 seconds if everything succeeded
     if (Object.values(results).every((r: any) => r.status === 'success')) {
-       setTimeout(() => router.push("/admin/social-media"), 2000);
+       setTimeout(() => router.push("/admin/social-media?optimistic=new"), 2000);
     } else {
        setSaving(false);
     }
@@ -243,7 +243,7 @@ function CreateNewPostForm() {
              
              {publishingState.done && (
                <div className="mt-8 flex justify-end">
-                 <button onClick={() => router.push("/admin/social-media")} className="px-6 py-2.5 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors">
+                 <button onClick={() => router.push("/admin/social-media?optimistic=new")} className="px-6 py-2.5 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors">
                    Go to Dashboard
                  </button>
                </div>

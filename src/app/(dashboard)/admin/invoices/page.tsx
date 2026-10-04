@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import useSWR from "swr";
 import { FileText, CheckCircle, Clock, AlertCircle, Search, Eye, Edit2, Send, Download, Trash2, DollarSign, X, Loader2, Upload, Image as ImageIcon, FileText as FileIcon } from "lucide-react";
@@ -247,7 +248,7 @@ export default function InvoicesPage() {
     return { data: res, accounts: accRes || [] };
   };
 
-  const { data: swrData, isLoading: loading, mutate: loadData } = useSWR(
+  const { data: swrData, isLoading: loading, isValidating, mutate: loadData } = useSWR(
     'invoices',
     fetcher,
     { revalidateOnFocus: true, dedupingInterval: 0 }
@@ -256,6 +257,12 @@ export default function InvoicesPage() {
   const { data = null as any, accounts = [] as any[] } = swrData || {};
 
   const [extraItems, setExtraItems] = useState<any[]>([]);
+  
+  const searchParams = useSearchParams();
+  const isOptimisticNew = searchParams.get('optimistic') === 'new';
+  const isOptimisticUpdate = searchParams.get('optimistic') === 'update';
+  const updateId = searchParams.get('id');
+
   const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -452,7 +459,18 @@ export default function InvoicesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
+              {isOptimisticNew && isValidating && (
+                 <tr className="animate-pulse bg-brand-500/10 border-b border-brand-500/20">
+                   <td colSpan={10} className="p-4 py-6">
+                     <div className="flex items-center justify-center gap-3 text-brand-400">
+                       <Loader2 className="w-5 h-5 animate-spin" />
+                       <span className="font-medium">Saving new entry...</span>
+                     </div>
+                   </td>
+                 </tr>
+              )}
               {filteredInvoices.map((row: any) => {
+                const isUpdating = isOptimisticUpdate && updateId === String(row.id) && isValidating;
                 const paymentStatus = row.status?.toLowerCase() || '';
                 const workStatus = row.work_status?.toLowerCase() || '';
 
@@ -470,7 +488,7 @@ export default function InvoicesPage() {
                 else if (workStatus === 'pending') workColor = "text-amber-400 bg-amber-400/10 border-amber-400/20";
 
                 return (
-                  <tr key={row.id} className="hover:bg-white/5 transition-colors">
+                  <tr key={row.id} className={`hover:bg-white/5 transition-colors ${isUpdating ? "animate-pulse bg-white/10 opacity-70" : ""}`}>
                     <td className="p-4">
                       <Link href={`/admin/invoice/${row.id}`} className="font-semibold text-brand-400 hover:text-brand-300 transition-colors">
                         {row.id}

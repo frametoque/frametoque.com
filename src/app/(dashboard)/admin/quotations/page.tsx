@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import useSWR from "swr";
 import { Wallet, TrendingUp, Plus, Edit2, Trash2, Eye, Loader2, CheckCircle2, FolderOpen, X, Download } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { 
   getQuotations, 
   deleteQuotation, 
@@ -74,11 +74,17 @@ export default function QuotationsPage() {
     return { data: res, bankAccounts: banks };
   };
 
-  const { data: swrData, isLoading: loading, mutate: loadData } = useSWR(
+  const { data: swrData, isLoading: loading, isValidating, mutate: loadData } = useSWR(
     ['quotations', startDate, endDate],
     fetcher,
     { keepPreviousData: true, revalidateOnFocus: false }
   );
+
+  const searchParams = useSearchParams();
+  const isOptimisticNew = searchParams.get('optimistic') === 'new';
+  const isOptimisticUpdate = searchParams.get('optimistic') === 'update';
+  const updateId = searchParams.get('id');
+
 
   const { data = null as any, bankAccounts = [] as any[] } = swrData || {};
 
@@ -253,8 +259,21 @@ const handleDelete = async (id: number) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filteredQuotations.map((row: any) => (
-                <tr key={row.id} className="hover:bg-white/5 transition-colors">
+
+              {isOptimisticNew && isValidating && (
+                 <tr className="animate-pulse bg-brand-500/10 border-b border-brand-500/20">
+                   <td colSpan={10} className="p-4 py-6">
+                     <div className="flex items-center justify-center gap-3 text-brand-400">
+                       <Loader2 className="w-5 h-5 animate-spin" />
+                       <span className="font-medium">Saving new entry...</span>
+                     </div>
+                   </td>
+                 </tr>
+              )}
+              {filteredQuotations.map((row: any) => {
+                const isUpdating = isOptimisticUpdate && updateId === String(row.id) && isValidating;
+                return (
+                <tr key={row.id} className={`hover:bg-white/5 transition-colors ${isUpdating ? "animate-pulse bg-white/10 opacity-70" : ""}`}>
                   <td className="p-4 text-sm">{row.date}</td>
                   <td className="p-4 font-semibold text-blue-400">{formatLKR(row.amount)}</td>
                   <td className="p-4">
@@ -329,7 +348,8 @@ const handleDelete = async (id: number) => {
                     </button>
                   </td>
                 </tr>
-              ))}
+              );
+            })}
               {filteredQuotations.length === 0 && (
                 <tr>
                   <td colSpan={7} className="p-6 text-center text-gray-500">No quotations found.</td>

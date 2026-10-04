@@ -141,7 +141,7 @@ export default function NewAgreementPage() {
     setIsSubmitting(true);
     try {
       await createAgreement(formData);
-      router.push("/admin/agreements");
+      router.push("/admin/agreements?optimistic=new");
     } catch (e) {
       console.error(e);
       alert("Failed to create agreement");

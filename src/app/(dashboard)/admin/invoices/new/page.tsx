@@ -180,7 +180,7 @@ export default function NewInvoicePage() {
         category: selectedCategories.join(", "),
         subtotal, total, totalDue,
       }, lineItems);
-      router.push("/admin/invoices");
+      router.push("/admin/invoices?optimistic=new");
     } catch (e) {
       console.error(e);
       alert("Failed to create invoice");

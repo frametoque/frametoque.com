@@ -194,7 +194,7 @@ export default function EditQuotationPage() {
         phone: formData.phone || null,
       }, lineItems);
       
-      router.push("/admin/quotations");
+      router.push(`/admin/quotations?optimistic=update&id=${quotation_id}`);
     } catch (e) {
       console.error(e);
       alert("Failed to update quotation");

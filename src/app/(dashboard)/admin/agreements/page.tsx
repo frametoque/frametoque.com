@@ -8,7 +8,7 @@ import {
   Loader2, User, Calendar, Tag, FileText
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { 
   getAgreements, 
   deleteAgreement, 
@@ -48,7 +48,13 @@ export default function AgreementsPage() {
     return { agreements: data };
   };
 
-  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-agreements'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { data: swrData, isLoading: loading, isValidating, mutate } = useSWR(['admin-agreements'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+
+  const searchParams = useSearchParams();
+  const isOptimisticNew = searchParams.get('optimistic') === 'new';
+  const isOptimisticUpdate = searchParams.get('optimistic') === 'update';
+  const updateId = searchParams.get('id');
+
   const { agreements = [] } = swrData || {};
 
   // Derived stats
@@ -180,11 +186,23 @@ export default function AgreementsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
+
+              {isOptimisticNew && isValidating && (
+                 <tr className="animate-pulse bg-brand-500/10 border-b border-brand-500/20">
+                   <td colSpan={10} className="p-4 py-6">
+                     <div className="flex items-center justify-center gap-3 text-brand-400">
+                       <Loader2 className="w-5 h-5 animate-spin" />
+                       <span className="font-medium">Saving new entry...</span>
+                     </div>
+                   </td>
+                 </tr>
+              )}
                 {filtered.map((row) => {
+                  const isUpdating = isOptimisticUpdate && updateId === String(row.id) && isValidating;
                   const sc = statusConfig[row.status] || statusConfig.draft;
                   const StatusIcon = sc.icon;
                   return (
-                    <tr key={row.id} className="hover:bg-white/5 transition-colors">
+                    <tr key={row.id} className={`hover:bg-white/5 transition-colors ${isUpdating ? "animate-pulse bg-white/10 opacity-70" : ""}`}>
                       <td className="p-4">
                         <p className="font-semibold text-sm text-white">{row.title}</p>
                         <p className="text-xs text-gray-500 mt-0.5">Created {formatDate(row.created_at || "")}</p>
