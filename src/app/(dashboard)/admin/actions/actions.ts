@@ -1510,7 +1510,8 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
   }
 
   await logSystemAction(`Updated invoice: "${invoiceData.projectName}" (${invoiceId})`);
-  return { success: true };
+  revalidatePath("/admin", "layout");
+    return { success: true };
 }
 
 // -- REPORTS --
@@ -2115,6 +2116,7 @@ export async function recordInvoicePayment(
       await reactivateDomainAfterRenewalPayment(invoiceId);
     }
 
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (e) {
     console.error("Failed to record invoice payment:", e);
@@ -2184,6 +2186,7 @@ export async function submitBankSlip(invoiceId: string, slipBase64: string, amou
     `;
 
     await logSystemAction(`Bank slip uploaded for invoice ${invoiceId}. Status changed to on review.`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to upload bank slip:", err);
@@ -2264,6 +2267,7 @@ export async function approveBankSlip(invoiceId: string, slipId?: string | numbe
       await reactivateDomainAfterRenewalPayment(invoiceId);
     }
 
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to approve bank slip:", err);
@@ -2331,6 +2335,7 @@ export async function declineBankSlip(invoiceId: string, slipId?: string | numbe
     }
 
     await logSystemAction(`Deleted declined bank slip for invoice ${invoiceId}.`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to decline bank slip:", err);
@@ -2375,7 +2380,8 @@ export async function undoApprovedBankSlipPayment(invoiceId: string, slipId: num
       `;
 
       await logSystemAction(`Marked bank slip ${slipId} as declined (no income record to reverse).`);
-      return { success: true };
+      revalidatePath("/admin", "layout");
+    return { success: true };
     }
 
     const incomeId = incomeRows[0].id;
@@ -2391,6 +2397,7 @@ export async function undoApprovedBankSlipPayment(invoiceId: string, slipId: num
     `;
 
     await logSystemAction(`Declined approved bank slip ${slipId} for invoice ${invoiceId}. Reversed income record of ${slipAmount}.`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to undo approved bank slip payment:", err);
@@ -2440,6 +2447,7 @@ export async function adminUploadPaymentSlip(invoiceId: string, slipBase64: stri
     `;
 
     await logSystemAction(`Admin uploaded and auto-approved payment slip for invoice ${invoiceId}: LKR ${amount}`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to upload admin payment slip:", err);
@@ -2477,6 +2485,7 @@ export async function submitPaymentSlip(invoiceId: string, amount: number, slipB
     `;
 
     await logSystemAction(`Payment slip submitted for invoice ${invoiceId}: LKR ${amount}`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to submit payment slip:", err);
@@ -2530,6 +2539,7 @@ export async function reviewPaymentSlip(id: number, approved: boolean, reviewerI
       WHERE id = ${id}
     `;
 
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to review payment slip:", err);

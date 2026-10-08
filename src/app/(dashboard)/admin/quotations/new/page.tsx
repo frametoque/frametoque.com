@@ -208,7 +208,7 @@ export default function NewQuotationPage() {
       }, lineItems);
 
       alert("Quotation created successfully!");
-      router.push("/admin/quotations?optimistic=new");
+      window.location.href = "/admin/quotations";
     } catch (e) {
       console.error(e);
       alert("Failed to create quotation");

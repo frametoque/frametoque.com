@@ -135,7 +135,7 @@ export default function ServicesAdminPage() {
     return { services: data };
   };
 
-  const { data: swrData, isLoading: loading, mutate: reloadServices } = useSWR(['services', activeCategory], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { data: swrData, isLoading: loading, mutate: reloadServices } = useSWR(['services', activeCategory], fetcher);
   const { services = EMPTY_SERVICES } = swrData || {};
 
   useEffect(() => {

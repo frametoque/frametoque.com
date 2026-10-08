@@ -1,4 +1,5 @@
 "use server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
@@ -129,6 +130,7 @@ export async function updateSocialPostRecord(id: number, platforms: string[], de
       UPDATE social_posts SET platforms = ${JSON.stringify(platforms)}, default_caption = ${default_caption}, custom_captions = ${JSON.stringify(custom_captions)}, media_urls = ${JSON.stringify(media_urls)}, scheduled_time = ${scheduled_time ? scheduled_time.toISOString() : null}, status = ${status}
       WHERE id = ${id}
     `;
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch(e:any) { return { success: false, error: e.message }; }
 }
@@ -336,6 +338,7 @@ export async function publishToPlatform(postId: number, platform: string) {
     }
 
     await sql`UPDATE social_posts SET platform_post_ids = ${JSON.stringify(platformPostIds)} WHERE id = ${postId}`;
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch(e:any) { return { success: false, error: e.message }; }
 }
@@ -416,6 +419,7 @@ export async function updatePlatformPost(postId: number, platform: string) {
         await fetch(`https://api.telegram.org/bot${botToken}/${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     }
 
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch(e:any) { return { success: false, error: e.message }; }
 }
@@ -474,6 +478,7 @@ export async function deletePlatformPost(postId: number, platform: string) {
         await youtube.videos.delete({ id: ids['youtube'] });
     }
 
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch(e:any) { return { success: false, error: e.message }; }
 }
@@ -483,7 +488,8 @@ export async function finalizeSocialPost(postId: number, status: string) {
   if (!userId) throw new Error("Unauthorized");
 
   await sql`UPDATE social_posts SET status = ${status} WHERE id = ${postId}`;
-  return { success: true };
+  revalidatePath("/admin", "layout");
+    return { success: true };
 }
 
 export async function finalizeDelete(postId: number) {
@@ -491,5 +497,6 @@ export async function finalizeDelete(postId: number) {
   if (!userId) throw new Error("Unauthorized");
 
   await sql`DELETE FROM social_posts WHERE id = ${postId}`;
-  return { success: true };
+  revalidatePath("/admin", "layout");
+    return { success: true };
 }

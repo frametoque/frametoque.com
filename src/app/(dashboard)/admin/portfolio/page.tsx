@@ -192,7 +192,7 @@ export default function PortfolioAdminPage() {
     return { items: res };
   };
 
-  const { data: swrData, isLoading: loading, mutate: reloadItems } = useSWR(["portfolio", activeCategory], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { data: swrData, isLoading: loading, mutate: reloadItems } = useSWR(["portfolio", activeCategory], fetcher);
   const { items = EMPTY_ITEMS } = swrData || {};
 
   const loadItems = async () => {

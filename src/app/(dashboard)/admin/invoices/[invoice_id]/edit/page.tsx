@@ -242,7 +242,7 @@ export default function EditInvoicePage() {
         category: selectedCategories.join(", "),
         subtotal, total, totalDue,
       }, lineItems);
-      router.push(`/admin/invoices?optimistic=update&id=${invoice_id}`);
+      window.location.href = "/admin/invoices";
     } catch (e) {
       console.error(e);
       alert("Failed to update invoice: " + (e instanceof Error ? e.message : String(e)));

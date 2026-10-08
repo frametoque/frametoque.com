@@ -50,7 +50,7 @@ export default function ReportsPage() {
     return { data: res, clients: cls, accounts: accs };
   };
 
-  const { data: swrData, isLoading: loading } = useSWR(['reports-main', startDate, endDate], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { data: swrData, isLoading: loading } = useSWR(['reports-main', startDate, endDate], fetcher);
   const { data, clients = [], accounts = [] } = swrData || {};
 
   useEffect(() => {

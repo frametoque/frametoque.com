@@ -125,7 +125,7 @@ export default function HostingPage() {
     };
   };
 
-  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-hosting'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-hosting'], fetcher);
   const { orders = [], lkrRate = 300.0 } = swrData || {};
 
   const loadOrders = async () => {

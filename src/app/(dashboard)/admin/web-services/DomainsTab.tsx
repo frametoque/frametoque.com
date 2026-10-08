@@ -385,7 +385,7 @@ export default function AdminOrdersPage() {
     };
   };
 
-  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-domains'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-domains'], fetcher);
   const { orders = [], allRenewals = [], lkrRate = 300 } = swrData || {};
 
   const loadData = async () => {

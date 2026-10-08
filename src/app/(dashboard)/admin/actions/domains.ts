@@ -1,4 +1,5 @@
 "use server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
@@ -108,6 +109,7 @@ export async function setDomainRenewalInvoiceUrl(
   try {
     // No migration check needed
     await sql`UPDATE domain_renewal_history SET renewal_invoice_url = ${url} WHERE id = ${renewalId}`;
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error('Failed to set renewal invoice url:', err);
@@ -312,6 +314,7 @@ export async function addDomainOrder(
       )
     `;
     await logSystemAction(`Domain order placed: "${order.domain_name}" for client "${order.client_email}"`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to add domain order:", err);
@@ -471,6 +474,7 @@ export async function updateDomainOrderStatus(
       `;
     }
     await logSystemAction(`Domain order status updated (ID: ${id}) to "${status}"`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to update domain order status:", err);
@@ -540,6 +544,7 @@ export async function deleteDomainOrder(id: number, deleteInvoices: boolean = fa
     `;
 
     await logSystemAction(`Domain order deleted (ID: ${id}) ${deleteInvoices ? "with all linked invoices" : "only"}`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to delete domain order:", err);
@@ -598,6 +603,7 @@ export async function updateDomainOrder(
     }
 
     await logSystemAction(`Domain order updated (ID: ${id})`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to update domain order:", err);

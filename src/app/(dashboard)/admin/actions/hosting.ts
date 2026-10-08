@@ -1,4 +1,5 @@
 "use server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
@@ -88,6 +89,7 @@ export async function addHostingOrder(
       )
     `;
     await logSystemAction(`Hosting order placed: "${order.domain_name}" for client "${order.client_email}"`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to add hosting order:", err);
@@ -129,6 +131,7 @@ export async function updateHostingOrder(
     `;
 
     await logSystemAction(`Hosting order updated (ID: ${id})`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to update hosting order:", err);
@@ -140,6 +143,7 @@ export async function deleteHostingOrder(id: number): Promise<{ success: boolean
   try {
     await sql`DELETE FROM admin_hosting_orders WHERE id = ${id}`;
     await logSystemAction(`Deleted hosting order ID ${id}`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to delete hosting order:", err);
@@ -195,6 +199,7 @@ export async function addHostingRenewalInvoiceUrl(
       WHERE id = ${orderId}
     `;
     await logSystemAction(`Added renewal invoice to hosting order ID ${orderId}`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error('Failed to add hosting renewal invoice url:', err);

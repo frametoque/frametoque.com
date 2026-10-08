@@ -1,4 +1,5 @@
 "use server";
+import { revalidatePath } from "next/cache";
 import { clerkClient, auth } from "@clerk/nextjs/server";
 import { logSystemAction } from "@/lib/logger";
 
@@ -117,6 +118,7 @@ export async function updateBooking(id: number, data: BookingData): Promise<bool
       WHERE id = ${id}
     `;
     await logSystemAction(`Updated booking for: ${data.customer_name}`);
+    revalidatePath("/admin", "layout");
     return true;
   } catch (error) {
     console.error("Failed to update booking:", error);
@@ -133,6 +135,7 @@ export async function deleteBooking(id: number): Promise<boolean> {
       DELETE FROM admin_bookings WHERE id = ${id}
     `;
     await logSystemAction(`Deleted booking ID: ${id}`);
+    revalidatePath("/admin", "layout");
     return true;
   } catch (error) {
     console.error("Failed to delete booking:", error);
@@ -490,6 +493,7 @@ export async function updateProject(id: number, data: WorkspaceProject): Promise
       WHERE id = ${id}
     `;
     await logSystemAction(`Updated workspace project: ${data.name}`);
+    revalidatePath("/admin", "layout");
     return true;
   } catch (error) {
     console.error("Failed to update project:", error);
@@ -504,6 +508,7 @@ export async function deleteProject(id: number): Promise<boolean> {
   try {
     await sql`DELETE FROM workspace_projects WHERE id = ${id}`;
     await logSystemAction(`Deleted workspace project ID: ${id}`);
+    revalidatePath("/admin", "layout");
     return true;
   } catch (error) {
     console.error("Failed to delete project:", error);
@@ -579,6 +584,7 @@ export async function updateTask(id: number, data: WorkspaceTask): Promise<boole
       WHERE id = ${id}
     `;
     await logSystemAction(`Updated workspace task: ${data.name}`);
+    revalidatePath("/admin", "layout");
     return true;
   } catch (error) {
     console.error("Failed to update task:", error);
@@ -593,6 +599,7 @@ export async function deleteTask(id: number): Promise<boolean> {
   try {
     await sql`DELETE FROM workspace_tasks WHERE id = ${id}`;
     await logSystemAction(`Deleted workspace task ID: ${id}`);
+    revalidatePath("/admin", "layout");
     return true;
   } catch (error) {
     console.error("Failed to delete task:", error);

@@ -114,7 +114,7 @@ export default function CalendarTab() {
     };
   };
 
-  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-bookings'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-bookings'], fetcher);
   const { bookings = [], calendarEvents = [], sriLankaHolidays = {}, bookingForecasts = [] } = swrData || {};
 
   const openNewModal = (dateStr?: string) => {

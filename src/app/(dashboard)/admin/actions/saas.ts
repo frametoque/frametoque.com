@@ -1,4 +1,5 @@
 "use server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
@@ -112,6 +113,7 @@ export async function addSaaSOrder(
       )
     `;
     await logSystemAction(`SaaS order placed: "${order.product_name}" for client "${order.client_email}"`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to add SaaS order:", err);
@@ -143,6 +145,7 @@ export async function updateSaaSOrder(
     `;
 
     await logSystemAction(`SaaS order updated (ID: ${id})`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to update SaaS order:", err);
@@ -157,6 +160,7 @@ export async function updateSaaSOrderStatus(
   try {
     await sql`UPDATE admin_saas_orders SET status = ${newStatus} WHERE id = ${id}`;
     await logSystemAction(`SaaS order status updated to ${newStatus} (ID: ${id})`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to update SaaS order status:", err);
@@ -168,6 +172,7 @@ export async function deleteSaaSOrder(id: number): Promise<{ success: boolean; e
   try {
     await sql`DELETE FROM admin_saas_orders WHERE id = ${id}`;
     await logSystemAction(`Deleted SaaS order ID ${id}`);
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to delete SaaS order:", err);

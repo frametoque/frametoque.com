@@ -29,7 +29,7 @@ export default function ClientsPage() {
     return { data: res };
   };
 
-  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-clients'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-clients'], fetcher);
   const { data = [] } = swrData || {};
 
   useEffect(() => {

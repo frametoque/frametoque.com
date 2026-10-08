@@ -1,4 +1,5 @@
 "use server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
@@ -191,6 +192,7 @@ export async function createAgreement(data: any) {
         'pending'
       ) RETURNING id
     `;
+    revalidatePath("/admin", "layout");
     return result[0]?.id;
   } catch (error) {
     console.error("Failed to create agreement:", error);
@@ -228,6 +230,7 @@ export async function updateAgreement(id: number, data: any) {
         status = ${data.status || 'pending'}
       WHERE id = ${id}
     `;
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (error) {
     console.error("Failed to update agreement:", error);
@@ -254,6 +257,7 @@ export async function signAgreement(
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id}
     `;
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (error) {
     console.error("Failed to sign agreement:", error);
@@ -270,6 +274,7 @@ export async function deleteAgreement(id: number) {
       DELETE FROM admin_agreements
       WHERE id = ${id}
     `;
+    revalidatePath("/admin", "layout");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete agreement:", error);

@@ -22,7 +22,7 @@ export default function SocialMediaPage() {
     return { posts: fetchedPosts };
   };
 
-  const { data: swrData, isLoading: loading, mutate: reloadPosts } = useSWR(['social-media-posts'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { data: swrData, isLoading: loading, mutate: reloadPosts } = useSWR(['social-media-posts'], fetcher);
   const { posts = [] } = swrData || {};
 
   const deleteStateDefault = { isOpen: false, currentPlatform: '', platforms: [], results: {}, done: false };

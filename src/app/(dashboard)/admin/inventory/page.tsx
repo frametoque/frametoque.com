@@ -29,7 +29,7 @@ export default function InventoryPage() {
     return { data: res, expenses: exp };
   };
 
-  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-inventory'], fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-inventory'], fetcher);
   const { data = [], expenses = [] } = swrData || {};
 
 
