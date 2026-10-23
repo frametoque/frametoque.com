@@ -13,7 +13,10 @@ export async function GET(request: Request) {
     // fuzzy point-of-interest and address search. It is 100% free and requires no API key.
     const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lat=7.8731&lon=80.7718`;
     const response = await fetch(photonUrl);
-    const data = await response.json();
+    if (!response.ok) {
+      return NextResponse.json([]);
+    }
+    const data = await response.json().catch(() => null);
 
     if (data && Array.isArray(data.features)) {
       const mapped = data.features.map((feature: any) => {

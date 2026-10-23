@@ -9,11 +9,12 @@ import {
   deleteHostingOrder,
   uploadRenewalInvoiceForHosting,
   addHostingRenewalInvoiceUrl,
+  linkInvoiceToHostingOrder,
   HostingOrder
 } from "../actions/hosting";
-import { uploadProviderInvoice } from "../actions/domains";
+import { uploadProviderInvoice, getInvoicesForLinking } from "../actions/domains";
 import {
-  Server, Shield, HardDrive, Cpu, Cloud, Settings, Plus, Edit2, Trash2, X, FileText, Globe, Mail, Clock, Check, Search, AlertTriangle, TrendingUp, ChevronLeft, ChevronRight, Upload, Lock, RefreshCw
+  Server, Shield, HardDrive, Cpu, Cloud, Settings, Plus, Edit2, Trash2, X, FileText, Mail, Clock, Check, Search, AlertTriangle, TrendingUp, ChevronLeft, ChevronRight, Upload, Lock, RefreshCw, Link2, Unlink, ExternalLink
 } from "lucide-react";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { StatCard } from "@/components/ui/StatCard";
@@ -116,7 +117,7 @@ export default function HostingPage() {
 
   const fetcher = async () => {
     const [rateRes, data] = await Promise.all([
-      fetch("https://open.er-api.com/v6/latest/USD").then(r => r.json()).catch(() => null),
+      fetch("https://open.er-api.com/v6/latest/USD").then(r => r.ok ? r.json() : null).catch(() => null),
       getHostingOrders(),
     ]);
     return {
@@ -195,10 +196,55 @@ export default function HostingPage() {
 
   const [saving, setSaving] = useState(false);
 
+  // Quick Invoice Linking Modal States for Hosting
+  const [linkingHostingOrder, setLinkingHostingOrder] = useState<HostingOrder | null>(null);
+  const [linkingInvoices, setLinkingInvoices] = useState<any[]>([]);
+  const [loadingLinkInvoices, setLoadingLinkInvoices] = useState(false);
+  const [manualInvoiceId, setManualInvoiceId] = useState("");
+  const [savingLink, setSavingLink] = useState(false);
+
+  // Available invoices for selection in Add/Edit modals
+  const [modalInvoices, setModalInvoices] = useState<any[]>([]);
+  const [loadingModalInvoices, setLoadingModalInvoices] = useState(false);
+
   const fetchOrders = async () => {
     await mutate();
   };
-  const handleOpenAddModal = () => {
+
+  const handleOpenLinkModal = async (order: HostingOrder) => {
+    setLinkingHostingOrder(order);
+    setManualInvoiceId(order.invoice_id || "");
+    setLoadingLinkInvoices(true);
+    try {
+      const invs = await getInvoicesForLinking(order.client_email);
+      setLinkingInvoices(invs);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingLinkInvoices(false);
+    }
+  };
+
+  const handleSaveInvoiceLink = async (invId: string | null) => {
+    if (!linkingHostingOrder) return;
+    setSavingLink(true);
+    try {
+      const res = await linkInvoiceToHostingOrder(linkingHostingOrder.id, invId);
+      if (res.success) {
+        alert(invId ? `Linked invoice ${invId} successfully!` : "Invoice unlinked successfully!");
+        setLinkingHostingOrder(null);
+        await fetchOrders();
+      } else {
+        alert("Failed to link invoice: " + ((res as any).error || "Unknown error"));
+      }
+    } catch (err: any) {
+      alert("Error linking invoice: " + err.message);
+    } finally {
+      setSavingLink(false);
+    }
+  };
+
+  const handleOpenAddModal = async () => {
     setAddEmail("");
     setAddDomain("");
     setAddProvider("Other");
@@ -216,9 +262,19 @@ export default function HostingPage() {
     setAddIsFree(false);
     setAddVercelEmail("");
     setIsAddModalOpen(true);
+
+    setLoadingModalInvoices(true);
+    try {
+      const invs = await getInvoicesForLinking();
+      setModalInvoices(invs);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingModalInvoices(false);
+    }
   };
 
-  const handleOpenEditModal = (order: HostingOrder) => {
+  const handleOpenEditModal = async (order: HostingOrder) => {
     setSelectedOrder(order);
     setEditEmail(order.client_email);
     setEditDomain(order.domain_name);
@@ -240,6 +296,16 @@ export default function HostingPage() {
     setEditIsFree(isFreeOrder);
     setEditVercelEmail(order.vercel_email || "");
     setIsEditModalOpen(true);
+
+    setLoadingModalInvoices(true);
+    try {
+      const invs = await getInvoicesForLinking(order.client_email);
+      setModalInvoices(invs);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingModalInvoices(false);
+    }
   };
 
   const handleAddSubmit = async (e: React.FormEvent) => {
@@ -399,31 +465,6 @@ export default function HostingPage() {
 
   return (
     <div className="space-y-6 pb-10 mt-2">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <StatCard 
-          title="Active Hosting" 
-          value={<AnimatedNumber value={activeCount} />} 
-          icon={<Server className="w-6 h-6" />} 
-          iconBgColor="bg-green-400/10" 
-          iconTextColor="text-green-400" 
-        />
-        <StatCard 
-          title="Suspended Hosting" 
-          value={<AnimatedNumber value={suspendedCount} />} 
-          icon={<AlertTriangle className="w-6 h-6" />} 
-          iconBgColor="bg-red-400/10" 
-          iconTextColor="text-red-400" 
-        />
-        <StatCard 
-          title="Est. Profit (LKR)" 
-          value={<AnimatedNumber value={formatLKR(totalProfitLkr)} />} 
-          icon={<TrendingUp className="w-6 h-6" />} 
-          iconBgColor="bg-brand-400/10" 
-          iconTextColor="text-brand-400" 
-        />
-      </div>
-
       {/* Controls */}
       <PageHeader
         searchQuery={searchQuery}
@@ -477,13 +518,19 @@ export default function HostingPage() {
                   <TableRow key={o.id}>
                     <TableCell>
                       <div className="font-semibold text-white flex items-center gap-1.5 flex-wrap">
-                        <Globe className="w-4 h-4 text-brand-400" />
+                        <Server className="w-4 h-4 text-brand-400" />
                         {o.domain_name}
                       </div>
                       <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                         <Mail className="w-3.5 h-3.5 text-gray-500" />
                         {o.client_email}
                       </div>
+                      {o.invoice_id && (
+                        <div className="text-[11px] text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-lg mt-1 inline-flex items-center gap-1 font-mono">
+                          <Link2 className="w-3 h-3 text-blue-400" />
+                          <span>{o.invoice_id}</span>
+                        </div>
+                      )}
                       {o.vercel_email && (
                         <div className="text-[11px] text-brand-300 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-lg mt-1 inline-flex items-center gap-1">
                           <Mail className="w-3 h-3 text-brand-400" />
@@ -567,6 +614,15 @@ export default function HostingPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => handleOpenLinkModal(o)}
+                          className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                            o.invoice_id ? 'hover:bg-blue-500/10 text-blue-400' : 'hover:bg-white/10 text-gray-400 hover:text-white'
+                          }`}
+                          title={o.invoice_id ? `Linked to ${o.invoice_id} (Click to change)` : "Link Invoice"}
+                        >
+                          <Link2 className="w-4 h-4" />
+                        </button>
                         {o.provider_invoice_url && (
                           <button
                             onClick={() => setViewingInvoice({ order: o, type: 'hosting' })}
@@ -803,6 +859,66 @@ export default function HostingPage() {
                       onChange={(e) => setAddExpiryDate(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
                     />
+                  </div>
+                )}
+              </div>
+
+              {/* Link Invoice (Billing) */}
+              <div className="p-4 bg-white/[0.03] border border-white/10 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <Link2 className="w-4 h-4 text-blue-400" />
+                      <span>Link Invoice (Order Billing)</span>
+                    </h4>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      Optional: attach an existing invoice to this hosting/server order
+                    </p>
+                  </div>
+                  {addInvoiceId && (
+                    <button
+                      type="button"
+                      onClick={() => setAddInvoiceId("")}
+                      className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer"
+                    >
+                      <Unlink className="w-3.5 h-3.5" />
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-400 block">Select Existing Invoice</label>
+                    <select
+                      value={addInvoiceId}
+                      onChange={(e) => setAddInvoiceId(e.target.value)}
+                      className="w-full bg-neutral-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-brand-500"
+                    >
+                      <option value="">-- No Linked Invoice --</option>
+                      {modalInvoices.map((inv) => (
+                        <option key={inv.invoice_id} value={inv.invoice_id}>
+                          {inv.invoice_id} - {inv.user_email} ({formatLKR(inv.total)}) [{inv.payment_status}]
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-400 block">Or Enter Invoice ID Directly</label>
+                    <input
+                      type="text"
+                      value={addInvoiceId}
+                      onChange={(e) => setAddInvoiceId(e.target.value)}
+                      placeholder="e.g. INV-00049"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 font-mono text-white"
+                    />
+                  </div>
+                </div>
+
+                {addInvoiceId && (
+                  <div className="flex items-center gap-2 pt-1 text-xs text-blue-400">
+                    <span>✓ Will link to invoice: <strong>{addInvoiceId}</strong></span>
                   </div>
                 )}
               </div>
@@ -1111,6 +1227,74 @@ export default function HostingPage() {
                 </div>
               </div>
 
+              {/* Link Invoice (Billing) */}
+              <div className="p-4 bg-white/[0.03] border border-white/10 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <Link2 className="w-4 h-4 text-blue-400" />
+                      <span>Link Invoice (Order Billing)</span>
+                    </h4>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      Manually attach an existing invoice to this hosting/server order
+                    </p>
+                  </div>
+                  {editInvoiceId && (
+                    <button
+                      type="button"
+                      onClick={() => setEditInvoiceId("")}
+                      className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer"
+                    >
+                      <Unlink className="w-3.5 h-3.5" />
+                      Unlink
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-400 block">Select Existing Invoice</label>
+                    <select
+                      value={editInvoiceId}
+                      onChange={(e) => setEditInvoiceId(e.target.value)}
+                      className="w-full bg-neutral-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-brand-500"
+                    >
+                      <option value="">-- No Linked Invoice --</option>
+                      {modalInvoices.map((inv) => (
+                        <option key={inv.invoice_id} value={inv.invoice_id}>
+                          {inv.invoice_id} - {inv.user_email} ({formatLKR(inv.total)}) [{inv.payment_status}]
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-400 block">Or Enter Invoice ID Directly</label>
+                    <input
+                      type="text"
+                      value={editInvoiceId}
+                      onChange={(e) => setEditInvoiceId(e.target.value)}
+                      placeholder="e.g. INV-00049"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 font-mono text-white"
+                    />
+                  </div>
+                </div>
+
+                {editInvoiceId && (
+                  <div className="flex items-center gap-2 pt-1 text-xs text-blue-400">
+                    <span>✓ Order is linked to invoice: <strong>{editInvoiceId}</strong></span>
+                    <a
+                      href={`/admin/invoices?search=${encodeURIComponent(editInvoiceId)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline flex items-center gap-0.5 ml-auto text-brand-400"
+                    >
+                      View Invoice <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+              </div>
+
               {/* Upload Provider Invoice */}
               <div className="space-y-1 border-t border-white/5 pt-4">
                 <label className="text-xs font-semibold text-gray-400 block">Provider Invoice (Admin Only)</label>
@@ -1182,6 +1366,146 @@ export default function HostingPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Invoice Linking Modal */}
+      {linkingHostingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg p-6 relative shadow-2xl text-white">
+            <button
+              onClick={() => setLinkingHostingOrder(null)}
+              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <Link2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Link Invoice to Server / Hosting</h3>
+                <p className="text-xs text-gray-400">{linkingHostingOrder.domain_name} ({linkingHostingOrder.client_email})</p>
+              </div>
+            </div>
+
+            {linkingHostingOrder.invoice_id && (
+              <div className="my-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-gray-400">Currently Linked:</span>
+                  <span className="ml-1.5 font-mono font-bold text-blue-400">{linkingHostingOrder.invoice_id}</span>
+                </div>
+                <button
+                  type="button"
+                  disabled={savingLink}
+                  onClick={() => handleSaveInvoiceLink("")}
+                  className="px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Unlink className="w-3 h-3" />
+                  Unlink
+                </button>
+              </div>
+            )}
+
+            <div className="space-y-4 my-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-300 block">Select Invoice</label>
+                {loadingLinkInvoices ? (
+                  <div className="py-4 text-center text-xs text-gray-500 flex items-center justify-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin" /> Loading client invoices...
+                  </div>
+                ) : (
+                  <div className="max-h-52 overflow-y-auto space-y-1.5 pr-1 border border-white/5 rounded-2xl p-2 bg-white/[0.02]">
+                    {linkingInvoices.length === 0 ? (
+                      <div className="py-4 text-center text-xs text-gray-500">
+                        No recent invoices found. You can enter an ID manually below.
+                      </div>
+                    ) : (
+                      linkingInvoices.map((inv) => {
+                        const isMatch = inv.user_email?.toLowerCase() === linkingHostingOrder.client_email?.toLowerCase();
+                        const isSelected = manualInvoiceId.trim() === inv.invoice_id;
+                        return (
+                          <button
+                            key={inv.invoice_id}
+                            type="button"
+                            onClick={() => setManualInvoiceId(inv.invoice_id)}
+                            className={`w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                              isSelected
+                                ? 'bg-blue-500/20 border-blue-500 text-white'
+                                : 'bg-white/5 border-white/5 hover:bg-white/10 text-gray-300'
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-xs">{inv.invoice_id}</span>
+                                {isMatch && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded font-semibold">
+                                    Client Match
+                                  </span>
+                                )}
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
+                                  inv.payment_status === 'paid' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                                }`}>
+                                  {inv.payment_status}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-gray-400 mt-0.5 truncate max-w-[260px]">{inv.user_email}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="font-bold text-xs">{formatLKR(inv.total)}</span>
+                              <p className="text-[10px] text-gray-500">{new Date(inv.created_at).toLocaleDateString()}</p>
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-400 block">Or Enter Invoice ID Directly</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={manualInvoiceId}
+                    onChange={(e) => setManualInvoiceId(e.target.value)}
+                    placeholder="e.g. INV-00049"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-brand-500 font-mono text-white"
+                  />
+                  {manualInvoiceId && (
+                    <button
+                      type="button"
+                      onClick={() => setManualInvoiceId("")}
+                      className="px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs text-gray-400 hover:text-white"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setLinkingHostingOrder(null)}
+                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 rounded-2xl font-semibold transition-colors text-sm text-gray-300 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={savingLink || !manualInvoiceId.trim()}
+                onClick={() => handleSaveInvoiceLink(manualInvoiceId.trim())}
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-semibold transition-colors text-sm disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              >
+                <Link2 className="w-4 h-4" />
+                {savingLink ? "Linking..." : "Link Invoice"}
+              </button>
+            </div>
           </div>
         </div>
       )}

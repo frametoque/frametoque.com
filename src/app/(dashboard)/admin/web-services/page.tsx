@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import DomainsTab from "./DomainsTab";
 import HostingTab from "./HostingTab";
-import { Globe, Server } from "lucide-react";
+import CredentialsTab from "./CredentialsTab";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 function WebServicesContent() {
@@ -11,8 +11,9 @@ function WebServicesContent() {
   const router = useRouter();
   const pathname = usePathname();
   
-  const initialTab = searchParams.get("tab") === "hosting" ? "hosting" : "domains";
-  const [activeTab, setActiveTab] = useState<"domains" | "hosting">(initialTab);
+  const tabParam = searchParams.get("tab");
+  const initialTab = tabParam === "hosting" ? "hosting" : tabParam === "credentials" ? "credentials" : "domains";
+  const [activeTab, setActiveTab] = useState<"domains" | "hosting" | "credentials">(initialTab);
 
   useEffect(() => {
     // Notify layout which tab is active for header buttons
@@ -26,9 +27,11 @@ function WebServicesContent() {
   useEffect(() => {
     const handleOpenAdd = () => {
       if (activeTab === "domains") {
-        window.dispatchEvent(new CustomEvent("domains:open-add"));
-      } else {
+        router.push("/admin/web-services/domains/new");
+      } else if (activeTab === "hosting") {
         window.dispatchEvent(new CustomEvent("hosting:open-add"));
+      } else {
+        window.dispatchEvent(new CustomEvent("credentials:open-add"));
       }
     };
     window.addEventListener("web-services:open-add", handleOpenAdd);
@@ -40,33 +43,51 @@ function WebServicesContent() {
   return (
     <div className="space-y-6">
       {/* Tab Switcher */}
-      <div className="flex gap-4 border-b border-white/10 pb-2">
+      <div className="flex flex-wrap gap-2">
         <button
+          type="button"
           onClick={() => setActiveTab("domains")}
-          className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors ${
-            activeTab === "domains" ? "text-brand-400 border-b-2 border-brand-400" : "text-gray-400 hover:text-white"
+          className={`px-5 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
+            activeTab === "domains"
+              ? "bg-white text-black shadow-lg"
+              : "bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10"
           }`}
         >
-          <Globe className="w-4 h-4" />
           Domains
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab("hosting")}
-          className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors ${
-            activeTab === "hosting" ? "text-brand-400 border-b-2 border-brand-400" : "text-gray-400 hover:text-white"
+          className={`px-5 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
+            activeTab === "hosting"
+              ? "bg-white text-black shadow-lg"
+              : "bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10"
           }`}
         >
-          <Server className="w-4 h-4" />
           Hosting
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("credentials")}
+          className={`px-5 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
+            activeTab === "credentials"
+              ? "bg-white text-black shadow-lg"
+              : "bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10"
+          }`}
+        >
+          Credentials Vault
         </button>
       </div>
 
-      {/* Tab Content - conditionally rendered to re-mount, but if state retention is needed we can use CSS. We will use simple unmount for now like separate pages. */}
+      {/* Tab Content */}
       <div className={activeTab === "domains" ? "block" : "hidden"}>
         <DomainsTab />
       </div>
       <div className={activeTab === "hosting" ? "block" : "hidden"}>
         <HostingTab />
+      </div>
+      <div className={activeTab === "credentials" ? "block" : "hidden"}>
+        <CredentialsTab />
       </div>
     </div>
   );

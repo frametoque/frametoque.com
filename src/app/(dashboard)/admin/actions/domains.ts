@@ -48,6 +48,14 @@ export interface DomainOrder {
   activation_lkr_price?: number | null;
   /** Actual cost (our cost) converted to LKR and locked at activation time */
   activation_lkr_cost?: number | null;
+  /** Renewal bank cost in LKR */
+  renewal_lkr_cost?: number | null;
+  /** Renewal selling price in LKR */
+  renewal_lkr_price?: number | null;
+  /** Renewal LKR rate */
+  renewal_lkr_rate?: number | null;
+  /** Renewal cost currency */
+  renewal_cost_currency?: string;
   provider_invoice_url?: string | null;
   actual_price_currency?: string;
 }
@@ -184,12 +192,59 @@ export async function getDomainOrders(): Promise<DomainOrder[]> {
       activation_lkr_rate: r.activation_lkr_rate ? parseFloat(r.activation_lkr_rate) : null,
       activation_lkr_price: r.activation_lkr_price ? parseFloat(r.activation_lkr_price) : null,
       activation_lkr_cost: r.activation_lkr_cost ? parseFloat(r.activation_lkr_cost) : null,
+      renewal_lkr_cost: r.renewal_lkr_cost ? parseFloat(r.renewal_lkr_cost) : null,
+      renewal_lkr_price: r.renewal_lkr_price ? parseFloat(r.renewal_lkr_price) : null,
+      renewal_lkr_rate: r.renewal_lkr_rate ? parseFloat(r.renewal_lkr_rate) : null,
+      renewal_cost_currency: r.renewal_cost_currency || 'USD',
       provider_invoice_url: r.provider_invoice_url || null,
       actual_price_currency: r.actual_price_currency || 'USD',
     }));
   } catch (error) {
     console.error("Failed to get domain orders:", error);
     return [];
+  }
+}
+
+export async function getDomainOrderById(id: number): Promise<DomainOrder | null> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    const rows = await sql`
+      SELECT * FROM admin_domain_orders
+      WHERE id = ${id}
+      LIMIT 1
+    `;
+    if (rows.length === 0) return null;
+    const r = rows[0] as any;
+    return {
+      id: r.id,
+      client_email: r.client_email,
+      domain_name: r.domain_name,
+      status: r.status,
+      invoice_id: r.invoice_id || null,
+      actual_price: parseFloat(r.actual_price || 0),
+      selling_price: parseFloat(r.selling_price || 0),
+      profit: parseFloat(r.profit || 0),
+      renewal_cost: parseFloat(r.renewal_cost || 0),
+      renewal_price: parseFloat(r.renewal_price || 0),
+      registrar: r.registrar || 'Internet.bs',
+      purchase_date: r.purchase_date ? new Date(r.purchase_date).toISOString() : '',
+      expiry_date: r.expiry_date ? new Date(r.expiry_date).toISOString() : '',
+      created_at: r.created_at ? new Date(r.created_at).toISOString() : '',
+      activation_lkr_rate: r.activation_lkr_rate ? parseFloat(r.activation_lkr_rate) : null,
+      activation_lkr_price: r.activation_lkr_price ? parseFloat(r.activation_lkr_price) : null,
+      activation_lkr_cost: r.activation_lkr_cost ? parseFloat(r.activation_lkr_cost) : null,
+      renewal_lkr_cost: r.renewal_lkr_cost ? parseFloat(r.renewal_lkr_cost) : null,
+      renewal_lkr_price: r.renewal_lkr_price ? parseFloat(r.renewal_lkr_price) : null,
+      renewal_lkr_rate: r.renewal_lkr_rate ? parseFloat(r.renewal_lkr_rate) : null,
+      renewal_cost_currency: r.renewal_cost_currency || 'USD',
+      provider_invoice_url: r.provider_invoice_url || null,
+      actual_price_currency: r.actual_price_currency || 'USD',
+    };
+  } catch (error) {
+    console.error("Failed to get domain order by id:", error);
+    return null;
   }
 }
 
@@ -307,10 +362,19 @@ export async function addDomainOrder(
   try {
     await sql`
       INSERT INTO admin_domain_orders (
-        client_email, domain_name, actual_price, selling_price, profit, renewal_cost, renewal_price, registrar, expiry_date, status, invoice_id, provider_invoice_url, actual_price_currency
+        client_email, domain_name, actual_price, selling_price, profit, 
+        renewal_cost, renewal_price, registrar, expiry_date, status, 
+        invoice_id, provider_invoice_url, actual_price_currency,
+        activation_lkr_rate, activation_lkr_price, activation_lkr_cost,
+        renewal_lkr_cost, renewal_lkr_price, renewal_lkr_rate, renewal_cost_currency
       ) VALUES (
         ${order.client_email}, ${order.domain_name}, ${order.actual_price}, ${order.selling_price}, 
-        ${order.profit}, ${order.renewal_cost || null}, ${order.renewal_price || null}, ${order.registrar || 'Internet.bs'}, ${order.expiry_date || null}, ${order.status}, ${order.invoice_id}, ${order.provider_invoice_url || null}, ${order.actual_price_currency || 'USD'}
+        ${order.profit}, ${order.renewal_cost ?? null}, ${order.renewal_price ?? null}, ${order.registrar || 'Internet.bs'}, 
+        ${order.expiry_date || null}, ${order.status}, ${order.invoice_id || null}, ${order.provider_invoice_url || null}, 
+        ${order.actual_price_currency || 'USD'},
+        ${order.activation_lkr_rate ?? null}, ${order.activation_lkr_price ?? null}, ${order.activation_lkr_cost ?? null},
+        ${order.renewal_lkr_cost ?? null}, ${order.renewal_lkr_price ?? null}, ${order.renewal_lkr_rate ?? null},
+        ${order.renewal_cost_currency || 'USD'}
       )
     `;
     await logSystemAction(`Domain order placed: "${order.domain_name}" for client "${order.client_email}"`);
@@ -345,9 +409,10 @@ export async function createDomainRenewalInvoice(id: number, currency: "USD" | "
       return { success: false, error: "Renewal price is not configured for this domain" };
     }
 
-    // Fetch live LKR rate — this will be locked into the renewal history row
-    const lkrRate = await getUsdToLkrRate();
-    const lkrPrice = parseFloat((renewalPrice * lkrRate).toFixed(2));
+    // Fetch live LKR rate — or use saved renewal LKR rate/price
+    const liveRate = await getUsdToLkrRate();
+    const lkrRate = o.renewal_lkr_rate ? parseFloat(o.renewal_lkr_rate) : liveRate;
+    const lkrPrice = o.renewal_lkr_price ? parseFloat(o.renewal_lkr_price) : parseFloat((renewalPrice * lkrRate).toFixed(2));
 
     let finalPrice = renewalPrice;
     const invCurrency = currency;
@@ -584,9 +649,14 @@ export async function updateDomainOrder(
         status = COALESCE(${order.status}, status),
         provider_invoice_url = COALESCE(${order.provider_invoice_url}, provider_invoice_url),
         actual_price_currency = COALESCE(${order.actual_price_currency}, actual_price_currency),
-        activation_lkr_rate = COALESCE(${order.activation_lkr_rate}, activation_lkr_rate),
-        activation_lkr_price = COALESCE(${order.activation_lkr_price}, activation_lkr_price),
-        activation_lkr_cost = COALESCE(${order.activation_lkr_cost}, activation_lkr_cost)
+        activation_lkr_rate = ${order.activation_lkr_rate !== undefined ? order.activation_lkr_rate : sql`activation_lkr_rate`},
+        activation_lkr_price = ${order.activation_lkr_price !== undefined ? order.activation_lkr_price : sql`activation_lkr_price`},
+        activation_lkr_cost = ${order.activation_lkr_cost !== undefined ? order.activation_lkr_cost : sql`activation_lkr_cost`},
+        renewal_lkr_cost = ${order.renewal_lkr_cost !== undefined ? order.renewal_lkr_cost : sql`renewal_lkr_cost`},
+        renewal_lkr_price = ${order.renewal_lkr_price !== undefined ? order.renewal_lkr_price : sql`renewal_lkr_price`},
+        renewal_lkr_rate = ${order.renewal_lkr_rate !== undefined ? order.renewal_lkr_rate : sql`renewal_lkr_rate`},
+        renewal_cost_currency = ${order.renewal_cost_currency !== undefined ? order.renewal_cost_currency : sql`renewal_cost_currency`},
+        invoice_id = ${order.invoice_id !== undefined ? order.invoice_id : sql`invoice_id`}
       WHERE id = ${id}
     `;
 
@@ -611,6 +681,57 @@ export async function updateDomainOrder(
   }
 }
 
+export async function linkInvoiceToDomainOrder(
+  domainOrderId: number,
+  invoiceId: string | null
+): Promise<SimpleActionResult> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    await sql`
+      UPDATE admin_domain_orders
+      SET invoice_id = ${invoiceId}
+      WHERE id = ${domainOrderId}
+    `;
+    await logSystemAction(`Domain order ${domainOrderId} ${invoiceId ? `linked to invoice ${invoiceId}` : 'unlinked from invoice'}`);
+    revalidatePath("/admin", "layout");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to link invoice to domain order:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function getInvoicesForLinking(clientEmail?: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    const emailPattern = clientEmail ? clientEmail.toLowerCase().trim() : '';
+    const rows = await sql`
+      SELECT invoice_id, user_email, project_name, total, currency, payment_status, date
+      FROM invoices
+      ORDER BY 
+        CASE WHEN ${emailPattern} <> '' AND LOWER(user_email) = ${emailPattern} THEN 0 ELSE 1 END,
+        date DESC, created_at DESC
+      LIMIT 100
+    `;
+    return rows.map((r: any) => ({
+      invoice_id: r.invoice_id,
+      user_email: r.user_email,
+      project_name: r.project_name,
+      total: parseFloat(r.total || 0),
+      currency: r.currency || 'LKR',
+      payment_status: r.payment_status || 'unpaid',
+      date: r.date ? new Date(r.date).toISOString() : '',
+    }));
+  } catch (err: any) {
+    console.error("Failed to get invoices for linking:", err);
+    return [];
+  }
+}
+
 export async function createDomainInvoice(
   id: number,
   currency: 'USD' | 'LKR'
@@ -627,10 +748,11 @@ export async function createDomainInvoice(
     const sellingPriceUsd = parseFloat(o.selling_price);
     const actualPriceUsd = parseFloat(o.actual_price);
 
-    // 2. Fetch live LKR rate and lock it in
-    const lkrRate = await getUsdToLkrRate();
-    const lkrSellingPrice = parseFloat((sellingPriceUsd * lkrRate).toFixed(2));
-    const lkrActualPrice = parseFloat((actualPriceUsd * lkrRate).toFixed(2));
+    // 2. Fetch live LKR rate or use saved activation LKR rate
+    const liveRate = await getUsdToLkrRate();
+    const lkrRate = o.activation_lkr_rate ? parseFloat(o.activation_lkr_rate) : liveRate;
+    const lkrSellingPrice = o.activation_lkr_price ? parseFloat(o.activation_lkr_price) : parseFloat((sellingPriceUsd * lkrRate).toFixed(2));
+    const lkrActualPrice = o.activation_lkr_cost ? parseFloat(o.activation_lkr_cost) : parseFloat((actualPriceUsd * lkrRate).toFixed(2));
 
     // 3. Calculate final invoice price based on selected currency
     let finalSellingPrice = sellingPriceUsd;

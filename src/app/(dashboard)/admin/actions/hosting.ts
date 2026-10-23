@@ -120,7 +120,7 @@ export async function updateHostingOrder(
         purchase_date = COALESCE(${purchaseDate ? purchaseDate + " 00:00:00" : null}::timestamp, purchase_date),
         expiry_date = ${expiryDate ? expiryDate + " 00:00:00" : null}::timestamp,
         status = COALESCE(${order.status}, status),
-        invoice_id = COALESCE(${order.invoice_id}, invoice_id),
+        invoice_id = ${order.invoice_id !== undefined ? order.invoice_id : sql`invoice_id`},
         provider_invoice_url = COALESCE(${order.provider_invoice_url}, provider_invoice_url),
         renewal_cost = COALESCE(${order.renewal_cost}, renewal_cost),
         renewal_price = COALESCE(${order.renewal_price}, renewal_price),
@@ -135,6 +135,28 @@ export async function updateHostingOrder(
     return { success: true };
   } catch (err: any) {
     console.error("Failed to update hosting order:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function linkInvoiceToHostingOrder(
+  hostingOrderId: number,
+  invoiceId: string | null
+): Promise<{ success: boolean; error?: string }> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    await sql`
+      UPDATE admin_hosting_orders
+      SET invoice_id = ${invoiceId}
+      WHERE id = ${hostingOrderId}
+    `;
+    await logSystemAction(`Hosting order ${hostingOrderId} ${invoiceId ? `linked to invoice ${invoiceId}` : 'unlinked from invoice'}`);
+    revalidatePath("/admin", "layout");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to link invoice to hosting order:", err);
     return { success: false, error: err.message };
   }
 }

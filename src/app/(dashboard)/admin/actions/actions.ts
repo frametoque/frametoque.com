@@ -853,7 +853,7 @@ export async function getInvoices(limit: number = 1000, offset: number = 0) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const [totalIssuedCount, rows, nonAdvancePaymentsRows] = await Promise.all([
+  const [totalIssuedCount, rows, nonAdvancePaymentsRows, domainLinks, hostingLinks] = await Promise.all([
     sql`SELECT COUNT(*) as count FROM invoices`,
     sql`
       SELECT i.invoice_id as id, i.user_email as client_email, c.id as client_id, c.full_name as client_name, i.project_name as service, i.subtotal, i.total, i.discount, i.advance, i.tax_rate, i.total_due, i.date, i.due_date, i.payment_status as status, i.work_status, i.legal_name, i.created_at, i.bank_account_id
@@ -867,11 +867,23 @@ export async function getInvoices(limit: number = 1000, offset: number = 0) {
       FROM admin_incomes
       WHERE invoice_id IS NOT NULL AND LOWER(description) NOT LIKE 'advance:%' AND LOWER(description) NOT LIKE 'advance payment%'
       GROUP BY invoice_id
-    `
+    `,
+    sql`SELECT id, domain_name, invoice_id FROM admin_domain_orders WHERE invoice_id IS NOT NULL`,
+    sql`SELECT id, domain_name, hosting_provider, invoice_id FROM admin_hosting_orders WHERE invoice_id IS NOT NULL`,
   ]);
   const paymentsMap: Record<string, number> = {};
   nonAdvancePaymentsRows.forEach((p: any) => {
     paymentsMap[p.invoice_id] = parseFloat(p.paid_sum || '0');
+  });
+
+  const domainLinkMap: Record<string, { id: number; domain_name: string }> = {};
+  domainLinks.forEach((d: any) => {
+    domainLinkMap[d.invoice_id] = { id: d.id, domain_name: d.domain_name };
+  });
+
+  const hostingLinkMap: Record<string, { id: number; domain_name: string; hosting_provider: string }> = {};
+  hostingLinks.forEach((h: any) => {
+    hostingLinkMap[h.invoice_id] = { id: h.id, domain_name: h.domain_name, hosting_provider: h.hosting_provider };
   });
 
   let paidCount = 0;
@@ -917,7 +929,9 @@ export async function getInvoices(limit: number = 1000, offset: number = 0) {
       status: status,
       work_status: r.work_status,
       bankAccountId: r.bank_account_id,
-      overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && status !== 'paid' && status !== 'fully paid')
+      overdue: r.status === 'overdue' || (r.due_date && new Date(r.due_date) < new Date() && status !== 'paid' && status !== 'fully paid'),
+      linkedDomain: domainLinkMap[r.id] || null,
+      linkedHosting: hostingLinkMap[r.id] || null,
     };
   });
 
@@ -928,6 +942,87 @@ export async function getInvoices(limit: number = 1000, offset: number = 0) {
     totalDue: computedTotalDueSum,
     items: items
   };
+}
+
+export async function linkInvoiceToEntity(
+  invoiceId: string,
+  targetType: 'domain' | 'hosting' | 'none',
+  targetId: number | null
+): Promise<{ success: boolean; error?: string }> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    // 1. Remove existing links to this invoice
+    await sql`UPDATE admin_domain_orders SET invoice_id = NULL WHERE invoice_id = ${invoiceId}`;
+    await sql`UPDATE admin_hosting_orders SET invoice_id = NULL WHERE invoice_id = ${invoiceId}`;
+
+    if (targetType === 'domain' && targetId) {
+      await sql`UPDATE admin_domain_orders SET invoice_id = ${invoiceId} WHERE id = ${targetId}`;
+      await logSystemAction(`Invoice ${invoiceId} linked to domain order ID ${targetId}`);
+    } else if (targetType === 'hosting' && targetId) {
+      await sql`UPDATE admin_hosting_orders SET invoice_id = ${invoiceId} WHERE id = ${targetId}`;
+      await logSystemAction(`Invoice ${invoiceId} linked to hosting order ID ${targetId}`);
+    } else {
+      await logSystemAction(`Invoice ${invoiceId} unlinked from all services`);
+    }
+
+    revalidatePath("/admin", "layout");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to link invoice to entity:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function getEntityOptionsForInvoice(invoiceId: string, clientEmail?: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    const emailPattern = clientEmail ? clientEmail.toLowerCase().trim() : '';
+    const [domains, hosting] = await Promise.all([
+      sql`
+        SELECT id, domain_name, client_email, invoice_id, status
+        FROM admin_domain_orders
+        ORDER BY 
+          CASE WHEN ${emailPattern} <> '' AND LOWER(client_email) = ${emailPattern} THEN 0 ELSE 1 END,
+          created_at DESC
+        LIMIT 60
+      `,
+      sql`
+        SELECT id, domain_name, hosting_provider, client_email, invoice_id, status
+        FROM admin_hosting_orders
+        ORDER BY 
+          CASE WHEN ${emailPattern} <> '' AND LOWER(client_email) = ${emailPattern} THEN 0 ELSE 1 END,
+          created_at DESC
+        LIMIT 60
+      `,
+    ]);
+
+    return {
+      domains: domains.map((d: any) => ({
+        id: d.id,
+        domain_name: d.domain_name,
+        client_email: d.client_email,
+        invoice_id: d.invoice_id,
+        status: d.status,
+        isLinkedToThis: d.invoice_id === invoiceId,
+      })),
+      hosting: hosting.map((h: any) => ({
+        id: h.id,
+        domain_name: h.domain_name,
+        hosting_provider: h.hosting_provider,
+        client_email: h.client_email,
+        invoice_id: h.invoice_id,
+        status: h.status,
+        isLinkedToThis: h.invoice_id === invoiceId,
+      })),
+    };
+  } catch (err: any) {
+    console.error("Failed to get entity options for invoice:", err);
+    return { domains: [], hosting: [] };
+  }
 }
 
 export async function deleteInvoice(id: string) {

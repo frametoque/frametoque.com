@@ -46,8 +46,9 @@ export default function CartClient() {
   const fetchRate = async () => {
     try {
       const res = await fetch("https://open.er-api.com/v6/latest/LKR");
-      const rateData = await res.json();
-      setExchangeRate(rateData.rates.USD);
+      if (!res.ok) return;
+      const rateData = await res.json().catch(() => null);
+      if (rateData?.rates?.USD) setExchangeRate(rateData.rates.USD);
     } catch (e) {
       console.error("Failed to fetch exchange rate", e);
     }

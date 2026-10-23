@@ -82,9 +82,11 @@ export default function CalendarTab() {
       setLoadingSuggestions(true);
       try {
         const response = await fetch(`/api/location/suggest?q=${encodeURIComponent(formLocation)}`);
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          setSuggestions(data);
+        if (response.ok) {
+          const data = await response.json().catch(() => null);
+          if (Array.isArray(data)) {
+            setSuggestions(data);
+          }
         }
       } catch (err) {
         console.error("Error fetching location suggestions:", err);

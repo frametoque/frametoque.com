@@ -52,7 +52,9 @@ const formatPrice = (price: string | number, currency: string): string => {
 const convertPricesToUSD = async (packages: Package[]): Promise<Package[]> => {
   try {
     const res = await fetch("https://open.er-api.com/v6/latest/LKR");
-    const rateData = await res.json();
+    if (!res.ok) return packages;
+    const rateData = await res.json().catch(() => null);
+    if (!rateData?.rates?.USD) return packages;
     const rate: number = rateData.rates.USD;
     return packages.map((pkg) => ({
       ...pkg,

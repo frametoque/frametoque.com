@@ -175,7 +175,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isCreateOrEdit = pathname.endsWith("/new") || pathname.endsWith("/edit");
   const isSystemLogs = pathname === "/admin/system-logs";
   const hideSelector = isServices || isPortfolio || isWorkspace || isWebServices || isInvoiceDetail || isSocialMedia || isDashboard || isAccounts || isCreateOrEdit || isSystemLogs;
-  const hasCustomAction = isInvoiceDetail || isWebServices || isSocialMedia || isWorkspace || isAccounts || isSystemLogs;
+  const hasCustomAction = isInvoiceDetail || (isWebServices && !isCreateOrEdit) || isSocialMedia || isWorkspace || isAccounts || isSystemLogs;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [currentTime, setCurrentTime] = useState("");
@@ -256,6 +256,8 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path === "/admin/agreements/new") return "New Agreement";
     if (path.startsWith("/admin/agreements/") && path.endsWith("/edit")) return "Edit Agreement";
     if (path.startsWith("/admin/agreements")) return "Agreements";
+    if (path === "/admin/web-services/domains/new") return "Add Domain Order";
+    if (path.startsWith("/admin/web-services/domains/") && path.endsWith("/edit")) return "Edit Domain Order";
     if (path.startsWith("/admin/web-services")) return "Web Services";
     if (path.startsWith("/admin/social-media")) return "Social Media";
         return "Admin";
@@ -389,7 +391,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                     <span>Download PDF</span>
                   </button>
                 </div>
-              ) : isWebServices ? (
+              ) : (isWebServices && !isCreateOrEdit) ? (
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("web-services:open-add"))}
                   className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"

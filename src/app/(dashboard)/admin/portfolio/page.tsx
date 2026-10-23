@@ -145,8 +145,9 @@ function YouTubeVideoTitle({ url }: { url: string }) {
     const targetUrl = ytId ? `https://www.youtube.com/watch?v=${ytId}` : url;
 
     fetch(`https://noembed.com/embed?url=${encodeURIComponent(targetUrl)}`)
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
+        if (!data) return;
         const t = data.title || "YouTube Video";
         youtubeTitleCache[url] = t;
         setTitle(t);

@@ -3,9 +3,9 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import useSWR from "swr";
-import { FileText, CheckCircle, Clock, AlertCircle, Search, Eye, Edit2, Send, Download, Trash2, DollarSign, X, Loader2, Upload, Image as ImageIcon, FileText as FileIcon } from "lucide-react";
+import { FileText, CheckCircle, Clock, AlertCircle, Search, Eye, Edit2, Send, Download, Trash2, DollarSign, X, Loader2, Upload, Image as ImageIcon, FileText as FileIcon, Link2, Unlink, Globe, Server, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { getInvoices, deleteInvoice, recordInvoicePayment, adminUploadPaymentSlip, getInvoiceByIdAdmin } from "../actions/actions";
+import { getInvoices, deleteInvoice, recordInvoicePayment, adminUploadPaymentSlip, getInvoiceByIdAdmin, linkInvoiceToEntity, getEntityOptionsForInvoice } from "../actions/actions";
 import { getAccounts } from "../actions/accounts";
 import AnimatedNumber from "../components/AnimatedNumber";
 
@@ -64,6 +64,60 @@ export default function InvoicesPage() {
   const [uploadingSlip, setUploadingSlip] = useState(false);
   const [includeSlip, setIncludeSlip] = useState(false);
   const [convertingPdf, setConvertingPdf] = useState(false);
+
+  // Entity Linking modal states
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [linkingInvoice, setLinkingInvoice] = useState<any>(null);
+  const [linkTargetType, setLinkTargetType] = useState<'domain' | 'hosting' | 'none'>('domain');
+  const [linkTargetId, setLinkTargetId] = useState<string>("");
+  const [loadingEntityOptions, setLoadingEntityOptions] = useState(false);
+  const [entityOptions, setEntityOptions] = useState<{ domains: any[]; hosting: any[] }>({ domains: [], hosting: [] });
+  const [savingEntityLink, setSavingEntityLink] = useState(false);
+
+  const openLinkModal = async (invoice: any) => {
+    setLinkingInvoice(invoice);
+    if (invoice.linkedDomain) {
+      setLinkTargetType('domain');
+      setLinkTargetId(String(invoice.linkedDomain.id));
+    } else if (invoice.linkedHosting) {
+      setLinkTargetType('hosting');
+      setLinkTargetId(String(invoice.linkedHosting.id));
+    } else {
+      setLinkTargetType('domain');
+      setLinkTargetId("");
+    }
+    setLinkModalOpen(true);
+    setLoadingEntityOptions(true);
+    try {
+      const opts = await getEntityOptionsForInvoice(invoice.id, invoice.clientEmail);
+      setEntityOptions(opts);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingEntityOptions(false);
+    }
+  };
+
+  const handleSaveEntityLink = async (targetType: 'domain' | 'hosting' | 'none', targetIdStr?: string) => {
+    if (!linkingInvoice) return;
+    setSavingEntityLink(true);
+    try {
+      const targetId = targetType === 'none' ? null : (parseInt(targetIdStr || linkTargetId, 10) || null);
+      const res = await linkInvoiceToEntity(linkingInvoice.id, targetType, targetId);
+      if (res.success) {
+        alert(targetType === 'none' ? "Invoice unlinked successfully!" : "Invoice linked successfully!");
+        setLinkModalOpen(false);
+        setLinkingInvoice(null);
+        await loadData();
+      } else {
+        alert("Failed to link invoice: " + (res.error || "Unknown error"));
+      }
+    } catch (err: any) {
+      alert("Error linking invoice: " + err.message);
+    } finally {
+      setSavingEntityLink(false);
+    }
+  };
 
   const openRecordPaymentModal = (invoice: any) => {
     setSelectedInvoice(invoice);
@@ -493,6 +547,18 @@ export default function InvoicesPage() {
                       <Link href={`/admin/invoice/${row.id}`} className="font-semibold text-brand-400 hover:text-brand-300 transition-colors">
                         {row.id}
                       </Link>
+                      {row.linkedDomain && (
+                        <div className="flex items-center gap-1 text-[11px] text-blue-400 mt-1" title={`Linked Domain: ${row.linkedDomain.name}`}>
+                          <Globe className="w-3 h-3 text-blue-400 shrink-0" />
+                          <span className="truncate max-w-[130px] font-mono font-medium">{row.linkedDomain.name}</span>
+                        </div>
+                      )}
+                      {row.linkedHosting && (
+                        <div className="flex items-center gap-1 text-[11px] text-purple-400 mt-1" title={`Linked Server: ${row.linkedHosting.name} (${row.linkedHosting.provider})`}>
+                          <Server className="w-3 h-3 text-purple-400 shrink-0" />
+                          <span className="truncate max-w-[130px] font-medium">{row.linkedHosting.name}</span>
+                        </div>
+                      )}
                     </td>
                     <td className="p-4">
                       <div className="font-semibold text-white">{row.date}</div>
@@ -540,6 +606,21 @@ export default function InvoicesPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => openLinkModal(row)}
+                          className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                            row.linkedDomain || row.linkedHosting ? 'text-blue-400 hover:bg-blue-500/10' : 'text-gray-400 hover:text-white hover:bg-white/10'
+                          }`}
+                          title={
+                            row.linkedDomain
+                              ? `Linked to Domain: ${row.linkedDomain.name} (Click to manage)`
+                              : row.linkedHosting
+                              ? `Linked to Server: ${row.linkedHosting.name} (Click to manage)`
+                              : "Link to Domain or Server"
+                          }
+                        >
+                          <Link2 className="w-4 h-4" />
+                        </button>
                         {row.status?.toLowerCase() !== 'paid' && row.status?.toLowerCase() !== 'fully paid' && (
                           <button onClick={() => openRecordPaymentModal(row)} className="p-2 hover:bg-green-400/10 rounded-xl transition-colors text-gray-400 hover:text-green-400" title="Create Income from Invoice">
                             <DollarSign className="w-4 h-4" />
@@ -746,6 +827,181 @@ export default function InvoicesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Link Invoice to Domain / Server Modal */}
+      {linkModalOpen && linkingInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg p-6 relative shadow-2xl text-white">
+            <button
+              onClick={() => setLinkModalOpen(false)}
+              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <Link2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Link Invoice to Order</h3>
+                <p className="text-xs text-gray-400">
+                  {linkingInvoice.id} • {linkingInvoice.client} ({formatLKR(linkingInvoice.amount)})
+                </p>
+              </div>
+            </div>
+
+            {/* Current Link Status */}
+            {(linkingInvoice.linkedDomain || linkingInvoice.linkedHosting) ? (
+              <div className="my-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-gray-400">Currently Linked:</span>
+                  <span className="ml-1.5 font-bold text-blue-400">
+                    {linkingInvoice.linkedDomain
+                      ? `Domain: ${linkingInvoice.linkedDomain.name}`
+                      : `Server: ${linkingInvoice.linkedHosting?.name} (${linkingInvoice.linkedHosting?.provider})`}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  disabled={savingEntityLink}
+                  onClick={() => handleSaveEntityLink('none')}
+                  className="px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Unlink className="w-3 h-3" />
+                  Unlink
+                </button>
+              </div>
+            ) : (
+              <div className="my-3 p-3 bg-white/5 border border-white/10 rounded-2xl text-xs text-gray-400">
+                This invoice is not currently linked to any domain or server order.
+              </div>
+            )}
+
+            {/* Target Type Selector */}
+            <div className="space-y-4 my-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-300 block">Link Target</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLinkTargetType('domain');
+                      setLinkTargetId('');
+                    }}
+                    className={`py-2.5 px-3 rounded-2xl border text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      linkTargetType === 'domain'
+                        ? 'border-blue-500 bg-blue-500/10 text-white'
+                        : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5 text-blue-400" />
+                    Domain Order
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLinkTargetType('hosting');
+                      setLinkTargetId('');
+                    }}
+                    className={`py-2.5 px-3 rounded-2xl border text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      linkTargetType === 'hosting'
+                        ? 'border-purple-500 bg-purple-500/10 text-white'
+                        : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    <Server className="w-3.5 h-3.5 text-purple-400" />
+                    Server / Hosting Order
+                  </button>
+                </div>
+              </div>
+
+              {/* List of Orders */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-300 block">
+                  Select {linkTargetType === 'domain' ? 'Domain' : 'Hosting / Server'} Order
+                </label>
+                {loadingEntityOptions ? (
+                  <div className="py-4 text-center text-xs text-gray-500 flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading orders...
+                  </div>
+                ) : (
+                  <div className="max-h-52 overflow-y-auto space-y-1.5 pr-1 border border-white/5 rounded-2xl p-2 bg-white/[0.02]">
+                    {(linkTargetType === 'domain' ? entityOptions.domains : entityOptions.hosting).length === 0 ? (
+                      <div className="py-4 text-center text-xs text-gray-500">
+                        No orders found for this category.
+                      </div>
+                    ) : (
+                      (linkTargetType === 'domain' ? entityOptions.domains : entityOptions.hosting).map((item) => {
+                        const isSelected = linkTargetId === String(item.id);
+                        const isMatch = item.client_email?.toLowerCase() === linkingInvoice.clientEmail?.toLowerCase();
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setLinkTargetId(String(item.id))}
+                            className={`w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                              isSelected
+                                ? linkTargetType === 'domain'
+                                  ? 'bg-blue-500/20 border-blue-500 text-white'
+                                  : 'bg-purple-500/20 border-purple-500 text-white'
+                                : 'bg-white/5 border-white/5 hover:bg-white/10 text-gray-300'
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-xs text-white">
+                                  {linkTargetType === 'domain' ? item.domain_name : `${item.domain_name} (${item.hosting_provider})`}
+                                </span>
+                                {isMatch && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded font-semibold">
+                                    Client Match
+                                  </span>
+                                )}
+                                {item.status && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-gray-400">
+                                    {item.status}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-gray-400 mt-0.5 truncate max-w-[260px]">{item.client_email}</p>
+                            </div>
+                            <div className="text-right">
+                              {item.invoice_id && (
+                                <span className="font-mono text-[10px] text-gray-500 block">Inv: {item.invoice_id}</span>
+                              )}
+                              <span className="text-[10px] text-brand-400 font-mono">ID #{item.id}</span>
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setLinkModalOpen(false)}
+                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 rounded-2xl font-semibold transition-colors text-sm text-gray-300 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={savingEntityLink || !linkTargetId}
+                onClick={() => handleSaveEntityLink(linkTargetType, linkTargetId)}
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-semibold transition-colors text-sm disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              >
+                <Link2 className="w-4 h-4" />
+                {savingEntityLink ? "Linking..." : "Link Invoice"}
+              </button>
+            </div>
           </div>
         </div>
       )}

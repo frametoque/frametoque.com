@@ -27,9 +27,10 @@ export default function ProfileProgress() {
     const loadProfile = async () => {
       try {
         const res = await fetch(`/api/users/get-profile?userId=${user.id}`);
-        const json = await res.json();
+        if (!res.ok) return;
+        const json = await res.json().catch(() => null);
 
-        if (json.success) {
+        if (json?.success) {
           const p = json.profile || {};
 
           const finalData = {
