@@ -33,15 +33,56 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import AnimatedNumber from "../components/AnimatedNumber";
 
-const CATEGORIES = [
-  "Next.js / Custom",
+const TECH_CATEGORIES = [
   "WordPress",
-  "cPanel / Plesk",
-  "VPS / Server",
-  "Shopify / Store",
-  "Database",
+  "Next.js",
+  "Shopify",
+  "Laravel",
+  "PHP",
+  "Webflow",
+  "React",
+  "Custom Code",
   "Other",
 ];
+
+const HOSTING_TYPES = [
+  "cPanel",
+  "Plesk",
+  "VPS",
+  "Vercel",
+  "AWS",
+  "DigitalOcean",
+  "Netlify",
+  "Cloudflare",
+  "Dedicated Server",
+  "Other",
+];
+
+function getControlPanelUrl(ipOrUrl?: string | null, port?: string | null): string | null {
+  if (!ipOrUrl) return null;
+  const trimmed = ipOrUrl.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+  if (
+    trimmed.includes(":2083") ||
+    trimmed.includes(":8443") ||
+    trimmed.includes(":2222") ||
+    trimmed.includes(":2082") ||
+    trimmed.includes(":8442") ||
+    trimmed.toLowerCase().includes("cpanel.") ||
+    trimmed.toLowerCase().includes("plesk.") ||
+    port === "2083" ||
+    port === "8443" ||
+    port === "2222"
+  ) {
+    const hasPort = trimmed.includes(":");
+    const finalPort = !hasPort && port ? `:${port}` : "";
+    return `https://${trimmed}${finalPort}`;
+  }
+  return null;
+}
 
 export default function CredentialsTab() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -80,7 +121,8 @@ export default function CredentialsTab() {
   const [addSiteName, setAddSiteName] = useState("");
   const [addDomain, setAddDomain] = useState("");
   const [addEmail, setAddEmail] = useState("");
-  const [addCategory, setAddCategory] = useState("Next.js / Custom");
+  const [addCategory, setAddCategory] = useState("WordPress");
+  const [addHostingType, setAddHostingType] = useState("cPanel");
   const [addLoginUrl, setAddLoginUrl] = useState("");
   const [addUsername, setAddUsername] = useState("");
   const [addPassword, setAddPassword] = useState("");
@@ -97,7 +139,8 @@ export default function CredentialsTab() {
   const [editSiteName, setEditSiteName] = useState("");
   const [editDomain, setEditDomain] = useState("");
   const [editEmail, setEditEmail] = useState("");
-  const [editCategory, setEditCategory] = useState("Next.js / Custom");
+  const [editCategory, setEditCategory] = useState("WordPress");
+  const [editHostingType, setEditHostingType] = useState("cPanel");
   const [editLoginUrl, setEditLoginUrl] = useState("");
   const [editUsername, setEditUsername] = useState("");
   const [editPassword, setEditPassword] = useState("");
@@ -120,7 +163,8 @@ export default function CredentialsTab() {
     setAddSiteName("");
     setAddDomain("");
     setAddEmail("");
-    setAddCategory("Next.js / Custom");
+    setAddCategory("WordPress");
+    setAddHostingType("cPanel");
     setAddLoginUrl("");
     setAddUsername("");
     setAddPassword("");
@@ -139,6 +183,7 @@ export default function CredentialsTab() {
     setEditDomain(c.domain_name || "");
     setEditEmail(c.client_email || "");
     setEditCategory(c.category || "WordPress");
+    setEditHostingType(c.hosting_type || "cPanel");
     setEditLoginUrl(c.login_url || "");
     setEditUsername(c.username || "");
     setEditPassword(c.password || "");
@@ -169,6 +214,7 @@ export default function CredentialsTab() {
         domain_name: addDomain,
         client_email: addEmail,
         category: addCategory,
+        hosting_type: addHostingType,
         login_url: addLoginUrl,
         username: addUsername,
         password: addPassword,
@@ -202,6 +248,7 @@ export default function CredentialsTab() {
         domain_name: editDomain,
         client_email: editEmail,
         category: editCategory,
+        hosting_type: editHostingType,
         login_url: editLoginUrl,
         username: editUsername,
         password: editPassword,
@@ -247,21 +294,29 @@ export default function CredentialsTab() {
       c.site_name.toLowerCase().includes(q) ||
       (c.domain_name && c.domain_name.toLowerCase().includes(q)) ||
       (c.client_email && c.client_email.toLowerCase().includes(q)) ||
+      (c.category && c.category.toLowerCase().includes(q)) ||
+      (c.hosting_type && c.hosting_type.toLowerCase().includes(q)) ||
       (c.username && c.username.toLowerCase().includes(q)) ||
       (c.login_url && c.login_url.toLowerCase().includes(q)) ||
+      (c.server_ip && c.server_ip.toLowerCase().includes(q)) ||
       (c.notes && c.notes.toLowerCase().includes(q));
 
     const matchFilter =
       activeFilter === "All" ||
-      c.category?.toLowerCase() === activeFilter.toLowerCase();
+      c.category?.toLowerCase() === activeFilter.toLowerCase() ||
+      c.hosting_type?.toLowerCase() === activeFilter.toLowerCase() ||
+      (activeFilter === "cPanel" && (
+        c.hosting_type?.toLowerCase() === "cpanel" ||
+        c.server_port === "2083" ||
+        c.server_ip?.includes("2083")
+      )) ||
+      (activeFilter === "VPS" && (
+        c.hosting_type?.toLowerCase() === "vps" ||
+        c.server_port === "22"
+      ));
 
     return matchQuery && matchFilter;
   });
-
-  const wpCount = credentials.filter((c) => c.category === "WordPress").length;
-  const customCount = credentials.filter(
-    (c) => c.category === "Next.js / Custom" || c.category === "VPS / Server"
-  ).length;
 
   return (
     <div className="space-y-6 pb-12 mt-2">
@@ -270,7 +325,7 @@ export default function CredentialsTab() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search website, domain, login, client..."
-        filters={["All", "Next.js / Custom", "WordPress", "cPanel / Plesk", "VPS / Server"]}
+        filters={["All", "WordPress", "Next.js", "cPanel", "Plesk", "VPS", "Vercel", "AWS"]}
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
         primaryActionLabel="Add Site"
@@ -280,11 +335,11 @@ export default function CredentialsTab() {
       {/* Credentials Table */}
       <Table>
         <TableHeader>
-          <TableHead>Website &amp; Category</TableHead>
+          <TableHead>Website &amp; Stack</TableHead>
           <TableHead>Admin Login URL</TableHead>
           <TableHead>Username / Email</TableHead>
           <TableHead>Password (Encrypted)</TableHead>
-          <TableHead>Server / Host (SSH/FTP)</TableHead>
+          <TableHead>Server / Host / cPanel</TableHead>
           <TableHead>Secure Notes</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableHeader>
@@ -313,7 +368,7 @@ export default function CredentialsTab() {
 
               return (
                 <TableRow key={c.id}>
-                  {/* Website & Category */}
+                  {/* Website & Stack */}
                   <TableCell>
                     <div className="font-semibold text-white flex items-center gap-1.5">
                       <span>{c.site_name}</span>
@@ -323,12 +378,16 @@ export default function CredentialsTab() {
                         <span>{c.domain_name}</span>
                       </div>
                     )}
-                    <div className="mt-1 flex items-center gap-1.5">
-                      <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300">
-                        {c.category}
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-300">
+                        {c.category || "WordPress"}
+                      </span>
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 flex items-center gap-1">
+                        <Server className="w-2.5 h-2.5 text-gray-400" />
+                        {c.hosting_type || "cPanel"}
                       </span>
                       {c.client_email && (
-                        <span className="text-[10px] text-gray-500 truncate max-w-[140px]" title={c.client_email}>
+                        <span className="text-[10px] text-gray-500 truncate max-w-[130px]" title={c.client_email}>
                           {c.client_email}
                         </span>
                       )}
@@ -421,58 +480,133 @@ export default function CredentialsTab() {
                     </div>
                   </TableCell>
 
-                  {/* Server / Host */}
+                  {/* Server / Host / cPanel */}
                   <TableCell>
-                    {c.server_ip || c.server_user ? (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1 text-xs text-gray-300">
-                          <span className="truncate max-w-[130px]">
-                            {c.server_user ? `${c.server_user}@` : ""}
-                            {c.server_ip}
-                            {c.server_port ? `:${c.server_port}` : ""}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleCopy(
-                                `${c.server_user ? `${c.server_user}@` : ""}${c.server_ip}`,
-                                `${c.id}-host`
-                              )
-                            }
-                            className="p-0.5 hover:bg-white/10 rounded text-gray-500 hover:text-white"
-                          >
-                            {copiedKey === `${c.id}-host` ? (
-                              <Check className="w-3 h-3 text-emerald-400" />
-                            ) : (
-                              <Copy className="w-3 h-3" />
+                    {c.server_ip || c.server_user ? (() => {
+                      const cpUrl = getControlPanelUrl(c.server_ip, c.server_port);
+                      if (cpUrl) {
+                        return (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs">
+                              <a
+                                href={cpUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1 font-medium truncate max-w-[150px]"
+                                title={`Open Control Panel: ${cpUrl}`}
+                              >
+                                <ExternalLink className="w-3 h-3 shrink-0" />
+                                <span className="truncate">{c.server_ip.replace(/^https?:\/\//i, '')}</span>
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(cpUrl, `${c.id}-host`)}
+                                className="p-0.5 hover:bg-white/10 rounded text-gray-500 hover:text-white"
+                                title="Copy Link"
+                              >
+                                {copiedKey === `${c.id}-host` ? (
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                ) : (
+                                  <Copy className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                            {c.server_user && (
+                              <div className="flex items-center gap-1 text-[11px] text-gray-400">
+                                <span className="truncate max-w-[120px]">User: {c.server_user}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopy(c.server_user || "", `${c.id}-srvuser`)}
+                                  className="p-0.5 text-gray-500 hover:text-white"
+                                  title="Copy Username"
+                                >
+                                  {copiedKey === `${c.id}-srvuser` ? (
+                                    <Check className="w-3 h-3 text-emerald-400" />
+                                  ) : (
+                                    <Copy className="w-3 h-3" />
+                                  )}
+                                </button>
+                              </div>
                             )}
-                          </button>
-                        </div>
-                        {c.server_pass && (
-                          <div className="flex items-center gap-1 text-[11px] text-gray-400">
-                            <span>Key: {isServerRevealed ? c.server_pass : "••••••••"}</span>
+                            {c.server_pass && (
+                              <div className="flex items-center gap-1 text-[11px] text-gray-400">
+                                <span>Pass: {isServerRevealed ? c.server_pass : "••••••••"}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleShowServerPass(c.id)}
+                                  className="p-0.5 text-gray-500 hover:text-white"
+                                >
+                                  {isServerRevealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopy(c.server_pass || "", `${c.id}-srvpass`)}
+                                  className="p-0.5 text-gray-500 hover:text-white"
+                                  title="Copy Password"
+                                >
+                                  {copiedKey === `${c.id}-srvpass` ? (
+                                    <Check className="w-3 h-3 text-emerald-400" />
+                                  ) : (
+                                    <Copy className="w-3 h-3" />
+                                  )}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-xs text-gray-300">
+                            <span className="truncate max-w-[130px]">
+                              {c.server_user ? `${c.server_user}@` : ""}
+                              {c.server_ip}
+                              {c.server_port ? `:${c.server_port}` : ""}
+                            </span>
                             <button
                               type="button"
-                              onClick={() => toggleShowServerPass(c.id)}
-                              className="p-0.5 text-gray-500 hover:text-white"
+                              onClick={() =>
+                                handleCopy(
+                                  `${c.server_user ? `${c.server_user}@` : ""}${c.server_ip}${c.server_port ? `:${c.server_port}` : ""}`,
+                                  `${c.id}-host`
+                                )
+                              }
+                              className="p-0.5 hover:bg-white/10 rounded text-gray-500 hover:text-white"
                             >
-                              {isServerRevealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(c.server_pass || "", `${c.id}-srvpass`)}
-                              className="p-0.5 text-gray-500 hover:text-white"
-                            >
-                              {copiedKey === `${c.id}-srvpass` ? (
+                              {copiedKey === `${c.id}-host` ? (
                                 <Check className="w-3 h-3 text-emerald-400" />
                               ) : (
                                 <Copy className="w-3 h-3" />
                               )}
                             </button>
                           </div>
-                        )}
-                      </div>
-                    ) : (
+                          {c.server_pass && (
+                            <div className="flex items-center gap-1 text-[11px] text-gray-400">
+                              <span>Key: {isServerRevealed ? c.server_pass : "••••••••"}</span>
+                              <button
+                                type="button"
+                                onClick={() => toggleShowServerPass(c.id)}
+                                className="p-0.5 text-gray-500 hover:text-white"
+                              >
+                                {isServerRevealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(c.server_pass || "", `${c.id}-srvpass`)}
+                                className="p-0.5 text-gray-500 hover:text-white"
+                              >
+                                {copiedKey === `${c.id}-srvpass` ? (
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                ) : (
+                                  <Copy className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })() : (
                       <span className="text-xs text-gray-500">—</span>
                     )}
                   </TableCell>
@@ -544,7 +678,7 @@ export default function CredentialsTab() {
             </div>
 
             <form onSubmit={handleAddSubmit} autoComplete="off" data-form-type="other" className="space-y-4">
-              {/* Site Name & Category */}
+              {/* Site Name & Domain */}
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-400 block">Website / Project Name *</label>
@@ -553,27 +687,10 @@ export default function CredentialsTab() {
                     required
                     value={addSiteName}
                     onChange={(e) => setAddSiteName(e.target.value)}
+                    placeholder="e.g. Acme Online Store"
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-400 block">Category</label>
-                  <select
-                    value={addCategory}
-                    onChange={(e) => setAddCategory(e.target.value)}
-                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Domain & Client Email */}
-              <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-400 block">Domain Name</label>
                   <input
@@ -590,6 +707,53 @@ export default function CredentialsTab() {
                     onBlur={() => {
                       setAddDomain((prev) => prev.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, ""));
                     }}
+                    placeholder="e.g. acmestore.com"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
+                  />
+                </div>
+              </div>
+
+              {/* Site Technology / CMS & Hosting Type */}
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Site Technology / CMS</label>
+                  <select
+                    value={addCategory}
+                    onChange={(e) => setAddCategory(e.target.value)}
+                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
+                  >
+                    {TECH_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Hosting Type</label>
+                  <select
+                    value={addHostingType}
+                    onChange={(e) => setAddHostingType(e.target.value)}
+                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
+                  >
+                    {HOSTING_TYPES.map((ht) => (
+                      <option key={ht} value={ht}>
+                        {ht}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Admin Login URL & Client Email */}
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Admin Login URL</label>
+                  <input
+                    type="text"
+                    value={addLoginUrl}
+                    onChange={(e) => setAddLoginUrl(e.target.value)}
+                    placeholder="https://acmestore.com/admin"
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
                   />
                 </div>
@@ -599,20 +763,10 @@ export default function CredentialsTab() {
                     type="email"
                     value={addEmail}
                     onChange={(e) => setAddEmail(e.target.value)}
+                    placeholder="client@acmestore.com"
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
                   />
                 </div>
-              </div>
-
-              {/* Admin Login URL */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-400 block">Admin Login URL</label>
-                <input
-                  type="text"
-                  value={addLoginUrl}
-                  onChange={(e) => setAddLoginUrl(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
-                />
               </div>
 
               {/* Username & Password */}
@@ -668,19 +822,69 @@ export default function CredentialsTab() {
                 </div>
               </div>
 
-              {/* Server / SSH / FTP Details */}
+              {/* Server / Shared Hosting / cPanel / Plesk Details */}
               <div className="p-4 bg-white/[0.03] border border-white/10 rounded-2xl space-y-3">
-                <span className="text-xs font-bold text-white">
-                  Server / SSH / FTP / Database (Optional)
-                </span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-white">
+                    Server / Shared Hosting / cPanel / Plesk (Optional)
+                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cleanDom = addDomain ? addDomain.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '') : '';
+                        setAddServerPort("2083");
+                        setAddServerIp(cleanDom ? `https://${cleanDom}:2083` : "https://cpanel.domain.com:2083");
+                        setAddHostingType("cPanel");
+                      }}
+                      className="text-[10px] px-2 py-0.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded-md transition-colors cursor-pointer"
+                      title="Quick fill cPanel port & URL"
+                    >
+                      + cPanel (:2083)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cleanDom = addDomain ? addDomain.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '') : '';
+                        setAddServerPort("8443");
+                        setAddServerIp(cleanDom ? `https://${cleanDom}:8443` : "https://plesk.domain.com:8443");
+                        setAddHostingType("Plesk");
+                      }}
+                      className="text-[10px] px-2 py-0.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-md transition-colors cursor-pointer"
+                      title="Quick fill Plesk port & URL"
+                    >
+                      + Plesk (:8443)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddServerPort("22");
+                        setAddHostingType("VPS");
+                      }}
+                      className="text-[10px] px-2 py-0.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-md transition-colors cursor-pointer"
+                    >
+                      SSH (:22)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAddServerPort("21")}
+                      className="text-[10px] px-2 py-0.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-md transition-colors cursor-pointer"
+                    >
+                      FTP (:21)
+                    </button>
+                  </div>
+                </div>
 
                 <div className="grid sm:grid-cols-3 gap-3">
                   <div className="sm:col-span-2 space-y-1">
-                    <label className="text-xs font-semibold text-gray-400 block">Server Host / IP</label>
+                    <label className="text-xs font-semibold text-gray-400 block">
+                      Server Host / IP / Control Panel URL (cPanel, Plesk)
+                    </label>
                     <input
                       type="text"
                       value={addServerIp}
                       onChange={(e) => setAddServerIp(e.target.value)}
+                      placeholder="e.g. https://cpanel.domain.com:2083 or 192.168.1.1"
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-brand-500 text-white"
                     />
                   </div>
@@ -690,6 +894,7 @@ export default function CredentialsTab() {
                       type="text"
                       value={addServerPort}
                       onChange={(e) => setAddServerPort(e.target.value)}
+                      placeholder="22, 2083, 8443"
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-brand-500 text-white"
                     />
                   </div>
@@ -697,7 +902,9 @@ export default function CredentialsTab() {
 
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-gray-400 block">Server Username</label>
+                    <label className="text-xs font-semibold text-gray-400 block">
+                      Username (cPanel / Plesk / SSH)
+                    </label>
                     <input
                       type="text"
                       name="site_server_username"
@@ -712,7 +919,9 @@ export default function CredentialsTab() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-gray-400 block">Server Password / Key</label>
+                    <label className="text-xs font-semibold text-gray-400 block">
+                      Password / Key
+                    </label>
                     <input
                       type="text"
                       name="site_server_password"
@@ -781,7 +990,7 @@ export default function CredentialsTab() {
             </div>
 
             <form onSubmit={handleEditSubmit} autoComplete="off" data-form-type="other" className="space-y-4">
-              {/* Site Name & Category */}
+              {/* Site Name & Domain */}
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-400 block">Website / Project Name *</label>
@@ -790,33 +999,63 @@ export default function CredentialsTab() {
                     required
                     value={editSiteName}
                     onChange={(e) => setEditSiteName(e.target.value)}
+                    placeholder="e.g. Acme Online Store"
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 transition-colors text-white"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-400 block">Category</label>
-                  <select
-                    value={editCategory}
-                    onChange={(e) => setEditCategory(e.target.value)}
-                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Domain & Client Email */}
-              <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-400 block">Domain Name</label>
                   <input
                     type="text"
                     value={editDomain}
                     onChange={(e) => setEditDomain(e.target.value)}
+                    placeholder="e.g. acmestore.com"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
+                  />
+                </div>
+              </div>
+
+              {/* Site Technology / CMS & Hosting Type */}
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Site Technology / CMS</label>
+                  <select
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
+                  >
+                    {TECH_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Hosting Type</label>
+                  <select
+                    value={editHostingType}
+                    onChange={(e) => setEditHostingType(e.target.value)}
+                    className="w-full bg-neutral-900 border border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
+                  >
+                    {HOSTING_TYPES.map((ht) => (
+                      <option key={ht} value={ht}>
+                        {ht}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Admin Login URL & Client Email */}
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400 block">Admin Login URL</label>
+                  <input
+                    type="text"
+                    value={editLoginUrl}
+                    onChange={(e) => setEditLoginUrl(e.target.value)}
+                    placeholder="https://acmestore.com/admin"
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
                   />
                 </div>
@@ -826,20 +1065,10 @@ export default function CredentialsTab() {
                     type="email"
                     value={editEmail}
                     onChange={(e) => setEditEmail(e.target.value)}
+                    placeholder="client@acmestore.com"
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
                   />
                 </div>
-              </div>
-
-              {/* Admin Login URL */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-400 block">Admin Login URL</label>
-                <input
-                  type="text"
-                  value={editLoginUrl}
-                  onChange={(e) => setEditLoginUrl(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-500 text-white"
-                />
               </div>
 
               {/* Username & Password */}
@@ -895,19 +1124,69 @@ export default function CredentialsTab() {
                 </div>
               </div>
 
-              {/* Server / SSH / FTP Details */}
+              {/* Server / Shared Hosting / cPanel / Plesk Details */}
               <div className="p-4 bg-white/[0.03] border border-white/10 rounded-2xl space-y-3">
-                <span className="text-xs font-bold text-white">
-                  Server / SSH / FTP / Database (Optional)
-                </span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-white">
+                    Server / Shared Hosting / cPanel / Plesk (Optional)
+                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cleanDom = editDomain ? editDomain.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '') : '';
+                        setEditServerPort("2083");
+                        setEditServerIp(cleanDom ? `https://${cleanDom}:2083` : "https://cpanel.domain.com:2083");
+                        setEditHostingType("cPanel");
+                      }}
+                      className="text-[10px] px-2 py-0.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded-md transition-colors cursor-pointer"
+                      title="Quick fill cPanel port & URL"
+                    >
+                      + cPanel (:2083)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cleanDom = editDomain ? editDomain.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '') : '';
+                        setEditServerPort("8443");
+                        setEditServerIp(cleanDom ? `https://${cleanDom}:8443` : "https://plesk.domain.com:8443");
+                        setEditHostingType("Plesk");
+                      }}
+                      className="text-[10px] px-2 py-0.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-md transition-colors cursor-pointer"
+                      title="Quick fill Plesk port & URL"
+                    >
+                      + Plesk (:8443)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditServerPort("22");
+                        setEditHostingType("VPS");
+                      }}
+                      className="text-[10px] px-2 py-0.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-md transition-colors cursor-pointer"
+                    >
+                      SSH (:22)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditServerPort("21")}
+                      className="text-[10px] px-2 py-0.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-md transition-colors cursor-pointer"
+                    >
+                      FTP (:21)
+                    </button>
+                  </div>
+                </div>
 
                 <div className="grid sm:grid-cols-3 gap-3">
                   <div className="sm:col-span-2 space-y-1">
-                    <label className="text-xs font-semibold text-gray-400 block">Server Host / IP</label>
+                    <label className="text-xs font-semibold text-gray-400 block">
+                      Server Host / IP / Control Panel URL (cPanel, Plesk)
+                    </label>
                     <input
                       type="text"
                       value={editServerIp}
                       onChange={(e) => setEditServerIp(e.target.value)}
+                      placeholder="e.g. https://cpanel.domain.com:2083 or 192.168.1.1"
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-brand-500 text-white"
                     />
                   </div>
@@ -917,6 +1196,7 @@ export default function CredentialsTab() {
                       type="text"
                       value={editServerPort}
                       onChange={(e) => setEditServerPort(e.target.value)}
+                      placeholder="22, 2083, 8443"
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-brand-500 text-white"
                     />
                   </div>
@@ -924,7 +1204,9 @@ export default function CredentialsTab() {
 
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-gray-400 block">Server Username</label>
+                    <label className="text-xs font-semibold text-gray-400 block">
+                      Username (cPanel / Plesk / SSH)
+                    </label>
                     <input
                       type="text"
                       name="edit_site_server_username"

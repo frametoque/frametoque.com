@@ -11,6 +11,7 @@ export interface SiteCredential {
   domain_name?: string | null;
   client_email?: string | null;
   category: string;
+  hosting_type?: string | null;
   login_url?: string | null;
   username?: string | null;
   password?: string; // Decrypted on read
@@ -84,6 +85,7 @@ export async function getSiteCredentials(): Promise<SiteCredential[]> {
       domain_name: r.domain_name,
       client_email: r.client_email,
       category: r.category || "WordPress",
+      hosting_type: r.hosting_type || "cPanel",
       login_url: r.login_url,
       username: r.username,
       password: decryptText(r.password_encrypted || ""),
@@ -106,6 +108,7 @@ export async function addSiteCredential(data: {
   domain_name?: string | null;
   client_email?: string | null;
   category?: string;
+  hosting_type?: string | null;
   login_url?: string | null;
   username?: string | null;
   password: string;
@@ -136,6 +139,7 @@ export async function addSiteCredential(data: {
         domain_name,
         client_email,
         category,
+        hosting_type,
         login_url,
         username,
         password_encrypted,
@@ -151,6 +155,7 @@ export async function addSiteCredential(data: {
         ${data.domain_name?.trim() || null},
         ${data.client_email?.trim() || null},
         ${data.category || 'WordPress'},
+        ${data.hosting_type || 'cPanel'},
         ${data.login_url?.trim() || null},
         ${data.username?.trim() || null},
         ${encryptedPass},
@@ -180,6 +185,7 @@ export async function updateSiteCredential(
     domain_name?: string | null;
     client_email?: string | null;
     category?: string;
+    hosting_type?: string | null;
     login_url?: string | null;
     username?: string | null;
     password?: string | null;
@@ -229,6 +235,7 @@ export async function updateSiteCredential(
         domain_name = ${data.domain_name?.trim() || null},
         client_email = ${data.client_email?.trim() || null},
         category = ${data.category || 'WordPress'},
+        hosting_type = ${data.hosting_type || 'cPanel'},
         login_url = ${data.login_url?.trim() || null},
         username = ${data.username?.trim() || null},
         server_ip = ${data.server_ip?.trim() || null},

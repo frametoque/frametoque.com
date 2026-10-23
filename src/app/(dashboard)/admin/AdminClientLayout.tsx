@@ -685,7 +685,7 @@ const Sidebar = ({
     { name: "Invoices", href: "/admin/invoices", icon: FileText, divider: true },
     { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
     { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
-    { name: "Web Services", href: "/admin/web-services", icon: Globe, divider: false },
+    { name: "Web Services", href: "/admin/web-services/domains", icon: Globe, divider: false },
     { name: "Clients", href: "/admin/clients", icon: Users },
     { name: "Inventory", href: "/admin/inventory", icon: Package },
     { name: "Reports", href: "/admin/reports", icon: BarChart3, divider: true },
@@ -698,6 +698,9 @@ const Sidebar = ({
 
   const isActive = (href: string) => {
     if (href === "/admin/dashboard") return pathname === href;
+    if (href === "/admin/web-services/domains") {
+      return pathname.startsWith("/admin/web-services");
+    }
     if (href === "/admin/invoices") {
       return pathname.startsWith("/admin/invoices") || pathname.startsWith("/admin/invoice");
     }

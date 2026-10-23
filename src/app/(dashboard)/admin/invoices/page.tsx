@@ -547,18 +547,6 @@ export default function InvoicesPage() {
                       <Link href={`/admin/invoice/${row.id}`} className="font-semibold text-brand-400 hover:text-brand-300 transition-colors">
                         {row.id}
                       </Link>
-                      {row.linkedDomain && (
-                        <div className="flex items-center gap-1 text-[11px] text-blue-400 mt-1" title={`Linked Domain: ${row.linkedDomain.name}`}>
-                          <Globe className="w-3 h-3 text-blue-400 shrink-0" />
-                          <span className="truncate max-w-[130px] font-mono font-medium">{row.linkedDomain.name}</span>
-                        </div>
-                      )}
-                      {row.linkedHosting && (
-                        <div className="flex items-center gap-1 text-[11px] text-purple-400 mt-1" title={`Linked Server: ${row.linkedHosting.name} (${row.linkedHosting.provider})`}>
-                          <Server className="w-3 h-3 text-purple-400 shrink-0" />
-                          <span className="truncate max-w-[130px] font-medium">{row.linkedHosting.name}</span>
-                        </div>
-                      )}
                     </td>
                     <td className="p-4">
                       <div className="font-semibold text-white">{row.date}</div>

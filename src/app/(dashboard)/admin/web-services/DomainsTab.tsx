@@ -1259,16 +1259,17 @@ export default function AdminOrdersPage() {
                               {o.registrar || 'Internet.bs'}
                             </span>
                             {o.invoice_id ? (
-                              <span
-                                onClick={() => handleOpenLinkModal(o)}
-                                title="Linked Invoice - Click to manage link"
+                              <Link
+                                href={`/admin/invoice/${o.invoice_id}`}
+                                title={`Open Invoice ${o.invoice_id}`}
                                 className="text-[10px] bg-blue-500/10 border border-blue-500/30 text-blue-400 px-1.5 py-0.5 rounded font-mono font-medium flex items-center gap-1 hover:bg-blue-500/20 cursor-pointer"
                               >
                                 <Link2 className="w-2.5 h-2.5" />
                                 {o.invoice_id}
-                              </span>
+                              </Link>
                             ) : (
                               <button
+                                type="button"
                                 onClick={() => handleOpenLinkModal(o)}
                                 title="Link invoice manually"
                                 className="text-[10px] text-gray-500 hover:text-brand-400 border border-dashed border-white/10 hover:border-brand-500/30 px-1.5 py-0.5 rounded flex items-center gap-1 transition-colors cursor-pointer"
@@ -1278,8 +1279,7 @@ export default function AdminOrdersPage() {
                               </button>
                             )}
                           </div>
-                          <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                            <Mail className="w-3.5 h-3.5 text-gray-500" />
+                          <div className="text-xs text-gray-500 mt-1">
                             {o.client_email}
                           </div>
                           <div className="text-[10px] text-gray-500 mt-1.5 flex items-center gap-1.5">
@@ -1452,6 +1452,17 @@ export default function AdminOrdersPage() {
                                 <FileText className="w-4 h-4 text-brand-400" />
                               </button>
                             )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenLinkModal(o)}
+                              className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                                o.invoice_id ? 'hover:bg-blue-500/10 text-blue-400' : 'hover:bg-white/10 text-gray-400 hover:text-white'
+                              }`}
+                              title={o.invoice_id ? `Linked to ${o.invoice_id} (Click to change/unlink)` : "Link Invoice"}
+                            >
+                              <Link2 className="w-4 h-4" />
+                            </button>
 
                             <Link
                               href={`/admin/web-services/domains/${o.id}/edit`}
@@ -1762,13 +1773,13 @@ export default function AdminOrdersPage() {
                     <RefreshCw className="w-4 h-4 animate-spin" /> Loading client invoices...
                   </div>
                 ) : (
-                  <div className="max-h-52 overflow-y-auto space-y-1.5 pr-1 border border-white/5 rounded-2xl p-2 bg-white/[0.02]">
-                    {linkingInvoices.length === 0 ? (
+                  <div className="space-y-1.5 pr-1 border border-white/5 rounded-2xl p-2 bg-white/[0.02]">
+                    {linkingInvoices.slice(0, 3).length === 0 ? (
                       <div className="py-4 text-center text-xs text-gray-500">
                         No recent invoices found. You can enter an ID manually below.
                       </div>
                     ) : (
-                      linkingInvoices.map((inv) => {
+                      linkingInvoices.slice(0, 3).map((inv) => {
                         const isMatch = inv.user_email?.toLowerCase() === linkingDomainOrder.client_email?.toLowerCase();
                         const isSelected = manualInvoiceId.trim() === inv.invoice_id;
                         return (
@@ -1800,7 +1811,9 @@ export default function AdminOrdersPage() {
                             </div>
                             <div className="text-right">
                               <span className="font-bold text-xs">{formatLKR(inv.total)}</span>
-                              <p className="text-[10px] text-gray-500">{new Date(inv.created_at).toLocaleDateString()}</p>
+                              <p className="text-[10px] text-gray-500">
+                                {inv.date ? new Date(inv.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
+                              </p>
                             </div>
                           </button>
                         );
@@ -1817,6 +1830,12 @@ export default function AdminOrdersPage() {
                     type="text"
                     value={manualInvoiceId}
                     onChange={(e) => setManualInvoiceId(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && manualInvoiceId.trim()) {
+                        e.preventDefault();
+                        handleSaveInvoiceLink(manualInvoiceId.trim());
+                      }
+                    }}
                     placeholder="e.g. INV-00049"
                     className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-brand-500 font-mono text-white"
                   />

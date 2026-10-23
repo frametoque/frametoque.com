@@ -326,7 +326,7 @@ export default function EditDomainOrderPage({
             alert(`Domain marked as expired. Renewal invoice #${res.invoiceId} created automatically!`);
           }
         }
-        router.push("/admin/web-services?tab=domains");
+        router.push("/admin/web-services/domains");
       } else {
         alert("Failed to update domain order: " + ((res as any).error || "Unknown error"));
         setSubmitting(false);
@@ -353,7 +353,7 @@ export default function EditDomainOrderPage({
         <h2 className="text-xl font-bold text-white">Domain Order Not Found</h2>
         <p className="text-sm text-gray-400">The requested domain order #{orderId} could not be located.</p>
         <Link
-          href="/admin/web-services?tab=domains"
+          href="/admin/web-services/domains"
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 rounded-2xl text-white font-medium text-sm transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -369,7 +369,7 @@ export default function EditDomainOrderPage({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
-            href="/admin/web-services?tab=domains"
+            href="/admin/web-services/domains"
             className="p-2.5 hover:bg-white/10 rounded-2xl transition-colors text-gray-400 hover:text-white border border-white/5 flex items-center justify-center cursor-pointer"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -935,7 +935,7 @@ export default function EditDomainOrderPage({
         {/* Submit Actions */}
         <div className="flex items-center justify-end gap-3 pt-2">
           <Link
-            href="/admin/web-services?tab=domains"
+            href="/admin/web-services/domains"
             className="px-6 py-3 bg-white/5 hover:bg-white/10 rounded-2xl font-semibold transition-colors text-sm text-gray-300 cursor-pointer"
           >
             Cancel
