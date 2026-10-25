@@ -2,7 +2,7 @@
 
 import sql from "@/lib/db";
 import { clerkClient, auth } from "@clerk/nextjs/server";
-import { put, del } from '@vercel/blob';
+import { putBlob, deleteBlob } from '@/lib/storage';
 import { logSystemAction } from "@/lib/logger";
 import { getGravatarUrl } from "@/lib/gravatar";
 import { reactivateDomainAfterRenewalPayment } from "./domains-shared";
@@ -20,7 +20,7 @@ export async function uploadReceipt(formData: FormData, type: 'income' | 'expens
 
   try {
     const filename = `admin/receipts/${type}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-    const blob = await put(filename, file, {
+    const blob = await putBlob(filename, file, {
       access: 'public',
     });
     
@@ -2255,7 +2255,7 @@ export async function submitBankSlip(invoiceId: string, slipBase64: string, amou
       const fileExtension = mimeType.split('/')[1].split('+')[0] || 'png';
       const binary = Buffer.from(base64Data, 'base64');
       const filename = `admin/bank-slips/${Date.now()}-${invoiceId}.${fileExtension}`;
-      const blob = await put(filename, binary, {
+      const blob = await putBlob(filename, binary, {
         access: 'public',
         contentType: mimeType,
       });
@@ -2391,18 +2391,13 @@ export async function declineBankSlip(invoiceId: string, slipId?: string | numbe
     const slip = slipRows[0];
     if (slip.status !== 'pending') return { success: false, error: "Slip already processed" };
 
-    // Delete the slip image from blob storage if it exists
+    // Delete the slip image from storage if it exists
     const slipUrl = slip.slip_url;
-    if (slipUrl && (slipUrl.includes('blob.vercel-storage.com') || slipUrl.includes('public.blob.vercel-storage.com'))) {
+    if (slipUrl) {
       try {
-        // Extract the blob path from the URL
-        const urlParts = slipUrl.split('.com/');
-        if (urlParts.length > 1) {
-          const blobPath = urlParts[1];
-          await del(blobPath);
-        }
+        await deleteBlob(slipUrl);
       } catch (blobErr) {
-        console.warn("Failed to delete slip image from blob storage:", blobErr);
+        console.warn("Failed to delete slip image from storage:", blobErr);
       }
     }
 
@@ -2522,7 +2517,7 @@ export async function adminUploadPaymentSlip(invoiceId: string, slipBase64: stri
       const fileExtension = mimeType.split('/')[1].split('+')[0] || 'png';
       const binary = Buffer.from(base64Data, 'base64');
       const filename = `admin/payment-slips/${Date.now()}-${invoiceId}.${fileExtension}`;
-      const blob = await put(filename, binary, {
+      const blob = await putBlob(filename, binary, {
         access: 'public',
         contentType: mimeType,
       });
@@ -2567,7 +2562,7 @@ export async function submitPaymentSlip(invoiceId: string, amount: number, slipB
       const fileExtension = mimeType.split('/')[1].split('+')[0] || 'png';
       const binary = Buffer.from(base64Data, 'base64');
       const filename = `admin/payment-slips/${Date.now()}-${invoiceId}.${fileExtension}`;
-      const blob = await put(filename, binary, {
+      const blob = await putBlob(filename, binary, {
         access: 'public',
         contentType: mimeType,
       });
@@ -2650,18 +2645,21 @@ export async function getExpenseBreakdownByMode(mode: string) {
   let end = '2099-12-31';
 
   const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const formatYMD = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
   if (mode === 'This Month') {
-    start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    start = formatYMD(new Date(now.getFullYear(), now.getMonth(), 1));
+    end = formatYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
   } else if (mode === 'Last Month') {
-    start = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
-    end = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+    start = formatYMD(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+    end = formatYMD(new Date(now.getFullYear(), now.getMonth(), 0));
   } else if (mode === 'This Year') {
-    start = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
-    end = new Date(now.getFullYear(), 11, 31).toISOString().split('T')[0];
+    start = `${now.getFullYear()}-01-01`;
+    end = `${now.getFullYear()}-12-31`;
   } else if (mode === 'Last Year') {
-    start = new Date(now.getFullYear() - 1, 0, 1).toISOString().split('T')[0];
-    end = new Date(now.getFullYear() - 1, 11, 31).toISOString().split('T')[0];
+    start = `${now.getFullYear() - 1}-01-01`;
+    end = `${now.getFullYear() - 1}-12-31`;
   } // Lifetime is default
 
   const rows = await sql`

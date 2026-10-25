@@ -175,7 +175,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isCreateOrEdit = pathname.endsWith("/new") || pathname.endsWith("/edit");
   const isSystemLogs = pathname === "/admin/system-logs";
   const hideSelector = isServices || isPortfolio || isWorkspace || isWebServices || isInvoiceDetail || isSocialMedia || isDashboard || isAccounts || isCreateOrEdit || isSystemLogs;
-  const hasCustomAction = isInvoiceDetail || (isWebServices && !isCreateOrEdit) || isSocialMedia || isWorkspace || isAccounts || isSystemLogs;
+  const hasCustomAction = isInvoiceDetail || isSocialMedia || isWorkspace || isAccounts || isSystemLogs;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [currentTime, setCurrentTime] = useState("");
@@ -391,14 +391,6 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                     <span>Download PDF</span>
                   </button>
                 </div>
-              ) : (isWebServices && !isCreateOrEdit) ? (
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("web-services:open-add"))}
-                  className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 border border-transparent text-white rounded-xl font-medium transition-colors cursor-pointer text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add New</span>
-                </button>
               ) : isSocialMedia ? (
                 
   <div className="flex items-center gap-3">

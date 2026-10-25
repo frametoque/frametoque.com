@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
-import { put } from "@vercel/blob";
+import { putBlob, fetchWithFallback } from "@/lib/storage";
 import { google } from "googleapis";
 import { Readable } from "stream";
 
@@ -70,7 +70,7 @@ export async function uploadSocialMedia(formData: FormData) {
 
   const file = formData.get("file") as File;
   const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-  const blob = await put(`social/${Date.now()}-${safeName}`, file, { access: 'public' });
+  const blob = await putBlob(`social/${Date.now()}-${safeName}`, file, { access: 'public' });
   return blob.url;
 }
 
@@ -244,7 +244,7 @@ export async function publishToPlatform(postId: number, platform: string) {
             const formData = new FormData();
             formData.append('chat_id', chatId);
             if (caption) formData.append('caption', caption);
-            const fileRes = await fetch(media_urls[0]);
+            const fileRes = await fetchWithFallback(media_urls[0]);
             const fileBlob = await fileRes.blob();
             formData.append(isVideo ? 'video' : 'photo', fileBlob, 'file' + (isVideo ? '.mp4' : '.jpg'));
             tgRes = await fetch(`https://api.telegram.org/bot${botToken}/${endpoint}`, { method: 'POST', body: formData });
@@ -324,7 +324,7 @@ export async function publishToPlatform(postId: number, platform: string) {
         oauth2Client.setCredentials({ refresh_token: refreshToken });
         const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
         
-        const response = await fetch(media_urls[0], { cache: 'no-store' });
+        const response = await fetchWithFallback(media_urls[0], { cache: 'no-store' });
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         const readableStream = Readable.from(buffer);

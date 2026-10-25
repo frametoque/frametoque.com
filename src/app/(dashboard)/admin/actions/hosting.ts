@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
+import { putBlob } from "@/lib/storage";
 
 export interface HostingOrder {
   id: number;
@@ -180,9 +181,8 @@ export async function uploadProviderInvoice(formData: FormData): Promise<string>
   const file = formData.get('file') as File;
   if (!file) throw new Error('No file uploaded');
   try {
-    const { put } = await import('@vercel/blob');
     const filename = `admin/hosting-invoices/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-    const blob = await put(filename, file, { access: 'public' });
+    const blob = await putBlob(filename, file, { access: 'public' });
     return blob.url;
   } catch (err: any) {
     console.error('Failed to upload hosting provider invoice:', err);
@@ -197,9 +197,8 @@ export async function uploadRenewalInvoiceForHosting(formData: FormData): Promis
   const file = formData.get('file') as File;
   if (!file) throw new Error('No file uploaded');
   try {
-    const { put } = await import('@vercel/blob');
     const filename = `admin/hosting-renewal-invoices/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-    const blob = await put(filename, file, { access: 'public' });
+    const blob = await putBlob(filename, file, { access: 'public' });
     return blob.url;
   } catch (err: any) {
     console.error('Failed to upload hosting renewal invoice:', err);

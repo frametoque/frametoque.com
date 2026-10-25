@@ -91,6 +91,7 @@ export default function IncomePage() {
   const [convertingPdf, setConvertingPdf] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState<any | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [isManualInvoice, setIsManualInvoice] = useState(false);
 
   const fetcher = async () => {
     const [res, cls, accs, invsData] = await Promise.all([getIncomes(startDate, endDate, 10, 0), getClients(), getAccounts(), getInvoices()]);
@@ -120,8 +121,9 @@ export default function IncomePage() {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const res = await getIncomes(startDate, endDate, 10, page * 10);
-      if (res.items.length < 10) setHasMore(false);
+      const currentOffset = (data?.items?.length || 0) + extraItems.length;
+      const res = await getIncomes(startDate, endDate, 20, currentOffset);
+      if (res.items.length < 20) setHasMore(false);
       setExtraItems(prev => [...prev, ...res.items]);
       setPage(p => p + 1);
     } catch (e) {
@@ -131,20 +133,52 @@ export default function IncomePage() {
     }
   };
 
+  const loadAll = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const currentOffset = (data?.items?.length || 0) + extraItems.length;
+      const res = await getIncomes(startDate, endDate, 5000, currentOffset);
+      if (res.items.length < 5000) setHasMore(false);
+      setExtraItems(prev => [...prev, ...res.items]);
+    } catch (e) {
+      console.error("Failed to load all income:", e);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeFilter !== "All" && hasMore && !loadingMore && data) {
+      loadAll();
+    }
+  }, [activeFilter, hasMore, loadingMore, data, startDate, endDate]);
+
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 500) {
         if (!loadingMore && hasMore) {
-          loadMore();
+          if (activeFilter !== "All") {
+            loadAll();
+          } else {
+            loadMore();
+          }
         }
       }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [loadingMore, hasMore, page, startDate, endDate]);
+  }, [loadingMore, hasMore, page, startDate, endDate, activeFilter, data, extraItems]);
 
   const allIncomeItems = useMemo(() => {
-    return [...(data?.items || []), ...extraItems];
+    const combined = [...(data?.items || []), ...extraItems];
+    const seen = new Set();
+    return combined.filter(item => {
+      if (!item || item.id === undefined || item.id === null) return false;
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
   }, [data?.items, extraItems]);
 
   const [downloadingReceiptId, setDownloadingReceiptId] = useState<number | null>(null);
@@ -246,6 +280,7 @@ export default function IncomePage() {
     setSelectedCategories([]);
     setNewClientName(''); setNewClientEmail(''); setNewClientCompany(''); setNewClientPhone('');
     setReceiptFile(null);
+    setIsManualInvoice(false);
     setIsModalOpen(true);
   };
 
@@ -272,6 +307,8 @@ export default function IncomePage() {
     accountId: row.accountId || row.bank_account_id || '', invoiceId: row.invoice || '', receiptUrl: row.receiptUrl || '' });
     setSelectedCategories(parseCategories(row.category));
     setReceiptFile(null);
+    const hasInList = row.invoice && invoicesList?.some((i: any) => i.id === row.invoice);
+    setIsManualInvoice(Boolean(row.invoice && !hasInList));
     setIsModalOpen(true);
   };
 
@@ -624,7 +661,7 @@ export default function IncomePage() {
                   </td>
                 </tr>
               ))}
-              {filteredIncome.length === 0 && (
+              {!loading && !loadingMore && filteredIncome.length === 0 && (
                 <tr><td colSpan={7} className="p-6 text-center text-gray-500">No income records found.</td></tr>
               )}
               {loadingMore && (
@@ -707,36 +744,99 @@ export default function IncomePage() {
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm text-gray-400">Linked Invoice (Optional)</label>
-                <select
-                  value={formData.invoiceId}
-                  onChange={e => {
-                    const invId = e.target.value;
-                    const inv = invoicesList.find((i: any) => i.id === invId);
-                    if (inv) {
-                      const dueAmount = inv.total_due != null ? inv.total_due : inv.amount;
-                      const clientMatch = clients.find((c: any) => c.email?.toLowerCase() === inv.client_email?.toLowerCase());
-                      setFormData(prev => ({
-                        ...prev,
-                        invoiceId: inv.id,
-                        amount: dueAmount > 0 ? dueAmount.toString() : inv.amount.toString(),
-                        description: `Invoice #${inv.id} - ${inv.service || 'Payment'}`,
-                        clientId: clientMatch ? clientMatch.id : prev.clientId
-                      }));
-                    } else {
-                      setFormData(prev => ({ ...prev, invoiceId: invId }));
-                    }
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none text-white"
-                >
-                  <option value="" className="bg-black text-white">None / Select Invoice</option>
-                  {filteredInvoicesList.map((inv: any) => (
-                    <option key={inv.id} value={inv.id} className="bg-black text-white">
-                      {inv.id} - {inv.service || 'Invoice'}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm text-gray-400">Linked Invoice (Optional)</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsManualInvoice(!isManualInvoice)}
+                    className="text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium cursor-pointer"
+                  >
+                    {isManualInvoice ? "← Choose from list" : "Enter manually"}
+                  </button>
+                </div>
+
+                {isManualInvoice ? (
+                  <div className="space-y-1">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Enter Invoice ID (e.g. INV-00029 or 29)"
+                        value={formData.invoiceId}
+                        onChange={e => {
+                          const val = e.target.value;
+                          const cleanVal = val.trim();
+                          const invMatch = invoicesList.find((i: any) => 
+                            i.id?.toLowerCase() === cleanVal.toLowerCase() ||
+                            (cleanVal.length > 0 && i.id?.replace(/\D/g, '') === cleanVal.replace(/\D/g, ''))
+                          );
+                          if (invMatch) {
+                            const dueAmount = invMatch.total_due != null ? invMatch.total_due : invMatch.amount;
+                            const clientMatch = clients.find((c: any) => c.email?.toLowerCase() === invMatch.client_email?.toLowerCase());
+                            setFormData(prev => ({
+                              ...prev,
+                              invoiceId: val,
+                              amount: prev.amount || (dueAmount > 0 ? dueAmount.toString() : invMatch.amount.toString()),
+                              description: prev.description || `Invoice #${invMatch.id} - ${invMatch.service || 'Payment'}`,
+                              clientId: clientMatch ? clientMatch.id : prev.clientId
+                            }));
+                          } else {
+                            setFormData(prev => ({ ...prev, invoiceId: val }));
+                          }
+                        }}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white text-sm pr-16"
+                      />
+                      {formData.invoiceId && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, invoiceId: '' }))}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs px-1.5 py-0.5 rounded hover:bg-white/10 transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-gray-400">
+                      Type any invoice number directly (e.g. <span className="text-gray-300">INV-00029</span> or <span className="text-gray-300">29</span>).
+                    </p>
+                  </div>
+                ) : (
+                  <select
+                    value={formData.invoiceId}
+                    onChange={e => {
+                      const invId = e.target.value;
+                      if (invId === "__manual__") {
+                        setIsManualInvoice(true);
+                        return;
+                      }
+                      const inv = invoicesList.find((i: any) => i.id === invId);
+                      if (inv) {
+                        const dueAmount = inv.total_due != null ? inv.total_due : inv.amount;
+                        const clientMatch = clients.find((c: any) => c.email?.toLowerCase() === inv.client_email?.toLowerCase());
+                        setFormData(prev => ({
+                          ...prev,
+                          invoiceId: inv.id,
+                          amount: dueAmount > 0 ? dueAmount.toString() : inv.amount.toString(),
+                          description: `Invoice #${inv.id} - ${inv.service || 'Payment'}`,
+                          clientId: clientMatch ? clientMatch.id : prev.clientId
+                        }));
+                      } else {
+                        setFormData(prev => ({ ...prev, invoiceId: invId }));
+                      }
+                    }}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none text-white cursor-pointer"
+                  >
+                    <option value="" className="bg-black text-white">None / Select Invoice</option>
+                    <option value="__manual__" className="bg-black text-brand-400 font-semibold">
+                      Enter Invoice Number Manually...
                     </option>
-                  ))}
-                </select>
+                    {filteredInvoicesList.map((inv: any) => (
+                      <option key={inv.id} value={inv.id} className="bg-black text-white">
+                        {inv.id} - {inv.service || 'Invoice'}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div className="space-y-1">

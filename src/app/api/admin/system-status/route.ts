@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import sql from "@/lib/db";
 import { list } from "@vercel/blob";
+import { isR2Configured, getR2Client } from "@/lib/storage";
+import { ListObjectsV2Command } from "@aws-sdk/client-s3";
 
 export const dynamic = "force-dynamic";
 
@@ -35,8 +37,26 @@ export async function GET() {
         await list({ limit: 1 });
         blobStatus = "Connected";
       } catch (e) {
-        console.error("Vercel Blob verification failed:", e);
-        blobStatus = "Configuration Error";
+        console.error("Vercel Blob verification failed (possibly suspended):", e);
+        blobStatus = "Suspended / Error";
+      }
+    }
+
+    // 3. Check Cloudflare R2
+    let r2Status = "Not Configured";
+    if (isR2Configured()) {
+      try {
+        const r2 = getR2Client();
+        await r2.send(
+          new ListObjectsV2Command({
+            Bucket: process.env.R2_BUCKET_NAME!,
+            MaxKeys: 1,
+          })
+        );
+        r2Status = "Connected";
+      } catch (e) {
+        console.error("Cloudflare R2 verification failed:", e);
+        r2Status = "Configuration Error";
       }
     }
 
@@ -44,6 +64,8 @@ export async function GET() {
       success: true,
       dbStatus,
       blobStatus,
+      r2Status,
+      activeStorage: blobStatus === "Connected" ? "Vercel Blob (Primary)" : (r2Status === "Connected" ? "Cloudflare R2 (Active Backup)" : "None"),
       env: process.env.NODE_ENV || "development",
     });
   } catch (error) {

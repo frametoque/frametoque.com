@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 import { generateUniqueInvoiceId } from "./actions";
-import { put } from '@vercel/blob';
+import { putBlob } from '@/lib/storage';
 
 export async function uploadProviderInvoice(formData: FormData): Promise<string> {
   const { userId } = await auth();
@@ -17,7 +17,7 @@ export async function uploadProviderInvoice(formData: FormData): Promise<string>
   }
   try {
     const filename = `admin/provider-invoices/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-    const blob = await put(filename, file, {
+    const blob = await putBlob(filename, file, {
       access: 'public',
     });
     return blob.url;
@@ -100,9 +100,8 @@ export async function uploadRenewalInvoiceForDomain(formData: FormData): Promise
   const file = formData.get('file') as File;
   if (!file) throw new Error('No file uploaded');
   try {
-    const { put } = await import('@vercel/blob');
     const filename = `admin/renewal-invoices/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-    const blob = await put(filename, file, { access: 'public' });
+    const blob = await putBlob(filename, file, { access: 'public' });
     return blob.url;
   } catch (err: any) {
     console.error('Failed to upload renewal invoice:', err);

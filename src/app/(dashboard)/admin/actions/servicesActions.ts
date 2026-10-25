@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 import sql from "@/lib/db";
 import { promises as fs } from "fs";
 import path from "path";
-import { put } from "@vercel/blob";
+import { putBlob } from "@/lib/storage";
 import { TABLE_MAP } from "@/lib/services";
 
 /**
@@ -177,7 +177,7 @@ export async function uploadServiceCover(formData: FormData): Promise<string> {
   }
 
   const filename = `uploads/services/${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
-  const blob = await put(filename, file, {
+  const blob = await putBlob(filename, file, {
     access: "public",
   });
 

@@ -25,7 +25,6 @@ import {
 import {
   Globe,
   AlertTriangle,
-  Mail,
   Check,
   Search,
   Trash2,
@@ -1472,13 +1471,6 @@ export default function AdminOrdersPage() {
                               <Edit2 className="w-4 h-4" />
                             </Link>
 
-                            <a
-                              href={`mailto:${o.client_email}?subject=Domain Renewal Reminder: ${o.domain_name}&body=Hi client,%0D%0A%0D%0AThis is a reminder that your domain registration for ${o.domain_name} expires on ${new Date(o.expiry_date).toLocaleDateString()} (${daysToExpiry} days remaining).%0D%0A%0D%0APlease let us know if you want us to handle the renewal for another year.%0D%0A%0D%0AThank you!`}
-                              className="p-2 hover:bg-brand-400/10 text-gray-400 hover:text-brand-400 rounded-xl transition-colors flex items-center justify-center"
-                              title="Send Expiry Reminder Email"
-                            >
-                              <Mail className="w-4 h-4" />
-                            </a>
 
                             <button
                               onClick={() => handleOpenDeleteModal(o)}

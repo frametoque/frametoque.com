@@ -38,26 +38,30 @@ export default function DateRangeSelector({
     onRangeChange(range);
     setActivePicker(null);
     const today = new Date();
-    const todayStr = today.toISOString().split("T")[0];
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const formatYMD = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-    if (range === "this year") {
-      onStartDateChange(`${today.getFullYear()}-01-01`);
-      onEndDateChange(todayStr);
-    } else if (range === "6 months") {
-      const d = new Date();
-      d.setMonth(d.getMonth() - 6);
-      onStartDateChange(d.toISOString().split("T")[0]);
-      onEndDateChange(todayStr);
-    } else if (range === "three months") {
-      const d = new Date();
-      d.setMonth(d.getMonth() - 3);
-      onStartDateChange(d.toISOString().split("T")[0]);
-      onEndDateChange(todayStr);
+    if (range === "this month") {
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      onStartDateChange(formatYMD(firstDay));
+      onEndDateChange(formatYMD(lastDay));
     } else if (range === "one month") {
-      const d = new Date();
-      d.setMonth(d.getMonth() - 1);
-      onStartDateChange(d.toISOString().split("T")[0]);
-      onEndDateChange(todayStr);
+      const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+      onStartDateChange(formatYMD(firstDay));
+      onEndDateChange(formatYMD(lastDay));
+    } else if (range === "this year") {
+      onStartDateChange(`${today.getFullYear()}-01-01`);
+      onEndDateChange(formatYMD(today));
+    } else if (range === "6 months") {
+      const d = new Date(today.getFullYear(), today.getMonth() - 6, today.getDate());
+      onStartDateChange(formatYMD(d));
+      onEndDateChange(formatYMD(today));
+    } else if (range === "three months") {
+      const d = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
+      onStartDateChange(formatYMD(d));
+      onEndDateChange(formatYMD(today));
     } else if (range === "custom") {
       const currentYear = today.getFullYear();
       const currentMonth = today.getMonth();
@@ -71,8 +75,7 @@ export default function DateRangeSelector({
       onEndDateChange(`${fyEndYear}-03-31`);
     } else if (range === "lifetime") {
       onStartDateChange("1970-01-01");
-      const tzoffset = (new Date()).getTimezoneOffset() * 60000;
-      onEndDateChange((new Date(Date.now() - tzoffset)).toISOString().split('T')[0]);
+      onEndDateChange("2099-12-31");
     }
   };
 
@@ -85,10 +88,11 @@ export default function DateRangeSelector({
           className="bg-white/5 border border-white/10 rounded-xl pl-4 pr-10 py-2 outline-none focus:border-brand-500 transition-colors appearance-none cursor-pointer text-sm font-medium text-white"
         >
           <option value="lifetime" className="bg-brand-900 text-white">Lifetime</option>
-          <option value="this year" className="bg-brand-900 text-white">This Year</option>
-          <option value="6 months" className="bg-brand-900 text-white">Last 6 Months</option>
-          <option value="three months" className="bg-brand-900 text-white">Last 3 Months</option>
+          <option value="this month" className="bg-brand-900 text-white">This Month</option>
           <option value="one month" className="bg-brand-900 text-white">Last Month</option>
+          <option value="three months" className="bg-brand-900 text-white">Last 3 Months</option>
+          <option value="6 months" className="bg-brand-900 text-white">Last 6 Months</option>
+          <option value="this year" className="bg-brand-900 text-white">This Year</option>
           <option value="custom" className="bg-brand-900 text-white">Custom Range</option>
         </select>
         <span className="absolute right-4 pointer-events-none text-gray-400">

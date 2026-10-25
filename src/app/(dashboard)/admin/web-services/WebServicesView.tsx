@@ -4,14 +4,12 @@ import React, { useState, useEffect } from "react";
 import DomainsTab from "./DomainsTab";
 import HostingTab from "./HostingTab";
 import CredentialsTab from "./CredentialsTab";
-import { useRouter } from "next/navigation";
 
 export default function WebServicesView({
   initialTab = "domains",
 }: {
   initialTab?: "domains" | "hosting" | "credentials";
 }) {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"domains" | "hosting" | "credentials">(initialTab);
 
   useEffect(() => {
@@ -33,22 +31,6 @@ export default function WebServicesView({
     setActiveTab(tab);
     window.history.pushState(null, "", `/admin/web-services/${tab}`);
   };
-
-  useEffect(() => {
-    const handleOpenAdd = () => {
-      if (activeTab === "domains") {
-        router.push("/admin/web-services/domains/new");
-      } else if (activeTab === "hosting") {
-        window.dispatchEvent(new CustomEvent("hosting:open-add"));
-      } else {
-        window.dispatchEvent(new CustomEvent("credentials:open-add"));
-      }
-    };
-    window.addEventListener("web-services:open-add", handleOpenAdd);
-    return () => {
-      window.removeEventListener("web-services:open-add", handleOpenAdd);
-    };
-  }, [activeTab, router]);
 
   return (
     <div className="space-y-6">

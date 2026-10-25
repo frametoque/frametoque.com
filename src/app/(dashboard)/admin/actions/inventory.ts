@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
+import { putBlob } from "@/lib/storage";
 
 export async function getInventoryItems() {
   const { userId } = await auth();
@@ -113,10 +114,9 @@ export async function uploadInventoryDocument(formData: FormData): Promise<strin
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const { put } = await import('@vercel/blob');
   const file = formData.get('file') as File;
   if (!file) throw new Error("No file uploaded");
   const filename = `admin/inventory/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-  const blob = await put(filename, file, { access: 'public' });
+  const blob = await putBlob(filename, file, { access: 'public' });
   return blob.url;
 }

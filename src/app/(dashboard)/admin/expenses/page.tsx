@@ -136,8 +136,9 @@ export default function ExpensesPage() {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const res = await getExpenses(startDate, endDate, 10, page * 10);
-      if (res.items.length < 10) setHasMore(false);
+      const currentOffset = (data?.items?.length || 0) + extraItems.length;
+      const res = await getExpenses(startDate, endDate, 20, currentOffset);
+      if (res.items.length < 20) setHasMore(false);
       setExtraItems(prev => [...prev, ...res.items]);
       setPage(p => p + 1);
     } catch (e) {
@@ -147,20 +148,52 @@ export default function ExpensesPage() {
     }
   };
 
+  const loadAll = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const currentOffset = (data?.items?.length || 0) + extraItems.length;
+      const res = await getExpenses(startDate, endDate, 5000, currentOffset);
+      if (res.items.length < 5000) setHasMore(false);
+      setExtraItems(prev => [...prev, ...res.items]);
+    } catch (e) {
+      console.error("Failed to load all expenses:", e);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeFilter !== "All" && hasMore && !loadingMore && data) {
+      loadAll();
+    }
+  }, [activeFilter, hasMore, loadingMore, data, startDate, endDate]);
+
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 500) {
         if (!loadingMore && hasMore) {
-          loadMore();
+          if (activeFilter !== "All") {
+            loadAll();
+          } else {
+            loadMore();
+          }
         }
       }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [loadingMore, hasMore, page, startDate, endDate]);
+  }, [loadingMore, hasMore, page, startDate, endDate, activeFilter, data, extraItems]);
 
   const allExpenseItems = useMemo(() => {
-    return [...(data?.items || []), ...extraItems];
+    const combined = [...(data?.items || []), ...extraItems];
+    const seen = new Set();
+    return combined.filter(item => {
+      if (!item || item.id === undefined || item.id === null) return false;
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
   }, [data?.items, extraItems]);
 
   // Handle actual expense save
@@ -457,7 +490,7 @@ export default function ExpensesPage() {
                   </td>
                 </tr>
               ))}
-              {filteredExpenses.length === 0 && (
+              {!loading && !loadingMore && filteredExpenses.length === 0 && (
                 <tr>
                   <td colSpan={6} className="p-6 text-center text-gray-500">No expense records found.</td>
                 </tr>

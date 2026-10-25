@@ -7,7 +7,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
 import { imageSize } from "image-size";
-import { put, del } from "@vercel/blob";
+import { putBlob, deleteBlob } from "@/lib/storage";
 import { headers } from "next/headers";
 
 // Mapping category slugs to table names
@@ -207,13 +207,13 @@ export async function deletePortfolioItem(categorySlug: string, id: number) {
     const eventId = photoRes[0].event_id;
     const src = photoRes[0].src;
 
-    // 2. Delete photo file from Vercel Blob CDN if it's a remote blob URL
+    // 2. Delete photo file from storage CDN if it's a remote URL
     if (src && src.startsWith("http")) {
       try {
-        await del(src);
-        console.log(`Deleted photo from Vercel Blob CDN: ${src}`);
+        await deleteBlob(src);
+        console.log(`Deleted photo from storage CDN: ${src}`);
       } catch (err: any) {
-        console.error(`Failed to delete Vercel Blob CDN file ${src}:`, err);
+        console.error(`Failed to delete storage CDN file ${src}:`, err);
       }
     } else if (src) {
       // Local file fallback
@@ -251,7 +251,7 @@ export async function deletePortfolioItem(categorySlug: string, id: number) {
     if (rows.length > 0) {
       const url = rows[0].image_path || rows[0].src;
       if (url && url.startsWith("http")) {
-        await del(url);
+        await deleteBlob(url);
       }
     }
   } catch (err) {
@@ -380,7 +380,7 @@ export async function uploadPortfolioMedia(formData: FormData, categorySlug?: st
     ? `projects/web/${Date.now()}-${cleanFilename}`
     : `uploads/portfolio/${Date.now()}-${cleanFilename}`;
 
-  const blob = await put(filename, file, {
+  const blob = await putBlob(filename, file, {
     access: "public",
   });
 
@@ -414,7 +414,7 @@ export async function uploadPortfolioMediaFromUrl(url: string): Promise<string> 
   const blob = await response.blob();
   const filename = `projects/web/${Date.now()}-screenshot.png`;
 
-  const uploadedBlob = await put(filename, blob, {
+  const uploadedBlob = await putBlob(filename, blob, {
     access: "public",
   });
 
@@ -451,7 +451,7 @@ export async function uploadPortfolioMediaWithDimensions(
     filename = `uploads/portfolio/${hash.slice(0, 12)}-${safeFilename}`;
   }
 
-  const blob = await put(filename, buffer, {
+  const blob = await putBlob(filename, buffer, {
     access: "public",
   });
 
@@ -544,10 +544,10 @@ export async function createBatchPortfolioPhotos(
       // Delete old CDN blob file if a new file URL was uploaded to replace it
       if (match.src && match.src !== photo.src && match.src.startsWith("http")) {
         try {
-          await del(match.src);
-          console.log(`Deleted replaced photo blob from Vercel Blob CDN: ${match.src}`);
+          await deleteBlob(match.src);
+          console.log(`Deleted replaced photo from storage CDN: ${match.src}`);
         } catch (err) {
-          console.error(`Failed to delete replaced blob ${match.src}:`, err);
+          console.error(`Failed to delete replaced file ${match.src}:`, err);
         }
       }
 
@@ -654,10 +654,10 @@ export async function cleanDuplicatesFromEvent(eventName: string): Promise<{ kep
   for (const photo of toDelete) {
     if (photo.src && photo.src.startsWith("http")) {
       try {
-        await del(photo.src);
-        console.log(`Deduplication: Deleted blob CDN file ${photo.src}`);
+        await deleteBlob(photo.src);
+        console.log(`Deduplication: Deleted storage CDN file ${photo.src}`);
       } catch (err) {
-        console.error(`Deduplication: Failed to delete blob ${photo.src}:`, err);
+        console.error(`Deduplication: Failed to delete file ${photo.src}:`, err);
       }
     }
     await sql.unsafe(`DELETE FROM work_photography_photos WHERE id = $1`, [photo.id]);

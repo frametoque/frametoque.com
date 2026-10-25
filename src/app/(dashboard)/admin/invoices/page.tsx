@@ -331,8 +331,9 @@ export default function InvoicesPage() {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const res = await getInvoices(10, page * 10);
-      if (res.items.length < 10) setHasMore(false);
+      const currentOffset = (data?.items?.length || 0) + extraItems.length;
+      const res = await getInvoices(20, currentOffset);
+      if (res.items.length < 20) setHasMore(false);
       setExtraItems(prev => [...prev, ...res.items]);
       setPage(p => p + 1);
     } catch (e) {
@@ -342,20 +343,52 @@ export default function InvoicesPage() {
     }
   };
 
+  const loadAll = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const currentOffset = (data?.items?.length || 0) + extraItems.length;
+      const res = await getInvoices(5000, currentOffset);
+      if (res.items.length < 5000) setHasMore(false);
+      setExtraItems(prev => [...prev, ...res.items]);
+    } catch (e) {
+      console.error("Failed to load all invoices:", e);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    if ((activeFilter !== "All" || (searchTerm && searchTerm.trim() !== "")) && hasMore && !loadingMore && data) {
+      loadAll();
+    }
+  }, [activeFilter, searchTerm, hasMore, loadingMore, data]);
+
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 500) {
         if (!loadingMore && hasMore) {
-          loadMore();
+          if (activeFilter !== "All" || (searchTerm && searchTerm.trim() !== "")) {
+            loadAll();
+          } else {
+            loadMore();
+          }
         }
       }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [loadingMore, hasMore, page]);
+  }, [loadingMore, hasMore, page, activeFilter, searchTerm, data, extraItems]);
 
   const allInvoiceItems = useMemo(() => {
-    return [...(data?.items || []), ...extraItems];
+    const combined = [...(data?.items || []), ...extraItems];
+    const seen = new Set();
+    return combined.filter(item => {
+      if (!item || item.id === undefined || item.id === null) return false;
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
   }, [data?.items, extraItems]);
 
   const handleDelete = async (id: string) => {
@@ -594,21 +627,6 @@ export default function InvoicesPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openLinkModal(row)}
-                          className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                            row.linkedDomain || row.linkedHosting ? 'text-blue-400 hover:bg-blue-500/10' : 'text-gray-400 hover:text-white hover:bg-white/10'
-                          }`}
-                          title={
-                            row.linkedDomain
-                              ? `Linked to Domain: ${row.linkedDomain.name} (Click to manage)`
-                              : row.linkedHosting
-                              ? `Linked to Server: ${row.linkedHosting.name} (Click to manage)`
-                              : "Link to Domain or Server"
-                          }
-                        >
-                          <Link2 className="w-4 h-4" />
-                        </button>
                         {row.status?.toLowerCase() !== 'paid' && row.status?.toLowerCase() !== 'fully paid' && (
                           <button onClick={() => openRecordPaymentModal(row)} className="p-2 hover:bg-green-400/10 rounded-xl transition-colors text-gray-400 hover:text-green-400" title="Create Income from Invoice">
                             <DollarSign className="w-4 h-4" />
@@ -640,7 +658,7 @@ export default function InvoicesPage() {
                   </tr>
                 );
               })}
-              {filteredInvoices.length === 0 && (
+              {!loading && !loadingMore && filteredInvoices.length === 0 && (
                 <tr>
                   <td colSpan={8} className="p-6 text-center text-gray-500">No invoices found.</td>
                 </tr>
