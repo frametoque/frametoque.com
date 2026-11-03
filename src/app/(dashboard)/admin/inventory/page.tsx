@@ -2,14 +2,144 @@
 
 import { useEffect, useState, useMemo } from "react";
 import useSWR from 'swr';
-import { Search, Plus, Edit2, Trash2, X, Loader2, Package, CheckCircle2, Box, Info, Download, FileText, Eye, Upload, Link2 } from "lucide-react";
-import { getInventoryItems, createInventoryItem, updateInventoryItem, deleteInventoryItem, uploadInventoryDocument, getExpensesForLinking } from "../actions/inventory";
+import { 
+  Search, Plus, Edit2, Trash2, X, Loader2, Package, CheckCircle2, 
+  Box, Info, Download, FileText, Eye, Upload, Link2, 
+  Check, ExternalLink, Clock, ShoppingCart, AlertCircle, GripVertical
+} from "lucide-react";
+import { 
+  getInventoryItems, createInventoryItem, updateInventoryItem, 
+  deleteInventoryItem, uploadInventoryDocument, getExpensesForLinking,
+  createToBuyItem, reorderToBuyItems
+} from "../actions/inventory";
 import AnimatedNumber from "../components/AnimatedNumber";
 
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount || 0);
 
-const emptyForm = { item_name: '', category: '', serial_number: '', quantity: 1, status: 'Available', purchase_date: '', purchase_price: '', notes: '', warranty_letter_url: '', expense_id: '' };
+const R2_PUBLIC_BASE = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "https://pub-efe1896ad7dc4cbc9be5a02f01f6f99f.r2.dev").replace(/\/+$/, "");
+
+function extractStoragePath(urlOrPath: string): string {
+  if (!urlOrPath) return "";
+  try {
+    if (urlOrPath.startsWith("http://") || urlOrPath.startsWith("https://")) {
+      const parsed = new URL(urlOrPath);
+      return parsed.pathname.replace(/^\/+/, "");
+    }
+  } catch {}
+  return urlOrPath.replace(/^\/+/, "");
+}
+
+function getMediaCandidates(rawUrl: string): string[] {
+  if (!rawUrl) return [];
+  const trimmed = rawUrl.trim();
+  if (trimmed.startsWith("data:") || trimmed.startsWith("blob:")) return [trimmed];
+
+  const key = extractStoragePath(trimmed);
+  const candidates: string[] = [];
+
+  // 1. Direct Cloudflare R2 URL
+  if (key) {
+    candidates.push(`${R2_PUBLIC_BASE}/${key}`);
+  }
+
+  // 2. Server-side /api/media proxy with S3 / R2 credentials
+  if (key) {
+    candidates.push(`/api/media/${key}`);
+  }
+  candidates.push(`/api/media?url=${encodeURIComponent(trimmed)}`);
+
+  // 3. Original raw URL
+  candidates.push(trimmed);
+
+  return Array.from(new Set(candidates.filter(Boolean)));
+}
+
+function DocumentPreview({ url, title }: { url: string; title: string }) {
+  const candidates = useMemo(() => getMediaCandidates(url), [url]);
+  const [candidateIndex, setCandidateIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const isPdf = Boolean(
+    url.toLowerCase().includes('.pdf') ||
+    url.toLowerCase().includes('/pdf') ||
+    url.startsWith('data:application/pdf')
+  );
+
+  useEffect(() => {
+    setCandidateIndex(0);
+    setLoading(true);
+  }, [url]);
+
+  const currentSrc = candidates[candidateIndex] || url;
+
+  const handleImageError = () => {
+    if (candidateIndex + 1 < candidates.length) {
+      setCandidateIndex(prev => prev + 1);
+    } else {
+      setLoading(false);
+    }
+  };
+
+  if (isPdf) {
+    return (
+      <div className="w-full h-full min-h-[60vh] flex flex-col items-center justify-center relative">
+        <object
+          data={currentSrc}
+          type="application/pdf"
+          className="w-full h-full min-h-[60vh] rounded-xl border border-white/10"
+        >
+          <div className="flex flex-col items-center justify-center p-8 text-center bg-white/[0.02] border border-white/10 rounded-2xl max-w-md mx-auto">
+            <FileText className="w-12 h-12 text-brand-400 mb-3" />
+            <p className="text-sm font-semibold text-white mb-1">{title} (PDF)</p>
+            <p className="text-xs text-gray-400 mb-4">Click below to open or download the PDF invoice.</p>
+            <div className="flex items-center gap-2">
+              <a
+                href={currentSrc}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-medium transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> Open in New Tab
+              </a>
+              <a
+                href={currentSrc}
+                download
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-medium transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" /> Download
+              </a>
+            </div>
+          </div>
+        </object>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative flex items-center justify-center w-full h-full min-h-[300px]">
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Loader2 className="w-7 h-7 text-brand-400 animate-spin" />
+        </div>
+      )}
+      <img
+        src={currentSrc}
+        alt={title}
+        onLoad={() => setLoading(false)}
+        onError={handleImageError}
+        className={`max-w-full max-h-[70vh] object-contain rounded-xl shadow-lg transition-opacity duration-300 ${
+          loading ? 'opacity-0' : 'opacity-100'
+        }`}
+      />
+    </div>
+  );
+}
+
+const emptyForm = { item_name: '', category: '', serial_number: '', quantity: 1, status: 'Available', purchase_date: '', purchase_price: '', notes: '', warranty_letter_url: '', expense_id: '', purchase_invoice_url: '' };
+const emptyToBuyForm = { item_name: '', product_link: '', estimated_price: '' };
 
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,10 +149,21 @@ export default function InventoryPage() {
   const [viewingItem, setViewingItem] = useState<any | null>(null);
   const [viewingItemTab, setViewingItemTab] = useState<'invoice' | 'warranty'>('invoice');
 
-  // Modal state
+  // Modal state for regular inventory items
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyForm);
+  const [isConvertingItem, setIsConvertingItem] = useState<any | null>(null);
+
+  // Modal state for To-Buy items
+  const [isToBuyModalOpen, setIsToBuyModalOpen] = useState(false);
+  const [editingToBuyId, setEditingToBuyId] = useState<string | null>(null);
+  const [toBuyFormData, setToBuyFormData] = useState(emptyToBuyForm);
+  const [toBuySaving, setToBuySaving] = useState(false);
+
+  // Drag and drop reordering for To-Buy items
+  const [draggedToBuyId, setDraggedToBuyId] = useState<string | number | null>(null);
+  const [dragOverToBuyId, setDragOverToBuyId] = useState<string | number | null>(null);
 
   const fetcher = async () => {
     const [res, exp] = await Promise.all([getInventoryItems(), getExpensesForLinking()]);
@@ -32,7 +173,6 @@ export default function InventoryPage() {
   const { data: swrData, isLoading: loading, mutate } = useSWR(['admin-inventory'], fetcher);
   const { data = [], expenses = [] } = swrData || {};
 
-
   useEffect(() => {
     const handleSearch = (e: Event) => {
       const customEvent = e as CustomEvent<string>;
@@ -40,25 +180,147 @@ export default function InventoryPage() {
     };
     const handleOpenNew = () => {
       setEditingId(null);
+      setIsConvertingItem(null);
       setFormData(emptyForm);
       setIsModalOpen(true);
     };
+    const handleOpenToBuy = () => {
+      setEditingToBuyId(null);
+      setToBuyFormData(emptyToBuyForm);
+      setIsToBuyModalOpen(true);
+    };
+
     window.addEventListener("inventory:search", handleSearch);
     window.addEventListener("inventory:open-new", handleOpenNew);
+    window.addEventListener("inventory:open-tobuy", handleOpenToBuy);
     return () => {
       window.removeEventListener("inventory:search", handleSearch);
       window.removeEventListener("inventory:open-new", handleOpenNew);
+      window.removeEventListener("inventory:open-tobuy", handleOpenToBuy);
     };
   }, []);
 
   const openNew = () => {
     setEditingId(null);
+    setIsConvertingItem(null);
     setFormData(emptyForm);
     setIsModalOpen(true);
   };
 
+  const openNewToBuy = () => {
+    setEditingToBuyId(null);
+    setToBuyFormData(emptyToBuyForm);
+    setIsToBuyModalOpen(true);
+  };
+
+  const openEditToBuy = (item: any) => {
+    setEditingToBuyId(item.id);
+    setToBuyFormData({
+      item_name: item.item_name || '',
+      product_link: item.product_link || '',
+      estimated_price: item.estimated_price ? String(item.estimated_price) : (item.purchase_price ? String(item.purchase_price) : '')
+    });
+    setIsToBuyModalOpen(true);
+  };
+
+  const handleConvertPurchased = (item: any) => {
+    setEditingId(item.id);
+    setIsConvertingItem(item);
+    const todayStr = new Date().toISOString().split('T')[0];
+    setFormData({
+      item_name: item.item_name || '',
+      category: item.category && item.category !== 'To Buy' ? item.category : 'Equipment',
+      serial_number: item.serial_number || '',
+      quantity: item.quantity || 1,
+      status: 'Available',
+      purchase_date: todayStr, // date automatically filled!
+      purchase_price: item.estimated_price ? String(item.estimated_price) : (item.purchase_price ? String(item.purchase_price) : ''), // price automatically filled!
+      notes: item.product_link ? `Product Link: ${item.product_link}${item.notes ? `\n${item.notes}` : ''}` : (item.notes || ''),
+      warranty_letter_url: item.warranty_letter_url || '',
+      expense_id: item.expense_id ? String(item.expense_id) : '',
+      purchase_invoice_url: item.purchase_invoice_url || ''
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSaveToBuy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!toBuyFormData.item_name.trim()) return;
+    setToBuySaving(true);
+    try {
+      const priceNum = toBuyFormData.estimated_price ? parseFloat(toBuyFormData.estimated_price) : null;
+      if (editingToBuyId) {
+        await updateInventoryItem(editingToBuyId, {
+          item_name: toBuyFormData.item_name.trim(),
+          category: 'To Buy',
+          status: 'To Buy',
+          quantity: 1,
+          is_to_buy: true,
+          product_link: toBuyFormData.product_link.trim() || null,
+          estimated_price: priceNum,
+          purchase_price: priceNum
+        });
+      } else {
+        await createToBuyItem({
+          item_name: toBuyFormData.item_name.trim(),
+          product_link: toBuyFormData.product_link.trim() || undefined,
+          estimated_price: priceNum
+        });
+      }
+      setIsToBuyModalOpen(false);
+      setEditingToBuyId(null);
+      setToBuyFormData(emptyToBuyForm);
+      await mutate();
+    } catch (err) {
+      console.error("Failed to save to-buy item:", err);
+      alert("Failed to save item to buy list.");
+    } finally {
+      setToBuySaving(false);
+    }
+  };
+
+  const handleReorderToBuy = async (sourceId: string | number, targetId: string | number) => {
+    if (sourceId === targetId) return;
+
+    const toBuyList = (data as any[])
+      .filter((d: any) => Boolean(d.is_to_buy))
+      .sort((a: any, b: any) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
+
+    const sourceIdx = toBuyList.findIndex((d: any) => String(d.id) === String(sourceId));
+    const targetIdx = toBuyList.findIndex((d: any) => String(d.id) === String(targetId));
+    if (sourceIdx === -1 || targetIdx === -1) return;
+
+    const reordered = [...toBuyList];
+    const [moved] = reordered.splice(sourceIdx, 1);
+    reordered.splice(targetIdx, 0, moved);
+
+    const updatedIds = reordered.map((d: any) => d.id);
+    const orderMap = new Map<string, number>();
+    reordered.forEach((d: any, idx: number) => {
+      orderMap.set(String(d.id), idx);
+    });
+
+    const updatedData = (data as any[]).map((item: any) => {
+      if (orderMap.has(String(item.id))) {
+        return { ...item, order_index: orderMap.get(String(item.id)) };
+      }
+      return item;
+    });
+
+    mutate({ ...swrData, data: updatedData as any, expenses }, false);
+
+    try {
+      await reorderToBuyItems(updatedIds);
+      mutate();
+    } catch (err) {
+      console.error("Failed to reorder to-buy items", err);
+      mutate();
+    }
+  };
+
   const openEdit = (item: any) => {
     setEditingId(item.id);
+    setIsConvertingItem(null);
     setFormData({
       item_name: item.item_name || '',
       category: item.category || '',
@@ -69,12 +331,14 @@ export default function InventoryPage() {
       purchase_price: item.purchase_price || '',
       notes: item.notes || '',
       warranty_letter_url: item.warranty_letter_url || '',
-      expense_id: item.expense_id ? String(item.expense_id) : ''
+      expense_id: item.expense_id ? String(item.expense_id) : '',
+      purchase_invoice_url: item.purchase_invoice_url || ''
     });
     setIsModalOpen(true);
   };
 
   const [uploadingWarranty, setUploadingWarranty] = useState(false);
+  const [uploadingInvoice, setUploadingInvoice] = useState(false);
 
   const handleUploadWarranty = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -93,17 +357,40 @@ export default function InventoryPage() {
     }
   };
 
+  const handleUploadInvoice = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingInvoice(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const url = await uploadInventoryDocument(fd);
+      setFormData(prev => ({ ...prev, purchase_invoice_url: url }));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to upload purchase invoice');
+    } finally {
+      setUploadingInvoice(false);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = { ...formData, quantity: parseInt(formData.quantity.toString()) || 1, purchase_price: parseFloat(formData.purchase_price) || null };
+      const payload = { 
+        ...formData, 
+        quantity: parseInt(formData.quantity.toString()) || 1, 
+        purchase_price: parseFloat(formData.purchase_price) || null,
+        is_to_buy: false // converts to regular active purchased inventory item!
+      };
       if (editingId) {
         await updateInventoryItem(editingId, payload);
       } else {
         await createInventoryItem(payload);
       }
       setIsModalOpen(false);
+      setIsConvertingItem(null);
       await mutate();
     } catch (e) {
       console.error(e);
@@ -128,19 +415,34 @@ export default function InventoryPage() {
   };
 
   const filteredData = useMemo(() => {
-    if (!searchTerm) return data;
-    const lower = searchTerm.toLowerCase();
-    return data.filter(d => 
-      (d.item_name || '').toLowerCase().includes(lower) ||
-      (d.category || '').toLowerCase().includes(lower) ||
-      (d.serial_number || '').toLowerCase().includes(lower)
-    );
+    let list = data;
+    if (searchTerm) {
+      const lower = searchTerm.toLowerCase();
+      list = list.filter((d: any) => 
+        (d.item_name || '').toLowerCase().includes(lower) ||
+        (d.category || '').toLowerCase().includes(lower) ||
+        (d.serial_number || '').toLowerCase().includes(lower) ||
+        (d.product_link || '').toLowerCase().includes(lower)
+      );
+    }
+    // Always keep To Buy items pinned at the top, ordered by order_index
+    return [...list].sort((a: any, b: any) => {
+      const aToBuy = Boolean(a.is_to_buy);
+      const bToBuy = Boolean(b.is_to_buy);
+      if (aToBuy && !bToBuy) return -1;
+      if (!aToBuy && bToBuy) return 1;
+      if (aToBuy && bToBuy) {
+        return (Number(a.order_index) || 0) - (Number(b.order_index) || 0);
+      }
+      return 0;
+    });
   }, [data, searchTerm]);
 
-  const totalItems = data.length;
-  const availableItems = data.filter(d => d.status === 'Available').length;
-  const totalValue = (data as any[]).reduce((acc: number, curr: any) => acc + (parseFloat(curr.purchase_price) || 0), 0);
-  const categories = new Set(data.map(d => d.category)).size;
+  const totalItems = (data as any[]).filter((d: any) => !d.is_to_buy).length;
+  const availableItems = (data as any[]).filter((d: any) => !d.is_to_buy && d.status === 'Available').length;
+  const totalValue = (data as any[]).filter((d: any) => !d.is_to_buy).reduce((acc: number, curr: any) => acc + (parseFloat(curr.purchase_price) || 0), 0);
+  const categories = new Set((data as any[]).filter((d: any) => !d.is_to_buy).map((d: any) => d.category)).size;
+  const toBuyCount = (data as any[]).filter((d: any) => d.is_to_buy).length;
 
   if (loading) {
     return (
@@ -221,12 +523,41 @@ export default function InventoryPage() {
         </div>
       </div>
 
+      {/* Top action bar above table */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-semibold text-gray-400">
+            {totalItems} Inventory Items
+          </span>
+          {toBuyCount > 0 && (
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              {toBuyCount} to buy
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <button
+            onClick={openNewToBuy}
+            className="flex items-center gap-1.5 px-4 py-2 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 rounded-2xl font-semibold transition-all text-xs cursor-pointer shadow-sm hover:scale-[1.02] active:scale-95"
+            title="Add item to buy list"
+          >
+            <ShoppingCart className="w-3.5 h-3.5" />
+            <span>+ To Buy</span>
+          </button>
+          <button
+            onClick={openNew}
+            className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl font-semibold transition-all text-xs cursor-pointer shadow-sm hover:scale-[1.02] active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Item</span>
+          </button>
+        </div>
+      </div>
+
       {/* List */}
       <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-xl">
-        <div className="p-6 border-b border-white/10">
-          <h2 className="text-lg font-semibold">Inventory List</h2>
-        </div>
-        
         {filteredData.length === 0 ? (
           <div className="p-12 text-center text-gray-400">
             <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -247,32 +578,137 @@ export default function InventoryPage() {
               </thead>
               <tbody>
                 {filteredData.map((item) => {
+                  const isToBuy = Boolean(item.is_to_buy);
                   let statusColor = "bg-gray-500/10 text-gray-400 border-gray-500/20";
                   if (item.status === 'Available') statusColor = "bg-green-500/10 text-green-400 border-green-500/20";
                   if (item.status === 'Maintenance') statusColor = "bg-amber-500/10 text-amber-400 border-amber-500/20";
                   if (item.status === 'Lost') statusColor = "bg-red-500/10 text-red-400 border-red-500/20";
                   if (item.status === 'Broken') statusColor = "bg-red-500/10 text-red-400 border-red-500/20";
-                  const hasDocs = item.expense_receipt_url || item.warranty_letter_url;
+                  const itemInvoiceUrl = item.purchase_invoice_url || item.expense_receipt_url;
+                  const hasDocs = Boolean(itemInvoiceUrl || item.warranty_letter_url);
 
                   return (
-                    <tr key={item.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                    <tr 
+                      key={item.id} 
+                      draggable={isToBuy}
+                      onDragStart={(e) => {
+                        if (!isToBuy) return;
+                        setDraggedToBuyId(item.id);
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", String(item.id));
+                      }}
+                      onDragEnd={() => {
+                        setDraggedToBuyId(null);
+                        setDragOverToBuyId(null);
+                      }}
+                      onDragOver={(e) => {
+                        if (!isToBuy || !draggedToBuyId) return;
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                        if (dragOverToBuyId !== item.id) {
+                          setDragOverToBuyId(item.id);
+                        }
+                      }}
+                      onDragLeave={() => {
+                        if (dragOverToBuyId === item.id) {
+                          setDragOverToBuyId(null);
+                        }
+                      }}
+                      onDrop={async (e) => {
+                        e.preventDefault();
+                        if (!isToBuy || !draggedToBuyId || draggedToBuyId === item.id) {
+                          setDragOverToBuyId(null);
+                          return;
+                        }
+                        const source = draggedToBuyId;
+                        setDraggedToBuyId(null);
+                        setDragOverToBuyId(null);
+                        await handleReorderToBuy(source, item.id);
+                      }}
+                      className={`border-b transition-all ${
+                        isToBuy 
+                          ? `bg-white/[0.015] border-dashed border-white/10 opacity-80 hover:opacity-100 hover:bg-white/[0.04] cursor-grab active:cursor-grabbing ${
+                              draggedToBuyId === item.id ? "opacity-30 bg-white/[0.02]" : ""
+                            } ${
+                              dragOverToBuyId === item.id && draggedToBuyId !== item.id ? "!border-t-2 !border-t-amber-400 bg-amber-400/[0.08]" : ""
+                            }` 
+                          : "border-white/5 hover:bg-white/[0.02]"
+                      }`}
+                    >
                       <td className="py-4 px-6">
-                        <div className="font-semibold text-white">{item.item_name}</div>
-                        {item.serial_number && <div className="text-xs text-gray-400 mt-1">SN: {item.serial_number}</div>}
-                        {item.quantity > 1 && <div className="text-xs text-gray-400 mt-0.5">Qty: {item.quantity}</div>}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {isToBuy && (
+                            <span 
+                              className="text-gray-500 hover:text-amber-300 transition-colors cursor-grab active:cursor-grabbing shrink-0" 
+                              title="Drag to reorder"
+                            >
+                              <GripVertical className="w-3.5 h-3.5" />
+                            </span>
+                          )}
+                          {isToBuy && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
+                              To Buy
+                            </span>
+                          )}
+                          <span className={`font-semibold ${isToBuy ? "text-gray-300" : "text-white"}`}>
+                            {item.item_name}
+                          </span>
+                        </div>
+                        {item.product_link && (
+                          <div className="mt-1">
+                            <a
+                              href={item.product_link.startsWith("http") ? item.product_link : `https://${item.product_link}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-300 hover:underline transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="w-3 h-3 shrink-0" />
+                              <span className="truncate max-w-[220px]">Product Link</span>
+                            </a>
+                          </div>
+                        )}
+                        {!isToBuy && item.serial_number && <div className="text-xs text-gray-400 mt-1">SN: {item.serial_number}</div>}
+                        {!isToBuy && item.quantity > 1 && <div className="text-xs text-gray-400 mt-0.5">Qty: {item.quantity}</div>}
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-300">{item.category}</td>
+                      <td className="py-4 px-6 text-sm">
+                        {isToBuy ? (
+                          <span className="text-gray-500 italic text-xs">To Buy</span>
+                        ) : (
+                          <span className="text-gray-300">{item.category}</span>
+                        )}
+                      </td>
                       <td className="py-4 px-6">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColor}`}>
-                          {item.status}
-                        </span>
+                        {isToBuy ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-amber-500/10 text-amber-300 border-amber-500/20">
+                            <Clock className="w-3 h-3 text-amber-400" />
+                            To Buy
+                          </span>
+                        ) : (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColor}`}>
+                            {item.status}
+                          </span>
+                        )}
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-400 hidden sm:table-cell">
-                        {item.purchase_date && <div>{new Date(item.purchase_date).toLocaleDateString()}</div>}
-                        {item.purchase_price && <div className="text-gray-300">{formatLKR(item.purchase_price)}</div>}
+                      <td className="py-4 px-6 text-sm hidden sm:table-cell">
+                        {isToBuy ? (
+                          <div>
+                            <span className="text-[10px] text-gray-500 uppercase font-semibold mr-1">Est:</span>
+                            <span className="text-amber-300 font-medium">
+                              {item.estimated_price || item.purchase_price ? formatLKR(item.estimated_price || item.purchase_price) : "—"}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="text-gray-400">
+                            {item.purchase_date && <div>{new Date(item.purchase_date).toLocaleDateString()}</div>}
+                            {item.purchase_price && <div className="text-gray-300">{formatLKR(item.purchase_price)}</div>}
+                          </div>
+                        )}
                       </td>
                       <td className="py-4 px-6 hidden lg:table-cell">
-                        {item.expense_id ? (
+                        {isToBuy ? (
+                          <span className="text-xs text-gray-500 italic">Not purchased</span>
+                        ) : item.expense_id ? (
                           <div className="flex flex-col gap-1">
                             {item.expense_desc && (
                               <span className="text-xs text-gray-400 max-w-[160px] truncate">{item.expense_desc}</span>
@@ -286,27 +722,36 @@ export default function InventoryPage() {
                         )}
                       </td>
                       <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {hasDocs && (
+                        <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+                          {isToBuy && (
                             <button
-                              onClick={() => { setViewingItem(item); setViewingItemTab(item.expense_receipt_url ? 'invoice' : 'warranty'); }}
-                              className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl transition-colors"
+                              onClick={() => handleConvertPurchased(item)}
+                              className="p-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 hover:text-emerald-300 rounded-xl transition-all border border-emerald-500/30 cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+                              title="Mark as Purchased (Convert to Inventory)"
+                            >
+                              <Check className="w-4 h-4 stroke-[2.5]" />
+                            </button>
+                          )}
+                          {!isToBuy && hasDocs && (
+                            <button
+                              onClick={() => { setViewingItem(item); setViewingItemTab(itemInvoiceUrl ? 'invoice' : 'warranty'); }}
+                              className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl transition-colors cursor-pointer"
                               title="View Details"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
                           )}
                           <button
-                            onClick={() => openEdit(item)}
-                            className="p-2 hover:bg-brand-500/20 text-gray-400 hover:text-brand-400 rounded-xl transition-colors"
-                            title="Edit"
+                            onClick={() => isToBuy ? openEditToBuy(item) : openEdit(item)}
+                            className="p-2 hover:bg-brand-500/20 text-gray-400 hover:text-brand-400 rounded-xl transition-colors cursor-pointer"
+                            title={isToBuy ? "Edit To-Buy Item" : "Edit"}
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(item)}
                             disabled={deletingId === item.id}
-                            className="p-2 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded-xl transition-colors"
+                            className="p-2 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded-xl transition-colors cursor-pointer"
                             title="Delete"
                           >
                             {deletingId === item.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
@@ -314,7 +759,7 @@ export default function InventoryPage() {
                         </div>
                       </td>
                     </tr>
-                  )
+                  );
                 })}
               </tbody>
             </table>
@@ -327,9 +772,19 @@ export default function InventoryPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#111111] border border-white/10 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
-              <h2 className="text-xl font-semibold">{editingId ? 'Edit Item' : 'Add Item'}</h2>
+              <div>
+                <h2 className="text-xl font-semibold">
+                  {isConvertingItem ? 'Convert to Inventory' : (editingId ? 'Edit Item' : 'Add Item')}
+                </h2>
+                {isConvertingItem && (
+                  <p className="text-xs text-emerald-400 mt-0.5">Purchased from To-Buy list</p>
+                )}
+              </div>
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setIsConvertingItem(null);
+                }}
                 className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -491,6 +946,34 @@ export default function InventoryPage() {
                     </label>
                   )}
                 </div>
+
+                {/* Purchase Invoice Upload (when no linked expense) */}
+                {!formData.expense_id && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Purchase Invoice (Optional)</label>
+                    {formData.purchase_invoice_url ? (
+                      <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+                        <FileText className="w-4 h-4 text-brand-400 shrink-0" />
+                        <span className="text-xs text-gray-300 truncate flex-1">Invoice Uploaded</span>
+                        <button type="button" onClick={() => setViewingDoc({ url: formData.purchase_invoice_url, title: 'Purchase Invoice' })} className="p-1 text-gray-400 hover:text-white transition-colors" title="View">
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                        <a href={formData.purchase_invoice_url} download target="_blank" rel="noopener noreferrer" className="p-1 text-gray-400 hover:text-white transition-colors" title="Download">
+                          <Download className="w-3.5 h-3.5" />
+                        </a>
+                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, purchase_invoice_url: '' }))} className="p-1 text-gray-400 hover:text-red-400 transition-colors" title="Remove">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors text-gray-400">
+                        {uploadingInvoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        {uploadingInvoice ? 'Uploading...' : 'Upload Purchase Invoice'}
+                        <input type="file" className="hidden" accept="image/*,application/pdf" onChange={handleUploadInvoice} disabled={uploadingInvoice} />
+                      </label>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 flex justify-end gap-3 shrink-0">
@@ -580,53 +1063,42 @@ export default function InventoryPage() {
             </div>
 
             {/* Right Panel — Tabs for Invoice / Warranty */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Tabs */}
-              <div className="flex items-center gap-1 px-6 pt-5 border-b border-white/10 shrink-0">
-                {viewingItem.expense_receipt_url && (
-                  <button
-                    onClick={() => setViewingItemTab('invoice')}
-                    className={`px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${viewingItemTab === 'invoice' ? 'border-brand-500 text-white' : 'border-transparent text-gray-400 hover:text-white'}`}
-                  >
-                    Purchase Invoice
-                  </button>
-                )}
-                {viewingItem.warranty_letter_url && (
-                  <button
-                    onClick={() => setViewingItemTab('warranty')}
-                    className={`px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${viewingItemTab === 'warranty' ? 'border-green-500 text-white' : 'border-transparent text-gray-400 hover:text-white'}`}
-                  >
-                    Warranty Letter
-                  </button>
-                )}
-                <div className="flex-1" />
-                {/* Download button for active tab */}
-                {viewingItemTab === 'invoice' && viewingItem.expense_receipt_url && (
-                  <a href={viewingItem.expense_receipt_url} download target="_blank" rel="noopener noreferrer" className="mb-1 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors text-gray-300">
-                    <Download className="w-3.5 h-3.5" /> Download
-                  </a>
-                )}
-                {viewingItemTab === 'warranty' && viewingItem.warranty_letter_url && (
-                  <a href={viewingItem.warranty_letter_url} download target="_blank" rel="noopener noreferrer" className="mb-1 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors text-gray-300">
-                    <Download className="w-3.5 h-3.5" /> Download
-                  </a>
-                )}
-              </div>
+            {(() => {
+              const activeInvoiceUrl = viewingItem.purchase_invoice_url || viewingItem.expense_receipt_url;
+              return (
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  {/* Tabs */}
+                  <div className="flex items-center gap-1 px-6 pt-5 border-b border-white/10 shrink-0">
+                    {activeInvoiceUrl && (
+                      <button
+                        onClick={() => setViewingItemTab('invoice')}
+                        className={`px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${viewingItemTab === 'invoice' ? 'border-brand-500 text-white' : 'border-transparent text-gray-400 hover:text-white'}`}
+                      >
+                        Purchase Invoice
+                      </button>
+                    )}
+                    {viewingItem.warranty_letter_url && (
+                      <button
+                        onClick={() => setViewingItemTab('warranty')}
+                        className={`px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${viewingItemTab === 'warranty' ? 'border-green-500 text-white' : 'border-transparent text-gray-400 hover:text-white'}`}
+                      >
+                        Warranty Letter
+                      </button>
+                    )}
+                  </div>
 
-              {/* Document viewer */}
-              <div className="flex-1 overflow-auto bg-black/40 p-4 flex items-center justify-center">
-                {viewingItemTab === 'invoice' && viewingItem.expense_receipt_url && (
-                  viewingItem.expense_receipt_url.match(/\.pdf/i)
-                    ? <iframe src={viewingItem.expense_receipt_url} className="w-full h-full min-h-[60vh] rounded-xl border border-white/10" title="Purchase Invoice" />
-                    : <img src={viewingItem.expense_receipt_url} alt="Purchase Invoice" className="max-w-full max-h-[70vh] object-contain rounded-xl" />
-                )}
-                {viewingItemTab === 'warranty' && viewingItem.warranty_letter_url && (
-                  viewingItem.warranty_letter_url.match(/\.pdf/i)
-                    ? <iframe src={viewingItem.warranty_letter_url} className="w-full h-full min-h-[60vh] rounded-xl border border-white/10" title="Warranty Letter" />
-                    : <img src={viewingItem.warranty_letter_url} alt="Warranty Letter" className="max-w-full max-h-[70vh] object-contain rounded-xl" />
-                )}
-              </div>
-            </div>
+                  {/* Document viewer */}
+                  <div className="flex-1 overflow-auto bg-black/40 p-4 flex items-center justify-center">
+                    {viewingItemTab === 'invoice' && activeInvoiceUrl && (
+                      <DocumentPreview url={activeInvoiceUrl} title="Purchase Invoice" />
+                    )}
+                    {viewingItemTab === 'warranty' && viewingItem.warranty_letter_url && (
+                      <DocumentPreview url={viewingItem.warranty_letter_url} title="Warranty Letter" />
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -636,7 +1108,7 @@ export default function InventoryPage() {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setViewingDoc(null)}>
           <div className="bg-[#111111] border border-white/10 rounded-3xl w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
-              <h3 className="text-sm font-semibold truncate">{viewingDoc.title}</h3>
+              <h3 className="text-sm font-semibold truncate text-white">{viewingDoc.title}</h3>
               <div className="flex items-center gap-2">
                 <a href={viewingDoc.url} download target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors" title="Download">
                   <Download className="w-5 h-5" />
@@ -647,12 +1119,96 @@ export default function InventoryPage() {
               </div>
             </div>
             <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-black/50">
-              {viewingDoc.url.match(/\.pdf/i) ? (
-                <iframe src={viewingDoc.url} className="w-full h-[75vh] rounded-xl border border-white/10" title={viewingDoc.title} />
-              ) : (
-                <img src={viewingDoc.url} alt={viewingDoc.title} className="max-w-full max-h-[75vh] object-contain rounded-xl" />
-              )}
+              <DocumentPreview url={viewingDoc.url} title={viewingDoc.title} />
             </div>
+          </div>
+        </div>
+      )}
+      {/* To-Buy Modal */}
+      {isToBuyModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#121217] border border-white/10 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
+              <h3 className="text-lg font-bold text-white">
+                {editingToBuyId ? "Edit To-Buy Item" : "Add Item to Buy"}
+              </h3>
+              <button
+                onClick={() => {
+                  setIsToBuyModalOpen(false);
+                  setEditingToBuyId(null);
+                }}
+                className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveToBuy} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                  Item Name <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Sony FX3 Cage, Rode Wireless Mic..."
+                  value={toBuyFormData.item_name}
+                  onChange={(e) => setToBuyFormData({ ...toBuyFormData, item_name: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                  Product Link (URL)
+                </label>
+                <div className="relative">
+                  <ExternalLink className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={toBuyFormData.product_link}
+                    onChange={(e) => setToBuyFormData({ ...toBuyFormData, product_link: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                  Estimated Price (LKR)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g. 75000"
+                  value={toBuyFormData.estimated_price}
+                  onChange={(e) => setToBuyFormData({ ...toBuyFormData, estimated_price: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsToBuyModalOpen(false);
+                    setEditingToBuyId(null);
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={toBuySaving}
+                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl text-xs flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/20 disabled:opacity-50"
+                >
+                  {toBuySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
+                  <span>{editingToBuyId ? "Save Changes" : "Add to Buy List"}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

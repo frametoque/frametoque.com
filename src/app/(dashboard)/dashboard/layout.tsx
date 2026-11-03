@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useUser, SignOutButton } from "@clerk/nextjs";
+import useSWR from "swr";
+import { hasClientAssignedProjects } from "@/app/(dashboard)/admin/actions/workspace";
 import {
   motion,
   AnimatePresence,
@@ -23,12 +25,14 @@ import {
   LogOut,
   X,
   ChevronRight,
+  ChevronDown,
   FilePenLine,
   NotepadTextDashed,
   PanelLeftClose,
   PanelLeftOpen,
   Clock,
   Calendar,
+  CalendarDays,
   Globe,
   CreditCard,
   Download,
@@ -72,8 +76,26 @@ export default function DashboardLayout({ children }) {
   const [ignoreHover, setIgnoreHover] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");
+  const [plannerProjectInfo, setPlannerProjectInfo] = useState<{
+    projectName: string;
+    projects?: { id: number; name: string }[];
+    selectedProjectId?: number;
+  } | null>(null);
 
   const pathname = usePathname();
+
+  useEffect(() => {
+    const handleProjectChange = (e: Event) => {
+      const custom = e as CustomEvent<{
+        projectName: string;
+        projects?: { id: number; name: string }[];
+        selectedProjectId?: number;
+      } | null>;
+      setPlannerProjectInfo(custom.detail || null);
+    };
+    window.addEventListener("client-planner:project-change", handleProjectChange);
+    return () => window.removeEventListener("client-planner:project-change", handleProjectChange);
+  }, []);
 
   const getPageTitle = (path: string): string => {
     if (path === "/dashboard") return "Dashboard";
@@ -87,6 +109,7 @@ export default function DashboardLayout({ children }) {
     if (path.startsWith("/dashboard/saas")) return "SaaS";
     if (path.startsWith("/dashboard/quotations")) return "Quotations";
     if (path.startsWith("/dashboard/agreements")) return "Agreements";
+    if (path.startsWith("/dashboard/planner")) return "Content Planner";
     if (path.startsWith("/dashboard/settings")) return "Settings";
     return "Client Portal";
   };
@@ -139,6 +162,14 @@ export default function DashboardLayout({ children }) {
 
   const { user, isLoaded } = useUser();
 
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    setIsDesktop(window.innerWidth >= 1024);
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <div className="min-h-screen bg-black text-white">
       <Sidebar
@@ -153,16 +184,16 @@ export default function DashboardLayout({ children }) {
         desktopExpanded={desktopExpanded}
       />
 
-      {/* Content padding is driven by the *persistent* collapsed state, not hover, so layout doesn't shift on hover */}
+      {/* Content padding is driven by desktop state + persistent collapsed state, not hover, so layout doesn't shift on hover */}
       <motion.div
-        animate={{ paddingLeft: collapsed ? 80 : 220 }}
+        animate={{ paddingLeft: isDesktop ? (collapsed ? 80 : 220) : 0 }}
         transition={{
           type: "spring",
           stiffness: 280,
           damping: 28,
           mass: 0.8,
         }}
-        className="min-h-screen lg:block hidden"
+        className="min-h-screen"
       >
         <Header 
           user={user} 
@@ -171,22 +202,10 @@ export default function DashboardLayout({ children }) {
           currentTime={currentTime}
           currentDate={currentDate}
           pageTitle={getPageTitle(pathname)}
+          plannerProjectInfo={plannerProjectInfo}
         />
         <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </motion.div>
-
-      {/* Mobile: no left padding */}
-      <div className="lg:hidden">
-        <Header 
-          user={user} 
-          isLoaded={isLoaded} 
-          setMobileMenuOpen={setMobileMenuOpen} 
-          currentTime={currentTime}
-          currentDate={currentDate}
-          pageTitle={getPageTitle(pathname)}
-        />
-        <main className="p-4 sm:p-6">{children}</main>
-      </div>
     </div>
   );
 }
@@ -215,12 +234,20 @@ const Sidebar = ({
 }) => {
   const pathname = usePathname();
   const { user, isLoaded } = useUser();
+  const userEmail = user?.primaryEmailAddress?.emailAddress;
+
+  const { data: hasPlanner = false } = useSWR(
+    userEmail ? ["client-has-planner", userEmail] : null,
+    () => hasClientAssignedProjects(userEmail),
+    { revalidateOnFocus: false }
+  );
 
   const links: { name: string; href: string; icon: any; newtab?: boolean }[] = [
     { name: "Dashboard",   href: "/dashboard",             icon: LayoutDashboard },
     { name: "Invoices", href: "/dashboard/invoices",    icon: ClipboardList },
     { name: "Quotations",  href: "/dashboard/quotations",  icon: NotepadTextDashed },
     { name: "Agreements",  href: "/dashboard/agreements",  icon: FilePenLine },
+    ...(hasPlanner ? [{ name: "Content Planner", href: "/dashboard/planner", icon: CalendarDays }] : []),
     // { name: "SaaS",     href: "/dashboard/saas",        icon: Cloud },
     { name: "Domains",  href: "/dashboard/domains",     icon: Globe },
     { name: "Settings",    href: "/dashboard/settings",    icon: Settings },
@@ -443,6 +470,7 @@ const Header = ({
   currentTime,
   currentDate,
   pageTitle,
+  plannerProjectInfo,
 }: {
   user: any;
   isLoaded: boolean;
@@ -450,27 +478,85 @@ const Header = ({
   currentTime: string;
   currentDate: string;
   pageTitle: string;
+  plannerProjectInfo?: {
+    projectName: string;
+    projects?: { id: number; name: string }[];
+    selectedProjectId?: number;
+  } | null;
 }) => {
   const pathname = usePathname();
   const isInvoiceDetail = pathname.startsWith("/dashboard/invoice/");
+  const isPlannerPage = pathname.startsWith("/dashboard/planner");
 
   return (
     <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/10 h-20 flex-shrink-0 flex items-center">
-      <div className="w-full flex items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="w-full flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         
         {/* Left Side: Title & Mobile menu button */}
-        <div className="flex items-center gap-4 sm:gap-6">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0 shrink">
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="lg:hidden p-2 hover:bg-white/10 rounded-3xl"
+            className="lg:hidden p-2 hover:bg-white/10 rounded-3xl shrink-0"
           >
             <Menu className="w-6 h-6" />
           </button>
 
           {/* Page Title */}
-          <h1 className="text-xl font-bold text-white tracking-tight">
-            {pageTitle}
-          </h1>
+          {isPlannerPage ? (
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink">
+              <span className="hidden sm:inline text-gray-400 font-medium text-base sm:text-lg shrink-0">
+                Content Planner
+              </span>
+              <span className="hidden sm:inline text-gray-600 font-light shrink-0">/</span>
+              {plannerProjectInfo?.projectName ? (
+                plannerProjectInfo.projects && plannerProjectInfo.projects.length > 1 ? (
+                  <div className="relative inline-flex items-center min-w-0">
+                    <select
+                      value={plannerProjectInfo.selectedProjectId}
+                      onChange={(e) => {
+                        const newId = Number(e.target.value);
+                        window.dispatchEvent(
+                          new CustomEvent("client-planner:select-project", {
+                            detail: { projectId: newId },
+                          })
+                        );
+                      }}
+                      className="appearance-none bg-white/5 hover:bg-white/10 text-white font-bold text-sm sm:text-lg px-2 sm:px-2.5 py-1 pr-6 sm:pr-7 rounded-xl border border-white/10 focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer max-w-[100px] xs:max-w-[130px] sm:max-w-[320px] truncate"
+                    >
+                      {plannerProjectInfo.projects.map((p) => (
+                        <option key={p.id} value={p.id} className="bg-gray-900 text-white font-medium">
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-400 pointer-events-none absolute right-1.5 sm:right-2" />
+                  </div>
+                ) : (
+                  <h1
+                    className="text-sm xs:text-base sm:text-xl font-bold text-white tracking-tight truncate max-w-[100px] xs:max-w-[130px] sm:max-w-[360px]"
+                    title={plannerProjectInfo.projectName}
+                  >
+                    <span className="sm:hidden">
+                      {plannerProjectInfo.projectName.length > 11
+                        ? `${plannerProjectInfo.projectName.slice(0, 10)}…`
+                        : plannerProjectInfo.projectName}
+                    </span>
+                    <span className="hidden sm:inline">
+                      {plannerProjectInfo.projectName}
+                    </span>
+                  </h1>
+                )
+              ) : (
+                <h1 className="text-base sm:text-xl font-bold text-white tracking-tight shrink-0">
+                  Content Planner
+                </h1>
+              )}
+            </div>
+          ) : (
+            <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight shrink-0">
+              {pageTitle}
+            </h1>
+          )}
 
           {isInvoiceDetail && (
             <>
@@ -497,34 +583,42 @@ const Header = ({
           )}
         </div>
 
-        {/* Right Side: System Stats (Time & Date only) + Mobile profile */}
-        <div className="flex items-center gap-3 sm:gap-5 text-sm text-gray-400">
-          {/* Current Time */}
-          <div className="hidden sm:flex items-center gap-1.5 text-gray-300">
-            <Clock className="w-3.5 h-3.5 text-gray-500" />
-            <span className="font-medium tabular-nums">{currentTime || "Loading..."}</span>
+        {/* Dynamic Portal Target for Client Planner Controls & Stats */}
+        {isPlannerPage ? (
+          <div
+            id="client-planner-topbar-portal"
+            className="flex items-center justify-end gap-1.5 sm:gap-3 shrink-0 ml-auto"
+          />
+        ) : (
+          /* Right Side: System Stats (Time & Date only) + Mobile profile */
+          <div className="flex items-center gap-3 sm:gap-5 text-sm text-gray-400">
+            {/* Current Time */}
+            <div className="hidden sm:flex items-center gap-1.5 text-gray-300">
+              <Clock className="w-3.5 h-3.5 text-gray-500" />
+              <span className="font-medium tabular-nums">{currentTime || "Loading..."}</span>
+            </div>
+
+            <span className="hidden sm:block w-1 h-1 rounded-full bg-white/20" />
+
+            {/* Current Date */}
+            <div className="hidden sm:flex items-center gap-1.5 text-gray-300">
+              <Calendar className="w-3.5 h-3.5 text-gray-500" />
+              <span className="font-medium">{currentDate || "Loading..."}</span>
+            </div>
+
+            {isLoaded && (
+              <Link href="/dashboard/settings" className="lg:hidden ml-2 shrink-0">
+                <ClientAvatar
+                  imageUrl={user?.imageUrl}
+                  email={user?.primaryEmailAddress?.emailAddress}
+                  name={user?.fullName || user?.firstName}
+                  className="w-8 h-8 rounded-full object-cover"
+                  fallbackClassName="w-8 h-8 rounded-full bg-gradient-to-r from-brand-600 to-brand-700 flex items-center justify-center text-white text-xs font-semibold"
+                />
+              </Link>
+            )}
           </div>
-
-          <span className="hidden sm:block w-1 h-1 rounded-full bg-white/20" />
-
-          {/* Current Date */}
-          <div className="hidden sm:flex items-center gap-1.5 text-gray-300">
-            <Calendar className="w-3.5 h-3.5 text-gray-500" />
-            <span className="font-medium">{currentDate || "Loading..."}</span>
-          </div>
-
-          {isLoaded && (
-            <Link href="/dashboard/settings" className="lg:hidden ml-2 shrink-0">
-              <ClientAvatar
-                imageUrl={user?.imageUrl}
-                email={user?.primaryEmailAddress?.emailAddress}
-                name={user?.fullName || user?.firstName}
-                className="w-8 h-8 rounded-full object-cover"
-                fallbackClassName="w-8 h-8 rounded-full bg-gradient-to-r from-brand-600 to-brand-700 flex items-center justify-center text-white text-xs font-semibold"
-              />
-            </Link>
-          )}
-        </div>
+        )}
       </div>
     </header>
   );

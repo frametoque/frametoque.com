@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import CalendarTab from "./CalendarTab";
-
 import ProjectsTab from "./ProjectsTab";
 
 export default function WorkspacePage() {
@@ -19,14 +18,13 @@ export default function WorkspacePage() {
     window.dispatchEvent(new CustomEvent("workspace:tab-changed", { detail: activeTab }));
     
     return () => window.removeEventListener("workspace:set-tab", handleSetTab);
-  }, []);
+  }, [activeTab]);
 
   return (
     <div className="space-y-6 flex flex-col">
       <div>
         {activeTab === "events" && <CalendarTab />}
         {activeTab === "projects" && <ProjectsTab />}
-        
       </div>
     </div>
   );

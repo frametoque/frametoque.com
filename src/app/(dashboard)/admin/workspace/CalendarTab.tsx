@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import useSWR from 'swr';
 import { 
   Calendar as CalendarIcon, Plus, Trash2, Edit2, ChevronLeft, ChevronRight,
@@ -30,6 +31,7 @@ const formatLKR = (amount: number) => {
 };
 
 export default function CalendarTab() {
+  const router = useRouter();
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -327,15 +329,19 @@ export default function CalendarTab() {
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span className="text-gray-300">Agreements</span>
+              <span className="text-gray-300">Shooting Days</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-              <span className="text-gray-300">Reminders</span>
+              <span className="text-gray-300">Uploads & Reminders</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+              <span className="text-gray-300">Editing Milestones</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-              <span className="text-gray-300">Expirations (Domain & Hosting)</span>
+              <span className="text-gray-300">Boosting & Expirations</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-red-700" />
@@ -399,7 +405,7 @@ export default function CalendarTab() {
                           }`}>{day}</span>
                           {holidayName && (
                             <span className="text-[8px] leading-tight text-red-400 font-semibold whitespace-normal break-words" title={holidayName}>
-                              🇱🇰 {holidayName}
+                              [Holiday] {holidayName}
                             </span>
                           )}
                         </div>
@@ -417,6 +423,9 @@ export default function CalendarTab() {
                                 const bookingId = e.id.replace('booking-', '');
                                 const originalObj = bookings.find(b => b.id?.toString() === bookingId);
                                 if (originalObj) openEditModal(originalObj);
+                              } else if (e.project_id || e.id.startsWith('project-') || e.id.startsWith('cp-')) {
+                                const pId = e.project_id || (e.id.startsWith('project-') ? e.id.replace('project-', '') : null);
+                                if (pId) router.push(`/admin/workspace/project/${pId}`);
                               }
                             }}
                             className={`text-[9px] px-1.5 py-0.5 rounded border leading-tight whitespace-normal break-words font-medium ${e.color}`}
@@ -756,7 +765,7 @@ export default function CalendarTab() {
                 {/* Sri Lanka Holiday banner */}
                 {holidayName && (
                   <div className="bg-rose-950/20 border border-rose-500/30 rounded-2xl p-3 text-sm text-rose-400 flex items-center gap-2">
-                    <span className="text-lg">🇱🇰</span>
+                    <span className="px-2 py-0.5 rounded text-xs font-bold uppercase bg-rose-500/20 text-rose-300">Holiday</span>
                     <div>
                       <p className="font-semibold">Public Holiday</p>
                       <p className="text-xs text-rose-300/80">{holidayName}</p>

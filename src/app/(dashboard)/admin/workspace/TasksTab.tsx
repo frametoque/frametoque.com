@@ -18,9 +18,18 @@ const CategoryIcon = ({ category, className }: { category?: string, className?: 
 
 const statusStyles: any = {
   "Not Started": "bg-neutral-500/20 text-neutral-300",
+  "Planned": "bg-neutral-500/20 text-neutral-300",
   "Backlog": "bg-neutral-500/20 text-neutral-300",
   "Planning": "bg-blue-500/20 text-blue-300",
-  "In Progress": "bg-amber-500/20 text-amber-300",
+  "In Progress": "bg-sky-500/20 text-sky-300",
+  "In Editing": "bg-purple-500/20 text-purple-300",
+  "Ready for Review": "bg-amber-500/20 text-amber-300",
+  "Review": "bg-amber-500/20 text-amber-300",
+  "Client Approved": "bg-emerald-500/20 text-emerald-300",
+  "Approved": "bg-emerald-500/20 text-emerald-300",
+  "Scheduled": "bg-indigo-500/20 text-indigo-300",
+  "Published": "bg-teal-500/20 text-teal-300",
+  "Completed": "bg-emerald-500/20 text-emerald-400",
   "Paused": "bg-purple-500/20 text-purple-300",
   "Done": "bg-emerald-500/20 text-emerald-300",
   "Canceled": "bg-rose-500/20 text-rose-300"
@@ -31,10 +40,16 @@ const priorityStyles: any = {
   "Low": "bg-blue-500/20 text-blue-400"
 };
 
-
 const cardBgStyles: any = {
   "Not Started": "bg-[#1a1a1a] border-white/10 hover:border-white/20",
-  "In Progress": "bg-amber-500/[0.05] border-amber-500/20 hover:border-amber-500/30 hover:bg-amber-500/10",
+  "Planned": "bg-[#1a1a1a] border-white/10 hover:border-white/20",
+  "In Progress": "bg-sky-500/[0.05] border-sky-500/20 hover:border-sky-500/30 hover:bg-sky-500/10",
+  "In Editing": "bg-purple-500/[0.05] border-purple-500/20 hover:border-purple-500/30 hover:bg-purple-500/10",
+  "Ready for Review": "bg-amber-500/[0.05] border-amber-500/20 hover:border-amber-500/30 hover:bg-amber-500/10",
+  "Review": "bg-amber-500/[0.05] border-amber-500/20 hover:border-amber-500/30 hover:bg-amber-500/10",
+  "Client Approved": "bg-emerald-500/[0.05] border-emerald-500/20 hover:border-emerald-500/30 hover:bg-emerald-500/10",
+  "Approved": "bg-emerald-500/[0.05] border-emerald-500/20 hover:border-emerald-500/30 hover:bg-emerald-500/10",
+  "Completed": "bg-emerald-500/[0.05] border-emerald-500/20 hover:border-emerald-500/30 hover:bg-emerald-500/10",
   "Done": "bg-emerald-500/[0.05] border-emerald-500/20 hover:border-emerald-500/30 hover:bg-emerald-500/10"
 };
 
@@ -47,7 +62,13 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
 
     const tasks = allTasks.filter((t: any) => t.project_id === projectId);
   
-  const projectMembers = (Array.isArray(currentProject?.owner_ids) ? currentProject.owner_ids : (typeof currentProject?.owner_ids === 'string' && (currentProject.owner_ids as string).startsWith('[') ? JSON.parse(currentProject.owner_ids) : [])).map((id: string) => team.find((t: any) => t.id === id) || { id, name: id.includes('@') ? id.split('@')[0] : id, image: null });
+  const currentProjectOwnerIds = Array.isArray(currentProject?.owner_ids) 
+    ? currentProject.owner_ids 
+    : (typeof currentProject?.owner_ids === 'string' && (currentProject.owner_ids as string).startsWith('[') 
+      ? JSON.parse(currentProject.owner_ids) 
+      : []);
+  const isAllProjectMembers = team.length > 0 && team.every((t: any) => currentProjectOwnerIds.includes(t.id));
+  const projectMembers = currentProjectOwnerIds.map((id: string) => team.find((t: any) => t.id === id) || { id, name: id.includes('@') ? id.split('@')[0] : id, image: null });
   const availableMembers = projectMembers.length > 0 ? projectMembers : team;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -72,7 +93,7 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
 
   const openNewModal = () => {
     setSelectedTask(null);
-    setName(""); setStatus("Not Started"); setAssigneeId(""); setDueDate(new Date().toISOString().split("T")[0]); setPriority("Medium"); setTags(""); setCategory(""); setCustomCategory("");
+    setName(""); setStatus(isPlannerProject ? "Planned" : "Not Started"); setAssigneeId(""); setDueDate(new Date().toISOString().split("T")[0]); setPriority("Medium"); setTags(""); setCategory(""); setCustomCategory("");
     setIsModalOpen(true);
   };
 
@@ -202,7 +223,7 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
     const task = tasks.find((t: any) => t.id.toString() === taskId);
     if (!task) return;
 
-    let colTasks = tasks.filter((t: any) => t.status === newStatus).sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0));
+    let colTasks = tasks.filter((t: any) => isTaskInColumn(t.status, newStatus)).sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0));
     const filteredColTasks = colTasks.filter((t: any) => t.id !== task.id);
     
     let insertIndex = currentIndicator?.col === newStatus ? currentIndicator.index : filteredColTasks.length;
@@ -223,10 +244,32 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
     mutate();
   };
 
+  const isPlannerProject = Boolean(
+    currentProject?.has_planner || 
+    (Array.isArray(currentProject?.categories) ? currentProject.categories.includes("Content Planner") : (typeof currentProject?.categories === 'string' && (currentProject.categories as string).includes("Content Planner")))
+  );
+
+  const columns = isPlannerProject 
+    ? ["Planned", "In Progress", "In Editing", "Ready for Review", "Client Approved", "Completed"]
+    : ["Not Started", "In Progress", "Done"];
+
+  const isTaskInColumn = (taskStatus: string, col: string) => {
+    if (taskStatus === col) return true;
+    if (isPlannerProject) {
+      if (col === "Planned" && (taskStatus === "Not Started" || taskStatus === "planned" || taskStatus === "Planning")) return true;
+      if (col === "In Progress" && (taskStatus === "in_progress" || taskStatus === "Shooting")) return true;
+      if (col === "In Editing" && (taskStatus === "in_editing" || taskStatus === "Editing")) return true;
+      if (col === "Ready for Review" && (taskStatus === "review" || taskStatus === "Review")) return true;
+      if (col === "Client Approved" && (taskStatus === "approved" || taskStatus === "Approved")) return true;
+      if (col === "Completed" && (taskStatus === "Done" || taskStatus === "completed" || taskStatus === "done" || taskStatus === "Published" || taskStatus === "published")) return true;
+    } else {
+      if (col === "Not Started" && (taskStatus === "Planned" || taskStatus === "planned")) return true;
+      if (col === "Done" && (taskStatus === "Completed" || taskStatus === "completed")) return true;
+    }
+    return false;
+  };
 
   if (isLoading) return <div className="text-white">Loading...</div>;
-
-  const columns = ["Not Started", "In Progress", "Done"];
 
   return (
     <div className="space-y-6 flex flex-col min-w-0">
@@ -264,11 +307,15 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
               {projectMembers.length > 0 && (
                 <div className="flex items-center gap-2 border-l border-white/10 pl-4">
                   <span className="opacity-70">Team:</span>
-                  <div className="flex items-center -space-x-1.5">
-                    {projectMembers.map((pm: any) => (
-                      pm.image ? <img key={pm.id} src={pm.image} alt={pm.name} title={pm.name} className="w-5 h-5 rounded-full border-2 border-black" /> : <span key={pm.id} title={pm.name} className="w-5 h-5 rounded-full bg-brand-500 text-white flex items-center justify-center text-[8px] font-bold uppercase border-2 border-black">{pm.name.substring(0,2)}</span>
-                    ))}
-                  </div>
+                  {isAllProjectMembers ? (
+                    <span className="text-gray-300 font-medium text-xs">All</span>
+                  ) : (
+                    <div className="flex items-center -space-x-1.5">
+                      {projectMembers.map((pm: any) => (
+                        pm.image ? <img key={pm.id} src={pm.image} alt={pm.name} title={pm.name} className="w-5 h-5 rounded-full border-2 border-black" /> : <span key={pm.id} title={pm.name} className="w-5 h-5 rounded-full bg-brand-500 text-white flex items-center justify-center text-[8px] font-bold uppercase border-2 border-black">{pm.name.substring(0,2)}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -281,7 +328,7 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
 
       <div className="flex gap-6 overflow-x-auto pb-4 custom-scrollbar items-start">
         {columns.map(col => {
-          const colTasks = tasks.filter((t: any) => t.status === col).sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0));
+          const colTasks = tasks.filter((t: any) => isTaskInColumn(t.status, col)).sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0));
           // All 3 columns should be shown even if empty // hide empty columns except main ones
           
           return (
@@ -363,8 +410,8 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
         </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-md p-6 space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" data-lenis-prevent>
+          <div data-lenis-prevent className="bg-black border border-white/10 rounded-3xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto overscroll-contain custom-scrollbar">
             <h3 className="text-lg font-bold text-white">{selectedTask ? "Edit Task" : "Create Task"}</h3>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="space-y-1">
@@ -377,9 +424,22 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
                 <div className="space-y-1">
                   <label className="text-xs text-gray-400 font-semibold uppercase">Status</label>
                   <select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white">
-                    <option value="Not Started">Not Started</option>
-<option value="In Progress">In Progress</option>
-<option value="Done">Done</option>
+                    {isPlannerProject ? (
+                      <>
+                        <option value="Planned">Planned</option>
+                        <option value="In Progress">In Progress (Shooting)</option>
+                        <option value="In Editing">In Editing</option>
+                        <option value="Ready for Review">Ready for Review</option>
+                        <option value="Client Approved">Client Approved</option>
+                        <option value="Completed">Completed</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                      </>
+                    )}
                   </select>
                 </div>
                 
@@ -408,22 +468,25 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
               
               <div className="space-y-1">
                   <label className="text-xs text-gray-400 font-semibold uppercase">Assigned To</label>
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 max-h-64 overflow-y-auto custom-scrollbar space-y-2">
+                  <div data-lenis-prevent className="bg-white/5 border border-white/10 rounded-xl p-3 max-h-52 overflow-y-auto overscroll-contain custom-scrollbar space-y-2 touch-pan-y">
                     <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/5 rounded-lg transition-colors overflow-hidden">
                       <input type="radio" name="assignee" checked={!assigneeId} onChange={() => setAssigneeId("")} className="rounded-full border-gray-600 bg-black shrink-0" />
                       <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs text-white shrink-0">?</div>
                       <span className="text-sm font-medium text-white truncate block flex-1">{projectMembers.length > 0 ? "All Project Members" : "Unassigned"}</span>
                     </label>
-                    {availableMembers.map((t: any) => (
-                      <label key={t.id} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/5 rounded-lg transition-colors overflow-hidden">
-                        <input type="radio" name="assignee" checked={assigneeId === t.id} onChange={() => setAssigneeId(t.id)} className="rounded-full border-gray-600 bg-black shrink-0" />
-                        {t.image ? <img src={t.image} alt={t.name} className="w-8 h-8 rounded-full shrink-0" /> : <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-xs text-white font-bold shrink-0">{t.name.substring(0,2).toUpperCase()}</div>}
-                        <div className="flex flex-col min-w-0 flex-1">
-                          <span className="text-sm font-medium text-white truncate block">{t.name}</span>
-                          <span className="text-xs text-gray-400 truncate block">{t.email}</span>
-                        </div>
-                      </label>
-                    ))}
+                    {availableMembers.map((t: any) => {
+                      const firstName = (t.first_name || t.name || "").split(" ")[0];
+                      return (
+                        <label key={t.id} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/5 rounded-lg transition-colors overflow-hidden">
+                          <input type="radio" name="assignee" checked={assigneeId === t.id} onChange={() => setAssigneeId(t.id)} className="rounded-full border-gray-600 bg-black shrink-0" />
+                          {t.image ? <img src={t.image} alt={firstName} className="w-8 h-8 rounded-full shrink-0 object-cover" /> : <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-xs text-white font-bold shrink-0">{firstName.substring(0,2).toUpperCase()}</div>}
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <span className="text-sm font-medium text-white truncate block">{firstName}</span>
+                            <span className="text-xs text-gray-400 truncate block">{t.email}</span>
+                          </div>
+                        </label>
+                      );
+                    })}
                   </div>
                 
   

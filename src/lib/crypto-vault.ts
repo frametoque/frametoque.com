@@ -120,3 +120,4 @@ export function generateBlindIndex(value: string | null | undefined, context: st
   const bidxKey = getBlindIndexKey();
   return crypto.createHmac("sha256", bidxKey).update(`${context}:${normalized}`).digest("hex");
 }
+

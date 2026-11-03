@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ShoppingCart, MessageCircle, Sparkles, UserCheck, FilePenLine, CreditCard } from "lucide-react";
+import { Sparkles, UserCheck, FilePenLine, CreditCard, CalendarDays } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
+import useSWR from "swr";
 import PayModal from "@/components/PayModal";
 
 import RecentProjectsWidget from "./invoices/RecentProjectsWidget";
 import RecentQuotationsWidget from "./quotations/RecentQuotationsWidget";
 import { getAgreementsByClient, AgreementData } from "../admin/actions/agreements";
+import { getClientContentPlanner } from "../admin/actions/workspace";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -34,6 +36,16 @@ export default function DashboardHome() {
   const [loadingInvoices, setLoadingInvoices] = useState(true);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+
+  const userEmail = user?.primaryEmailAddress?.emailAddress;
+  const { data: plannerData } = useSWR(
+    userEmail ? ["client-planner-summary", userEmail] : null,
+    () => getClientContentPlanner(userEmail),
+    { revalidateOnFocus: false }
+  );
+  const plannerProjects = plannerData?.projects || [];
+  const hasPlanner = plannerProjects.length > 0;
+  const primaryProjectName = plannerProjects[0]?.name;
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -138,23 +150,6 @@ export default function DashboardHome() {
     }
   }, [isLoaded, user]);
 
-  const quickActions = [
-    {
-      href: "/services",
-      icon: ShoppingCart,
-      label: "Browse Services",
-      className:
-        "flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 text-white rounded-3xl font-semibold hover:opacity-90 transition-opacity",
-    },
-    {
-      href: "/contact",
-      icon: MessageCircle,
-      label: "Contact Us",
-      className:
-        "flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/20 text-white rounded-3xl font-semibold hover:bg-white/20 transition-all duration-300",
-    },
-  ];
-
   if (!isLoaded || !isSignedIn) {
     return null;
   }
@@ -170,7 +165,7 @@ export default function DashboardHome() {
               <Sparkles className="w-6 h-6 text-brand-400" />
               <span className="text-brand-400 font-semibold">{getGreeting()}</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold mb-3">
+            <h1 className="text-3xl sm:text-4xl font-bold">
               <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                 Welcome back,&nbsp;
               </span>
@@ -178,22 +173,6 @@ export default function DashboardHome() {
                 {user?.firstName || user?.fullName || "there"}!
               </span>
             </h1>
-            <p className="text-gray-300 text-lg mb-6 max-w-2xl">
-              Your one-stop solution for stunning websites, graphic, and videos.&nbsp;
-              Explore our services and let's bring your vision to life!
-            </p>
-
-            <div className="flex flex-wrap gap-4">
-              {quickActions.map((action, idx) => {
-                const IconComponent = action.icon;
-                return (
-                  <Link key={idx} href={action.href} className={action.className}>
-                    <IconComponent className="w-5 h-5" />
-                    {action.label}
-                  </Link>
-                );
-              })}
-            </div>
           </div>
 
           {/* Profile Progress Column */}
@@ -321,6 +300,33 @@ export default function DashboardHome() {
               </Link>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Content Planner Schedule Banner (Only visible if client has assigned projects) */}
+      {hasPlanner && (
+        <div className="bg-gradient-to-r from-purple-500/10 via-brand-500/10 to-blue-500/10 border border-white/10 backdrop-blur-xl rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-brand-500/20 text-brand-400 rounded-2xl shrink-0">
+              <CalendarDays className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30">
+                  Monthly Content Schedule
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-white">
+                {primaryProjectName || "Content Planner"}
+              </h3>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/planner"
+            className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-3xl text-sm transition-all shadow-lg shadow-brand-600/20"
+          >
+            View Calendar
+          </Link>
         </div>
       )}
 

@@ -29,3 +29,4 @@ export function validateEnvironment(): void {
     throw new Error(errorMsg);
   }
 }
+
