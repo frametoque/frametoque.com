@@ -23,3 +23,4 @@ This document specifies the events, audit thresholds, and alerting integrations 
 1. **Uptime & Error Tracking**: Sentry or LogRocket configured with PII masking (stripping authorization headers, passwords, and sensitive fields).
 2. **Webhooks for Critical Events**: Add a Discord or Slack webhook URL (`SECURITY_ALERT_WEBHOOK_URL`) to [`src/lib/logger.ts`](file:///Users/nelitha/Dev/frametoque.com/src/lib/logger.ts) to push high-severity alerts immediately.
 3. **AWS GuardDuty**: Enable GuardDuty on the AWS EC2 account to monitor VPC flow logs for DNS exfiltration and unauthorized port scans.
+
