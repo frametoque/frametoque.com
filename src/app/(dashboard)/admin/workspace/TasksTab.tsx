@@ -285,8 +285,8 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
                 {projectName}
               </h2>
               {currentProject?.status && (
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1 ${statusStyles[currentProject.status] || "bg-white/10"}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium inline-flex whitespace-nowrap shrink-0 items-center gap-1 ${statusStyles[currentProject.status] || "bg-white/10"}`}>
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-current opacity-70"></span>
                   {currentProject.status}
                 </span>
               )}
@@ -334,7 +334,7 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
           return (
             <div key={col} className="bg-[#111] border border-white/5 rounded-3xl p-4 flex flex-col gap-4 flex-1 min-w-[300px] relative" onDragOver={(e) => handleDragOverColumn(e, col)} onDragLeave={handleDragLeaveColumn} onDrop={(e) => handleDrop(e, col)}>
               <h3 className="font-semibold text-white flex items-center gap-2 text-sm">
-                <span className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${statusStyles[col] || "bg-white/10"}`}>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-medium inline-flex whitespace-nowrap shrink-0 items-center gap-1.5 ${statusStyles[col] || "bg-white/10"}`}>
                   <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
                   {col}
                 </span>

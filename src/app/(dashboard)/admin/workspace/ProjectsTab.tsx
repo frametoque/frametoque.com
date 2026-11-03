@@ -447,7 +447,7 @@ export default function ProjectsTab() {
               return (
                 <div key={col} className="bg-[#111] border border-white/5 rounded-3xl p-4 flex flex-col gap-4 flex-1 min-w-[300px]" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, col)}>
                   <h3 className="font-semibold text-white flex items-center gap-2 text-sm">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${statusStyles[col] || "bg-white/10"}`}>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium inline-flex whitespace-nowrap shrink-0 items-center gap-1.5 ${statusStyles[col] || "bg-white/10"}`}>
                       <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
                       {col}
                     </span>
@@ -552,8 +552,8 @@ export default function ProjectsTab() {
               <thead className="bg-white/5 text-xs uppercase text-gray-400">
                 <tr>
                   <th className="px-6 py-4 font-semibold w-[300px]">Project name</th>
-                  <th className="px-4 py-4 font-semibold">Status</th>
-                  <th className="px-4 py-4 font-semibold">Assigned To</th>
+                  <th className="px-4 py-4 font-semibold whitespace-nowrap">Status</th>
+                  <th className="px-4 py-4 font-semibold whitespace-nowrap">Assigned To</th>
                   <th className="px-4 py-4 font-semibold">Dates</th>
                   <th className="px-4 py-4 font-semibold">Priority</th>
                   <th className="px-4 py-4 font-semibold">Categories</th>
@@ -622,14 +622,14 @@ export default function ProjectsTab() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2 pt-1">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold flex w-fit items-center gap-1.5 ${
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold inline-flex whitespace-nowrap shrink-0 items-center gap-1.5 ${
                             isDone 
                               ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30" 
                               : statusStyles[proj.status] || "bg-white/10"
                           }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${isDone ? "bg-emerald-400" : "bg-current opacity-70"}`}></span>
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDone ? "bg-emerald-400" : "bg-current opacity-70"}`}></span>
                             {proj.status}
                           </span>
                         </div>
@@ -798,8 +798,8 @@ export default function ProjectsTab() {
                           <tr>
                             <th className="pb-2 font-medium w-[30%]">Task name</th>
                             <th className="pb-2 font-medium w-[15%]">Category</th>
-                            <th className="pb-2 font-medium w-[15%]">Status</th>
-                            <th className="pb-2 font-medium w-[15%]">Assigned To</th>
+                            <th className="pb-2 font-medium w-[15%] whitespace-nowrap">Status</th>
+                            <th className="pb-2 font-medium w-[15%] whitespace-nowrap">Assigned To</th>
                             <th className="pb-2 font-medium w-[15%]">Due</th>
                             <th className="pb-2 font-medium w-[10%] text-right">Actions</th>
                           </tr>
@@ -837,9 +837,9 @@ export default function ProjectsTab() {
   ) : <span className="text-gray-500">-</span>;
 })()}
                                 </td>
-                                <td className="py-3">
-                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium flex w-fit items-center gap-1 ${statusStyles[task.status] || "bg-white/10"}`}>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
+                                <td className="py-3 whitespace-nowrap">
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium inline-flex whitespace-nowrap shrink-0 items-center gap-1 ${statusStyles[task.status] || "bg-white/10"}`}>
+                                    <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-current opacity-70"></span>
                                     {task.status}
                                   </span>
                                 </td>
