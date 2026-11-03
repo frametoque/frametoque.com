@@ -3,9 +3,39 @@ import chromium from "@sparticuz/chromium";
 import puppeteerCore from "puppeteer-core";
 import puppeteer from "puppeteer";
 import fs from "fs";
+import { requireAdminSession } from "@/lib/auth-guard";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // Allow up to 60 seconds for screenshot generation on Next.js/Vercel
+
+function isBlockedHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  if (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "0.0.0.0" ||
+    host === "::1" ||
+    host === "169.254.169.254" ||
+    host.endsWith(".internal") ||
+    host.endsWith(".local") ||
+    host.endsWith(".lan")
+  ) {
+    return true;
+  }
+
+  // Check IPv4 private ranges
+  const ipv4Match = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4Match) {
+    const [_, a, b] = ipv4Match.map(Number);
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 0) return true;
+  }
+  return false;
+}
 
 function getLocalChromePath(): string | undefined {
   const possiblePaths = [
@@ -26,6 +56,12 @@ function getLocalChromePath(): string | undefined {
 }
 
 export async function GET(req: NextRequest) {
+  try {
+    await requireAdminSession();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized: Admin access required" }, { status: 403 });
+  }
+
   const { searchParams } = new URL(req.url);
   const targetUrl = searchParams.get("url");
   const delayMs = parseInt(searchParams.get("delay") || "2000", 10);
@@ -39,6 +75,18 @@ export async function GET(req: NextRequest) {
   let formattedUrl = targetUrl.trim();
   if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
     formattedUrl = "https://" + formattedUrl;
+  }
+
+  try {
+    const parsed = new URL(formattedUrl);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return NextResponse.json({ error: "Invalid URL scheme" }, { status: 400 });
+    }
+    if (isBlockedHost(parsed.hostname)) {
+      return NextResponse.json({ error: "Access to private or local network addresses is prohibited" }, { status: 403 });
+    }
+  } catch {
+    return NextResponse.json({ error: "Malformed URL" }, { status: 400 });
   }
 
   let browser = null;

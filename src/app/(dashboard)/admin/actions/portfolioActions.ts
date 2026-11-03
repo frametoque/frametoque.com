@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { promises as fs } from "fs";
@@ -23,8 +23,7 @@ const TABLE_MAP: Record<string, string> = {
  * Fetch portfolio items for a specific category
  */
 export async function getPortfolioByCategory(categorySlug: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   if (categorySlug === "photography") {
     const rows = await sql.unsafe(
@@ -49,8 +48,7 @@ export async function getPortfolioByCategory(categorySlug: string) {
  * Create a new portfolio item under a specific category
  */
 export async function createPortfolioItem(categorySlug: string, data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const table = TABLE_MAP[categorySlug];
   if (!table) {
@@ -128,8 +126,7 @@ export async function createPortfolioItem(categorySlug: string, data: any) {
  * Update an existing portfolio item in a specific category
  */
 export async function updatePortfolioItem(categorySlug: string, id: number, data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const table = TABLE_MAP[categorySlug];
   if (!table) {
@@ -196,8 +193,7 @@ export async function updatePortfolioItem(categorySlug: string, id: number, data
  * Delete a portfolio item from a specific category
  */
 export async function deletePortfolioItem(categorySlug: string, id: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   if (categorySlug === "photography") {
     // 1. Fetch event_id and src first before deleting photo
@@ -269,8 +265,7 @@ export async function reorderPortfolioItems(
   idA: number,
   idB: number
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const table = TABLE_MAP[categorySlug];
   if (!table) {
@@ -306,8 +301,7 @@ export async function reorderPortfolioItemsBatch(
   categorySlug: string,
   orderedIds: number[]
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   if (!orderedIds || orderedIds.length === 0) return;
 
@@ -339,8 +333,7 @@ export async function reorderPortfolioItemsBatch(
  * Batch-assign sort_order to photos inside a photography event in a single database query.
  */
 export async function reorderEventPhotosBatch(orderedPhotoIds: number[]) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   if (!orderedPhotoIds || orderedPhotoIds.length === 0) return;
 
@@ -367,8 +360,7 @@ export async function reorderEventPhotosBatch(orderedPhotoIds: number[]) {
  * Upload portfolio media files
  */
 export async function uploadPortfolioMedia(formData: FormData, categorySlug?: string): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const file = formData.get("file") as File;
   if (!file) {
@@ -391,8 +383,7 @@ export async function uploadPortfolioMedia(formData: FormData, categorySlug?: st
  * Download portfolio media files from an external URL or internal route and save them to Vercel Blob
  */
 export async function uploadPortfolioMediaFromUrl(url: string): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   if (!url) {
     throw new Error("No URL provided");
@@ -478,8 +469,7 @@ export async function createBatchPortfolioPhotos(
   eventName: string,
   photos: { src: string; width: number; height: number; hash?: string; filename?: string }[]
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   if (!photos || photos.length === 0) return;
   const cleanEvent = eventName.trim();

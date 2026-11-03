@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { getActiveVisitors } from "../../../(dashboard)/admin/actions/analytics-shared";
 import sql from "@/lib/db";
+import { requireAdminSession } from "@/lib/auth-guard";
 
 export async function GET() {
+  try {
+    await requireAdminSession();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   // 1. Fetch active visitors and DB bookings simultaneously
   const [activeVisitors, bookings] = await Promise.all([
     getActiveVisitors(),

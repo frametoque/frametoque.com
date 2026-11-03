@@ -79,15 +79,21 @@ export async function generateReceiptPDF(receiptData: any): Promise<Uint8Array> 
   if (typeof window !== "undefined" && (window as any).fontkit) {
     fontkit = (window as any).fontkit;
   } else {
-    const res = await fetch("https://unpkg.com/@pdf-lib/fontkit@0.0.4/dist/fontkit.umd.js");
-    const script = await res.text();
-    const scriptEl = document.createElement("script");
-    scriptEl.text = script;
-    document.head.appendChild(scriptEl);
-    
-    // Wait for the script to be evaluated
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    fontkit = (window as any).fontkit;
+    try {
+      const res = await fetch("/vendor/fontkit.umd.min.js");
+      if (res.ok) {
+        const script = await res.text();
+        const scriptEl = document.createElement("script");
+        scriptEl.text = script;
+        document.head.appendChild(scriptEl);
+        
+        // Wait for the script to be evaluated
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        fontkit = (window as any).fontkit;
+      }
+    } catch (e) {
+      console.warn("Could not load local fontkit vendor bundle:", e);
+    }
   }
   
   if (fontkit) {

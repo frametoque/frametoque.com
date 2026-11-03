@@ -1,18 +1,27 @@
 import { NextResponse } from 'next/server';
 import sql from "@/lib/db";
+import { requireUserSession, AuthError } from "@/lib/auth-guard";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request) {
-  console.log('API Route: /api/requests called');
-  
+export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const user_email = searchParams.get('user_email');
     
-    console.log('Query param user_email:', user_email);
-    
-    if (!user_email) {
+    let session;
+    try {
+      session = await requireUserSession(user_email);
+    } catch (err) {
+      if (err instanceof AuthError) {
+        return NextResponse.json({ error: err.message }, { status: err.statusCode });
+      }
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const effectiveEmail = (!session.isAdmin && session.email) ? session.email : user_email;
+
+    if (!effectiveEmail) {
       return NextResponse.json(
         { error: 'user_email is required' },
         { status: 400 }
@@ -38,7 +47,7 @@ export async function GET(request) {
         category,
         created_at
       FROM public.invoices
-      WHERE LOWER(user_email) = LOWER(${user_email}) 
+      WHERE LOWER(user_email) = LOWER(${effectiveEmail}) 
       ORDER BY created_at DESC
     `;
     

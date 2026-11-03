@@ -1,15 +1,28 @@
 import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { logSystemAction } from '@/lib/logger';
+import { requireUserSession, AuthError } from '@/lib/auth-guard';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request) {
+export async function POST(request: Request) {
   try {
+    let session;
+    try {
+      session = await requireUserSession();
+    } catch (err) {
+      if (err instanceof AuthError) {
+        return NextResponse.json({ success: false, error: err.message }, { status: err.statusCode });
+      }
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
 
-    const clerkId = body.clerkId || body.clerk_id;
-    const { email, fullName, phone, company, website, address } = body;
+    // Non-admins can only modify their own profile
+    const clerkId = (session.isAdmin && (body.clerkId || body.clerk_id)) ? (body.clerkId || body.clerk_id) : session.userId;
+    const { fullName, phone, company, website, address } = body;
+    const email = (!session.isAdmin && session.email) ? session.email : (body.email || session.email);
 
     if (!clerkId) {
       return NextResponse.json(

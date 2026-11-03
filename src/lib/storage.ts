@@ -118,11 +118,29 @@ export function getR2PublicBaseUrl(): string {
   return "";
 }
 
+const DANGEROUS_EXTENSIONS = new Set([
+  ".html", ".htm", ".exe", ".sh", ".php", ".bat", ".cmd", ".js", ".mjs", ".cgi", ".jar", ".vbs", ".dll"
+]);
+
 /**
- * Normalizes pathname (removes leading slash, preserves folder hierarchy).
+ * Normalizes pathname, prevents directory traversal, and blocks executable extensions.
  */
 export function sanitizeKey(key: string): string {
-  return key.replace(/^\/+/, "");
+  if (!key) return "";
+  // Strip null bytes and control characters
+  let clean = key.replace(/[\0\x00-\x1f\x7f]/g, "").replace(/^\/+/, "");
+  // Block directory traversal sequences
+  clean = clean.replace(/\.\.+[/\\]/g, "").replace(/\.\.+$/g, "");
+
+  const match = clean.match(/\.[a-zA-Z0-9]+$/);
+  if (match) {
+    const ext = match[0].toLowerCase();
+    if (DANGEROUS_EXTENSIONS.has(ext)) {
+      throw new Error(`Upload of executable or dangerous file extension (${ext}) is prohibited.`);
+    }
+  }
+
+  return clean;
 }
 
 /**
@@ -176,8 +194,43 @@ export async function putBlob(
 ): Promise<StorageResult> {
   const cleanKey = sanitizeKey(pathname);
   let vercelError: Error | null = null;
+  const preferR2 = process.env.NEXT_PUBLIC_PREFER_R2 === "true" || process.env.STORAGE_PROVIDER === "r2";
 
-  // 1. Try Vercel Blob first if configured
+  // 1. If Cloudflare R2 is preferred and configured, upload directly to R2
+  if (preferR2 && isR2Configured()) {
+    try {
+      const { buffer, contentType: inferredType } = await toBuffer(body);
+      const contentType = detectContentType(cleanKey, options?.contentType || inferredType);
+      const r2Client = getR2Client();
+      const bucket = process.env.R2_BUCKET_NAME!;
+
+      await r2Client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: cleanKey,
+          Body: buffer,
+          ContentType: contentType,
+        })
+      );
+
+      const baseUrl = getR2PublicBaseUrl();
+      const r2Url = baseUrl ? `${baseUrl}/${cleanKey}` : cleanKey;
+
+      console.info(`[Storage] Successfully uploaded "${cleanKey}" to Cloudflare R2`);
+
+      return {
+        url: r2Url,
+        downloadUrl: r2Url,
+        pathname: cleanKey,
+        contentType,
+        provider: "r2",
+      };
+    } catch (r2Err: any) {
+      console.warn(`[Storage Warning] Preferred R2 upload failed for "${cleanKey}": ${r2Err?.message || r2Err}. Falling back to Vercel Blob...`);
+    }
+  }
+
+  // 2. Try Vercel Blob first if configured
   if (isVercelBlobConfigured()) {
     try {
       const { put } = await import("@vercel/blob");

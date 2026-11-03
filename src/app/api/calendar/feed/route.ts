@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import sql from "@/lib/db";
 import { getSriLankaHolidays } from "@/app/(dashboard)/admin/actions/workspace";
+import { requireAdminSession } from "@/lib/auth-guard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -56,6 +57,28 @@ function formatTimeICS(dateStr: any, timeStr?: string | null): string {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const token = searchParams.get("token") || searchParams.get("secret");
+    const configuredSecret = process.env.CALENDAR_FEED_SECRET || process.env.CRON_SECRET;
+
+    let isAuthorized = false;
+    if (token && configuredSecret && token === configuredSecret) {
+      isAuthorized = true;
+    }
+
+    if (!isAuthorized) {
+      try {
+        const session = await requireAdminSession();
+        if (session.isAdmin) isAuthorized = true;
+      } catch {}
+    }
+
+    if (!isAuthorized) {
+      return new Response("Unauthorized: Valid calendar token or admin session required", {
+        status: 401,
+        headers: { "Content-Type": "text/plain" }
+      });
+    }
+
     const noHolidays = searchParams.get("noHolidays") === "true";
 
     // 1. Fetch Bookings & Task Reminders
@@ -87,6 +110,19 @@ export async function GET(request: NextRequest) {
       `;
     } catch (e) {
       console.warn("Calendar Feed: admin_hosting_orders query skipped:", e);
+    }
+
+    // 4. Fetch Content Planner Events (Shooting Days, Uploads, Editing, Boosting)
+    let plannerItems: any[] = [];
+    try {
+      plannerItems = await sql`
+        SELECT cp.*, p.name as project_name, p.client_name, p.client_company
+        FROM workspace_content_planner cp
+        LEFT JOIN workspace_projects p ON cp.project_id = p.id
+        WHERE cp.status != 'cancelled' AND cp.start_date IS NOT NULL
+      `;
+    } catch (e) {
+      console.warn("Calendar Feed: workspace_content_planner query skipped:", e);
     }
 
     let icsContent = [
@@ -198,6 +234,69 @@ export async function GET(request: NextRequest) {
       icsContent.push(`DTEND;VALUE=DATE:${endDateOnly}`);
       icsContent.push(`SUMMARY:${escapeICS(`Ft. - Hosting Expiry: ${nameLabel}`)}`);
       icsContent.push(`DESCRIPTION:${escapeICS(`Hosting package expiration reminder for ${nameLabel}`)}`);
+      icsContent.push("END:VEVENT");
+    });
+
+    // Add Content Planner Events (Shoots, Uploads, Editing, Boosting)
+    plannerItems.forEach(cp => {
+      const typeLabels: Record<string, string> = {
+        shooting: "Shoot",
+        upload: "Upload",
+        editing: "Editing",
+        boosting: "Boosting",
+        work: "Work",
+      };
+      const label = typeLabels[cp.activity_type] || "Planner";
+      const plannerPrefix = cp.project_name ? `${cp.project_name}: ` : "";
+      const formattedTitle = `Ft. - ${plannerPrefix}[${label}] ${cp.title}`;
+      const uid = `content-planner-${cp.id}@frametoque.com`;
+
+      const descriptionLines = [
+        `Activity: ${label}`,
+        cp.project_name ? `Planner: ${cp.project_name}` : "",
+        cp.client_name ? `Client: ${cp.client_name}${cp.client_company ? ` (${cp.client_company})` : ""}` : "",
+        `Status: ${cp.status}`,
+        cp.format ? `Format: ${cp.format}` : "",
+        cp.platforms ? `Platforms: ${Array.isArray(cp.platforms) ? cp.platforms.join(", ") : cp.platforms}` : "",
+        cp.boosting_budget ? `Ad Budget: Rs. ${Number(cp.boosting_budget).toLocaleString()}` : "",
+        cp.deliverables_url ? `Deliverables URL: ${cp.deliverables_url}` : "",
+        cp.caption ? `Caption / Copy: ${cp.caption}` : "",
+        cp.notes ? `Notes: ${cp.notes}` : "",
+      ].filter(Boolean).join("\n");
+
+      const eventLastMod = cp.created_at ? new Date(cp.created_at).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z" : nowStr;
+
+      icsContent.push("BEGIN:VEVENT");
+      icsContent.push(`UID:${uid}`);
+      icsContent.push(`DTSTAMP:${eventLastMod}`);
+      icsContent.push(`LAST-MODIFIED:${eventLastMod}`);
+      icsContent.push("SEQUENCE:0");
+
+      const isAllDay = !cp.start_time;
+      if (isAllDay) {
+        const startDateOnly = formatDateOnly(cp.start_date);
+        const endDateOnly = cp.end_date ? getNextDayDateOnly(cp.end_date) : getNextDayDateOnly(cp.start_date);
+        icsContent.push(`DTSTART;VALUE=DATE:${startDateOnly}`);
+        icsContent.push(`DTEND;VALUE=DATE:${endDateOnly}`);
+      } else {
+        const startICS = formatTimeICS(cp.start_date, cp.start_time);
+        let endICS = "";
+        if (cp.end_time) {
+          endICS = formatTimeICS(cp.end_date || cp.start_date, cp.end_time);
+        } else {
+          const [h, m] = (cp.start_time || "09:00").split(":");
+          const hr = (parseInt(h, 10) + 1).toString().padStart(2, "0");
+          endICS = formatTimeICS(cp.start_date, `${hr}:${m}`);
+        }
+        icsContent.push(`DTSTART;TZID=Asia/Colombo:${startICS}`);
+        icsContent.push(`DTEND;TZID=Asia/Colombo:${endICS}`);
+      }
+
+      icsContent.push(`SUMMARY:${escapeICS(formattedTitle)}`);
+      icsContent.push(`DESCRIPTION:${escapeICS(descriptionLines)}`);
+      if (cp.location) {
+        icsContent.push(`LOCATION:${escapeICS(cp.location)}`);
+      }
       icsContent.push("END:VEVENT");
     });
 

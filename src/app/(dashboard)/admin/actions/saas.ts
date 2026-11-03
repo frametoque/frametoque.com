@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
@@ -22,8 +22,7 @@ export interface SaaSOrder {
 }
 
 export async function getSaaSOrders(): Promise<SaaSOrder[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const rows = await sql`
@@ -50,8 +49,7 @@ export async function getSaaSOrders(): Promise<SaaSOrder[]> {
 }
 
 export async function getSaaSOrderById(id: number): Promise<SaaSOrder | null> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const rows = await sql`SELECT * FROM admin_saas_orders WHERE id = ${id}`;
@@ -64,8 +62,7 @@ export async function getSaaSOrderById(id: number): Promise<SaaSOrder | null> {
 }
 
 export async function getClientSaaSOrders(email: string): Promise<any[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const rows = await sql`
@@ -241,8 +238,7 @@ export async function createSaaSInvoice(
   }
 }
 export async function getSaaSProducts(): Promise<string[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const rows = await sql`
@@ -256,8 +252,7 @@ export async function getSaaSProducts(): Promise<string[]> {
 }
 
 export async function getTotalSaaSRevenueSoFar(): Promise<number> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const rows = await sql`
@@ -273,8 +268,7 @@ export async function getTotalSaaSRevenueSoFar(): Promise<number> {
 }
 
 export async function getSaaSInvoices(): Promise<any[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     return await sql`

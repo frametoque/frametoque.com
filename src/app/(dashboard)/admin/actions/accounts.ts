@@ -1,14 +1,13 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 
 // Fetch all accounts and calculate running balances
 export async function getAccounts(startDate?: string, endDate?: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
@@ -87,8 +86,7 @@ export async function getAccounts(startDate?: string, endDate?: string) {
 }
 
 export async function createAccount(data: { name: string; type: string; bankName?: string; accountNumber?: string; branch?: string; initialBalance: number; isCompanyAccount?: boolean }) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await sql`
     INSERT INTO admin_accounts (name, type, bank_name, account_number, branch, initial_balance, is_company_account)
@@ -98,8 +96,7 @@ export async function createAccount(data: { name: string; type: string; bankName
 }
 
 export async function updateAccount(id: number, data: { name: string; type: string; bankName?: string; accountNumber?: string; branch?: string; isCompanyAccount?: boolean }) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await sql`
     UPDATE admin_accounts 
@@ -110,8 +107,7 @@ export async function updateAccount(id: number, data: { name: string; type: stri
 }
 
 export async function deleteAccount(id: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   // Soft delete by hiding it from the UI.
   // Add 'is_hidden' column if it doesn't exist.
@@ -126,8 +122,7 @@ export async function deleteAccount(id: number) {
 }
 
 export async function transferCash(data: { date: string; sourceAccountId: number; destinationAccountId: number; amount: number; description: string }) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await sql`
     INSERT INTO admin_transfers (date, source_account_id, destination_account_id, amount, description)
@@ -137,8 +132,7 @@ export async function transferCash(data: { date: string; sourceAccountId: number
 }
 
 export async function getTransfers() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const rows = await sql`
     SELECT t.id, t.date, t.amount, t.description, 
@@ -164,8 +158,7 @@ export async function getTransfers() {
 }
 
 export async function updateTransfer(id: number, data: { date: string; sourceAccountId: number; destinationAccountId: number; amount: number; description: string }) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await sql`
     UPDATE admin_transfers
@@ -176,16 +169,14 @@ export async function updateTransfer(id: number, data: { date: string; sourceAcc
 }
 
 export async function deleteTransfer(id: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await sql`DELETE FROM admin_transfers WHERE id = ${id}`;
   await logSystemAction(`Undid a cash transfer`);
 }
 
 export async function getLedger(accountId: number | null, startDate?: string, endDate?: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
@@ -245,8 +236,7 @@ export async function getLedger(accountId: number | null, startDate?: string, en
 }
 
 export async function setDefaultAccount(id: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await sql`UPDATE admin_accounts SET is_default = FALSE`;
   await sql`UPDATE admin_accounts SET is_default = TRUE WHERE id = ${id}`;

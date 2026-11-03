@@ -2,6 +2,7 @@
 
 import sql from "@/lib/db";
 import { clerkClient, auth } from "@clerk/nextjs/server";
+import { requireAdminSession, requireUserSession } from "@/lib/auth-guard";
 import { putBlob, deleteBlob } from '@/lib/storage';
 import { logSystemAction } from "@/lib/logger";
 import { getGravatarUrl } from "@/lib/gravatar";
@@ -9,8 +10,7 @@ import { reactivateDomainAfterRenewalPayment } from "./domains-shared";
 import { revalidatePath } from "next/cache";
 
 export async function uploadReceipt(formData: FormData, type: 'income' | 'expenses'): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const file = formData.get('file') as File;
   if (!file) {
@@ -34,8 +34,7 @@ export async function uploadReceipt(formData: FormData, type: 'income' | 'expens
 
 // -- DASHBOARD --
 export async function getDashboardData(startDate?: string, endDate?: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
@@ -287,8 +286,7 @@ function getCutoffDate(range: string) {
 
 // -- INCOMES --
 export async function getIncomes(startDate?: string, endDate?: string, limit: number = 1000, offset: number = 0) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
@@ -332,8 +330,7 @@ export async function getIncomes(startDate?: string, endDate?: string, limit: nu
 }
 
 export async function createIncome(data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   // If payment method is bank transfer and no account_id is provided, try to fetch the invoice's bank account
   let accountId = data.accountId || null;
@@ -387,8 +384,7 @@ export async function createIncome(data: any) {
 }
 
 export async function createClient(data: { name: string; email?: string | null; company?: string | null; phone?: string | null; address?: string | null; legal_name?: string | null }): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const clientId = 'C-' + Date.now();
   const emailToSave = (data.email && data.email.trim() !== '') ? data.email.trim() : `${clientId}@client.local`;
@@ -408,8 +404,7 @@ export async function createClient(data: { name: string; email?: string | null; 
 }
 
 export async function updateClient(clientId: string, data: { name?: string; email?: string | null; company?: string | null; phone?: string | null; address?: string | null; legal_name?: string | null }) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   // Fetch current email first so we can cascade if it changes
   const existing = await sql`SELECT email, full_name FROM admin_clients WHERE id = ${clientId}`;
@@ -466,8 +461,7 @@ export async function updateClient(clientId: string, data: { name?: string; emai
 }
 
 export async function deleteClient(clientId: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const existing = await sql`SELECT full_name FROM admin_clients WHERE id = ${clientId}`;
   const clientName = existing[0]?.full_name || clientId;
@@ -476,8 +470,7 @@ export async function deleteClient(clientId: string) {
 }
 
 export async function updateIncome(id: number, data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   let accountId = data.accountId || null;
   if (!accountId && data.paymentMethod === 'Bank Transfer') {
@@ -509,8 +502,7 @@ export async function updateIncome(id: number, data: any) {
 }
 
 export async function deleteIncome(id: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   let incomeDesc = "";
   let incomeAmount = 0;
@@ -589,8 +581,7 @@ export async function deleteIncome(id: number) {
 
 // -- EXPENSES --
 export async function getExpenses(startDate?: string, endDate?: string, limit: number = 1000, offset: number = 0) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await processRecurringExpenses();
   const start = startDate || '1970-01-01';
@@ -624,8 +615,7 @@ export async function getExpenses(startDate?: string, endDate?: string, limit: n
 }
 
 export async function createExpense(data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   let accountId = data.accountId || null;
   if (!accountId && data.paymentMethod === 'Bank Transfer') {
@@ -655,8 +645,7 @@ export async function createExpense(data: any) {
 }
 
 export async function updateExpense(id: number, data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   let accountId = data.accountId || null;
   if (!accountId && data.paymentMethod === 'Bank Transfer') {
@@ -672,8 +661,7 @@ export async function updateExpense(id: number, data: any) {
 }
 
 export async function deleteExpense(id: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   let expDesc = "";
   let expAmount = 0;
@@ -693,8 +681,7 @@ async function ensureScheduledExpensesTable() {
 }
 
 export async function processRecurringExpenses() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await ensureScheduledExpensesTable();
   try {
@@ -743,8 +730,7 @@ export async function processRecurringExpenses() {
 }
 
 export async function getScheduledExpenses() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await ensureScheduledExpensesTable();
   try {
@@ -778,8 +764,7 @@ export async function getScheduledExpenses() {
 }
 
 export async function createScheduledExpense(data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await ensureScheduledExpensesTable();
   await sql`
@@ -789,8 +774,7 @@ export async function createScheduledExpense(data: any) {
 }
 
 export async function updateScheduledExpense(id: number, data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await ensureScheduledExpensesTable();
   await sql`
@@ -801,16 +785,14 @@ export async function updateScheduledExpense(id: number, data: any) {
 }
 
 export async function deleteScheduledExpense(id: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await ensureScheduledExpensesTable();
   await sql`DELETE FROM admin_scheduled_expenses WHERE id = ${id}`;
 }
 
 export async function payScheduledExpense(id: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await ensureScheduledExpensesTable();
   const rows = await sql`
@@ -850,8 +832,7 @@ export async function payScheduledExpense(id: number) {
 
 // -- INVOICES --
 export async function getInvoices(limit: number = 1000, offset: number = 0) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const [totalIssuedCount, rows, nonAdvancePaymentsRows, domainLinks, hostingLinks] = await Promise.all([
     sql`SELECT COUNT(*) as count FROM invoices`,
@@ -949,8 +930,7 @@ export async function linkInvoiceToEntity(
   targetType: 'domain' | 'hosting' | 'none',
   targetId: number | null
 ): Promise<{ success: boolean; error?: string }> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     // 1. Remove existing links to this invoice
@@ -976,8 +956,7 @@ export async function linkInvoiceToEntity(
 }
 
 export async function getEntityOptionsForInvoice(invoiceId: string, clientEmail?: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const emailPattern = clientEmail ? clientEmail.toLowerCase().trim() : '';
@@ -1026,8 +1005,7 @@ export async function getEntityOptionsForInvoice(invoiceId: string, clientEmail?
 }
 
 export async function deleteInvoice(id: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   let projectName = "";
   try {
@@ -1100,8 +1078,7 @@ export async function deleteInvoice(id: string) {
 }
 
 export async function getInvoiceByIdAdmin(invoiceId: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   // Join with admin_clients and bank_accs to get client name + billing address + bank account
   const result = await sql`
@@ -1228,8 +1205,7 @@ let _clerkUsersCache: any = null;
 let _clerkUsersCacheTime = 0;
 
 export async function getClients() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   let clerkUsersMap: Record<string, string> = {};
   let clerkEmailSet: Set<string> = new Set();
@@ -1317,8 +1293,7 @@ export async function getClients() {
 
 
 export async function getClientById(clientId: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const clerk = await clerkClient();
 
@@ -1430,8 +1405,7 @@ export async function getClientById(clientId: string) {
 }
 
 export async function generateUniqueInvoiceId(): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const existing = await sql`SELECT invoice_id FROM invoices WHERE invoice_id LIKE 'INV-%'`;
   const usedIds = existing
@@ -1448,8 +1422,7 @@ export async function generateUniqueInvoiceId(): Promise<string> {
 }
 
 export async function getAvailableQuotationId(): Promise<number> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const existing = await sql`SELECT id FROM admin_quotations`;
   const usedIds = existing.map(r => r.id).sort((a, b) => a - b);
@@ -1462,8 +1435,7 @@ export async function getAvailableQuotationId(): Promise<number> {
 }
 
 export async function getAvailableReceiptId(): Promise<number> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const existing = await sql`SELECT id FROM admin_incomes`;
   const usedIds = existing.map(r => r.id).sort((a, b) => a - b);
@@ -1476,8 +1448,7 @@ export async function getAvailableReceiptId(): Promise<number> {
 }
 
 export async function createInvoice(invoiceData: any, lineItems: any[]) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   // Upsert client — also save billing address if provided
   let existingClient: any[] = [];
@@ -1543,8 +1514,7 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
 }
 
 export async function updateInvoice(invoiceId: string, invoiceData: any, lineItems: any[]) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   // If a billing address was edited, persist it back to admin_clients
   if (invoiceData.billingAddress) {
@@ -1611,8 +1581,7 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
 
 // -- REPORTS --
 export async function getReports(startDate?: string, endDate?: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
@@ -1682,8 +1651,7 @@ export async function getReports(startDate?: string, endDate?: string) {
 
 // -- QUOTATIONS --
 export async function getQuotations(startDate?: string, endDate?: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const start = startDate || '1970-01-01';
   const end = endDate || '2099-12-31';
@@ -1722,8 +1690,7 @@ export async function getQuotations(startDate?: string, endDate?: string) {
  
 // ─── REPLACE createQuotation in actions.ts ───────────────────────────────────
 export async function createQuotation(data: any, lineItems: any[] = []) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const advance = data.advance || 0;
   const discount = data.discount || 0;
@@ -1795,8 +1762,7 @@ export async function createQuotation(data: any, lineItems: any[] = []) {
 
 // ─── REPLACE updateQuotation in actions.ts ───────────────────────────────────
 export async function updateQuotation(id: number, data: any, lineItems: any[] = []) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const advance = data.advance || 0;
@@ -1882,8 +1848,7 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
 }
  
 export async function deleteQuotation(id: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   let quoteDesc = "";
   try {
@@ -1907,8 +1872,7 @@ export async function deleteQuotation(id: number) {
 }
  
 export async function confirmQuotation(quotationId: number, quotationData: any, projectName: string, bankAccountId: number | null = null) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const quotation = await sql`
     SELECT q.*, c.id as client_id_val, COALESCE(c.email, q.client_email) as email, COALESCE(c.full_name, q.client_name) as client_name, c.company, c.address as billing_address
@@ -2021,8 +1985,8 @@ export async function confirmQuotation(quotationId: number, quotationData: any, 
 }
 
 export async function getQuotationById(quotationId: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+
+  const session = await requireUserSession();
 
   try {
     const quotation = await sql`
@@ -2041,6 +2005,15 @@ export async function getQuotationById(quotationId: string) {
     if (quotation.length === 0) return null;
  
     const q = quotation[0];
+
+    // Non-admin clients can only access quotations belonging to them
+    if (!session.isAdmin) {
+      const clientEmail = (q.email || q.client_email || "").toLowerCase().trim();
+      const sessionEmail = (session.email || "").toLowerCase().trim();
+      if (!sessionEmail || (clientEmail && clientEmail !== sessionEmail)) {
+        throw new Error("Unauthorized: Quotation does not belong to your account");
+      }
+    }
  
     const itemRows = await sql`
       SELECT id, description, quantity, price, total
@@ -2097,8 +2070,7 @@ export async function getQuotationById(quotationId: string) {
 
 // -- BANK ACCOUNTS --
 export async function getBankAccounts() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const rows = await sql`
     SELECT id, name, account_number as number, bank_name as bank, branch, 0 as is_default
@@ -2125,8 +2097,7 @@ export async function recordInvoicePayment(
   customDescription?: string,
   accountId?: number | null
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     // 1. Fetch invoice info
@@ -2220,14 +2191,21 @@ export async function recordInvoicePayment(
 }
 
 export async function submitBankSlip(invoiceId: string, slipBase64: string, amount?: string | number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+
+  const session = await requireUserSession();
 
   try {
-    const invoiceRows = await sql`SELECT total, total_due, category FROM invoices WHERE invoice_id = ${invoiceId}`;
+    const invoiceRows = await sql`SELECT total, total_due, category, user_email FROM invoices WHERE invoice_id = ${invoiceId}`;
     if (invoiceRows.length === 0) return { success: false, error: "Invoice not found" };
 
     const invoice = invoiceRows[0];
+    if (!session.isAdmin) {
+      const invEmail = (invoice.user_email || "").toLowerCase().trim();
+      const sessionEmail = (session.email || "").toLowerCase().trim();
+      if (!sessionEmail || (invEmail && invEmail !== sessionEmail)) {
+        return { success: false, error: "Unauthorized: Invoice does not belong to your account" };
+      }
+    }
     const currentDue = parseFloat(invoice.total_due != null ? invoice.total_due : invoice.total || '0');
     const isDomainInvoice = String(invoice.category || '').toLowerCase() === 'domain';
     let slipAmount = isDomainInvoice ? currentDue : parseFloat(String(amount ?? ''));
@@ -2251,6 +2229,10 @@ export async function submitBankSlip(invoiceId: string, slipBase64: string, amou
         throw new Error('Invalid slip data');
       }
       const mimeType = matches[1];
+      const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+      if (!allowedMimes.includes(mimeType.toLowerCase())) {
+        return { success: false, error: "Invalid file format. Only JPEG, PNG, WEBP, and PDF receipts are allowed." };
+      }
       const base64Data = matches[2];
       const fileExtension = mimeType.split('/')[1].split('+')[0] || 'png';
       const binary = Buffer.from(base64Data, 'base64');
@@ -2290,8 +2272,7 @@ export async function submitBankSlip(invoiceId: string, slipBase64: string, amou
 }
 
 export async function approveBankSlip(invoiceId: string, slipId?: string | number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     let slipRows: any[] = [];
@@ -2371,8 +2352,7 @@ export async function approveBankSlip(invoiceId: string, slipId?: string | numbe
 }
 
 export async function declineBankSlip(invoiceId: string, slipId?: string | number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     let slipRows: any[] = [];
@@ -2434,8 +2414,7 @@ export async function declineBankSlip(invoiceId: string, slipId?: string | numbe
 }
 
 export async function undoApprovedBankSlipPayment(invoiceId: string, slipId: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     // First, get the specific slip to find its amount
@@ -2496,8 +2475,7 @@ export async function undoApprovedBankSlipPayment(invoiceId: string, slipId: num
 }
 
 export async function adminUploadPaymentSlip(invoiceId: string, slipBase64: string, amount: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     // Validate amount
@@ -2513,6 +2491,10 @@ export async function adminUploadPaymentSlip(invoiceId: string, slipBase64: stri
         throw new Error('Invalid slip data');
       }
       const mimeType = matches[1];
+      const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+      if (!allowedMimes.includes(mimeType.toLowerCase())) {
+        return { success: false, error: "Invalid file format. Only JPEG, PNG, WEBP, and PDF receipts are allowed." };
+      }
       const base64Data = matches[2];
       const fileExtension = mimeType.split('/')[1].split('+')[0] || 'png';
       const binary = Buffer.from(base64Data, 'base64');
@@ -2547,8 +2529,7 @@ export async function adminUploadPaymentSlip(invoiceId: string, slipBase64: stri
 
 // -- PAYMENT SLIPS --
 export async function submitPaymentSlip(invoiceId: string, amount: number, slipBase64: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     let slipUrl = slipBase64;
@@ -2558,6 +2539,10 @@ export async function submitPaymentSlip(invoiceId: string, amount: number, slipB
         throw new Error('Invalid slip data');
       }
       const mimeType = matches[1];
+      const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+      if (!allowedMimes.includes(mimeType.toLowerCase())) {
+        return { success: false, error: "Invalid file format. Only JPEG, PNG, WEBP, and PDF receipts are allowed." };
+      }
       const base64Data = matches[2];
       const fileExtension = mimeType.split('/')[1].split('+')[0] || 'png';
       const binary = Buffer.from(base64Data, 'base64');
@@ -2584,8 +2569,7 @@ export async function submitPaymentSlip(invoiceId: string, amount: number, slipB
 }
 
 export async function reviewPaymentSlip(id: number, approved: boolean, reviewerId: string, note?: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const slipRows = await sql`SELECT * FROM invoice_payment_slips WHERE id = ${id}`;
@@ -2638,8 +2622,7 @@ export async function reviewPaymentSlip(id: number, approved: boolean, reviewerI
 }
 
 export async function getExpenseBreakdownByMode(mode: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   let start = '1970-01-01';
   let end = '2099-12-31';
@@ -2684,8 +2667,7 @@ export async function getExpenseBreakdownByMode(mode: string) {
 }
 
 export async function getTopClients() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   // Lifetime top clients by revenue
   const rows = await sql`

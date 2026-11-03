@@ -1,19 +1,22 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 import { putBlob } from "@/lib/storage";
 
 export async function getInventoryItems() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS purchase_invoice_url TEXT`;
     await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS warranty_letter_url TEXT`;
     await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS expense_id INTEGER`;
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS is_to_buy BOOLEAN DEFAULT false`;
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS product_link TEXT`;
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS estimated_price NUMERIC(12, 2)`;
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0`;
   } catch (e) {
     console.error("Failed to add columns to admin_inventory", e);
   }
@@ -26,14 +29,13 @@ export async function getInventoryItems() {
            e.category as expense_category
     FROM admin_inventory i
     LEFT JOIN admin_expenses e ON i.expense_id = e.id
-    ORDER BY i.created_at DESC
+    ORDER BY COALESCE(i.is_to_buy, false) DESC, COALESCE(i.order_index, 0) ASC, i.created_at DESC
   `;
   return items;
 }
 
 export async function getInventoryItem(id: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const items = await sql`
     SELECT * FROM admin_inventory
@@ -43,8 +45,7 @@ export async function getInventoryItem(id: string) {
 }
 
 export async function getExpensesForLinking() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const rows = await sql`
     SELECT id, description, amount, date, receipt_url, category
@@ -62,17 +63,83 @@ export async function getExpensesForLinking() {
   }));
 }
 
-export async function createInventoryItem(data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+export async function createToBuyItem(data: {
+  item_name: string;
+  product_link?: string;
+  estimated_price?: number | null;
+}) {
+  await requireAdminSession();
+
+  try {
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS is_to_buy BOOLEAN DEFAULT false`;
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS product_link TEXT`;
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS estimated_price NUMERIC(12, 2)`;
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0`;
+  } catch (e) {}
+
+  const minOrder = await sql`SELECT MIN(order_index) as min_idx FROM admin_inventory WHERE is_to_buy = true`;
+  const nextOrder = (minOrder[0]?.min_idx !== null && minOrder[0]?.min_idx !== undefined) ? Number(minOrder[0].min_idx) - 1 : 0;
 
   const result = await sql`
     INSERT INTO admin_inventory (
-      item_name, category, serial_number, quantity, status, purchase_date, purchase_price, notes, warranty_letter_url, expense_id
+      item_name, category, status, is_to_buy, product_link, estimated_price, purchase_price, quantity, order_index
+    ) VALUES (
+      ${data.item_name},
+      ${'To Buy'},
+      ${'To Buy'},
+      true,
+      ${data.product_link || null},
+      ${data.estimated_price || null},
+      ${data.estimated_price || null},
+      1,
+      ${nextOrder}
+    )
+    RETURNING id
+  `;
+  await logSystemAction(`Created to-buy inventory item: "${data.item_name}"`);
+  return result[0];
+}
+
+export async function reorderToBuyItems(itemIds: (string | number)[]) {
+  await requireAdminSession();
+
+  try {
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0`;
+    for (let i = 0; i < itemIds.length; i++) {
+      await sql`
+        UPDATE admin_inventory 
+        SET order_index = ${i} 
+        WHERE id = ${itemIds[i]} AND is_to_buy = true
+      `;
+    }
+    revalidatePath("/admin/inventory");
+    return { success: true };
+  } catch (err) {
+    console.error("Failed to reorder to-buy items", err);
+    throw new Error("Failed to reorder items");
+  }
+}
+
+export async function createInventoryItem(data: any) {
+  await requireAdminSession();
+
+  try {
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS is_to_buy BOOLEAN DEFAULT false`;
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS product_link TEXT`;
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS estimated_price NUMERIC(12, 2)`;
+  } catch (e) {}
+
+  const result = await sql`
+    INSERT INTO admin_inventory (
+      item_name, category, serial_number, quantity, status, purchase_date, purchase_price, notes, warranty_letter_url, expense_id, is_to_buy, product_link, estimated_price, purchase_invoice_url
     ) VALUES (
       ${data.item_name}, ${data.category}, ${data.serial_number || null}, ${data.quantity || 1}, 
       ${data.status || 'Available'}, ${data.purchase_date || null}, ${data.purchase_price || null}, ${data.notes || null},
-      ${data.warranty_letter_url || null}, ${data.expense_id || null}
+      ${data.warranty_letter_url || null}, ${data.expense_id || null},
+      ${data.is_to_buy !== undefined ? Boolean(data.is_to_buy) : false},
+      ${data.product_link || null},
+      ${data.estimated_price || null},
+      ${data.purchase_invoice_url || null}
     )
     RETURNING id
   `;
@@ -81,8 +148,13 @@ export async function createInventoryItem(data: any) {
 }
 
 export async function updateInventoryItem(id: string, data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
+
+  try {
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS is_to_buy BOOLEAN DEFAULT false`;
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS product_link TEXT`;
+    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS estimated_price NUMERIC(12, 2)`;
+  } catch (e) {}
 
   await sql`
     UPDATE admin_inventory SET
@@ -96,6 +168,10 @@ export async function updateInventoryItem(id: string, data: any) {
       notes = ${data.notes || null},
       warranty_letter_url = ${data.warranty_letter_url || null},
       expense_id = ${data.expense_id || null},
+      is_to_buy = ${data.is_to_buy !== undefined ? Boolean(data.is_to_buy) : false},
+      product_link = ${data.product_link || null},
+      estimated_price = ${data.estimated_price !== undefined ? data.estimated_price : null},
+      purchase_invoice_url = ${data.purchase_invoice_url || null},
       updated_at = NOW()
     WHERE id = ${id}
   `;
@@ -103,16 +179,14 @@ export async function updateInventoryItem(id: string, data: any) {
 }
 
 export async function deleteInventoryItem(id: string, itemName: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await sql`DELETE FROM admin_inventory WHERE id = ${id}`;
   await logSystemAction(`Deleted inventory item: "${itemName}" (ID: ${id})`);
 }
 
 export async function uploadInventoryDocument(formData: FormData): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const file = formData.get('file') as File;
   if (!file) throw new Error("No file uploaded");

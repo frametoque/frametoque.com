@@ -1,21 +1,28 @@
 import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
+import { requireUserSession, AuthError } from '@/lib/auth-guard';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request) {
+export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const clerkId = searchParams.get('userId');
-
-    if (!clerkId) {
-      return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
-      );
+    let session;
+    try {
+      session = await requireUserSession();
+    } catch (err) {
+      if (err instanceof AuthError) {
+        return NextResponse.json({ success: false, error: err.message }, { status: err.statusCode });
+      }
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const email = searchParams.get('email');
+    const { searchParams } = new URL(request.url);
+    const requestedClerkId = searchParams.get('userId');
+    const requestedEmail = searchParams.get('email');
+
+    // Non-admin callers can only access their own profile
+    const clerkId = (session.isAdmin && requestedClerkId) ? requestedClerkId : session.userId;
+    const email = (session.isAdmin && requestedEmail) ? requestedEmail : session.email;
 
     // Fetch client profile from admin_clients using clerk_id or matching email
     let rows = await sql`

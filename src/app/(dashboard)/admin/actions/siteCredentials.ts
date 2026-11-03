@@ -1,7 +1,7 @@
 "use server";
 
 import sql from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/auth-guard";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 
@@ -70,8 +70,7 @@ function decryptText(cipherText: string): string {
 // Server Actions
 // ---------------------------------------------------------------------------
 export async function getSiteCredentials(): Promise<SiteCredential[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const rows = await sql`
@@ -118,8 +117,7 @@ export async function addSiteCredential(data: {
   server_pass?: string | null;
   notes?: string | null;
 }) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   if (!data.site_name?.trim()) {
     return { success: false, error: "Website/Project name is required" };
@@ -196,8 +194,7 @@ export async function updateSiteCredential(
     notes?: string | null;
   }
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     // If password provided, encrypt it; otherwise keep existing
@@ -254,8 +251,7 @@ export async function updateSiteCredential(
 }
 
 export async function deleteSiteCredential(id: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     await sql`DELETE FROM admin_site_credentials WHERE id = ${id}`;

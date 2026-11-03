@@ -145,14 +145,18 @@ export async function generateQuotationPDF(quotation: any) {
     const fontkitModule = await import(/* webpackIgnore: true */ '@pdf-lib/fontkit');
     fontkit = fontkitModule.default || fontkitModule;
   } catch (e) {
-    console.warn("Could not import @pdf-lib/fontkit locally, falling back to CDN...");
-    const res = await fetch("https://unpkg.com/@pdf-lib/fontkit@0.0.4/dist/fontkit.umd.min.js");
-    const script = await res.text();
-    // Evaluate the UMD script in the global scope so it sets window.fontkit
-    const scriptEl = document.createElement("script");
-    scriptEl.text = script;
-    document.head.appendChild(scriptEl);
-    fontkit = (window as any).fontkit;
+    try {
+      const res = await fetch("/vendor/fontkit.umd.min.js");
+      if (res.ok) {
+        const script = await res.text();
+        const scriptEl = document.createElement("script");
+        scriptEl.text = script;
+        document.head.appendChild(scriptEl);
+        fontkit = (window as any).fontkit;
+      }
+    } catch (err) {
+      console.warn("Could not load local fontkit vendor bundle:", err);
+    }
   }
   if (fontkit) {
     pdfDoc.registerFontkit(fontkit);

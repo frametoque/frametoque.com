@@ -8,8 +8,13 @@ import { publishToPlatform } from "@/app/(dashboard)/admin/actions/social-media"
 // In Vercel, setup vercel.json with:
 // "crons": [{ "path": "/api/cron/social-publisher", "schedule": "*/5 * * * *" }]
 export async function GET(request: Request) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    return new NextResponse('Cron secret not configured', { status: 500 });
+  }
+
   const authHeader = request.headers.get('authorization');
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/auth-guard";
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 
@@ -10,10 +10,8 @@ async function ensurePrefsTable() {
 
 export async function GET() {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireAdminSession();
+    const userId = session.userId;
 
     await ensurePrefsTable();
 
@@ -53,10 +51,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireAdminSession();
+    const userId = session.userId;
 
     await ensurePrefsTable();
     const { currency, invoicePrefix, autoRefresh, maxUploadSize } = await request.json();

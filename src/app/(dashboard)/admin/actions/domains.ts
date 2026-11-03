@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
@@ -8,8 +8,7 @@ import { generateUniqueInvoiceId } from "./actions";
 import { putBlob } from '@/lib/storage';
 
 export async function uploadProviderInvoice(formData: FormData): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const file = formData.get('file') as File;
   if (!file) {
@@ -94,8 +93,7 @@ type CreateInvoiceResult =
 // ---------------------------------------------------------------------------
 
 export async function uploadRenewalInvoiceForDomain(formData: FormData): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const file = formData.get('file') as File;
   if (!file) throw new Error('No file uploaded');
@@ -159,8 +157,7 @@ function countsTowardProfit(o: DomainOrder): boolean {
 // ---------------------------------------------------------------------------
 
 export async function getDomainOrders(): Promise<DomainOrder[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     // Batch-expire all overdue active domains in a single SQL statement
@@ -205,8 +202,7 @@ export async function getDomainOrders(): Promise<DomainOrder[]> {
 }
 
 export async function getDomainOrderById(id: number): Promise<DomainOrder | null> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const rows = await sql`
@@ -248,8 +244,7 @@ export async function getDomainOrderById(id: number): Promise<DomainOrder | null
 }
 
 export async function getDomainRenewalHistory(domainOrderId: number): Promise<DomainRenewalHistoryRow[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const rows = await sql`
@@ -321,8 +316,7 @@ export async function getDomainRenewalHistory(domainOrderId: number): Promise<Do
 }
 
 export async function getAllRenewalHistory(): Promise<DomainRenewalHistoryRow[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const rows = await sql`
@@ -355,8 +349,7 @@ export async function getAllRenewalHistory(): Promise<DomainRenewalHistoryRow[]>
 export async function addDomainOrder(
   order: Omit<DomainOrder, "id" | "created_at" | "purchase_date">
 ): Promise<SimpleActionResult> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     await sql`
@@ -395,8 +388,7 @@ type DomainExpiryResult =
   | { success: true; invoiceId: string | null; skippedInvoice?: boolean; alreadyExists?: boolean };
 
 export async function createDomainRenewalInvoice(id: number, currency: "USD" | "LKR" = "USD"): Promise<DomainExpiryResult> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const orders = await sql`SELECT * FROM admin_domain_orders WHERE id = ${id}`;
@@ -500,8 +492,7 @@ export async function updateDomainOrderStatus(
   status: string,
   options?: DomainExpiryOptions
 ): Promise<StatusUpdateResult> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const normalizedStatus = status.toLowerCase();
@@ -547,8 +538,7 @@ export async function updateDomainOrderStatus(
 }
 
 export async function deleteDomainOrder(id: number, deleteInvoices: boolean = false): Promise<SimpleActionResult> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     // 1. Fetch domain order details first
@@ -621,8 +611,7 @@ export async function updateDomainOrder(
   order: Partial<DomainOrder>,
   options?: DomainExpiryOptions
 ): Promise<StatusUpdateResult> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const currentRows = await sql`SELECT status FROM admin_domain_orders WHERE id = ${id}`;
@@ -684,8 +673,7 @@ export async function linkInvoiceToDomainOrder(
   domainOrderId: number,
   invoiceId: string | null
 ): Promise<SimpleActionResult> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     await sql`
@@ -703,8 +691,7 @@ export async function linkInvoiceToDomainOrder(
 }
 
 export async function getInvoicesForLinking(clientEmail?: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const emailPattern = clientEmail ? clientEmail.toLowerCase().trim() : '';
@@ -735,8 +722,7 @@ export async function createDomainInvoice(
   id: number,
   currency: 'USD' | 'LKR'
 ): Promise<CreateInvoiceResult> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     // 1. Fetch domain order details
@@ -803,8 +789,7 @@ export async function createDomainInvoice(
 }
 
 export async function renewExpiredDomain(id: number): Promise<CreateInvoiceResult> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const orders = await sql`SELECT * FROM admin_domain_orders WHERE id = ${id}`;

@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession, requireUserSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { PREDEFINED_REPRESENTATIVES } from "@/lib/representatives";
@@ -48,8 +48,7 @@ function formatDateOnly(d: any): string {
 }
 
 export async function getAgreements(): Promise<AgreementData[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const rows = await sql`
@@ -76,8 +75,7 @@ export async function getAgreements(): Promise<AgreementData[]> {
 }
 
 export async function getAgreementsByClient(email: string): Promise<AgreementData[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireUserSession(email);
 
   try {
     const rows = await sql`
@@ -105,8 +103,7 @@ export async function getAgreementsByClient(email: string): Promise<AgreementDat
 }
 
 export async function getAgreementById(id: number): Promise<AgreementData | null> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const session = await requireUserSession();
 
   try {
     const rows = await sql`
@@ -116,6 +113,13 @@ export async function getAgreementById(id: number): Promise<AgreementData | null
     if (rows.length === 0) return null;
     
     const r = rows[0];
+    if (!session.isAdmin) {
+      const agrEmail = (r.client_email || '').toLowerCase().trim();
+      const sessEmail = (session.email || '').toLowerCase().trim();
+      if (!sessEmail || (agrEmail && agrEmail !== sessEmail)) {
+        throw new Error("Unauthorized: You do not have permission to view this agreement");
+      }
+    }
     return {
       ...r,
       total_fee: parseFloat(r.total_fee || 0),
@@ -136,8 +140,7 @@ export async function getAgreementById(id: number): Promise<AgreementData | null
 }
 
 export async function createAgreement(data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     // Check client existence
@@ -201,8 +204,7 @@ export async function createAgreement(data: any) {
 }
 
 export async function updateAgreement(id: number, data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     await sql`
@@ -244,10 +246,18 @@ export async function signAgreement(
   clientSigDate: string,
   clientSigImage: string
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const session = await requireUserSession();
 
   try {
+    const existing = await sql`SELECT client_email FROM admin_agreements WHERE id = ${id}`;
+    if (existing.length === 0) throw new Error("Agreement not found");
+    if (!session.isAdmin) {
+      const agrEmail = (existing[0].client_email || '').toLowerCase().trim();
+      const sessEmail = (session.email || '').toLowerCase().trim();
+      if (!sessEmail || (agrEmail && agrEmail !== sessEmail)) {
+        throw new Error("Unauthorized: You do not have permission to sign this agreement");
+      }
+    }
     await sql`
       UPDATE admin_agreements SET
         client_sig_name = ${clientSigName},
@@ -266,8 +276,7 @@ export async function signAgreement(
 }
 
 export async function deleteAgreement(id: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     await sql`

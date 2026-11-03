@@ -392,7 +392,36 @@ const getClientFocusedResponse = (userMessage: string): string => {
   return defaults[Math.floor(Math.random() * defaults.length)];
 };
 
+const aiRateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+function checkAiRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const windowMs = 60 * 1000; // 1 minute
+  const maxRequests = 20;
+
+  const record = aiRateLimitMap.get(ip);
+  if (!record || now > record.resetTime) {
+    aiRateLimitMap.set(ip, { count: 1, resetTime: now + windowMs });
+    return true;
+  }
+
+  if (record.count >= maxRequests) {
+    return false;
+  }
+
+  record.count += 1;
+  return true;
+}
+
 export async function POST(req: Request) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "127.0.0.1";
+  if (!checkAiRateLimit(ip)) {
+    return Response.json(
+      { error: "Too many requests. Please wait a minute before sending another message." },
+      { status: 429 }
+    );
+  }
+
   let message = '';
   let format = 'markdown';
 
@@ -400,6 +429,10 @@ export async function POST(req: Request) {
     const body = await req.json();
     message = body.message ?? '';
     format = body.format ?? 'markdown';
+
+    if (typeof message === 'string' && message.length > 1500) {
+      return Response.json({ error: "Message too long (maximum 1500 characters)." }, { status: 400 });
+    }
 
     if (!message || typeof message !== 'string' || message.trim() === '') {
       const welcomeMsg = `Hello! I'm the Frametoque AI Assistant. We specialize in photography, videography, graphic design, web development, and video editing. How can I help you today?`;
