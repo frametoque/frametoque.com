@@ -24,10 +24,12 @@ export interface SiteCredential {
   updated_at: string;
 }
 
+import { encryptField, decryptField } from "@/lib/crypto-vault";
+
 // ---------------------------------------------------------------------------
-// AES-256-GCM Encryption Helpers
+// AES-256-GCM Encryption Helpers (Hardened with Envelope & Legacy Fallback)
 // ---------------------------------------------------------------------------
-function getEncryptionKey(): Buffer {
+function getLegacyEncryptionKey(): Buffer {
   const secret =
     process.env.CREDENTIALS_ENCRYPTION_KEY ||
     process.env.CLERK_SECRET_KEY ||
@@ -38,21 +40,22 @@ function getEncryptionKey(): Buffer {
 
 function encryptText(plainText: string): string {
   if (!plainText) return "";
-  const key = getEncryptionKey();
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-  const encrypted = Buffer.concat([cipher.update(plainText, "utf8"), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  return `${iv.toString("hex")}:${tag.toString("hex")}:${encrypted.toString("hex")}`;
+  return encryptField(plainText, "admin_site_credentials") || "";
 }
 
 function decryptText(cipherText: string): string {
   if (!cipherText) return "";
+  // If modern v1 envelope format
+  if (cipherText.startsWith("v1:")) {
+    return decryptField(cipherText, "admin_site_credentials") || "";
+  }
+
+  // Legacy fallback for records created prior to hardening
   try {
     const parts = cipherText.split(":");
-    if (parts.length !== 3) return cipherText; // Fallback if plain
+    if (parts.length !== 3) return cipherText;
     const [ivHex, tagHex, dataHex] = parts;
-    const key = getEncryptionKey();
+    const key = getLegacyEncryptionKey();
     const iv = Buffer.from(ivHex, "hex");
     const tag = Buffer.from(tagHex, "hex");
     const encrypted = Buffer.from(dataHex, "hex");
@@ -61,7 +64,7 @@ function decryptText(cipherText: string): string {
     const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
     return decrypted.toString("utf8");
   } catch (err) {
-    console.error("Failed to decrypt field:", err);
+    console.error("Failed to decrypt legacy credential field:", err);
     return "[Decryption Error]";
   }
 }
