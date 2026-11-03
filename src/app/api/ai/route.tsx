@@ -287,7 +287,6 @@ const GROQ_MODELS = [
 // Function to crawl web
 async function crawlWebsite() {
   try {
-    console.log('🕷️ Starting website crawl...');
 
     const crawlResults: typeof websiteContent = {
       services: [],
@@ -323,17 +322,14 @@ async function crawlWebsite() {
             crawled: new Date().toISOString(),
           };
 
-          console.log(`✅ Crawled: ${pageName} - ${title} (Content length: ${content.length} chars)`);
         }
       } catch (error: any) {
-        console.log(`⚠️ Failed to crawl ${pageName}:`, error.message);
       }
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     websiteContent = crawlResults;
-    console.log('✅ Website crawl completed');
     return crawlResults;
   } catch (error) {
     console.error('❌ Crawl error:', error);
@@ -446,7 +442,6 @@ export async function POST(req: Request) {
       });
     }
 
-    console.log(`📩 Client message: "${message}"`);
 
     const shouldCrawl =
       !websiteContent.lastCrawled ||
@@ -457,7 +452,6 @@ export async function POST(req: Request) {
     }
 
     if (!process.env.GROQ_API_KEY) {
-      console.log('⚠️ No Groq API key - using trained fallback');
       await new Promise((resolve) => setTimeout(resolve, 600));
 
       const baseResponse = getClientFocusedResponse(message);
@@ -483,7 +477,6 @@ export async function POST(req: Request) {
 
     for (const modelName of GROQ_MODELS) {
       try {
-        console.log(`🔄 Trying Groq model: ${modelName}`);
 
         const completion = await getGroqClient().chat.completions.create({
           model: modelName,
@@ -512,7 +505,6 @@ export async function POST(req: Request) {
 
         cleanReply = enhanceResponseWithLinks(cleanReply, message);
 
-        console.log(`✅ Success with Groq model: ${modelName}`);
 
         return Response.json({
           reply: format === 'plain' ? stripMarkdown(cleanReply) : cleanReply,
@@ -525,7 +517,6 @@ export async function POST(req: Request) {
         });
       } catch (modelError: any) {
         lastError = modelError;
-        console.log(`❌ Groq model ${modelName} failed:`, modelError.message);
         await new Promise((resolve) => setTimeout(resolve, 300));
         continue;
       }

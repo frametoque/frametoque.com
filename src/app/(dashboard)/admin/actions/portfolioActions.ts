@@ -207,7 +207,6 @@ export async function deletePortfolioItem(categorySlug: string, id: number) {
     if (src && src.startsWith("http")) {
       try {
         await deleteBlob(src);
-        console.log(`Deleted photo from storage CDN: ${src}`);
       } catch (err: any) {
         console.error(`Failed to delete storage CDN file ${src}:`, err);
       }
@@ -535,7 +534,6 @@ export async function createBatchPortfolioPhotos(
       if (match.src && match.src !== photo.src && match.src.startsWith("http")) {
         try {
           await deleteBlob(match.src);
-          console.log(`Deleted replaced photo from storage CDN: ${match.src}`);
         } catch (err) {
           console.error(`Failed to delete replaced file ${match.src}:`, err);
         }
@@ -645,7 +643,6 @@ export async function cleanDuplicatesFromEvent(eventName: string): Promise<{ kep
     if (photo.src && photo.src.startsWith("http")) {
       try {
         await deleteBlob(photo.src);
-        console.log(`Deduplication: Deleted storage CDN file ${photo.src}`);
       } catch (err) {
         console.error(`Deduplication: Failed to delete file ${photo.src}:`, err);
       }

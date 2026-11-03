@@ -159,7 +159,6 @@ export async function POST(
     /* 4. Parse P12 → extract PEM cert + PEM key */
     const p12Buffer           = Buffer.from(CERT_B64, "base64");
     const { certPem, keyPem } = extractFromP12(p12Buffer, CERT_PASS);
-    console.log("[apple-wallet] P12 parsed successfully");
 
     /* 5. Load logo images + Apple WWDR cert from local filesystem */
     const logoPath = path.join(process.cwd(), "public/logos/ft/logo-main.png");
@@ -280,7 +279,6 @@ export async function POST(
 
     /* 9. Export */
     const passBuffer = pass.getAsBuffer();
-    console.log("[apple-wallet] Pass generated, size:", passBuffer.length, "bytes");
 
     return new NextResponse(passBuffer as unknown as BodyInit, {
       status: 200,
