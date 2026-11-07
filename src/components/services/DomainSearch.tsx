@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, CheckCircle, XCircle, Globe, Server, ShieldCheck, Mail, ShoppingCart, Loader2, PlusCircle } from "lucide-react";
-import { useCart } from "@/context/CartContext";
+import { Search, CheckCircle, XCircle, Globe, Server, ShieldCheck, Mail, ArrowRight, Loader2 } from "lucide-react";
 
 interface DomainSearchProps {
   lkrRate?: number;
@@ -14,7 +13,6 @@ const formatLKR = (amount: number) =>
   new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" }).format(amount || 0);
 
 export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
-  const { addToCart } = useCart();
   const [domainInput, setDomainInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -95,21 +93,6 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
     } finally {
       setOrderingDomain(null);
     }
-  };
-
-  const handleAddToCart = (targetDomain: string, usdPrice: number) => {
-    const lkrPrice = roundToNearest10(usdPrice * lkrRate);
-    addToCart({
-      id: `domain-${targetDomain.toLowerCase()}`,
-      serviceId: "domain-reg",
-      serviceTitle: `Domain Registration: ${targetDomain}`,
-      categorySlug: "domain",
-      categoryName: "Domain Services",
-      tier: "1 Year",
-      price: lkrPrice.toFixed(2),
-      duration: "1 year",
-    });
-    setSuccessMsg(`Added "${targetDomain}" to your cart. Proceed to checkout to finalize order.`);
   };
 
   return (
@@ -198,27 +181,18 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
                       <CheckCircle className="w-4 h-4" /> Ordered
                     </span>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleAddToCart(result.domain, parseFloat(result.reg_price_usd || 15.96))}
-                        className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-                        title="Add to Cart"
-                      >
-                        <PlusCircle className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleOrderDomain(result.domain)}
-                        disabled={orderingDomain === result.domain}
-                        className="px-6 py-3 rounded-3xl font-bold flex items-center gap-2 transition-all cursor-pointer bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 disabled:opacity-50 text-xs"
-                      >
-                        {orderingDomain === result.domain ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <ShoppingCart className="w-4 h-4" />
-                        )}
-                        <span>{orderingDomain === result.domain ? "Ordering..." : "Buy Domain"}</span>
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleOrderDomain(result.domain)}
+                      disabled={orderingDomain === result.domain}
+                      className="px-6 py-3 rounded-3xl font-bold flex items-center gap-2 transition-all cursor-pointer bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 disabled:opacity-50 text-xs"
+                    >
+                      {orderingDomain === result.domain ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <ArrowRight className="w-4 h-4" />
+                      )}
+                      <span>{orderingDomain === result.domain ? "Ordering..." : "Buy Domain"}</span>
+                    </button>
                   )}
                 </div>
               </div>
@@ -270,22 +244,18 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
                               Ordered
                             </span>
                           ) : (
-                            <div className="flex items-center gap-1.5">
-                              <button
-                                onClick={() => handleAddToCart(s.domain, parseFloat(s.reg_price_usd || 15.96))}
-                                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300"
-                                title="Add to Cart"
-                              >
-                                <PlusCircle className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleOrderDomain(s.domain)}
-                                disabled={isOrdering}
-                                className="px-4 py-2 text-xs font-semibold rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-colors cursor-pointer"
-                              >
-                                {isOrdering ? "Ordering..." : "Buy"}
-                              </button>
-                            </div>
+                            <button
+                              onClick={() => handleOrderDomain(s.domain)}
+                              disabled={isOrdering}
+                              className="px-4 py-2 text-xs font-semibold rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                            >
+                              {isOrdering ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              )}
+                              <span>{isOrdering ? "Ordering..." : "Buy"}</span>
+                            </button>
                           )}
                         </div>
                       </div>
