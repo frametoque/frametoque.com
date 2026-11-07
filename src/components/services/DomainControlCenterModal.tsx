@@ -499,18 +499,11 @@ export default function DomainControlCenterModal({
       <div className="relative w-full max-w-5xl bg-[#0c0d12] border border-white/10 rounded-3xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 bg-white/[0.02]">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-brand-500/10 border border-brand-500/20 text-brand-400">
-              <Globe className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-white tracking-wide">{domain.domain_name}</h2>
-                <span className="text-[10px] px-2 py-0.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 font-semibold uppercase tracking-wider">
-                  {details?.live_zone?.status || details?.status || domain.status || "Active"}
-                </span>
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-white tracking-wide">{domain.domain_name}</h2>
+            <span className="text-[10px] px-2 py-0.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 font-semibold uppercase tracking-wider">
+              {details?.live_zone?.status || details?.status || domain.status || "Active"}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <button
