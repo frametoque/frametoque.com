@@ -8,6 +8,7 @@ import { logSystemAction } from "@/lib/logger";
 import { getGravatarUrl } from "@/lib/gravatar";
 import { reactivateDomainAfterRenewalPayment } from "./domains-shared";
 import { revalidatePath } from "next/cache";
+import { encryptField, decryptField, generateBlindIndex } from "@/lib/crypto-vault";
 
 export async function uploadReceipt(formData: FormData, type: 'income' | 'expenses'): Promise<string> {
   await requireAdminSession();
@@ -436,10 +437,22 @@ export async function createClient(data: { name: string; email?: string | null; 
     addressToSave = data.email.trim();
   }
 
-  await sql`
-    INSERT INTO admin_clients (id, full_name, email, company, phone, address, active, legal_name)
-    VALUES (${clientId}, ${data.name}, ${emailToSave}, ${data.company || null}, ${data.phone || null}, ${addressToSave}, true, ${legalNameToSave})
-  `;
+  const encPhone = data.phone ? encryptField(data.phone, `client:phone:${clientId}`) : null;
+  const bidxPhone = data.phone ? generateBlindIndex(data.phone, "phone") : null;
+  const encAddress = addressToSave ? encryptField(addressToSave, `client:address:${clientId}`) : null;
+
+  try {
+    await sql`
+      INSERT INTO admin_clients (id, full_name, email, company, phone, phone_encrypted, phone_bidx, address, address_encrypted, active, legal_name)
+      VALUES (${clientId}, ${data.name}, ${emailToSave}, ${data.company || null}, ${data.phone || null}, ${encPhone}, ${bidxPhone}, ${addressToSave}, ${encAddress}, true, ${legalNameToSave})
+    `;
+  } catch {
+    await sql`
+      INSERT INTO admin_clients (id, full_name, email, company, phone, address, active, legal_name)
+      VALUES (${clientId}, ${data.name}, ${emailToSave}, ${data.company || null}, ${data.phone || null}, ${addressToSave}, true, ${legalNameToSave})
+    `;
+  }
+
   await logSystemAction(`Created client: "${data.name}" (${data.email || data.phone || 'No contact'})`);
   return clientId;
 }
@@ -474,18 +487,39 @@ export async function updateClient(clientId: string, data: { name?: string; emai
     }
   }
 
+  const encPhone = data.phone !== undefined ? (data.phone ? encryptField(data.phone, `client:phone:${clientId}`) : null) : undefined;
+  const bidxPhone = data.phone !== undefined ? (data.phone ? generateBlindIndex(data.phone, "phone") : null) : undefined;
+  const encAddress = addressToSave !== undefined ? (addressToSave ? encryptField(addressToSave, `client:address:${clientId}`) : null) : undefined;
+
   // Update admin_clients row
-  await sql`
-    UPDATE admin_clients
-    SET 
-      full_name = COALESCE(${data.name  || null}, full_name),
-      email   = ${newEmail},
-      company = ${data.company !== undefined ? data.company : null},
-      phone   = ${data.phone   ?? null},
-      address = ${addressToSave !== undefined ? addressToSave : null},
-      legal_name = ${legalNameToSave !== undefined ? legalNameToSave : null}
-    WHERE id = ${clientId}
-  `;
+  try {
+    await sql`
+      UPDATE admin_clients
+      SET 
+        full_name = COALESCE(${data.name  || null}, full_name),
+        email   = ${newEmail},
+        company = ${data.company !== undefined ? data.company : null},
+        phone   = ${data.phone   ?? null},
+        phone_encrypted = ${encPhone !== undefined ? encPhone : null},
+        phone_bidx = ${bidxPhone !== undefined ? bidxPhone : null},
+        address = ${addressToSave !== undefined ? addressToSave : null},
+        address_encrypted = ${encAddress !== undefined ? encAddress : null},
+        legal_name = ${legalNameToSave !== undefined ? legalNameToSave : null}
+      WHERE id = ${clientId}
+    `;
+  } catch {
+    await sql`
+      UPDATE admin_clients
+      SET 
+        full_name = COALESCE(${data.name  || null}, full_name),
+        email   = ${newEmail},
+        company = ${data.company !== undefined ? data.company : null},
+        phone   = ${data.phone   ?? null},
+        address = ${addressToSave !== undefined ? addressToSave : null},
+        legal_name = ${legalNameToSave !== undefined ? legalNameToSave : null}
+      WHERE id = ${clientId}
+    `;
+  }
 
   // Cascade email change to every table that stores user_email
   if (emailChanged) {
@@ -1318,24 +1352,48 @@ export async function getClients() {
     console.warn("Failed to fetch clerk users for images", e);
   }
 
-  const rows = await sql`
-    SELECT c.id,
-           c.full_name as name,
-           c.email,
-           c.active,
-           c.company,
-           c.phone,
-           c.address,
-           c.clerk_id,
-           c.legal_name,
-           (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email)) as invoices,
-           COALESCE((SELECT SUM(amount) FROM admin_incomes inc WHERE inc.client_id = c.id), 0) as revenue,
-           (SELECT COUNT(*) FROM admin_incomes inc WHERE inc.client_id = c.id) as income_count,
-           (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email) AND i.work_status IS NOT NULL) as project_count,
-           (SELECT COUNT(*) FROM admin_quotations q WHERE q.client_id = c.id) as quotation_count
-    FROM admin_clients c
-    ORDER BY c.id DESC
-  `;
+  let rows: any[] = [];
+  try {
+    rows = await sql`
+      SELECT c.id,
+             c.full_name as name,
+             c.email,
+             c.active,
+             c.company,
+             c.phone,
+             c.phone_encrypted,
+             c.address,
+             c.address_encrypted,
+             c.clerk_id,
+             c.legal_name,
+             (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email)) as invoices,
+             COALESCE((SELECT SUM(amount) FROM admin_incomes inc WHERE inc.client_id = c.id), 0) as revenue,
+             (SELECT COUNT(*) FROM admin_incomes inc WHERE inc.client_id = c.id) as income_count,
+             (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email) AND i.work_status IS NOT NULL) as project_count,
+             (SELECT COUNT(*) FROM admin_quotations q WHERE q.client_id = c.id) as quotation_count
+      FROM admin_clients c
+      ORDER BY c.id DESC
+    `;
+  } catch {
+    rows = await sql`
+      SELECT c.id,
+             c.full_name as name,
+             c.email,
+             c.active,
+             c.company,
+             c.phone,
+             c.address,
+             c.clerk_id,
+             c.legal_name,
+             (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email)) as invoices,
+             COALESCE((SELECT SUM(amount) FROM admin_incomes inc WHERE inc.client_id = c.id), 0) as revenue,
+             (SELECT COUNT(*) FROM admin_incomes inc WHERE inc.client_id = c.id) as income_count,
+             (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email) AND i.work_status IS NOT NULL) as project_count,
+             (SELECT COUNT(*) FROM admin_quotations q WHERE q.client_id = c.id) as quotation_count
+      FROM admin_clients c
+      ORDER BY c.id DESC
+    `;
+  }
 
   const clients = await Promise.all(
     rows.map(async (r) => {
@@ -1348,6 +1406,9 @@ export async function getClients() {
         imageUrl = getGravatarUrl(r.email.trim());
       }
 
+      const effectivePhone = (r.phone_encrypted ? decryptField(r.phone_encrypted, `client:phone:${r.id}`) : null) || r.phone;
+      const effectiveAddress = (r.address_encrypted ? decryptField(r.address_encrypted, `client:address:${r.id}`) : null) || r.address;
+
       return {
         id: r.id,
         name: r.name || r.email.split('@')[0],
@@ -1358,8 +1419,8 @@ export async function getClients() {
           (r.email && clerkEmailSet.has(r.email.toLowerCase())),
         active: r.active,
         company: r.company,
-        phone: r.phone,
-        address: r.address,
+        phone: effectivePhone,
+        address: effectiveAddress,
         legalName: r.legal_name || "",
         imageUrl,
         invoices: parseInt(r.invoices),
@@ -1380,20 +1441,40 @@ export async function getClientById(clientId: string) {
 
   const clerk = await clerkClient();
 
-  const rows = await sql`
-    SELECT c.id,
-           c.full_name as name,
-           c.email,
-           c.active,
-           c.company,
-           c.phone,
-           c.address,
-           c.clerk_id,
-           c.website,
-           c.legal_name
-    FROM admin_clients c
-    WHERE c.id = ${clientId}
-  `;
+  let rows: any[] = [];
+  try {
+    rows = await sql`
+      SELECT c.id,
+             c.full_name as name,
+             c.email,
+             c.active,
+             c.company,
+             c.phone,
+             c.phone_encrypted,
+             c.address,
+             c.address_encrypted,
+             c.clerk_id,
+             c.website,
+             c.legal_name
+      FROM admin_clients c
+      WHERE c.id = ${clientId}
+    `;
+  } catch {
+    rows = await sql`
+      SELECT c.id,
+             c.full_name as name,
+             c.email,
+             c.active,
+             c.company,
+             c.phone,
+             c.address,
+             c.clerk_id,
+             c.website,
+             c.legal_name
+      FROM admin_clients c
+      WHERE c.id = ${clientId}
+    `;
+  }
 
   if (rows.length === 0) return null;
   const c = rows[0];
@@ -1471,14 +1552,17 @@ export async function getClientById(clientId: string) {
   const orders = [...invoiceOrders, ...incomeOrders]
     .sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime());
 
+  const effectivePhone = (c.phone_encrypted ? decryptField(c.phone_encrypted, `client:phone:${c.id}`) : null) || c.phone;
+  const effectiveAddress = (c.address_encrypted ? decryptField(c.address_encrypted, `client:address:${c.id}`) : null) || c.address;
+
   return {
     id: c.id,
     name: c.name || c.email.split('@')[0],
     email: c.email,
     active: c.active,
     company: c.company,
-    phone: c.phone,
-    address: c.address,
+    phone: effectivePhone,
+    address: effectiveAddress,
     website: c.website,
     legalName: c.legal_name || "",
     imageUrl,
