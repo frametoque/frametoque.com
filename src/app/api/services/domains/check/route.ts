@@ -155,9 +155,12 @@ export async function GET(req: NextRequest) {
   }
 
   const cleanDomain = val.cleanDomain;
+  const isLk = cleanDomain.endsWith(".lk");
   const parts = cleanDomain.split(".");
-  const name = parts[0];
   const tld = parts[parts.length - 1];
+  const rootName = isLk
+    ? cleanDomain.replace(/\.(com|org|edu|hotel|web|gov|sch|net)?\.?lk$/, "")
+    : parts[0];
 
   try {
     const provider = getDomainProvider();
@@ -168,19 +171,18 @@ export async function GET(req: NextRequest) {
     const isAvailable = checkRes.available;
     let providerNote = checkRes.note;
 
-    // Strict white-labeling: strip internal provider codes, sandbox or auth notes
+    // Strict white-labeling: strip internal provider codes, sandbox or auth notes, and local registry notes
     if (
       providerNote &&
       (providerNote.includes("[Code") ||
         providerNote.includes("Authentication error") ||
         providerNote.toLowerCase().includes("sandbox") ||
-        providerNote.toLowerCase().includes("cloudflare"))
+        providerNote.toLowerCase().includes("cloudflare") ||
+        providerNote.toLowerCase().includes("lk nic") ||
+        providerNote.toLowerCase().includes("local registry") ||
+        providerNote.toLowerCase().includes("registrar provisioning"))
     ) {
       providerNote = undefined;
-    }
-
-    if (tld === "lk" && !providerNote) {
-      providerNote = "LK domain registration is processed through local registry provisioning (LK NIC).";
     }
 
     // Realtime Cloudflare Cost Sync: if provider returns a valid cost price, sync database
@@ -204,24 +206,67 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Generate verified multi-TLD suggestions (only show genuine available extensions)
-    const candidateTlds = ["com", "lk", "net", "org", "io", "xyz"];
-    const suggestionPromises = candidateTlds
-      .filter((sTld) => sTld !== tld)
-      .map(async (sTld) => {
-        const sDomain = `${name}.${sTld}`;
-        const sPricing = await getPricingForTld(sTld, provider);
-        const availCheck = await verifyDomainAvailability(sDomain);
-        return {
-          domain: sDomain,
-          available: availCheck.available,
-          registrar: "Frametoque Digital",
-          reg_cost_usd: sPricing.regCost,
-          reg_price_usd: sPricing.regRetail,
-          renew_cost_usd: sPricing.renewCost,
-          renew_price_usd: sPricing.renewRetail,
-        };
-      });
+    // Build LK Registry Tiers with Frametoque markup (+LKR 500)
+    let lkTiers: any = undefined;
+    if (isLk && isAvailable) {
+      const standardMarkup = 2000; // Fair profit: 2,000 LKR (Cost 8,000 -> Retail 10,000 LKR)
+      const economyMarkup = 1500;  // Fair profit: 1,500 LKR (Cost 5,000 -> Retail 6,500 LKR)
+      const budgetMarkup = 1000;   // Fair profit: 1,000 LKR (Cost 1,000 -> Retail 2,000 LKR)
+
+      lkTiers = {
+        standard: {
+          domain: `${rootName}.lk`,
+          package_type: "standard",
+          title: "Standard",
+          badge: "RECOMMENDED",
+          cost_lkr: 8000,
+          markup_lkr: standardMarkup,
+          price_lkr: 8000 + standardMarkup,
+          reserved_names: [
+            `${rootName}.org.lk`,
+            `${rootName}.edu.lk`,
+            `${rootName}.com.lk`,
+            `${rootName}.hotel.lk`,
+            `${rootName}.web.lk`,
+          ],
+        },
+        economy: {
+          domain: `${rootName}.lk`,
+          package_type: "economy",
+          title: "Economy",
+          cost_lkr: 5000,
+          markup_lkr: economyMarkup,
+          price_lkr: 5000 + economyMarkup,
+        },
+        second_level: [
+          { domain: `${rootName}.com.lk`, cost_lkr: 1000, markup_lkr: budgetMarkup, price_lkr: 1000 + budgetMarkup },
+          { domain: `${rootName}.edu.lk`, cost_lkr: 1000, markup_lkr: budgetMarkup, price_lkr: 1000 + budgetMarkup },
+          { domain: `${rootName}.org.lk`, cost_lkr: 1000, markup_lkr: budgetMarkup, price_lkr: 1000 + budgetMarkup },
+          { domain: `${rootName}.hotel.lk`, cost_lkr: 1000, markup_lkr: budgetMarkup, price_lkr: 1000 + budgetMarkup },
+          { domain: `${rootName}.web.lk`, cost_lkr: 1000, markup_lkr: budgetMarkup, price_lkr: 1000 + budgetMarkup },
+        ],
+      };
+    }
+
+    // Generate verified multi-TLD suggestions including our standard extensions (.com, .net, .org, .io, .xyz)
+    const candidateTlds = isLk
+      ? ["com", "net", "org", "io", "xyz"]
+      : ["com", "lk", "net", "org", "io", "xyz"].filter((sTld) => sTld !== tld);
+
+    const suggestionPromises = candidateTlds.map(async (sTld) => {
+      const sDomain = `${rootName}.${sTld}`;
+      const sPricing = await getPricingForTld(sTld, provider);
+      const availCheck = await verifyDomainAvailability(sDomain);
+      return {
+        domain: sDomain,
+        available: availCheck.available,
+        registrar: "Frametoque Digital",
+        reg_cost_usd: sPricing.regCost,
+        reg_price_usd: sPricing.regRetail,
+        renew_cost_usd: sPricing.renewCost,
+        renew_price_usd: sPricing.renewRetail,
+      };
+    });
 
     const suggestionsResults = await Promise.allSettled(suggestionPromises);
     const suggestions = suggestionsResults
@@ -241,6 +286,8 @@ export async function GET(req: NextRequest) {
       renew_profit_usd: parseFloat((pricing.renewRetail - pricing.renewCost).toFixed(2)),
       currency: "USD",
       note: providerNote,
+      is_lk: isLk,
+      lk_tiers: lkTiers,
       suggestions,
     });
   } catch (err: any) {

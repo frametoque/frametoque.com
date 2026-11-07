@@ -30,6 +30,7 @@ import {
   CheckCircle2,
   ArrowLeft,
   ShieldAlert,
+  Info,
 } from "lucide-react";
 import PayModal from "@/components/PayModal";
 
@@ -116,7 +117,7 @@ export function DomainControlCenterView({
   backHref,
 }: DomainControlCenterModalProps) {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "dns" | "nameservers" | "renewals" | "settings"
+    "overview" | "dns" | "renewals" | "settings"
   >("overview");
 
   // Domain details & states
@@ -145,6 +146,7 @@ export function DomainControlCenterView({
     priority: 10,
   });
   const [togglingRecordId, setTogglingRecordId] = useState<string | null>(null);
+  const [fixingRecordId, setFixingRecordId] = useState<string | null>(null);
 
   // Security & Toggles
   const [isLocked, setIsLocked] = useState(activeDomain?.locked ?? true);
@@ -300,6 +302,103 @@ export function DomainControlCenterView({
     return rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [activeDomain, historyRows]);
 
+  // Computed DNS Diagnostics / Smart Advisories
+  const dnsDiagnostics = useMemo(() => {
+    const issues: Array<{
+      id: string;
+      level: "warning" | "info" | "error";
+      title: string;
+      message: string;
+      record?: DnsRecord;
+      actionType?: "unproxy" | "fix-txt";
+      actionText?: string;
+    }> = [];
+
+    // 1. TXT records missing quotes
+    const unquotedTxtList = dnsRecords.filter((r) => {
+      if (r.type !== "TXT") return false;
+      const c = (r.content || "").trim();
+      return !c.startsWith('"') || !c.endsWith('"');
+    });
+
+    if (unquotedTxtList.length > 0) {
+      const first = unquotedTxtList[0];
+      issues.push({
+        id: `unquoted-txt-${first.id}`,
+        level: "warning",
+        title: "TXT Record Format Warning",
+        message: `TXT record for "${first.name}" is missing surrounding double quotes (" "). TXT records with spaces, semicolons, or values like SPF and DMARC must be wrapped in quotes (e.g. "v=spf1 ...") to prevent DNS lookup errors.`,
+        record: first,
+        actionType: "fix-txt",
+        actionText: 'Wrap in ""',
+      });
+    }
+
+    // 2. Vercel deployment with Cloudflare Proxy turned ON
+    const vercelProxiedList = dnsRecords.filter((r) => {
+      if (!r.proxied) return false;
+      const c = (r.content || "").toLowerCase().trim();
+      return (
+        c === "76.76.21.21" ||
+        c.includes("vercel-dns.com") ||
+        c.includes("vercel.app")
+      );
+    });
+
+    if (vercelProxiedList.length > 0) {
+      const first = vercelProxiedList[0];
+      issues.push({
+        id: `vercel-proxy-${first.id}`,
+        level: "warning",
+        title: "Vercel Performance & SSL Advisory",
+        message: `Record "${first.name}" (${first.content}) points to Vercel with Cloudflare Proxy turned ON. Turning off the proxy (DNS Only) is recommended for optimal performance on Vercel and to allow Vercel to issue and renew SSL certificates seamlessly.`,
+        record: first,
+        actionType: "unproxy",
+        actionText: "Turn Off Proxy",
+      });
+    }
+
+    // 3. GitHub Pages with Proxy ON
+    const ghProxiedList = dnsRecords.filter((r) => {
+      if (!r.proxied) return false;
+      const c = (r.content || "").toLowerCase().trim();
+      return (
+        c.includes("github.io") ||
+        ["185.199.108.153", "185.199.109.153", "185.199.110.153", "185.199.111.153"].includes(c)
+      );
+    });
+
+    if (ghProxiedList.length > 0 && vercelProxiedList.length === 0) {
+      const first = ghProxiedList[0];
+      issues.push({
+        id: `gh-proxy-${first.id}`,
+        level: "warning",
+        title: "GitHub Pages Proxy Advisory",
+        message: `Record "${first.name}" points to GitHub Pages with Proxy enabled. GitHub Pages requires "Proxy Off" (DNS only) for TLS certificate verification and direct edge routing.`,
+        record: first,
+        actionType: "unproxy",
+        actionText: "Turn Off Proxy",
+      });
+    }
+
+    // 4. Missing SPF / DMARC when MX exists
+    const hasMx = dnsRecords.some((r) => r.type === "MX");
+    const hasSpf = dnsRecords.some((r) => r.type === "TXT" && (r.content || "").toLowerCase().includes("v=spf1"));
+    const hasDmarc = dnsRecords.some((r) => r.type === "TXT" && (r.content || "").toLowerCase().includes("v=dmarc1"));
+
+    if (hasMx && (!hasSpf || !hasDmarc)) {
+      const missing = !hasSpf && !hasDmarc ? "SPF and DMARC" : !hasSpf ? "SPF" : "DMARC";
+      issues.push({
+        id: "email-spf-dmarc",
+        level: "info",
+        title: "Email Deliverability Notice",
+        message: `This domain has mail (MX) servers configured but is missing ${missing} authentication records. Adding them prevents email spoofing and ensures reliable inbox delivery.`,
+      });
+    }
+
+    return issues;
+  }, [dnsRecords]);
+
   if (!isPage && !isOpen) return null;
 
   if (!details && !domain && loading) {
@@ -388,6 +487,7 @@ export function DomainControlCenterView({
 
   // Handlers
   const handleToggleLock = async () => {
+    if (!isAdmin) return;
     setTogglingLock(true);
     try {
       const newLocked = !isLocked;
@@ -505,6 +605,13 @@ export function DomainControlCenterView({
   const handleSaveDnsRecord = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let finalContent = dnsForm.content.trim();
+      if (dnsForm.type === "TXT") {
+        if (!finalContent.startsWith('"') || !finalContent.endsWith('"')) {
+          finalContent = `"${finalContent.replace(/^"+|"+$/g, "")}"`;
+        }
+      }
+
       if (editingRecordId) {
         // Update
         const res = await fetch(`/api/services/domains/${targetId}/dns`, {
@@ -513,6 +620,7 @@ export function DomainControlCenterView({
           body: JSON.stringify({
             record_id: editingRecordId,
             ...dnsForm,
+            content: finalContent,
           }),
         });
         const data = await res.json();
@@ -522,7 +630,10 @@ export function DomainControlCenterView({
         const res = await fetch(`/api/services/domains/${targetId}/dns`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dnsForm),
+          body: JSON.stringify({
+            ...dnsForm,
+            content: finalContent,
+          }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to create record");
@@ -600,6 +711,35 @@ export function DomainControlCenterView({
     }
   };
 
+  const handleFixUnquotedTxt = async (record: DnsRecord) => {
+    let clean = (record.content || "").trim();
+    if (!clean.startsWith('"')) clean = `"${clean}`;
+    if (!clean.endsWith('"')) clean = `${clean}"`;
+    setFixingRecordId(record.id);
+    try {
+      const res = await fetch(`/api/services/domains/${targetId}/dns`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          record_id: record.id,
+          type: "TXT",
+          name: record.name,
+          content: clean,
+          ttl: record.ttl || 1,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update TXT record");
+      await fetchDnsRecords();
+      setSuccessMsg("TXT record wrapped in quotes successfully.");
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setFixingRecordId(null);
+    }
+  };
+
   const handlePayRenewal = (invoiceId: string, lkrAmount: number) => {
     const inv = {
       id: invoiceId,
@@ -620,7 +760,6 @@ export function DomainControlCenterView({
   const tabs = [
     { id: "overview", label: "Overview", icon: Globe },
     { id: "dns", label: "DNS Editor", icon: Server },
-    { id: "nameservers", label: "Nameservers", icon: ArrowRightLeft },
     { id: "renewals", label: "Renewal & History", icon: History },
     { id: "settings", label: "Settings", icon: Settings },
   ] as const;
@@ -629,79 +768,90 @@ export function DomainControlCenterView({
     <>
       {/* TAB 1: OVERVIEW */}
           {activeTab === "overview" && (
-            <div className="space-y-6 sm:space-y-8">
+            <div className="space-y-6">
               {/* Quick Status Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <span className="text-sm font-semibold text-gray-400">Registrar Lock</span>
-                    <div className="flex items-center justify-between pt-1">
-                      <span className={`text-xl sm:text-2xl font-bold ${isLocked ? "text-emerald-400" : "text-amber-400"}`}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-gray-400">Registrar Lock</span>
+                    <div className="flex items-center justify-between pt-0.5">
+                      <span className={`text-base sm:text-lg font-semibold ${isLocked ? "text-emerald-400" : "text-amber-400"}`}>
                         {isLocked ? "Locked (Protected)" : "Unlocked"}
                       </span>
-                      <button
-                        onClick={handleToggleLock}
-                        disabled={togglingLock}
-                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 transition-colors"
-                        title={isLocked ? "Unlock Domain" : "Lock Domain"}
-                      >
-                        {togglingLock ? <Loader2 className="w-4 h-4 animate-spin" /> : isLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-                      </button>
+                      {isAdmin ? (
+                        <button
+                          onClick={handleToggleLock}
+                          disabled={togglingLock}
+                          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 transition-colors cursor-pointer"
+                          title={isLocked ? "Unlock Domain" : "Lock Domain"}
+                        >
+                          {togglingLock ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={true}
+                          className="p-1.5 rounded-lg bg-white/5 text-gray-500 opacity-50 cursor-not-allowed"
+                          title="Transfer lock is managed by administrators"
+                        >
+                          {isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <span className="text-xs sm:text-sm text-gray-400 font-medium">
+                  <span className="text-xs text-gray-400 font-normal">
                     {isLocked ? "Transfers Blocked" : "Ready for Transfer"}
                   </span>
                 </div>
 
-                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <span className="text-sm font-semibold text-gray-400">Auto-Renewal</span>
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-xl sm:text-2xl font-bold text-gray-300">
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-gray-400">Auto-Renewal</span>
+                    <div className="flex items-center justify-between pt-0.5">
+                      <span className="text-base sm:text-lg font-semibold text-gray-200">
                         Disabled
                       </span>
                       <button
                         disabled={true}
-                        className="p-2 rounded-xl bg-white/5 text-gray-600 cursor-not-allowed opacity-40"
+                        className="p-1.5 rounded-lg bg-white/5 text-gray-600 cursor-not-allowed opacity-40"
                         title="Auto-renewal is disabled. Manual renewal required."
                       >
-                        <RefreshCw className="w-4 h-4" />
+                        <RefreshCw className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
-                  <span className="text-xs sm:text-sm text-gray-400 font-medium">
+                  <span className="text-xs text-gray-400 font-normal">
                     Manual Renewal Required
                   </span>
                 </div>
 
-                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <span className="text-sm font-semibold text-gray-400">WHOIS Privacy</span>
-                    <div className="flex items-center justify-between pt-1">
-                      <span className={`text-xl sm:text-2xl font-bold ${details?.privacy ?? true ? "text-emerald-400" : "text-gray-400"}`}>
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-gray-400">WHOIS Privacy</span>
+                    <div className="flex items-center justify-between pt-0.5">
+                      <span className={`text-base sm:text-lg font-semibold ${details?.privacy ?? true ? "text-emerald-400" : "text-gray-400"}`}>
                         {details?.privacy ?? true ? "Active" : "Standard"}
                       </span>
-                      <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
                     </div>
                   </div>
-                  <span className="text-xs sm:text-sm text-gray-400 font-medium">
+                  <span className="text-xs text-gray-400 font-normal">
                     {details?.privacy ?? true ? "Included Free with Frametoque" : "Public Registry"}
                   </span>
                 </div>
 
-                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <span className="text-sm font-semibold text-gray-400">Expiration Date</span>
-                    <div className="pt-1">
-                      <span className="text-xl sm:text-2xl font-bold text-white">
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-gray-400">Expiration Date</span>
+                    <div className="pt-0.5">
+                      <span className="text-base sm:text-lg font-semibold text-white">
                         {(details?.expiry_date || activeDomain.expiry_date)
                           ? new Date(details?.expiry_date || activeDomain.expiry_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                           : "Not found"}
                       </span>
                     </div>
                   </div>
-                  <span className="text-xs sm:text-sm text-gray-400 font-medium">
+                  <span className="text-xs text-gray-400 font-normal">
                     {details?.days_remaining !== undefined && details?.days_remaining !== null
                       ? details.days_remaining > 0
                         ? `Expires in ${details.days_remaining} days`
@@ -712,24 +862,23 @@ export function DomainControlCenterView({
               </div>
 
               {/* Active Nameservers */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-4">
+              <div className="p-5 sm:p-6 rounded-2xl bg-white/5 border border-white/10 space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2.5">
-                    <Server className="w-5 h-5 text-brand-400" />
-                    <span>Active Nameservers</span>
+                  <h3 className="text-base font-semibold text-white">
+                    Active Nameservers
                   </h3>
                   {activeNameservers.length > 0 && (
-                    <span className="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                    <span className="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
                       Active
                     </span>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-3 pt-2">
+                <div className="flex flex-wrap gap-2.5 pt-1">
                   {activeNameservers.length > 0 ? (
                     activeNameservers.map((ns: string) => (
                       <div
                         key={ns}
-                        className="px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-mono text-sm sm:text-base flex items-center gap-3 hover:border-white/20 transition-colors"
+                        className="px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white font-mono text-xs flex items-center gap-2 hover:border-white/20 transition-colors"
                       >
                         <span>{ns}</span>
                         <button
@@ -738,15 +887,15 @@ export function DomainControlCenterView({
                           title="Copy Nameserver"
                         >
                           {copiedKey === ns ? (
-                            <Check className="w-4 h-4 text-emerald-400" />
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
                           ) : (
-                            <Copy className="w-4 h-4" />
+                            <Copy className="w-3.5 h-3.5" />
                           )}
                         </button>
                       </div>
                     ))
                   ) : (
-                    <span className="text-gray-400 text-sm py-1 font-medium">Not found</span>
+                    <span className="text-gray-400 text-xs py-1 font-medium">Not found</span>
                   )}
                 </div>
               </div>
@@ -759,7 +908,6 @@ export function DomainControlCenterView({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-xl sm:text-2xl font-bold text-white">DNS Records Management</h3>
-                  <p className="text-sm text-gray-400 mt-1">Configure authoritative DNS records, host routing, and Cloudflare proxying.</p>
                 </div>
 
                 <div className="flex items-center gap-3 flex-wrap">
@@ -904,6 +1052,18 @@ export function DomainControlCenterView({
                       required
                       className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white text-sm focus:outline-none focus:border-brand-400"
                     />
+                    {dnsForm.type === "TXT" && dnsForm.content && (!dnsForm.content.trim().startsWith('"') || !dnsForm.content.trim().endsWith('"')) && (
+                      <p className="text-xs text-amber-300 mt-2 flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                        <span>Tip: TXT records should be enclosed in double quotes (e.g. &quot;v=spf1 ...&quot;)</span>
+                      </p>
+                    )}
+                    {dnsForm.proxied && (dnsForm.content.includes("vercel-dns.com") || dnsForm.content.trim() === "76.76.21.21") && (
+                      <p className="text-xs text-amber-300 mt-2 flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                        <span>Vercel recommendation: Set Proxy to Off (DNS only) for optimal performance and SSL management.</span>
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex justify-end gap-3 pt-2">
@@ -938,6 +1098,58 @@ export function DomainControlCenterView({
                   >
                     Retry
                   </button>
+                </div>
+              )}
+
+              {/* DNS Smart Diagnostics / Recommendations */}
+              {dnsDiagnostics.length > 0 && (
+                <div className="space-y-3">
+                  {dnsDiagnostics.map((diag) => (
+                    <div
+                      key={diag.id}
+                      className={`p-4 sm:p-5 rounded-2xl border text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                        diag.level === "warning"
+                          ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
+                          : "bg-blue-500/10 border-blue-500/30 text-blue-200"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        {diag.level === "warning" ? (
+                          <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400 mt-0.5" />
+                        ) : (
+                          <Info className="w-5 h-5 shrink-0 text-blue-400 mt-0.5" />
+                        )}
+                        <div className="space-y-1">
+                          <span className="font-semibold block text-white text-sm">
+                            {diag.title}
+                          </span>
+                          <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                            {diag.message}
+                          </p>
+                        </div>
+                      </div>
+
+                      {diag.actionText && diag.record && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (diag.actionType === "unproxy") {
+                              handleQuickToggleProxy(diag.record!);
+                            } else if (diag.actionType === "fix-txt") {
+                              handleFixUnquotedTxt(diag.record!);
+                            }
+                          }}
+                          disabled={togglingRecordId === diag.record.id || fixingRecordId === diag.record.id}
+                          className="self-start sm:self-auto px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition-colors shrink-0 border border-white/10 cursor-pointer flex items-center gap-1.5"
+                        >
+                          {togglingRecordId === diag.record.id || fixingRecordId === diag.record.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : null}
+                          <span>{diag.actionText}</span>
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -1044,50 +1256,15 @@ export function DomainControlCenterView({
             </div>
           )}
 
-          {/* TAB 3: NAMESERVERS */}
-          {activeTab === "nameservers" && (
-            <div className="space-y-6 sm:space-y-8">
-              <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white">Authoritative Nameservers</h3>
-                <p className="text-sm text-gray-400 mt-1">Nameservers delegate DNS authority for your domain across Cloudflare's global edge network.</p>
-              </div>
-
-              <div className="p-6 sm:p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-4">
-                <span className="text-sm font-semibold text-gray-400">Current Authoritative Nameservers:</span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  {activeNameservers.length > 0 ? (
-                    activeNameservers.map((ns: string, idx: number) => (
-                      <div
-                        key={idx}
-                        className="p-5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-base font-mono text-white hover:border-white/20 transition-colors"
-                      >
-                        <span className="font-semibold">{ns}</span>
-                        <span className="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                          Active
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="col-span-2 text-gray-400 text-sm py-8 text-center bg-white/5 rounded-2xl border border-white/10 font-medium">
-                      No nameservers found
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: RENEWAL & PAYMENT HISTORY */}
+          {/* TAB 3: RENEWAL & PAYMENT HISTORY */}
           {activeTab === "renewals" && (
             <div className="space-y-6 sm:space-y-8">
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5">
-                    <History className="w-5 h-5 text-brand-400" />
-                    <span>Renewal & Payment History</span>
+                  <h3 className="text-xl sm:text-2xl font-bold text-white">
+                    Renewal & Payment History
                   </h3>
-                  <p className="text-sm text-gray-400 mt-1">Review your expiration timeline, renewal rates, and past invoices.</p>
                 </div>
                 <button
                   type="button"
@@ -1102,16 +1279,15 @@ export function DomainControlCenterView({
               </div>
 
               {/* Metric Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Expiration Date Card */}
-                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <span className="text-sm font-semibold text-gray-400 flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-brand-400" />
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-gray-400">
                       Expiration Date
                     </span>
-                    <div className="pt-1">
-                      <span className="text-xl sm:text-2xl font-bold text-white">
+                    <div className="pt-0.5">
+                      <span className="text-base sm:text-lg font-semibold text-white">
                         {(details?.expiry_date || activeDomain.expiry_date)
                           ? new Date(details?.expiry_date || activeDomain.expiry_date).toLocaleDateString("en-US", {
                               month: "short",
@@ -1122,7 +1298,7 @@ export function DomainControlCenterView({
                       </span>
                     </div>
                   </div>
-                  <span className="text-xs sm:text-sm text-gray-400 font-medium">
+                  <span className="text-xs text-gray-400 font-normal">
                     {details?.days_remaining !== undefined && details?.days_remaining !== null
                       ? details.days_remaining > 0
                         ? `Expires in ${details.days_remaining} days`
@@ -1132,37 +1308,33 @@ export function DomainControlCenterView({
                 </div>
 
                 {/* Renewal Fee Card */}
-                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm font-semibold text-gray-400">
-                      <span className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-brand-400" />
-                        Renewal Price
-                      </span>
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-medium text-gray-400">
+                      <span>Renewal Price</span>
                       <span className="text-[10px] text-amber-400/90 font-semibold uppercase tracking-wider bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
                         Estimated
                       </span>
                     </div>
-                    <div className="pt-1">
-                      <span className="text-xl sm:text-2xl font-bold text-amber-300">
+                    <div className="pt-0.5">
+                      <span className="text-base sm:text-lg font-semibold text-amber-300">
                         ~{formatLKR(renewalLkr)}
                       </span>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-400 leading-relaxed font-medium">
-                    Estimated renewal fee based on current exchange rates; can vary slightly according to USD/LKR rate fluctuations at renewal.
+                  <p className="text-xs text-gray-400 leading-relaxed font-normal">
+                    Estimated annual renewal fee based on standard registry rates.
                   </p>
                 </div>
 
                 {/* Auto-Renewal Status Card */}
-                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <span className="text-sm font-semibold text-gray-400 flex items-center gap-2">
-                      <RefreshCw className="w-4 h-4 text-brand-400" />
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-gray-400">
                       Auto-Renewal
                     </span>
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-xl sm:text-2xl font-bold text-gray-300">
+                    <div className="flex items-center justify-between pt-0.5">
+                      <span className="text-base sm:text-lg font-semibold text-gray-200">
                         Disabled
                       </span>
                       <button
@@ -1175,26 +1347,25 @@ export function DomainControlCenterView({
                       </button>
                     </div>
                   </div>
-                  <span className="text-xs sm:text-sm text-gray-400 font-medium">
+                  <span className="text-xs text-gray-400 font-normal">
                     Manual payment required
                   </span>
                 </div>
 
                 {/* Registry Protection Card */}
-                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <span className="text-sm font-semibold text-gray-400 flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-gray-400">
                       Registry Status
                     </span>
-                    <div className="pt-1">
-                      <span className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-                        <span className={`w-2.5 h-2.5 rounded-full ${activeDomain.status === "active" ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
+                    <div className="pt-0.5">
+                      <span className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${activeDomain.status === "active" ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
                         {activeDomain.status === "active" ? "Active" : "Pending"}
                       </span>
                     </div>
                   </div>
-                  <span className="text-xs sm:text-sm text-emerald-400 font-medium">
+                  <span className="text-xs text-emerald-400 font-normal">
                     Registry Active & Protected
                   </span>
                 </div>
@@ -1203,9 +1374,8 @@ export function DomainControlCenterView({
               {/* Invoices & Payment Ledger */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-brand-400" />
-                    <span>Invoices & Payment History</span>
+                  <h4 className="text-lg sm:text-xl font-bold text-white">
+                    Invoices & Payment History
                   </h4>
                   <span className="text-sm text-gray-400 font-medium">
                     {allLedgerRows.length} record{allLedgerRows.length === 1 ? "" : "s"}
@@ -1343,7 +1513,6 @@ export function DomainControlCenterView({
             <div className="space-y-6">
               <div>
                 <h3 className="text-xl sm:text-2xl font-bold text-white">Domain & Security Controls</h3>
-                <p className="text-sm text-gray-400 mt-1">Configure registry lock, DNSSEC, auto-renewal, and privacy settings.</p>
               </div>
 
               {transferMessage && (
@@ -1358,11 +1527,10 @@ export function DomainControlCenterView({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Transfer Lock Card */}
-                <div className="p-6 sm:p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 flex flex-col justify-between space-y-4">
+                <div className="p-5 sm:p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
-                        <Lock className="w-5 h-5 text-brand-400" />
+                      <span className="text-base sm:text-lg font-semibold text-white">
                         Transfer Lock
                       </span>
                       <span
@@ -1376,7 +1544,7 @@ export function DomainControlCenterView({
                       </span>
                     </div>
                     <p className="text-sm text-gray-400 leading-relaxed">
-                      Prevents this domain from being transferred away to another provider.
+                      Prevents this domain from being transferred away to another provider.{!isAdmin && " Transfer lock settings are managed by administrators."}
                     </p>
                   </div>
 
@@ -1384,34 +1552,49 @@ export function DomainControlCenterView({
                     <span className="text-sm text-gray-400">
                       {isLocked ? "Transfers blocked" : "Transfers allowed"}
                     </span>
-                    <button
-                      type="button"
-                      onClick={handleToggleLock}
-                      disabled={togglingLock}
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold transition-all cursor-pointer border ${
-                        isLocked
-                          ? "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
-                          : "bg-emerald-500 hover:bg-emerald-600 text-white border-transparent"
-                      }`}
-                    >
-                      {togglingLock ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : isLocked ? (
-                        <Unlock className="w-4 h-4" />
-                      ) : (
-                        <Lock className="w-4 h-4" />
-                      )}
-                      <span>{isLocked ? "Unlock Domain" : "Lock Domain"}</span>
-                    </button>
+                    {isAdmin ? (
+                      <button
+                        type="button"
+                        onClick={handleToggleLock}
+                        disabled={togglingLock}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer border ${
+                          isLocked
+                            ? "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
+                            : "bg-emerald-500 hover:bg-emerald-600 text-white border-transparent"
+                        }`}
+                      >
+                        {togglingLock ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : isLocked ? (
+                          <Unlock className="w-4 h-4" />
+                        ) : (
+                          <Lock className="w-4 h-4" />
+                        )}
+                        <span>{isLocked ? "Unlock Domain" : "Lock Domain"}</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={true}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-white/5 text-gray-400 border border-white/10 cursor-not-allowed opacity-50"
+                        title="Transfer lock can only be changed by administrators"
+                      >
+                        {isLocked ? (
+                          <Unlock className="w-4 h-4" />
+                        ) : (
+                          <Lock className="w-4 h-4" />
+                        )}
+                        <span>{isLocked ? "Unlock Domain" : "Lock Domain"}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
                 {/* DNSSEC Card */}
-                <div className="p-6 sm:p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 flex flex-col justify-between space-y-4">
+                <div className="p-5 sm:p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
-                        <Shield className="w-5 h-5 text-brand-400" />
+                      <span className="text-base sm:text-lg font-semibold text-white">
                         DNSSEC Protection
                       </span>
                       <span
@@ -1437,7 +1620,7 @@ export function DomainControlCenterView({
                       type="button"
                       onClick={handleToggleDnssec}
                       disabled={togglingDnssec}
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold transition-all cursor-pointer border ${
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer border ${
                         dnssecEnabled
                           ? "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
                           : "bg-brand-500 hover:bg-brand-600 text-white border-transparent"
@@ -1455,11 +1638,10 @@ export function DomainControlCenterView({
                 </div>
 
                 {/* Auto-Renewal Card */}
-                <div className="p-6 sm:p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 flex flex-col justify-between space-y-4">
+                <div className="p-5 sm:p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
-                        <RefreshCw className="w-4 h-4 text-brand-400" />
+                      <span className="text-base sm:text-lg font-semibold text-white">
                         Auto-Renewal
                       </span>
                       <span className="text-xs font-semibold px-3 py-1 rounded-full border bg-white/5 text-gray-400 border-white/10">
@@ -1489,11 +1671,10 @@ export function DomainControlCenterView({
                 </div>
 
                 {/* WHOIS Privacy Card */}
-                <div className="p-6 sm:p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 flex flex-col justify-between space-y-4">
+                <div className="p-5 sm:p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
-                        <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      <span className="text-base sm:text-lg font-semibold text-white">
                         WHOIS Privacy
                       </span>
                       <span className="text-xs font-semibold px-3 py-1 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
@@ -1526,17 +1707,17 @@ export function DomainControlCenterView({
           <div className="flex items-center gap-4 flex-wrap">
             <Link
               href={backHref || (isAdmin ? "/admin/web-services/domains" : "/dashboard/domains")}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-sm font-semibold transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs sm:text-sm font-medium transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Domains</span>
             </Link>
-            <div className="h-6 w-px bg-white/10 hidden sm:block" />
+            <div className="h-5 w-px bg-white/10 hidden sm:block" />
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                 {activeDomain.domain_name || "Manage Domains"}
               </h1>
-              <span className="text-xs px-3 py-1 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 font-semibold uppercase tracking-wider">
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 font-semibold uppercase tracking-wider">
                 {details?.live_zone?.status || details?.status || activeDomain.status || "Active"}
               </span>
             </div>
@@ -1551,10 +1732,10 @@ export function DomainControlCenterView({
                 if (activeTab === "renewals") fetchRenewalHistory();
               }}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-semibold text-gray-200 hover:text-white transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs sm:text-sm font-medium text-gray-200 hover:text-white transition-colors cursor-pointer"
               title="Refresh Domain Data"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-brand-400" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-brand-400" : ""}`} />
               <span>Refresh</span>
             </button>
           </div>
@@ -1562,14 +1743,14 @@ export function DomainControlCenterView({
 
         {/* Success Alert Banner */}
         {successMsg && (
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-3.5 flex items-center gap-3 text-emerald-400 text-sm font-medium">
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-3 flex items-center gap-2.5 text-emerald-400 text-xs sm:text-sm font-medium">
             <Check className="w-4 h-4 shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}
 
         {/* Tab Switcher - modern pill buttons matching other dashboard pages */}
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1578,13 +1759,13 @@ export function DomainControlCenterView({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all cursor-pointer inline-flex items-center gap-2.5 ${
+                className={`px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all cursor-pointer inline-flex items-center gap-2 ${
                   isActive
                     ? "bg-white text-black shadow-lg shadow-white/10"
                     : "bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10"
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
               </button>
             );

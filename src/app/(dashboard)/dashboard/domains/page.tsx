@@ -502,9 +502,9 @@ export default function ClientDomainsPage() {
 
                         {/* Renewal Price */}
                         <TableCell className="text-right">
-                          <div className="text-gray-300 font-medium" title="Renewal fees are estimated values based on current exchange rates and may vary slightly according to the USD to LKR conversion rate at the time of renewal.">
-                            ~{formatLKR(renew.lkrValue)}
-                            <span className="block text-[10px] text-gray-400 font-normal">Est. / yr</span>
+                          <div className="text-gray-300 font-medium whitespace-nowrap" title="Estimated annual renewal fee based on standard registry rates.">
+                            <span>~{formatLKR(renew.lkrValue)}</span>
+                            <span className="text-xs text-gray-400 font-normal ml-1.5">Est. / yr</span>
                           </div>
                         </TableCell>
 
@@ -555,10 +555,10 @@ export default function ClientDomainsPage() {
                                       <Link
                                         href={`/dashboard/domains/${d.domain_uid || d.id}`}
                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/20 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-                                        title="Configure DNS records, Nameservers & Security"
+                                        title="Manage domain details, DNS records, renewals & security"
                                       >
                                         <Settings2 className="w-3.5 h-3.5" />
-                                        <span>Manage DNS</span>
+                                        <span>Manage Domain</span>
                                       </Link>
                                     ) : (
                                       <span className="text-[11px] text-amber-400/90 font-medium bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">

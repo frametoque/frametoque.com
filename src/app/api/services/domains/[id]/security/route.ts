@@ -51,7 +51,7 @@ export async function POST(
 ) {
   try {
     const { id } = await context.params;
-    const { domain, sessionEmail } = await requireDomainOwnership(id);
+    const { domain, sessionEmail, isAdmin } = await requireDomainOwnership(id);
     const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
 
     const rate = checkRateLimit(`security:write:${sessionEmail}`, 20, 60000);
@@ -68,6 +68,12 @@ export async function POST(
 
     // 1. Lock toggle
     if (typeof body.locked === "boolean") {
+      if (!isAdmin) {
+        return NextResponse.json(
+          { error: "Transfer lock can only be modified by administrators." },
+          { status: 403 }
+        );
+      }
       await provider.setLock(domain.domain_name, body.locked);
       await sql`
         UPDATE admin_domain_orders SET locked = ${body.locked} WHERE id = ${domain.id}

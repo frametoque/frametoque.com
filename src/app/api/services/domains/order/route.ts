@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { domain, contacts, autoRenew } = body;
+    const { domain, contacts, autoRenew, packageType, customPriceLkr } = body;
 
     const val = validateDomainName(domain);
     if (!val.valid) {
@@ -71,10 +71,40 @@ export async function POST(req: Request) {
       // fallback
     }
     const roundToNearest10 = (amount: number): number => Math.ceil((amount || 0) / 10) * 10;
-    const lkrPrice = roundToNearest10(sellPrice * lkrRate);
-    const lkrCost = parseFloat((costPrice * lkrRate).toFixed(2));
-    const lkrRenewPrice = roundToNearest10(renewPrice * lkrRate);
-    const lkrRenewCost = parseFloat((renewCost * lkrRate).toFixed(2));
+    const defaultLkrPrice = roundToNearest10(sellPrice * lkrRate);
+    const defaultLkrCost = parseFloat((costPrice * lkrRate).toFixed(2));
+    const defaultLkrRenewPrice = roundToNearest10(renewPrice * lkrRate);
+    const defaultLkrRenewCost = parseFloat((renewCost * lkrRate).toFixed(2));
+
+    // Handle LK packages and custom price tiers with Frametoque markup
+    const isLk = cleanDomain.endsWith(".lk");
+    let finalLkrPrice = defaultLkrPrice;
+    let finalLkrCost = defaultLkrCost;
+    let finalLkrRenewPrice = defaultLkrRenewPrice;
+    let finalLkrRenewCost = defaultLkrRenewCost;
+    let itemDescription = `1 Year Domain Registration for ${cleanDomain}`;
+
+    if (isLk) {
+      if (packageType === "economy") {
+        finalLkrCost = 5000;
+        finalLkrPrice = customPriceLkr || 6500;
+        finalLkrRenewPrice = finalLkrPrice;
+        finalLkrRenewCost = finalLkrCost;
+        itemDescription = `1 Year Domain Registration for ${cleanDomain} (Economy Package)`;
+      } else if (packageType === "second_level" || cleanDomain.match(/\.(com|org|edu|hotel|web|sch|gov|net)\.lk$/)) {
+        finalLkrCost = 1000;
+        finalLkrPrice = customPriceLkr || 2000;
+        finalLkrRenewPrice = finalLkrPrice;
+        finalLkrRenewCost = finalLkrCost;
+        itemDescription = `1 Year Domain Registration for ${cleanDomain} (Second-Level Domain)`;
+      } else {
+        finalLkrCost = 8000;
+        finalLkrPrice = customPriceLkr || 10000;
+        finalLkrRenewPrice = finalLkrPrice;
+        finalLkrRenewCost = finalLkrCost;
+        itemDescription = `1 Year Domain Registration for ${cleanDomain} (Standard Package - Multi-Extension Reserve)`;
+      }
+    }
 
     // 1. Create linked invoice
     await sql`
@@ -85,7 +115,7 @@ export async function POST(req: Request) {
       ) VALUES (
         ${invoiceId}, ${email},
         ${`Domain Registration: ${cleanDomain}`}, CURRENT_DATE,
-        ${lkrPrice}, 0, ${lkrPrice}, 0, ${lkrPrice},
+        ${finalLkrPrice}, 0, ${finalLkrPrice}, 0, ${finalLkrPrice},
         'pending', 'unpaid', 'LKR', 'Domain'
       )
     `;
@@ -93,10 +123,14 @@ export async function POST(req: Request) {
     // 2. Create invoice item
     await sql`
       INSERT INTO invoice_items (invoice_id, description, quantity, price, total)
-      VALUES (${invoiceId}, ${`1 Year Domain Registration for ${cleanDomain}`}, 1, ${lkrPrice}, ${lkrPrice})
+      VALUES (${invoiceId}, ${itemDescription}, 1, ${finalLkrPrice}, ${finalLkrPrice})
     `;
 
     // 3. Create domain order linked to invoice
+    const finalSellUsd = parseFloat((finalLkrPrice / lkrRate).toFixed(2));
+    const finalCostUsd = parseFloat((finalLkrCost / lkrRate).toFixed(2));
+    const finalProfitUsd = parseFloat((finalSellUsd - finalCostUsd).toFixed(2));
+
     const inserted = await sql`
       INSERT INTO admin_domain_orders (
         client_email, domain_name, actual_price, selling_price, profit,
@@ -105,11 +139,11 @@ export async function POST(req: Request) {
         invoice_id, activation_lkr_price, activation_lkr_cost, activation_lkr_rate,
         renewal_lkr_price, renewal_lkr_cost, renewal_lkr_rate
       ) VALUES (
-        ${email}, ${cleanDomain}, ${costPrice}, ${sellPrice}, 
-        ${profit}, ${renewCost}, ${renewPrice}, ${provider}, null, 'pending',
+        ${email}, ${cleanDomain}, ${finalCostUsd}, ${finalSellUsd}, 
+        ${finalProfitUsd}, ${finalCostUsd}, ${finalSellUsd}, ${provider}, null, 'pending',
         true, ${autoRenew ?? false}, true, ${contacts ? JSON.stringify(contacts) : '{}'}::jsonb,
-        ${invoiceId}, ${lkrPrice}, ${lkrCost}, ${lkrRate},
-        ${lkrRenewPrice}, ${lkrRenewCost}, ${lkrRate}
+        ${invoiceId}, ${finalLkrPrice}, ${finalLkrCost}, ${lkrRate},
+        ${finalLkrRenewPrice}, ${finalLkrRenewCost}, ${lkrRate}
       )
       RETURNING id
     `;
@@ -128,7 +162,7 @@ export async function POST(req: Request) {
       domain: cleanDomain,
       id: inserted[0].id,
       invoice_id: invoiceId,
-      total_due: lkrPrice,
+      total_due: finalLkrPrice,
       currency: "LKR",
     });
   } catch (err: any) {

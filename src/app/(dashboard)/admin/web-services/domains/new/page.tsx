@@ -11,6 +11,20 @@ import {
   AlertCircle,
   Loader2,
   FileText,
+  Search,
+  Sparkles,
+  ArrowRight,
+  CheckCircle,
+  X,
+  Sliders,
+  ChevronLeft,
+  User,
+  CreditCard,
+  Building,
+  Phone,
+  Mail,
+  ShieldCheck,
+  Globe,
 } from "lucide-react";
 import {
   addDomainOrder,
@@ -18,7 +32,8 @@ import {
   uploadProviderInvoice,
 } from "@/app/(dashboard)/admin/actions/domains";
 import ClientCombobox from "@/app/(dashboard)/admin/components/ClientCombobox";
-import { getClients, createClient } from "@/app/(dashboard)/admin/actions/actions";
+import { getClients, createClient, createInvoice } from "@/app/(dashboard)/admin/actions/actions";
+import DomainSearch, { DomainSelectionAdminData } from "@/components/services/DomainSearch";
 
 // Formatters
 const formatLKR = (amount: number) =>
@@ -87,9 +102,41 @@ const convertPdfToImage = async (file: File): Promise<File> => {
 export default function NewDomainOrderPage() {
   const router = useRouter();
 
+  // Mode: "search" (Default client search experience) vs "manual" (Direct DB entry form)
+  const [viewMode, setViewMode] = useState<"search" | "manual">("search");
   const [lkrRate, setLkrRate] = useState<number>(310);
 
-  // Form states
+  // Clients
+  const [clients, setClients] = useState<any[]>([]);
+  const [clientsLoading, setClientsLoading] = useState(true);
+
+  // Modal State for Ordering Domain from Search
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [modalDomainData, setModalDomainData] = useState<DomainSelectionAdminData | null>(null);
+
+  // Modal Client selection state
+  const [modalClientId, setModalClientId] = useState("");
+  const [modalIsNewClient, setModalIsNewClient] = useState(false);
+  const [modalNewClient, setModalNewClient] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+  });
+
+  // Modal Pricing & Invoicing State
+  const [modalSellingPrice, setModalSellingPrice] = useState<string>("");
+  const [modalCostPrice, setModalCostPrice] = useState<string>("");
+  const [modalRenewalPrice, setModalRenewalPrice] = useState<string>("");
+  const [modalCurrency, setModalCurrency] = useState<"LKR" | "USD">("LKR");
+  const [modalAutoInvoice, setModalAutoInvoice] = useState(true);
+  const [modalPaymentStatus, setModalPaymentStatus] = useState<"unpaid" | "paid">("unpaid");
+  const [modalOrderStatus, setModalOrderStatus] = useState<string>("active");
+  const [modalAutoRenew, setModalAutoRenew] = useState(true);
+  const [modalNotes, setModalNotes] = useState("");
+  const [modalSubmitting, setModalSubmitting] = useState(false);
+
+  // Manual Form States (for legacy/custom manual database entry)
   const [email, setEmail] = useState("");
   const [domainName, setDomainName] = useState("");
   const [registrar, setRegistrar] = useState("Cloudflare");
@@ -99,10 +146,6 @@ export default function NewDomainOrderPage() {
     exp.setFullYear(exp.getFullYear() + 1);
     return exp.toISOString().split("T")[0];
   });
-
-  // Client Selection
-  const [clients, setClients] = useState<any[]>([]);
-  const [clientsLoading, setClientsLoading] = useState(true);
   const [clientId, setClientId] = useState("");
   const [manualEmail, setManualEmail] = useState(false);
   const [showNewClientForm, setShowNewClientForm] = useState(false);
@@ -114,7 +157,7 @@ export default function NewDomainOrderPage() {
   });
   const [creatingClient, setCreatingClient] = useState(false);
 
-  // Registration Pricing
+  // Manual Registration Pricing
   const [actualPriceCurrency, setActualPriceCurrency] = useState("USD");
   const [regCost, setRegCost] = useState("");
   const [regBankLkr, setRegBankLkr] = useState("");
@@ -122,7 +165,7 @@ export default function NewDomainOrderPage() {
   const [regPrice, setRegPrice] = useState("");
   const [regPriceLkr, setRegPriceLkr] = useState("");
 
-  // Renewal Pricing
+  // Manual Renewal Pricing
   const [renewCostCurrency, setRenewCostCurrency] = useState("USD");
   const [renewCost, setRenewCost] = useState("");
   const [renewBankLkr, setRenewBankLkr] = useState("");
@@ -130,21 +173,16 @@ export default function NewDomainOrderPage() {
   const [renewPrice, setRenewPrice] = useState("");
   const [renewPriceLkr, setRenewPriceLkr] = useState("");
 
-  // Invoice linking
+  // Manual Invoice linking & uploads
   const [invoiceId, setInvoiceId] = useState("");
   const [modalInvoices, setModalInvoices] = useState<any[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
-
-  // Provider Invoice
   const [providerInvoiceUrl, setProviderInvoiceUrl] = useState<string | null>(null);
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
-
-  // Search & submission
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState<any>(null);
+  const [autoCreateInvoice, setAutoCreateInvoice] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Fetch exchange rate and invoices
+  // Fetch initial data
   useEffect(() => {
     fetch("/api/services/domains/rate")
       .then((res) => (res.ok ? res.json() : null))
@@ -170,71 +208,234 @@ export default function NewDomainOrderPage() {
       .finally(() => setClientsLoading(false));
   }, []);
 
-  // Dynamic calculations for registration
-  const isLkr = actualPriceCurrency === "LKR";
-  const costNum = parseFloat(regCost) || 0;
-  const bankLkrNum = parseFloat(regBankLkr) || 0;
-  const effRateNum = parseFloat(regRate) || (isLkr ? 1 : (costNum > 0 && bankLkrNum > 0 ? bankLkrNum / costNum : lkrRate));
-  const regPriceLkrNum = parseFloat(regPriceLkr) || (parseFloat(regPrice) ? parseFloat(regPrice) * effRateNum : 0);
-  const regPriceUsdNum = parseFloat(regPrice) || (effRateNum > 0 ? regPriceLkrNum / effRateNum : 0);
-  const costUsdNum = isLkr ? (effRateNum > 0 ? costNum / effRateNum : 0) : costNum;
-  const profitUsd = regPriceUsdNum - costUsdNum;
-  const profitLkr = regPriceLkrNum - (isLkr ? costNum : (bankLkrNum || costNum * effRateNum));
+  // Handler when admin clicks "Register for Client" on any domain search result
+  const handleSelectForAdmin = (data: DomainSelectionAdminData) => {
+    setModalDomainData(data);
 
-  // Dynamic calculations for renewal
-  const isRenLkr = renewCostCurrency === "LKR";
-  const renCostNum = parseFloat(renewCost) || 0;
-  const renBankLkrNum = parseFloat(renewBankLkr) || 0;
-  const renRateNum = parseFloat(renewRate) || (isRenLkr ? 1 : (renCostNum > 0 && renBankLkrNum > 0 ? renBankLkrNum / renCostNum : effRateNum));
-  const renPriceLkrNum = parseFloat(renewPriceLkr) || (parseFloat(renewPrice) ? parseFloat(renewPrice) * renRateNum : 0);
-  const renPriceUsdNum = parseFloat(renewPrice) || (renRateNum > 0 ? renPriceLkrNum / renRateNum : 0);
-  const renCostUsdNum = isRenLkr ? (renRateNum > 0 ? renCostNum / renRateNum : 0) : renCostNum;
-  const renProfitUsd = renPriceUsdNum - renCostUsdNum;
-  const renProfitLkr = renPriceLkrNum - (isRenLkr ? renCostNum : (renBankLkrNum || renCostNum * renRateNum));
+    // Populate modal pricing
+    const isLk = data.domain.endsWith(".lk");
+    if (isLk) {
+      setModalCurrency("LKR");
+      setModalSellingPrice(String(data.priceLkr || 10000));
+      setModalCostPrice(String(data.costLkr || 8000));
+      setModalRenewalPrice(String(data.renewPriceLkr || data.priceLkr || 10000));
+    } else {
+      // Global domain
+      setModalCurrency("LKR");
+      setModalSellingPrice(String(data.priceLkr || Math.ceil((data.priceUsd || 14.12) * lkrRate)));
+      setModalCostPrice(String(data.costLkr || Math.ceil((data.priceUsd || 10.46) * lkrRate)));
+      setModalRenewalPrice(String(data.renewPriceLkr || Math.ceil((data.renewPriceUsd || 14.12) * lkrRate)));
+    }
 
-  const checkDomainAvailability = async () => {
-    if (!domainName || !domainName.includes(".")) {
-      alert("Please enter a valid domain name");
+    // Prepare informative notes
+    let notes = "";
+    if (data.packageType === "standard" && data.reservedNames && data.reservedNames.length > 0) {
+      notes = `LK Domain Registry Standard Package. Auto-reserved sibling domains: ${data.reservedNames.join(", ")}. Order placed on client behalf via Frametoque admin.`;
+    } else if (data.packageType === "economy") {
+      notes = `LK Domain Registry Economy Package. Order placed on client behalf via Frametoque admin.`;
+    } else if (data.packageType === "second_level") {
+      notes = `LK Domain Registry Second-Level Budget Package. Order placed on client behalf via Frametoque admin.`;
+    } else {
+      notes = `Global Domain registered via Cloudflare. Order placed on client behalf via Frametoque admin.`;
+    }
+    setModalNotes(notes);
+
+    // Default order status
+    setModalOrderStatus(isLk ? "pending_manual_registration" : "active");
+    setModalPaymentStatus("unpaid");
+    setModalAutoInvoice(true);
+
+    setIsOrderModalOpen(true);
+  };
+
+  // Switch from modal to manual form
+  const handleSwitchToManualForm = () => {
+    if (!modalDomainData) return;
+    setDomainName(modalDomainData.domain);
+    setRegistrar(modalDomainData.registrar || (modalDomainData.domain.endsWith(".lk") ? "LK Domain Registry" : "Cloudflare"));
+    
+    if (modalCurrency === "LKR") {
+      setActualPriceCurrency("LKR");
+      setRenewCostCurrency("LKR");
+      setRegPriceLkr(modalSellingPrice);
+      setRegCost(modalCostPrice);
+      setRegBankLkr(modalCostPrice);
+      setRenewPriceLkr(modalRenewalPrice);
+      setRenewCost(modalCostPrice);
+      setRenewBankLkr(modalCostPrice);
+    } else {
+      setActualPriceCurrency("USD");
+      setRenewCostCurrency("USD");
+      setRegPrice(modalSellingPrice);
+      setRegCost(modalCostPrice);
+      setRenewPrice(modalRenewalPrice);
+      setRenewCost(modalCostPrice);
+    }
+
+    if (modalClientId && modalClientId !== "new") {
+      setClientId(modalClientId);
+      const sel = clients.find((c) => String(c.id) === String(modalClientId));
+      if (sel) setEmail(sel.email || "");
+    }
+
+    setIsOrderModalOpen(false);
+    setViewMode("manual");
+  };
+
+  // Submit order for client from the Search Modal
+  const handleConfirmModalOrder = async () => {
+    if (!modalDomainData) return;
+
+    if (!modalClientId && !modalIsNewClient) {
+      alert("Please select a client or create a new client.");
       return;
     }
-    setSearchLoading(true);
-    setSearchResults(null);
-    try {
-      const res = await fetch(`/api/services/domains/check?domain=${encodeURIComponent(domainName)}`);
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data) throw new Error(data?.error || "Failed to check domain");
-      setSearchResults(data);
-      if (data.available) {
-        const costUsd = data.reg_price_usd || 10.46;
-        const renCostUsd = data.renew_price_usd || 10.46;
-        setRegCost(String(costUsd));
-        setRenewCost(String(renCostUsd));
-        const rate = parseFloat(regRate) || lkrRate;
-        const bankLkr = (costUsd * rate).toFixed(2);
-        setRegBankLkr(bankLkr);
-        setRenewBankLkr((renCostUsd * rate).toFixed(2));
 
-        const sellUsd = Number((costUsd * 1.35).toFixed(2));
-        const renSellUsd = Number((renCostUsd * 1.35).toFixed(2));
-        setRegPrice(String(sellUsd));
-        setRegPriceLkr(String((sellUsd * rate).toFixed(2)));
-        setRenewPrice(String(renSellUsd));
-        setRenewPriceLkr(String((renSellUsd * rate).toFixed(2)));
+    if (modalIsNewClient && (!modalNewClient.name || !modalNewClient.email)) {
+      alert("Please enter the new client's name and email address.");
+      return;
+    }
+
+    setModalSubmitting(true);
+
+    try {
+      let clientEmail = "";
+      let clientName = "";
+      let finalClientId: string | undefined = undefined;
+
+      if (modalIsNewClient) {
+        finalClientId = await createClient({
+          name: modalNewClient.name,
+          email: modalNewClient.email,
+          phone: modalNewClient.phone || null,
+          company: modalNewClient.company || null,
+        });
+        clientEmail = modalNewClient.email;
+        clientName = modalNewClient.name;
+
+        // Add to local state
+        const createdObj = {
+          id: finalClientId,
+          name: modalNewClient.name,
+          email: modalNewClient.email,
+          phone: modalNewClient.phone || "",
+          company: modalNewClient.company || "",
+        };
+        setClients((prev) => [createdObj, ...prev]);
+        setClientId(finalClientId);
       } else {
-        alert("Domain is already registered according to WHOIS, but you can still record it manually.");
+        const selected = clients.find((c) => String(c.id) === String(modalClientId));
+        if (!selected) {
+          alert("Selected client could not be found.");
+          setModalSubmitting(false);
+          return;
+        }
+        clientEmail = selected.email;
+        clientName = selected.name || selected.full_name || clientEmail.split("@")[0];
+        finalClientId = String(selected.id);
+      }
+
+      const domain = modalDomainData.domain;
+      const registrarName = modalDomainData.registrar || (domain.endsWith(".lk") ? "LK Domain Registry" : "Cloudflare");
+      const isLkr = modalCurrency === "LKR";
+      const sellPrice = parseFloat(modalSellingPrice) || 0;
+      const costPrice = parseFloat(modalCostPrice) || 0;
+      const renPrice = parseFloat(modalRenewalPrice) || sellPrice;
+      const profitVal = sellPrice - costPrice;
+      const effRate = lkrRate || 310;
+
+      let linkedInvoiceId: string | null = null;
+
+      // Auto-create client invoice if checked
+      if (modalAutoInvoice) {
+        try {
+          const invRes = await createInvoice(
+            {
+              clientId: finalClientId,
+              clientName: clientName,
+              userEmail: clientEmail,
+              projectName: `Domain Registration: ${domain}`,
+              date: new Date().toISOString().split("T")[0],
+              subtotal: sellPrice,
+              discount: 0,
+              total: sellPrice,
+              advance: 0,
+              totalDue: modalPaymentStatus === "paid" ? 0 : sellPrice,
+              workStatus: modalOrderStatus === "active" ? "completed" : "pending",
+              paymentStatus: modalPaymentStatus === "paid" ? "paid" : "unpaid",
+              currency: modalCurrency,
+              category: "Domain",
+            },
+            [
+              {
+                description: `1 Year Domain Registration for ${domain} (${registrarName})${
+                  modalDomainData.packageType ? ` - ${modalDomainData.packageType.toUpperCase()} Package` : ""
+                }`,
+                quantity: 1,
+                rate: sellPrice,
+              },
+            ]
+          );
+          if (invRes?.invoiceId) {
+            linkedInvoiceId = invRes.invoiceId;
+          }
+        } catch (invErr: any) {
+          console.warn("Invoice creation notice:", invErr);
+        }
+      }
+
+      const expDate = new Date();
+      expDate.setFullYear(expDate.getFullYear() + 1);
+      const expiryStr = expDate.toISOString().split("T")[0] + " 00:00:00";
+
+      const sellPriceLkr = isLkr ? sellPrice : sellPrice * effRate;
+      const costPriceLkr = isLkr ? costPrice : costPrice * effRate;
+      const renPriceLkr = isLkr ? renPrice : renPrice * effRate;
+
+      const orderPayload = {
+        client_email: clientEmail,
+        domain_name: domain,
+        actual_price: isLkr ? (costPrice / effRate) : costPrice,
+        actual_price_currency: modalCurrency,
+        selling_price: isLkr ? (sellPrice / effRate) : sellPrice,
+        profit: isLkr ? (profitVal / effRate) : profitVal,
+        renewal_cost: isLkr ? (costPrice / effRate) : costPrice,
+        renewal_price: isLkr ? (renPrice / effRate) : renPrice,
+        renewal_cost_currency: modalCurrency,
+        renewal_lkr_cost: costPriceLkr,
+        renewal_lkr_price: renPriceLkr,
+        renewal_lkr_rate: effRate,
+        registrar: registrarName,
+        expiry_date: expiryStr,
+        status: modalPaymentStatus === "paid" ? modalOrderStatus : "pending",
+        invoice_id: linkedInvoiceId,
+        activation_lkr_cost: costPriceLkr,
+        activation_lkr_price: sellPriceLkr,
+        activation_lkr_rate: effRate,
+        auto_renew: modalAutoRenew,
+      };
+
+      const res = await addDomainOrder(orderPayload);
+      if (res.success) {
+        setIsOrderModalOpen(false);
+        router.push("/admin/web-services/domains");
+      } else {
+        alert("Failed to place domain order: " + ((res as any).error || "Unknown error"));
+        setModalSubmitting(false);
       }
     } catch (err: any) {
-      alert("WHOIS search error: " + err.message);
-    } finally {
-      setSearchLoading(false);
+      alert("Error: " + err.message);
+      setModalSubmitting(false);
     }
   };
 
+  // Manual client combo change
   const handleClientChange = (e: any) => {
     const val = e.target.value;
     if (val === "new") {
       setClientId("new");
       setShowNewClientForm(true);
+      setEmail("");
     } else {
       setClientId(val);
       setShowNewClientForm(false);
@@ -245,6 +446,7 @@ export default function NewDomainOrderPage() {
     }
   };
 
+  // Manual client creation
   const handleCreateNewClient = async () => {
     if (!newClientData.name || !newClientData.email) {
       alert("Please enter a name and email for the new client.");
@@ -277,7 +479,8 @@ export default function NewDomainOrderPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Manual Form submit
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
       alert("Please select or enter a client email");
@@ -307,6 +510,45 @@ export default function NewDomainOrderPage() {
     const renSellLkr = parseFloat(renewPriceLkr) || (parseFloat(renewPrice) ? parseFloat(renewPrice) * finalRenRate : 0);
     const renSellUsd = parseFloat(renewPrice) || (finalRenRate > 0 ? renSellLkr / finalRenRate : 0);
 
+    let linkedInvoiceId = invoiceId.trim() || null;
+
+    if (autoCreateInvoice && !linkedInvoiceId && email) {
+      try {
+        const clientObj = clients.find((c) => String(c.id) === String(clientId));
+        const invoiceTotal = isLkrCurr ? (parseFloat(regPriceLkr) || rawCost) : (regSellLkr || regSellUsd * effRate);
+        const invRes = await createInvoice(
+          {
+            clientId: clientId && clientId !== "new" ? clientId : undefined,
+            clientName: clientObj?.name || clientObj?.full_name || email.split("@")[0],
+            userEmail: email,
+            projectName: `Domain Registration: ${domainName}`,
+            date: new Date().toISOString().split("T")[0],
+            subtotal: invoiceTotal,
+            discount: 0,
+            total: invoiceTotal,
+            advance: 0,
+            totalDue: invoiceTotal,
+            workStatus: status === "active" ? "completed" : "pending",
+            paymentStatus: status === "active" ? "paid" : "unpaid",
+            currency: isLkrCurr ? "LKR" : "USD",
+            category: "Domain",
+          },
+          [
+            {
+              description: `1 Year Domain Registration for ${domainName}`,
+              quantity: 1,
+              rate: invoiceTotal,
+            },
+          ]
+        );
+        if (invRes?.invoiceId) {
+          linkedInvoiceId = invRes.invoiceId;
+        }
+      } catch (invErr: any) {
+        console.warn("Auto-invoice generation notice:", invErr);
+      }
+    }
+
     try {
       const res = await addDomainOrder({
         client_email: email,
@@ -324,7 +566,7 @@ export default function NewDomainOrderPage() {
         registrar,
         expiry_date: expiry ? expiry + " 00:00:00" : "",
         status,
-        invoice_id: invoiceId.trim() || null,
+        invoice_id: linkedInvoiceId,
         provider_invoice_url: providerInvoiceUrl,
         activation_lkr_cost: bankDeductionLkr,
         activation_lkr_price: regSellLkr,
@@ -344,622 +586,558 @@ export default function NewDomainOrderPage() {
   };
 
   return (
-    <div className="space-y-4 pb-4 w-full max-w-[1600px] mx-auto min-h-[calc(100vh-140px)] flex flex-col justify-between">
-      <form id="domain-order-form" onSubmit={handleSubmit} className="space-y-4 flex-1 flex flex-col justify-between">
-        {/* Basic Domain Information Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-3.5 relative z-20">
-          <div className="border-b border-white/5 pb-2.5">
-            <h2 className="text-sm font-semibold text-white">Domain &amp; Client Details</h2>
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-gray-300 block">Client</label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const nextManual = !manualEmail;
-                    setManualEmail(nextManual);
-                    if (!nextManual && clientId) {
-                      const selected = clients.find((c) => String(c.id) === String(clientId));
-                      if (selected) setEmail(selected.email || "");
-                    }
-                  }}
-                  className="text-[11px] text-brand-400 hover:text-brand-300 transition-colors cursor-pointer"
-                >
-                  {manualEmail ? "Select from list" : "Enter email manually"}
-                </button>
-              </div>
-
-              {manualEmail ? (
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-brand-500 transition-colors text-white"
-                />
-              ) : (
-                <ClientCombobox
-                  name="clientId"
-                  value={clientId}
-                  onChange={handleClientChange}
-                  clients={clients}
-                  loading={clientsLoading}
-                />
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-300 block">Domain Name</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  required
-                  value={domainName}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setDomainName(val);
-                    if (val.toLowerCase().endsWith(".lk")) {
-                      setActualPriceCurrency("LKR");
-                      setRenewCostCurrency("LKR");
-                      if (registrar === "Cloudflare") {
-                        setRegistrar("LK Domain Registry");
-                      }
-                    }
-                  }}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-brand-500 transition-colors text-white font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={checkDomainAvailability}
-                  disabled={searchLoading}
-                  className="px-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap flex items-center gap-1.5"
-                >
-                  {searchLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  <span>{searchLoading ? "Checking..." : "Check API"}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {showNewClientForm && (
-            <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-brand-400">New Client Details</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowNewClientForm(false);
-                    setClientId("");
-                  }}
-                  className="text-xs text-gray-400 hover:text-white cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-2.5">
-                <input
-                  type="text"
-                  placeholder="Client Name *"
-                  value={newClientData.name}
-                  onChange={(e) => setNewClientData((prev) => ({ ...prev, name: e.target.value }))}
-                  className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-brand-500"
-                />
-                <input
-                  type="email"
-                  placeholder="Client Email *"
-                  value={newClientData.email}
-                  onChange={(e) => setNewClientData((prev) => ({ ...prev, email: e.target.value }))}
-                  className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-brand-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Company (Optional)"
-                  value={newClientData.company}
-                  onChange={(e) => setNewClientData((prev) => ({ ...prev, company: e.target.value }))}
-                  className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-brand-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Phone (Optional)"
-                  value={newClientData.phone}
-                  onChange={(e) => setNewClientData((prev) => ({ ...prev, phone: e.target.value }))}
-                  className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-brand-500"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleCreateNewClient}
-                  disabled={creatingClient}
-                  className="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
-                >
-                  {creatingClient && <Loader2 className="w-3 h-3 animate-spin" />}
-                  <span>{creatingClient ? "Saving..." : "Save & Select Client"}</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {searchResults && (
-            <div
-              className={`p-2.5 rounded-xl border text-xs ${
-                searchResults.available
-                  ? "bg-green-500/10 border-green-500/20 text-green-400"
-                  : "bg-red-500/10 border-red-500/20 text-red-400"
-              }`}
+    <div className="space-y-6 pb-8 w-full max-w-[1600px] mx-auto min-h-[calc(100vh-140px)]">
+      {/* Top Header & View Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Link
+              href="/admin/web-services/domains"
+              className="text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
             >
-              {searchResults.available
-                ? `✓ Domain is available! Registrar Cost: $${searchResults.reg_price_usd} (Renews: $${searchResults.renew_price_usd}). Prices auto-filled below.`
-                : `✗ WHOIS: Domain is already registered.`}
-            </div>
-          )}
-
-          <div className="grid sm:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-300 block">Registrar</label>
-              <input
-                type="text"
-                required
-                value={registrar}
-                onChange={(e) => setRegistrar(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-brand-500 transition-colors text-white"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-300 block">Status</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full bg-neutral-900 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-brand-500 transition-colors text-white cursor-pointer"
-              >
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-                <option value="expired">Expired</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-300 block">Expiry Date</label>
-              <input
-                type="date"
-                required
-                value={expiry}
-                onChange={(e) => setExpiry(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-brand-500 transition-colors text-white"
-              />
-            </div>
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span>Back to Domains</span>
+            </Link>
           </div>
+          <h1 className="text-xl md:text-2xl font-black text-white tracking-tight">
+            Register Domain for Client
+          </h1>
         </div>
 
-        {/* Pricing Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Registration Pricing & Bank Cost */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
-            <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
-              <h2 className="text-sm font-semibold text-white">
-                1. Registration Pricing &amp; Bank Cost
-              </h2>
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-400 font-medium">Currency:</label>
-                <select
-                  value={actualPriceCurrency}
-                  onChange={(e) => {
-                    const curr = e.target.value;
-                    setActualPriceCurrency(curr);
-                    if (curr === "LKR") {
-                      setRegBankLkr(regCost || "3500");
-                    } else {
-                      const costUsd = parseFloat(regCost) || 10.46;
-                      setRegBankLkr((costUsd * lkrRate).toFixed(2));
-                    }
-                  }}
-                  className="bg-neutral-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white outline-none focus:border-brand-500 cursor-pointer"
-                >
-                  <option value="USD">USD ($)</option>
-                  <option value="LKR">LKR (Rs.)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-300 block truncate">
-                  Cost ({isLkr ? "Rs." : "$"})
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={regCost}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setRegCost(val);
-                    const num = parseFloat(val) || 0;
-                    if (isLkr) {
-                      setRegBankLkr(val);
-                    } else {
-                      const rate = parseFloat(regRate) || lkrRate;
-                      setRegBankLkr((num * rate).toFixed(2));
-                    }
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm outline-none focus:border-brand-500 transition-colors font-mono text-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-gray-300 block truncate">
-                    Bank Deduction (LKR)
-                  </label>
-                  {!isLkr && costNum > 0 && bankLkrNum > 0 && (
-                    <span className="text-[10px] text-gray-400 font-mono">
-                      @{Math.round(effRateNum)}
-                    </span>
-                  )}
-                </div>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={regBankLkr}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setRegBankLkr(val);
-                    const bankNum = parseFloat(val) || 0;
-                    if (!isLkr && costNum > 0 && bankNum > 0) {
-                      const newRate = bankNum / costNum;
-                      setRegRate(newRate.toFixed(4));
-                      if (regPriceLkr) {
-                        setRegPrice((parseFloat(regPriceLkr) / newRate).toFixed(2));
-                      }
-                    }
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm outline-none focus:border-brand-500 transition-colors font-mono text-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-300 block truncate">
-                  Exchange Rate
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={regRate}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setRegRate(val);
-                    const r = parseFloat(val) || lkrRate;
-                    if (!isLkr && costNum > 0) {
-                      setRegBankLkr((costNum * r).toFixed(2));
-                    }
-                    if (regPrice) {
-                      setRegPriceLkr((parseFloat(regPrice) * r).toFixed(2));
-                    }
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm outline-none focus:border-brand-500 transition-colors font-mono text-white"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 pt-1.5 border-t border-white/5">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-200 block truncate">
-                  Selling Price (LKR)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={regPriceLkr}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setRegPriceLkr(val);
-                    const lkrP = parseFloat(val) || 0;
-                    if (effRateNum > 0) {
-                      setRegPrice((lkrP / effRateNum).toFixed(2));
-                    }
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm outline-none focus:border-brand-500 transition-colors font-mono text-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-400 block truncate">
-                  Equivalent USD ($)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={regPrice}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setRegPrice(val);
-                    const usdP = parseFloat(val) || 0;
-                    setRegPriceLkr((usdP * effRateNum).toFixed(2));
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm outline-none focus:border-brand-500 transition-colors font-mono text-gray-300"
-                />
-              </div>
-            </div>
-
-            {/* Live Profit Preview */}
-            <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-brand-500/10 border border-brand-500/20 text-xs">
-              <span className="text-gray-300 font-medium">Estimated Registration Profit:</span>
-              <span className="font-bold text-brand-400">
-                +{formatUSD(profitUsd)} ({formatLKR(profitLkr)})
-              </span>
-            </div>
-          </div>
-
-          {/* Renewal Pricing */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
-            <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
-              <h2 className="text-sm font-semibold text-white">
-                2. Renewal Pricing
-              </h2>
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-400 font-medium">Currency:</label>
-                <select
-                  value={renewCostCurrency}
-                  onChange={(e) => setRenewCostCurrency(e.target.value)}
-                  className="bg-neutral-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white outline-none focus:border-brand-500 cursor-pointer"
-                >
-                  <option value="USD">USD ($)</option>
-                  <option value="LKR">LKR (Rs.)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-300 block truncate">
-                  Renewal Cost ({renewCostCurrency === "LKR" ? "Rs." : "$"})
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={renewCost}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setRenewCost(val);
-                    const num = parseFloat(val) || 0;
-                    if (renewCostCurrency === "LKR") {
-                      setRenewBankLkr(val);
-                    } else {
-                      setRenewBankLkr((num * renRateNum).toFixed(2));
-                    }
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm outline-none focus:border-brand-500 transition-colors font-mono text-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-300 block truncate">
-                  Renewal Bank Deduction (LKR)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={renewBankLkr}
-                  onChange={(e) => setRenewBankLkr(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm outline-none focus:border-brand-500 transition-colors font-mono text-white"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 pt-1.5 border-t border-white/5">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-200 block truncate">
-                  Renewal Selling Price (LKR)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={renewPriceLkr}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setRenewPriceLkr(val);
-                    const lkrP = parseFloat(val) || 0;
-                    if (renRateNum > 0) {
-                      setRenewPrice((lkrP / renRateNum).toFixed(2));
-                    }
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm outline-none focus:border-brand-500 transition-colors font-mono text-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-400 block truncate">
-                  Equivalent USD ($)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={renewPrice}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setRenewPrice(val);
-                    const usdP = parseFloat(val) || 0;
-                    setRenewPriceLkr((usdP * renRateNum).toFixed(2));
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm outline-none focus:border-brand-500 transition-colors font-mono text-gray-300"
-                />
-              </div>
-            </div>
-
-            {/* Live Renewal Profit Preview */}
-            <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-brand-500/10 border border-brand-500/20 text-xs">
-              <span className="text-gray-300 font-medium">Estimated Renewal Profit:</span>
-              <span className="font-bold text-brand-400">
-                +{formatUSD(renProfitUsd)} ({formatLKR(renProfitLkr)})
-              </span>
-            </div>
-          </div>
+        {/* View Mode Switcher */}
+        <div className="flex items-center gap-1.5 bg-white/5 p-1 rounded-2xl border border-white/10 shrink-0 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setViewMode("search")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              viewMode === "search"
+                ? "bg-brand-500 text-white shadow-lg shadow-brand-500/25"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span>Live Domain Search</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("manual")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              viewMode === "manual"
+                ? "bg-brand-500 text-white shadow-lg shadow-brand-500/25"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>Manual / Legacy Entry</span>
+          </button>
         </div>
+      </div>
 
-        {/* Invoicing & Provider Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Invoice Linking Card */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
-              <h2 className="text-sm font-semibold text-white">
-                3. Link Invoice (Order Billing)
-              </h2>
-              {invoiceId && (
-                <button
-                  type="button"
-                  onClick={() => setInvoiceId("")}
-                  className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer"
-                >
-                  <Unlink className="w-3.5 h-3.5" />
-                  Clear Link
-                </button>
-              )}
+      {/* VIEW MODE 1: CLIENT DOMAIN SEARCH */}
+      {viewMode === "search" && (
+        <div className="space-y-6">
+          <DomainSearch
+            lkrRate={lkrRate}
+            adminMode={true}
+            onSelectForAdmin={handleSelectForAdmin}
+            selectedDomain={modalDomainData?.domain}
+          />
+        </div>
+      )}
+
+      {/* VIEW MODE 2: MANUAL FORM */}
+      {viewMode === "manual" && (
+        <form onSubmit={handleManualSubmit} className="space-y-4">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-3.5 relative z-20">
+            <div className="border-b border-white/5 pb-2.5">
+              <h2 className="text-sm font-semibold text-white">Domain &amp; Client Details</h2>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-300 block">Select Invoice</label>
-                <select
-                  value={invoiceId}
-                  onChange={(e) => setInvoiceId(e.target.value)}
-                  className="w-full bg-neutral-900 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-brand-500 cursor-pointer"
-                >
-                  <option value="">-- No Linked Invoice --</option>
-                  {modalInvoices.map((inv) => (
-                    <option key={inv.invoice_id} value={inv.invoice_id}>
-                      {inv.invoice_id} - {inv.user_email} ({formatLKR(inv.total)}) [{inv.payment_status}]
-                    </option>
-                  ))}
-                </select>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-gray-300 block">Client</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextManual = !manualEmail;
+                      setManualEmail(nextManual);
+                      if (!nextManual && clientId) {
+                        const selected = clients.find((c) => String(c.id) === String(clientId));
+                        if (selected) setEmail(selected.email || "");
+                      }
+                    }}
+                    className="text-[11px] text-brand-400 hover:text-brand-300 transition-colors cursor-pointer"
+                  >
+                    {manualEmail ? "Select from list" : "Enter email manually"}
+                  </button>
+                </div>
+
+                {manualEmail ? (
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-brand-500 transition-colors text-white"
+                  />
+                ) : (
+                  <ClientCombobox
+                    name="clientId"
+                    value={clientId}
+                    onChange={handleClientChange}
+                    clients={clients}
+                    loading={clientsLoading}
+                  />
+                )}
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-300 block">Or Invoice ID</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-300 block">Domain Name</label>
                 <input
                   type="text"
-                  value={invoiceId}
-                  onChange={(e) => setInvoiceId(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-brand-500 font-mono text-white"
+                  required
+                  placeholder="e.g. acmecorp.com or selexprime.lk"
+                  value={domainName}
+                  onChange={(e) => setDomainName(e.target.value.toLowerCase().trim())}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-brand-500 transition-colors text-white font-mono"
                 />
               </div>
             </div>
 
-            {invoiceId ? (
-              <div className="flex items-center gap-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-xs text-blue-400">
-                <Check className="w-4 h-4 shrink-0" />
-                <span>
-                  Order linked to invoice: <strong className="font-mono text-white">{invoiceId}</strong>
-                </span>
-              </div>
-            ) : (
-              <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl text-xs text-gray-400">
-                No invoice linked. You can link an existing client invoice or link one later.
-              </div>
-            )}
-          </div>
-
-          {/* Provider Invoice Upload */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4 flex flex-col justify-between">
-            <div className="border-b border-white/5 pb-2.5">
-              <h2 className="text-sm font-semibold text-white">
-                Provider Invoice (Admin Only - Optional)
-              </h2>
-            </div>
-
-            <div className="flex-1 flex flex-col justify-center">
-              <input
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  setUploadingInvoice(true);
-                  try {
-                    const convertedFile = await convertPdfToImage(file);
-                    const formData = new FormData();
-                    formData.append("file", convertedFile);
-                    const url = await uploadProviderInvoice(formData);
-                    setProviderInvoiceUrl(url);
-                  } catch (err: any) {
-                    alert("Failed to upload: " + err.message);
-                  } finally {
-                    setUploadingInvoice(false);
-                  }
-                }}
-                className="hidden"
-                id="provider-invoice-page-upload"
-              />
-              <label
-                htmlFor="provider-invoice-page-upload"
-                className="border-2 border-dashed border-white/10 hover:border-brand-500/50 rounded-2xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-white/[0.02] hover:bg-white/[0.04] group"
-              >
-                <div className="w-9 h-9 rounded-xl bg-brand-500/10 flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
-                  <Upload className="w-4 h-4 text-brand-400" />
+            {showNewClientForm && (
+              <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-2.5">
+                <span className="text-xs font-semibold text-brand-400">New Client Details</span>
+                <div className="grid sm:grid-cols-2 gap-2.5">
+                  <input
+                    type="text"
+                    placeholder="Full Name *"
+                    value={newClientData.name}
+                    onChange={(e) => setNewClientData({ ...newClientData, name: e.target.value })}
+                    className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email Address *"
+                    value={newClientData.email}
+                    onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })}
+                    className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Company"
+                    value={newClientData.company}
+                    onChange={(e) => setNewClientData({ ...newClientData, company: e.target.value })}
+                    className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Phone"
+                    value={newClientData.phone}
+                    onChange={(e) => setNewClientData({ ...newClientData, phone: e.target.value })}
+                    className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none"
+                  />
                 </div>
-                <p className="text-xs font-medium text-gray-200">
-                  {uploadingInvoice ? "Uploading invoice..." : providerInvoiceUrl ? "Replace provider invoice" : "Click to upload registrar receipt or invoice"}
-                </p>
-                <p className="text-[11px] text-gray-400 mt-0.5">Supports PDF, PNG, JPG</p>
-              </label>
-
-              {providerInvoiceUrl && (
-                <div className="flex items-center justify-between mt-2.5 px-3 py-2 bg-brand-500/10 border border-brand-500/20 rounded-xl text-xs">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5 text-brand-400" />
-                    <a
-                      href={providerInvoiceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-brand-300 hover:underline flex items-center gap-1 font-medium"
-                    >
-                      <span>View Uploaded Invoice</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
+                <div className="flex justify-end gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => setProviderInvoiceUrl(null)}
-                    className="text-red-400 hover:text-red-300 cursor-pointer font-medium"
+                    onClick={() => setShowNewClientForm(false)}
+                    className="px-3 py-1 bg-white/5 rounded-lg text-xs text-gray-400"
                   >
-                    Remove
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateNewClient}
+                    disabled={creatingClient}
+                    className="px-3 py-1 bg-brand-600 rounded-lg text-xs font-semibold text-white"
+                  >
+                    {creatingClient ? "Saving..." : "Create Client"}
                   </button>
                 </div>
-              )}
+              </div>
+            )}
+
+            <div className="grid sm:grid-cols-3 gap-4 pt-2">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-300 block">Registrar</label>
+                <select
+                  value={registrar}
+                  onChange={(e) => setRegistrar(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white"
+                >
+                  <option value="Cloudflare">Cloudflare</option>
+                  <option value="LK Domain Registry">LK Domain Registry (.lk)</option>
+                  <option value="Internet.bs">Internet.bs</option>
+                  <option value="Namecheap">Namecheap</option>
+                  <option value="GoDaddy">GoDaddy</option>
+                  <option value="Other">Other Registrar</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-300 block">Status</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white"
+                >
+                  <option value="active">Active</option>
+                  <option value="pending">Pending</option>
+                  <option value="pending_manual_registration">Pending Manual Registration</option>
+                  <option value="expired">Expired</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-300 block">Expiry Date</label>
+                <input
+                  type="date"
+                  value={expiry}
+                  onChange={(e) => setExpiry(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Bottom Actions Bar */}
-        <div className="flex items-center justify-end pt-1">
-          <div className="flex items-center gap-3">
+          {/* Pricing Details Card */}
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-3.5">
+            <div className="border-b border-white/5 pb-2.5">
+              <h2 className="text-sm font-semibold text-white">Pricing &amp; Rates</h2>
+            </div>
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-300 block">Cost Price ({actualPriceCurrency})</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={regCost}
+                  onChange={(e) => setRegCost(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-300 block">Retail Price LKR</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={regPriceLkr}
+                  onChange={(e) => setRegPriceLkr(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-300 block">Renewal Price LKR</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={renewPriceLkr}
+                  onChange={(e) => setRenewPriceLkr(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Submit Actions */}
+          <div className="flex items-center justify-end gap-3 pt-2">
             <Link
               href="/admin/web-services/domains"
-              className="px-5 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl font-medium transition-colors text-xs text-gray-300 cursor-pointer"
+              className="px-5 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl font-medium text-xs text-gray-300"
             >
               Cancel
             </Link>
             <button
               type="submit"
-              disabled={submitting || uploadingInvoice}
-              className="px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-semibold transition-colors text-xs disabled:opacity-50 cursor-pointer flex items-center gap-2 shadow-lg shadow-brand-500/20"
+              disabled={submitting}
+              className="px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-semibold text-xs disabled:opacity-50 flex items-center gap-2"
             >
-              {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>{submitting ? "Saving..." : "Add Domain Order"}</span>
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              <span>Save Domain Order</span>
             </button>
           </div>
+        </form>
+      )}
+
+      {/* REGISTER DOMAIN FOR CLIENT MODAL */}
+      {isOrderModalOpen && modalDomainData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="bg-[#0b0c10] border border-white/15 rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-white/10 flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-brand-400 bg-brand-500/10 px-2.5 py-0.5 rounded-full border border-brand-500/20">
+                    Domain Order Configuration
+                  </span>
+                  <span className="text-xs font-medium text-gray-400 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10">
+                    {modalDomainData.registrar || (modalDomainData.domain.endsWith(".lk") ? "LK Domain Registry" : "Cloudflare")}
+                  </span>
+                  {modalDomainData.packageType === "standard" && (
+                    <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/30">
+                      Standard Multi-Tier Bundle
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-2xl font-black text-white font-mono tracking-tight">
+                  {modalDomainData.domain}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOrderModalOpen(false)}
+                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6 flex-1">
+              {/* Standard Reserved Sibling Names Notice */}
+              {modalDomainData.packageType === "standard" &&
+                modalDomainData.reservedNames &&
+                modalDomainData.reservedNames.length > 0 && (
+                  <div className="p-4 rounded-2xl bg-brand-500/5 border border-brand-500/20 space-y-2">
+                    <span className="text-xs font-bold text-brand-300 block">
+                      Auto-Reserved Domain Variants Included:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {modalDomainData.reservedNames.map((resName) => (
+                        <span
+                          key={resName}
+                          className="font-mono text-xs text-gray-200 bg-black/40 px-2.5 py-1 rounded-md border border-white/10"
+                        >
+                          {resName}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              {/* STEP 1: CLIENT SELECTION */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-brand-400" />
+                    <span>Choose Client *</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModalIsNewClient(!modalIsNewClient);
+                      if (!modalIsNewClient) {
+                        setModalClientId("");
+                      }
+                    }}
+                    className="text-xs text-brand-400 hover:text-brand-300 font-semibold transition-colors cursor-pointer"
+                  >
+                    {modalIsNewClient ? "Select existing client" : "+ Create New Client"}
+                  </button>
+                </div>
+
+                {!modalIsNewClient ? (
+                  <ClientCombobox
+                    name="modalClientId"
+                    value={modalClientId}
+                    onChange={(e) => setModalClientId(e.target.value)}
+                    clients={clients}
+                    loading={clientsLoading}
+                  />
+                ) : (
+                  <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
+                    <span className="text-xs font-bold text-brand-400 block">Enter New Client Details</span>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        placeholder="Full Name *"
+                        value={modalNewClient.name}
+                        onChange={(e) => setModalNewClient({ ...modalNewClient, name: e.target.value })}
+                        className="bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-brand-500"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email Address *"
+                        value={modalNewClient.email}
+                        onChange={(e) => setModalNewClient({ ...modalNewClient, email: e.target.value })}
+                        className="bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-brand-500"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Phone Number"
+                        value={modalNewClient.phone}
+                        onChange={(e) => setModalNewClient({ ...modalNewClient, phone: e.target.value })}
+                        className="bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-brand-500"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Company / Organization"
+                        value={modalNewClient.company}
+                        onChange={(e) => setModalNewClient({ ...modalNewClient, company: e.target.value })}
+                        className="bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-brand-500"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* STEP 2: PRICING & PROFIT */}
+              <div className="space-y-3 pt-2 border-t border-white/5">
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
+                  <CreditCard className="w-3.5 h-3.5 text-brand-400" />
+                  <span>Pricing &amp; Margins ({modalCurrency})</span>
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <span className="text-[11px] text-gray-400 block">Retail Selling Price</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={modalSellingPrice}
+                      onChange={(e) => setModalSellingPrice(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none focus:border-brand-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[11px] text-gray-400 block">Wholesale Cost Price</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={modalCostPrice}
+                      onChange={(e) => setModalCostPrice(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none focus:border-brand-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[11px] text-gray-400 block">Annual Renewal Price</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={modalRenewalPrice}
+                      onChange={(e) => setModalRenewalPrice(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none focus:border-brand-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Profit Margin Indicator */}
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs text-emerald-300">
+                  <span>Net Estimated Profit Margin:</span>
+                  <strong className="text-emerald-400 font-mono text-sm">
+                    +{modalCurrency === "LKR"
+                      ? formatLKR((parseFloat(modalSellingPrice) || 0) - (parseFloat(modalCostPrice) || 0))
+                      : formatUSD((parseFloat(modalSellingPrice) || 0) - (parseFloat(modalCostPrice) || 0))}
+                  </strong>
+                </div>
+              </div>
+
+              {/* STEP 3: INVOICE & ORDER SETTINGS */}
+              <div className="space-y-4 pt-2 border-t border-white/5">
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-300 block">
+                  Invoice &amp; Order Settings
+                </label>
+
+                {/* Auto create invoice toggle */}
+                <label className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/10 hover:border-white/20 transition-all cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={modalAutoInvoice}
+                    onChange={(e) => setModalAutoInvoice(e.target.checked)}
+                    className="w-4 h-4 rounded text-brand-500 border-white/20 bg-white/5 focus:ring-0 cursor-pointer"
+                  />
+                  <div className="text-xs">
+                    <span className="text-white font-semibold block">Generate and link client invoice automatically</span>
+                    <span className="text-gray-400 text-[11px]">
+                      Creates official invoice with line item and tracks payment in client dashboard.
+                    </span>
+                  </div>
+                </label>
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <span className="text-[11px] text-gray-400 block">Payment Status</span>
+                    <select
+                      value={modalPaymentStatus}
+                      onChange={(e) => setModalPaymentStatus(e.target.value as any)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500 cursor-pointer"
+                    >
+                      <option value="unpaid">Unpaid (Send Invoice to Client)</option>
+                      <option value="paid">Paid (Payment Received via Phone/Bank)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[11px] text-gray-400 block">Order Status</span>
+                    <select
+                      value={modalOrderStatus}
+                      onChange={(e) => setModalOrderStatus(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500 cursor-pointer"
+                    >
+                      <option value="active">Active (Ready &amp; Configured)</option>
+                      <option value="pending_manual_registration">Pending Manual Registration (Registry)</option>
+                      <option value="pending">Pending</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Internal Notes */}
+                <div className="space-y-1">
+                  <span className="text-[11px] text-gray-400 block">Internal Order Notes</span>
+                  <textarea
+                    rows={2}
+                    value={modalNotes}
+                    onChange={(e) => setModalNotes(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-gray-200 outline-none focus:border-brand-500 leading-relaxed font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 bg-black/40">
+              <button
+                type="button"
+                onClick={handleSwitchToManualForm}
+                className="text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium cursor-pointer"
+              >
+                Switch to Advanced Form →
+              </button>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsOrderModalOpen(false)}
+                  className="px-5 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl font-medium text-xs text-gray-300 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmModalOrder}
+                  disabled={modalSubmitting}
+                  className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs shadow-lg shadow-emerald-500/20 disabled:opacity-50 transition-all cursor-pointer flex items-center gap-2"
+                >
+                  {modalSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Placing Order...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Confirm &amp; Register Domain</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </form>
+      )}
     </div>
   );
 }

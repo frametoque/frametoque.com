@@ -3,8 +3,24 @@
 import { useState } from "react";
 import { Search, CheckCircle, XCircle, Globe, Server, ShieldCheck, Mail, ArrowRight, Loader2 } from "lucide-react";
 
+export interface DomainSelectionAdminData {
+  domain: string;
+  packageType?: "standard" | "economy" | "second_level" | "global" | string;
+  priceLkr?: number;
+  costLkr?: number;
+  renewPriceLkr?: number;
+  priceUsd?: number;
+  renewPriceUsd?: number;
+  registrar?: string;
+  currency?: string;
+  reservedNames?: string[];
+}
+
 interface DomainSearchProps {
   lkrRate?: number;
+  adminMode?: boolean;
+  onSelectForAdmin?: (data: DomainSelectionAdminData) => void;
+  selectedDomain?: string | null;
 }
 
 const roundToNearest10 = (amount: number) => Math.ceil((amount || 0) / 10) * 10;
@@ -12,7 +28,12 @@ const roundToNearest10 = (amount: number) => Math.ceil((amount || 0) / 10) * 10;
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" }).format(amount || 0);
 
-export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
+export default function DomainSearch({
+  lkrRate = 300,
+  adminMode = false,
+  onSelectForAdmin,
+  selectedDomain,
+}: DomainSearchProps) {
   const [domainInput, setDomainInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -52,8 +73,65 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
     }
   };
 
-  const handleOrderDomain = async (targetDomain: string) => {
+  const handleOrderDomain = async (
+    targetDomain: string,
+    options?: { packageType?: string; customPriceLkr?: number }
+  ) => {
     if (!targetDomain) return;
+
+    if (adminMode && onSelectForAdmin) {
+      const packageType = options?.packageType || "global";
+      let priceLkr = options?.customPriceLkr;
+      let costLkr: number | undefined;
+      let renewPriceLkr: number | undefined;
+      let priceUsd: number | undefined;
+      let renewPriceUsd: number | undefined;
+      let registrar = "Cloudflare";
+      let currency = "LKR";
+      let reservedNames: string[] = [];
+
+      if (result?.lk_tiers) {
+        if (packageType === "standard") {
+          priceLkr = result.lk_tiers.standard.price_lkr || 10000;
+          costLkr = result.lk_tiers.standard.cost_lkr || 8000;
+          renewPriceLkr = result.lk_tiers.standard.renew_price_lkr || 10000;
+          registrar = "LK Domain Registry";
+          reservedNames = result.lk_tiers.standard.reserved_names || [];
+        } else if (packageType === "economy") {
+          priceLkr = result.lk_tiers.economy.price_lkr || 6500;
+          costLkr = result.lk_tiers.economy.cost_lkr || 5000;
+          renewPriceLkr = result.lk_tiers.economy.renew_price_lkr || 6500;
+          registrar = "LK Domain Registry";
+        } else if (packageType === "second_level") {
+          priceLkr = options?.customPriceLkr || 2000;
+          costLkr = 1000;
+          renewPriceLkr = priceLkr;
+          registrar = "LK Domain Registry";
+        }
+      } else {
+        registrar = "Cloudflare";
+        priceUsd = parseFloat(result?.reg_price_usd || 0);
+        renewPriceUsd = parseFloat(result?.renew_price_usd || 0);
+        priceLkr = roundToNearest10(priceUsd * lkrRate);
+        renewPriceLkr = roundToNearest10(renewPriceUsd * lkrRate);
+        costLkr = roundToNearest10(parseFloat(result?.actual_cost_usd || result?.reg_price_usd || 0) * lkrRate);
+      }
+
+      onSelectForAdmin({
+        domain: targetDomain,
+        packageType,
+        priceLkr,
+        costLkr,
+        renewPriceLkr,
+        priceUsd,
+        renewPriceUsd,
+        registrar,
+        currency,
+        reservedNames,
+      });
+      return;
+    }
+
     setOrderingDomain(targetDomain);
     setError("");
     setSuccessMsg("");
@@ -62,7 +140,11 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
       const res = await fetch("/api/services/domains/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ domain: targetDomain }),
+        body: JSON.stringify({
+          domain: targetDomain,
+          packageType: options?.packageType,
+          customPriceLkr: options?.customPriceLkr,
+        }),
       });
       const data = await res.json();
 
@@ -151,51 +233,277 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
         {result && (
           <div className="mt-8 pt-8 border-t border-neutral-800 max-w-2xl mx-auto relative z-10 space-y-6">
             {result.available ? (
-              <div className="flex flex-col sm:flex-row items-center justify-between p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl gap-4">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="w-8 h-8 text-emerald-400 shrink-0" />
-                  <div>
-                    <h4 className="text-lg font-bold text-white leading-snug">{result.domain}</h4>
-                    <p className="text-emerald-400 text-xs font-semibold uppercase tracking-wider mt-0.5">Available for registration</p>
-                    {result.note &&
-                      !result.note.includes("Code") &&
-                      !result.note.includes("error") &&
-                      !result.note.toLowerCase().includes("sandbox") &&
-                      !result.note.toLowerCase().includes("cloudflare") && (
-                        <p className="text-gray-400 text-[10px] mt-1">{result.note}</p>
-                      )}
+              result.lk_tiers ? (
+                /* LK Domain Registry Packages & Options View */
+                <div className="space-y-6">
+                  {/* Standard (Recommended) Tier */}
+                  <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 space-y-4 shadow-xl">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <h4 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                          {result.lk_tiers.standard.domain}
+                        </h4>
+                        <span className="px-2.5 py-0.5 rounded-md border border-gray-600 bg-white/5 text-gray-300 text-xs font-semibold">
+                          Standard
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-md border border-blue-500/40 bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-wider">
+                          RECOMMENDED
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-4 self-end sm:self-auto">
+                        <div className="text-right">
+                          <span className="text-xl font-black text-white">
+                            {formatLKR(result.lk_tiers.standard.price_lkr)}
+                          </span>
+                          <span className="text-xs text-gray-400 font-normal">/yr</span>
+                        </div>
+                        {orderedDomains.includes(result.lk_tiers.standard.domain.toLowerCase()) ? (
+                          <span className="px-6 py-3 rounded-3xl font-bold bg-slate-800/45 text-emerald-400 border border-emerald-500/30 text-sm flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4" /> Ordered
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              handleOrderDomain(result.lk_tiers.standard.domain, {
+                                packageType: "standard",
+                                customPriceLkr: result.lk_tiers.standard.price_lkr,
+                              })
+                            }
+                            disabled={orderingDomain === result.lk_tiers.standard.domain}
+                            className={`px-6 py-3 rounded-3xl font-bold flex items-center gap-2 transition-all cursor-pointer text-xs disabled:opacity-50 ${
+                              selectedDomain?.toLowerCase() === result.lk_tiers.standard.domain.toLowerCase()
+                                ? "bg-brand-500 hover:bg-brand-600 text-white shadow-lg shadow-brand-500/30 ring-2 ring-brand-400"
+                                : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                            }`}
+                          >
+                            {orderingDomain === result.lk_tiers.standard.domain ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <ArrowRight className="w-4 h-4" />
+                            )}
+                            <span>
+                              {adminMode
+                                ? selectedDomain?.toLowerCase() === result.lk_tiers.standard.domain.toLowerCase()
+                                  ? "Selected for Client"
+                                  : "Register for Client"
+                                : orderingDomain === result.lk_tiers.standard.domain
+                                ? "Ordering..."
+                                : "Buy Domain"}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-white/5 text-xs text-gray-400 space-y-1.5">
+                      <p className="text-gray-400 font-medium">You automatically reserve following names:</p>
+                      <div className="flex flex-wrap gap-2 pt-0.5">
+                        {result.lk_tiers.standard.reserved_names?.map((resName: string) => (
+                          <span
+                            key={resName}
+                            className="font-mono text-gray-300 bg-white/5 px-2.5 py-1 rounded-md text-[11px] border border-white/5"
+                          >
+                            {resName}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Other options related to your domain name search */}
+                  <div className="space-y-3">
+                    <h5 className="text-sm font-semibold text-gray-400">
+                      Other options related to your domain name search
+                    </h5>
+                    <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <h4 className="text-lg font-bold text-white">{result.lk_tiers.economy.domain}</h4>
+                        <span className="px-2.5 py-0.5 rounded-md border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-semibold">
+                          Economy
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-4 self-end sm:self-auto">
+                        <div className="text-right">
+                          <span className="text-base font-bold text-white">
+                            {formatLKR(result.lk_tiers.economy.price_lkr)}
+                          </span>
+                          <span className="text-xs text-gray-400 font-normal">/yr</span>
+                        </div>
+                        {orderedDomains.includes(result.lk_tiers.economy.domain.toLowerCase()) ? (
+                          <span className="px-4 py-2 rounded-2xl font-bold bg-slate-800/45 text-emerald-400 border border-emerald-500/30 text-xs">
+                            Ordered
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              handleOrderDomain(result.lk_tiers.economy.domain, {
+                                packageType: "economy",
+                                customPriceLkr: result.lk_tiers.economy.price_lkr,
+                              })
+                            }
+                            disabled={orderingDomain === result.lk_tiers.economy.domain}
+                            className={`px-4 py-2 text-xs font-semibold rounded-2xl transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50 ${
+                              selectedDomain?.toLowerCase() === result.lk_tiers.economy.domain.toLowerCase()
+                                ? "bg-brand-500 text-white border border-brand-400 shadow-md shadow-brand-500/20"
+                                : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            }`}
+                          >
+                            {orderingDomain === result.lk_tiers.economy.domain ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            )}
+                            <span>
+                              {adminMode
+                                ? selectedDomain?.toLowerCase() === result.lk_tiers.economy.domain.toLowerCase()
+                                  ? "Selected"
+                                  : "Register for Client"
+                                : orderingDomain === result.lk_tiers.economy.domain
+                                ? "Ordering..."
+                                : "Buy"}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Budget (Second Level Domain Names Only) */}
+                  <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
+                    <h5 className="text-sm font-semibold text-gray-300">
+                      Budget (Second Level Domain Names Only)
+                    </h5>
+                    <div className="divide-y divide-white/5">
+                      {result.lk_tiers.second_level?.map((item: any) => {
+                        const isOrdered = orderedDomains.includes(item.domain.toLowerCase());
+                        const isOrdering = orderingDomain === item.domain;
+                        return (
+                          <div
+                            key={item.domain}
+                            className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-4"
+                          >
+                            <span className="font-semibold text-white text-sm font-mono">
+                              {item.domain}
+                            </span>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <span className="text-sm font-bold text-white block">
+                                  {formatLKR(item.price_lkr)}
+                                  <span className="text-xs text-gray-400 font-normal">/yr</span>
+                                </span>
+                              </div>
+                              {isOrdered ? (
+                                <span className="px-4 py-2 text-xs font-semibold rounded-2xl bg-slate-800/45 text-emerald-400 border border-emerald-500/20">
+                                  Ordered
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() =>
+                                    handleOrderDomain(item.domain, {
+                                      packageType: "second_level",
+                                      customPriceLkr: item.price_lkr,
+                                    })
+                                  }
+                                  disabled={isOrdering}
+                                  className={`px-4 py-1.5 text-xs font-semibold rounded-2xl transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50 ${
+                                    selectedDomain?.toLowerCase() === item.domain.toLowerCase()
+                                      ? "bg-brand-500 text-white border border-brand-400 shadow-md shadow-brand-500/20"
+                                      : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                  }`}
+                                >
+                                  {isOrdering ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                  )}
+                                  <span>
+                                    {adminMode
+                                      ? selectedDomain?.toLowerCase() === item.domain.toLowerCase()
+                                        ? "Selected"
+                                        : "Register for Client"
+                                      : isOrdering
+                                      ? "Ordering..."
+                                      : "Buy"}
+                                  </span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">Price (1st Yr)</p>
-                    <p className="text-2xl font-black text-white">
-                      {formatLKR(roundToNearest10(parseFloat(result.reg_price_usd || 0) * lkrRate))}
-                    </p>
-                    <p className="text-[11px] text-gray-400 mt-1">
-                      Est. Renews at <span className="text-gray-300 font-semibold">~{formatLKR(roundToNearest10(parseFloat(result.renew_price_usd || 0) * lkrRate))}/yr</span>*
-                    </p>
+              ) : (
+                /* Standard Top-Level Domain (Non-LK) */
+                <div className="flex flex-col sm:flex-row items-center justify-between p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl gap-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-8 h-8 text-emerald-400 shrink-0" />
+                    <div>
+                      <h4 className="text-lg font-bold text-white leading-snug">{result.domain}</h4>
+                      <p className="text-emerald-400 text-xs font-semibold uppercase tracking-wider mt-0.5">
+                        Available for registration
+                      </p>
+                      {result.note &&
+                        !result.note.includes("Code") &&
+                        !result.note.includes("error") &&
+                        !result.note.toLowerCase().includes("sandbox") &&
+                        !result.note.toLowerCase().includes("cloudflare") &&
+                        !result.note.toLowerCase().includes("lk nic") &&
+                        !result.note.toLowerCase().includes("local registry") && (
+                          <p className="text-gray-400 text-[10px] mt-1">{result.note}</p>
+                        )}
+                    </div>
                   </div>
-                  {orderedDomains.includes(result.domain.toLowerCase()) ? (
-                    <span className="px-6 py-3 rounded-3xl font-bold bg-slate-800/45 text-emerald-400 border border-emerald-500/30 text-sm flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4" /> Ordered
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => handleOrderDomain(result.domain)}
-                      disabled={orderingDomain === result.domain}
-                      className="px-6 py-3 rounded-3xl font-bold flex items-center gap-2 transition-all cursor-pointer bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 disabled:opacity-50 text-xs"
-                    >
-                      {orderingDomain === result.domain ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <ArrowRight className="w-4 h-4" />
-                      )}
-                      <span>{orderingDomain === result.domain ? "Ordering..." : "Buy Domain"}</span>
-                    </button>
-                  )}
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500">Price (1st Yr)</p>
+                      <p className="text-2xl font-black text-white">
+                        {formatLKR(roundToNearest10(parseFloat(result.reg_price_usd || 0) * lkrRate))}
+                      </p>
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        Est. Renews at{" "}
+                        <span className="text-gray-300 font-semibold">
+                          ~{formatLKR(roundToNearest10(parseFloat(result.renew_price_usd || 0) * lkrRate))}/yr
+                        </span>
+                        *
+                      </p>
+                    </div>
+                    {orderedDomains.includes(result.domain.toLowerCase()) ? (
+                      <span className="px-6 py-3 rounded-3xl font-bold bg-slate-800/45 text-emerald-400 border border-emerald-500/30 text-sm flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4" /> Ordered
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleOrderDomain(result.domain)}
+                        disabled={orderingDomain === result.domain}
+                        className={`px-6 py-3 rounded-3xl font-bold flex items-center gap-2 transition-all cursor-pointer text-xs disabled:opacity-50 ${
+                          selectedDomain?.toLowerCase() === result.domain.toLowerCase()
+                            ? "bg-brand-500 hover:bg-brand-600 text-white shadow-lg shadow-brand-500/30 ring-2 ring-brand-400"
+                            : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                        }`}
+                      >
+                        {orderingDomain === result.domain ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <ArrowRight className="w-4 h-4" />
+                        )}
+                        <span>
+                          {adminMode
+                            ? selectedDomain?.toLowerCase() === result.domain.toLowerCase()
+                              ? "Selected for Client"
+                              : "Register for Client"
+                            : orderingDomain === result.domain
+                            ? "Ordering..."
+                            : "Buy Domain"}
+                        </span>
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )
             ) : (
               <div className="flex items-center gap-3 p-6 bg-rose-500/5 border border-rose-500/20 rounded-2xl">
                 <XCircle className="w-8 h-8 text-rose-400 shrink-0" />
@@ -209,10 +517,10 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
             {/* Price Validity & Renewal Disclaimer Notice */}
             <div className="text-[11px] text-gray-400 text-center leading-relaxed bg-white/[0.02] border border-white/5 py-3 px-4 rounded-2xl space-y-1">
               <p>
-                ⚠️ Note: First year registration prices are valid for 3 days. Domain orders generate an invoice automatically for online or bank payment.
+                ⚠️ Note: First year registration prices are valid for 3 days.
               </p>
               <p className="text-gray-400/80">
-                * Renewal fees are estimated values based on current exchange rates and can vary slightly according to the USD to LKR conversion rate at the time of renewal.
+                * Renewal fees are estimated values and may adjust slightly based on standard registry and market rates at the time of renewal.
               </p>
             </div>
 
@@ -245,16 +553,46 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
                             </span>
                           ) : (
                             <button
-                              onClick={() => handleOrderDomain(s.domain)}
+                              onClick={() => {
+                                if (adminMode && onSelectForAdmin) {
+                                  const pUsd = parseFloat(s.reg_price_usd || 0);
+                                  const rUsd = parseFloat(s.renew_price_usd || 0);
+                                  onSelectForAdmin({
+                                    domain: s.domain,
+                                    packageType: "global",
+                                    priceLkr: roundToNearest10(pUsd * lkrRate),
+                                    costLkr: roundToNearest10(parseFloat(s.actual_cost_usd || s.reg_price_usd || 0) * lkrRate),
+                                    renewPriceLkr: roundToNearest10(rUsd * lkrRate),
+                                    priceUsd: pUsd,
+                                    renewPriceUsd: rUsd,
+                                    registrar: "Cloudflare",
+                                    currency: "LKR",
+                                  });
+                                  return;
+                                }
+                                handleOrderDomain(s.domain);
+                              }}
                               disabled={isOrdering}
-                              className="px-4 py-2 text-xs font-semibold rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                              className={`px-4 py-2 text-xs font-semibold rounded-2xl transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50 ${
+                                selectedDomain?.toLowerCase() === s.domain.toLowerCase()
+                                  ? "bg-brand-500 text-white border border-brand-400 shadow-md shadow-brand-500/20"
+                                  : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                              }`}
                             >
                               {isOrdering ? (
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                               ) : (
                                 <ArrowRight className="w-3.5 h-3.5" />
                               )}
-                              <span>{isOrdering ? "Ordering..." : "Buy"}</span>
+                              <span>
+                                {adminMode
+                                  ? selectedDomain?.toLowerCase() === s.domain.toLowerCase()
+                                    ? "Selected"
+                                    : "Register for Client"
+                                  : isOrdering
+                                  ? "Ordering..."
+                                  : "Buy"}
+                              </span>
                             </button>
                           )}
                         </div>
