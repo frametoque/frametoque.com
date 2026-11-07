@@ -125,8 +125,7 @@ export default function DashboardProjectsPage() {
       <div className="flex flex-col gap-4">
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">My</span>
-            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Invoices</span>
+            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">Invoices</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl">
             Track the status of every invoice and service request you have with Frametoque.
@@ -172,8 +171,7 @@ export default function DashboardProjectsPage() {
       <div className="flex flex-col gap-4">
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">My</span>
-            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Invoices</span>
+            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">Invoices</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl">
             Track the status of every invoice and service request you have with Frametoque.
