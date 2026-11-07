@@ -1441,7 +1441,12 @@ export default function AdminOrdersPage() {
                         <TableCell>
                           <div className="font-semibold text-white flex items-center gap-1.5 flex-wrap">
                             <Globe className="w-4 h-4 text-brand-400" />
-                            {o.domain_name}
+                            <Link
+                              href={`/admin/web-services/domains/${o.id}`}
+                              className="hover:text-brand-400 transition-colors"
+                            >
+                              {o.domain_name}
+                            </Link>
                             <span className="text-[10px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-gray-400 font-medium">
                               {o.registrar || 'Internet.bs'}
                             </span>
@@ -1567,13 +1572,13 @@ export default function AdminOrdersPage() {
                         <TableCell>
                           <div className="flex items-center justify-end gap-1">
                             {/* Cloudflare Control Center */}
-                            <button
-                              onClick={() => setSelectedControlDomain(o)}
+                            <Link
+                              href={`/admin/web-services/domains/${o.id}`}
                               className="p-2 hover:bg-brand-500/20 text-brand-400 rounded-xl transition-colors flex items-center justify-center cursor-pointer"
                               title="Domain Control Center (DNS, Lock, DNSSEC, Nameservers)"
                             >
                               <Settings2 className="w-4 h-4" />
-                            </button>
+                            </Link>
 
                             {(o.status === "pending" || o.status === "pending_manual_registration" || o.status === "manual_review") && (
                               <>

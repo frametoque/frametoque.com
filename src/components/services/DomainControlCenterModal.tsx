@@ -28,7 +28,10 @@ import {
   Eye,
   Clock,
   CheckCircle2,
+  ArrowLeft,
+  ShieldAlert,
 } from "lucide-react";
+import PayModal from "@/components/PayModal";
 
 interface DnsRecord {
   id: string;
@@ -40,14 +43,17 @@ interface DnsRecord {
   priority?: number;
 }
 
-interface DomainControlCenterModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  domain: any;
-  userEmail: string;
-  onRefresh: () => void;
+export interface DomainControlCenterModalProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  domain?: any;
+  domainId?: string | number;
+  userEmail?: string;
+  onRefresh?: () => void;
   onOpenPayModal?: (invoice: any) => void;
   isAdmin?: boolean;
+  isPage?: boolean;
+  backHref?: string;
 }
 
 function parseNameservers(val: any): string[] {
@@ -97,14 +103,17 @@ const formatLKR = (amount: number | string | null | undefined) => {
   }).format(num || 0);
 };
 
-export default function DomainControlCenterModal({
-  isOpen,
+export function DomainControlCenterView({
+  isOpen = true,
   onClose,
   domain,
+  domainId,
   userEmail,
   onRefresh,
   isAdmin = false,
   onOpenPayModal,
+  isPage = false,
+  backHref,
 }: DomainControlCenterModalProps) {
   const [activeTab, setActiveTab] = useState<
     "overview" | "dns" | "nameservers" | "renewals" | "settings"
@@ -112,10 +121,14 @@ export default function DomainControlCenterModal({
 
   // Domain details & states
   const [loading, setLoading] = useState(false);
-  const [details, setDetails] = useState<any>(null);
-  const activeNameservers = parseNameservers(details?.nameservers ?? domain?.nameservers);
+  const [details, setDetails] = useState<any>(domain || null);
+  const [isForbidden, setIsForbidden] = useState(false);
+  const activeDomain = details || domain || {};
+  const targetId = activeDomain?.id || domain?.id || domainId;
+  const activeNameservers = parseNameservers(details?.nameservers ?? activeDomain?.nameservers);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [payInvoice, setPayInvoice] = useState<any>(null);
 
   // DNS State
   const [dnsRecords, setDnsRecords] = useState<DnsRecord[]>([]);
@@ -134,8 +147,8 @@ export default function DomainControlCenterModal({
   const [togglingRecordId, setTogglingRecordId] = useState<string | null>(null);
 
   // Security & Toggles
-  const [isLocked, setIsLocked] = useState(domain?.locked ?? true);
-  const [isAutoRenew, setIsAutoRenew] = useState(domain?.auto_renew ?? false);
+  const [isLocked, setIsLocked] = useState(activeDomain?.locked ?? true);
+  const [isAutoRenew, setIsAutoRenew] = useState(activeDomain?.auto_renew ?? false);
   const [togglingLock, setTogglingLock] = useState(false);
   const [togglingAutoRenew, setTogglingAutoRenew] = useState(false);
 
@@ -159,16 +172,22 @@ export default function DomainControlCenterModal({
 
   // Fetch full details
   const fetchDomainDetails = async () => {
-    if (!domain?.id) return;
+    if (!targetId) return;
     setLoading(true);
     setError(null);
+    setIsForbidden(false);
     try {
-      const res = await fetch(`/api/services/domains/${domain.id}`);
+      const res = await fetch(`/api/services/domains/${targetId}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load domain details.");
+      if (!res.ok) {
+        if (res.status === 403) {
+          setIsForbidden(true);
+        }
+        throw new Error(data.error || "Failed to load domain details.");
+      }
       setDetails(data);
-      setIsLocked(data.locked);
-      setIsAutoRenew(data.auto_renew);
+      setIsLocked(data.locked ?? true);
+      setIsAutoRenew(data.auto_renew ?? false);
       if (data.dnssec_info?.status === "active") {
         setDnssecEnabled(true);
       } else {
@@ -183,11 +202,12 @@ export default function DomainControlCenterModal({
 
   // Fetch Renewal & Payment History
   const fetchRenewalHistory = async () => {
-    if (!domain?.id || !userEmail) return;
+    const emailToUse = userEmail || details?.client_email || activeDomain?.client_email;
+    if (!targetId || !emailToUse) return;
     setLoadingHistory(true);
     try {
       const res = await fetch(
-        `/api/services/domains/renewal-history?user_email=${encodeURIComponent(userEmail)}&domain_id=${domain.id}`,
+        `/api/services/domains/renewal-history?user_email=${encodeURIComponent(emailToUse)}&domain_id=${targetId}`,
         { cache: "no-store" }
       );
       const data = await res.json();
@@ -201,11 +221,11 @@ export default function DomainControlCenterModal({
 
   // Fetch DNS Records
   const fetchDnsRecords = async () => {
-    if (!domain?.id) return;
+    if (!targetId) return;
     setLoadingDns(true);
     setDnsError(null);
     try {
-      const res = await fetch(`/api/services/domains/${domain.id}/dns`);
+      const res = await fetch(`/api/services/domains/${targetId}/dns`);
       const data = await res.json();
       if (res.ok) {
         setDnsRecords(data.records || []);
@@ -221,21 +241,88 @@ export default function DomainControlCenterModal({
   };
 
   useEffect(() => {
-    if (isOpen && domain?.id) {
+    if ((isOpen || isPage) && targetId) {
       fetchDomainDetails();
       fetchDnsRecords();
       fetchRenewalHistory();
     }
-  }, [isOpen, domain?.id]);
+  }, [isOpen, isPage, targetId]);
 
-  if (!isOpen || !domain) return null;
+  if (!isPage && !isOpen) return null;
+
+  if (!details && !domain && loading) {
+    const loadingView = (
+      <div className="relative w-full max-w-6xl mx-auto bg-[#0c0d12] border border-white/10 rounded-3xl p-16 text-center flex flex-col items-center justify-center space-y-3 shadow-2xl">
+        <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
+        <p className="text-sm text-gray-400">Loading domain details...</p>
+      </div>
+    );
+    if (isPage) {
+      return (
+        <div className="w-full max-w-6xl mx-auto space-y-4">
+          <Link
+            href={backHref || (isAdmin ? "/admin/web-services/domains" : "/dashboard/domains")}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-gray-300 hover:text-white border border-white/5 text-xs font-medium transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Domains</span>
+          </Link>
+          {loadingView}
+        </div>
+      );
+    }
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        {loadingView}
+      </div>
+    );
+  }
+
+  if (!details && !domain && (error || isForbidden)) {
+    const errorView = (
+      <div className="relative w-full max-w-6xl mx-auto bg-[#0c0d12] border border-white/10 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-2xl">
+        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white">
+          {isForbidden ? "Access Denied" : "Domain Unavailable"}
+        </h2>
+        <p className="text-sm text-gray-400 max-w-md">
+          {isForbidden
+            ? "You do not have permission to view or manage this domain. This domain belongs to another client account."
+            : error || "The requested domain could not be found."}
+        </p>
+        <Link
+          href={backHref || (isAdmin ? "/admin/web-services/domains" : "/dashboard/domains")}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Return to Domains</span>
+        </Link>
+      </div>
+    );
+    if (isPage) {
+      return (
+        <div className="w-full max-w-6xl mx-auto space-y-4">
+          {errorView}
+        </div>
+      );
+    }
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        {errorView}
+      </div>
+    );
+  }
+
+  if (!activeDomain || (!activeDomain.id && !domainId)) return null;
 
   // Handlers
   const handleToggleLock = async () => {
     setTogglingLock(true);
     try {
       const newLocked = !isLocked;
-      const res = await fetch(`/api/services/domains/${domain.id}/security`, {
+      const res = await fetch(`/api/services/domains/${targetId}/security`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ locked: newLocked }),
@@ -245,7 +332,7 @@ export default function DomainControlCenterModal({
       setIsLocked(newLocked);
       setSuccessMsg(newLocked ? "Registrar Lock Enabled." : "Registrar Lock Disabled.");
       setTimeout(() => setSuccessMsg(null), 3000);
-      onRefresh();
+      onRefresh?.();
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -257,7 +344,7 @@ export default function DomainControlCenterModal({
     setTogglingAutoRenew(true);
     try {
       const newAuto = !isAutoRenew;
-      const res = await fetch(`/api/services/domains/${domain.id}`, {
+      const res = await fetch(`/api/services/domains/${targetId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ auto_renew: newAuto }),
@@ -267,7 +354,7 @@ export default function DomainControlCenterModal({
       setIsAutoRenew(newAuto);
       setSuccessMsg(newAuto ? "Auto-renewal enabled." : "Auto-renewal disabled.");
       setTimeout(() => setSuccessMsg(null), 3000);
-      onRefresh();
+      onRefresh?.();
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -279,7 +366,7 @@ export default function DomainControlCenterModal({
     setTogglingDnssec(true);
     try {
       const newDnssec = !dnssecEnabled;
-      const res = await fetch(`/api/services/domains/${domain.id}/security`, {
+      const res = await fetch(`/api/services/domains/${targetId}/security`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dnssec_enabled: newDnssec }),
@@ -289,7 +376,7 @@ export default function DomainControlCenterModal({
       setDnssecEnabled(newDnssec);
       setSuccessMsg(newDnssec ? "DNSSEC has been enabled." : "DNSSEC has been disabled.");
       setTimeout(() => setSuccessMsg(null), 3000);
-      onRefresh();
+      onRefresh?.();
     } catch (err: any) {
       alert(err.message || "Failed to toggle DNSSEC");
     } finally {
@@ -308,7 +395,7 @@ export default function DomainControlCenterModal({
     setRequestingTransfer(true);
     setTransferMessage(null);
     try {
-      const res = await fetch(`/api/services/domains/${domain.id}/transfer`, {
+      const res = await fetch(`/api/services/domains/${targetId}/transfer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -322,7 +409,7 @@ export default function DomainControlCenterModal({
       );
       setSuccessMsg("Domain unlocked and transfer code requested.");
       setTimeout(() => setSuccessMsg(null), 4000);
-      onRefresh();
+      onRefresh?.();
     } catch (err: any) {
       alert(err.message || "Failed to request outbound transfer.");
     } finally {
@@ -345,20 +432,20 @@ export default function DomainControlCenterModal({
     const seenInvoices = new Set<string>();
 
     // 1. Initial registration invoice
-    if (domain.invoice_id) {
-      seenInvoices.add(domain.invoice_id);
-      const regAmount = domain.activation_lkr_price
-        ? parseFloat(domain.activation_lkr_price)
-        : domain.total_due
-        ? parseFloat(domain.total_due)
+    if (activeDomain.invoice_id) {
+      seenInvoices.add(activeDomain.invoice_id);
+      const regAmount = activeDomain.activation_lkr_price
+        ? parseFloat(activeDomain.activation_lkr_price)
+        : activeDomain.total_due
+        ? parseFloat(activeDomain.total_due)
         : 0;
       rows.push({
-        id: `reg-${domain.invoice_id}`,
-        invoice_id: domain.invoice_id,
+        id: `reg-${activeDomain.invoice_id}`,
+        invoice_id: activeDomain.invoice_id,
         description: `Initial Domain Registration (1 Year)`,
-        date: domain.created_at || domain.purchase_date || new Date().toISOString(),
+        date: activeDomain.created_at || activeDomain.purchase_date || new Date().toISOString(),
         amount: regAmount,
-        status: domain.payment_status || (domain.status === "active" ? "paid" : "unpaid"),
+        status: activeDomain.payment_status || (activeDomain.status === "active" ? "paid" : "unpaid"),
         isRenewal: false,
       });
     }
@@ -380,20 +467,20 @@ export default function DomainControlCenterModal({
 
     // Sort descending by date
     return rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [domain, historyRows]);
+  }, [activeDomain, historyRows]);
 
-  const renewalLkr = domain.renewal_lkr_price
-    ? parseFloat(domain.renewal_lkr_price)
-    : domain.renewal_price
-    ? parseFloat(domain.renewal_price) * 310
-    : domain.activation_lkr_price
-    ? parseFloat(domain.activation_lkr_price)
+  const renewalLkr = activeDomain.renewal_lkr_price
+    ? parseFloat(activeDomain.renewal_lkr_price)
+    : activeDomain.renewal_price
+    ? parseFloat(activeDomain.renewal_price) * 310
+    : activeDomain.activation_lkr_price
+    ? parseFloat(activeDomain.activation_lkr_price)
     : 0;
 
-  const renewalUsd = domain.renewal_price
-    ? parseFloat(domain.renewal_price)
-    : domain.selling_price
-    ? parseFloat(domain.selling_price)
+  const renewalUsd = activeDomain.renewal_price
+    ? parseFloat(activeDomain.renewal_price)
+    : activeDomain.selling_price
+    ? parseFloat(activeDomain.selling_price)
     : 0;
 
   const handleSaveDnsRecord = async (e: React.FormEvent) => {
@@ -401,7 +488,7 @@ export default function DomainControlCenterModal({
     try {
       if (editingRecordId) {
         // Update
-        const res = await fetch(`/api/services/domains/${domain.id}/dns`, {
+        const res = await fetch(`/api/services/domains/${targetId}/dns`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -413,7 +500,7 @@ export default function DomainControlCenterModal({
         if (!res.ok) throw new Error(data.error || "Failed to update record");
       } else {
         // Create
-        const res = await fetch(`/api/services/domains/${domain.id}/dns`, {
+        const res = await fetch(`/api/services/domains/${targetId}/dns`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(dnsForm),
@@ -436,7 +523,7 @@ export default function DomainControlCenterModal({
   const handleDeleteDns = async (recordId: string) => {
     if (!confirm("Are you sure you want to delete this DNS record?")) return;
     try {
-      const res = await fetch(`/api/services/domains/${domain.id}/dns?record_id=${recordId}`, {
+      const res = await fetch(`/api/services/domains/${targetId}/dns?record_id=${recordId}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -450,7 +537,7 @@ export default function DomainControlCenterModal({
   const handleApplyTemplate = async (templateName: string) => {
     if (!confirm(`Apply the ${templateName} preset? This will add standard DNS records for this service.`)) return;
     try {
-      const res = await fetch(`/api/services/domains/${domain.id}/dns`, {
+      const res = await fetch(`/api/services/domains/${targetId}/dns`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ template: templateName }),
@@ -469,7 +556,7 @@ export default function DomainControlCenterModal({
     if (!["A", "AAAA", "CNAME"].includes(record.type)) return;
     setTogglingRecordId(record.id);
     try {
-      const res = await fetch(`/api/services/domains/${domain.id}/dns`, {
+      const res = await fetch(`/api/services/domains/${targetId}/dns`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -494,26 +581,57 @@ export default function DomainControlCenterModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-5xl bg-[#0c0d12] border border-white/10 rounded-3xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 bg-white/[0.02]">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-white tracking-wide">{domain.domain_name}</h2>
-            <span className="text-[10px] px-2 py-0.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 font-semibold uppercase tracking-wider">
-              {details?.live_zone?.status || details?.status || domain.status || "Active"}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
+  const handlePayRenewal = (invoiceId: string, lkrAmount: number) => {
+    const inv = {
+      id: invoiceId,
+      invoice_id: invoiceId,
+      total_amount: lkrAmount,
+      total_due: lkrAmount,
+      currency: "LKR",
+      client_name: activeDomain.domain_name,
+      description: `Domain Renewal: ${activeDomain.domain_name}`,
+    };
+    if (onOpenPayModal) {
+      onOpenPayModal(inv);
+    } else {
+      setPayInvoice(inv);
+    }
+  };
+
+  const modalBody = (
+    <div className={`relative w-full ${isPage ? "max-w-6xl mx-auto" : "max-w-5xl my-auto max-h-[90vh]"} bg-[#0c0d12] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col`}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 bg-white/[0.02]">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-bold text-white tracking-wide">{activeDomain.domain_name || "Domain Control Center"}</h2>
+          <span className="text-[10px] px-2 py-0.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 font-semibold uppercase tracking-wider">
+            {details?.live_zone?.status || details?.status || activeDomain.status || "Active"}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              fetchDomainDetails();
+              if (activeTab === "dns") fetchDnsRecords();
+              if (activeTab === "renewals") fetchRenewalHistory();
+            }}
+            disabled={loading}
+            className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+            title="Refresh Domain Data"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          </button>
+          {!isPage && onClose && (
             <button
               onClick={onClose}
               className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+              title="Close Modal"
             >
               <X className="w-5 h-5" />
             </button>
-          </div>
+          )}
         </div>
+      </div>
 
         {/* Success Alert Banner */}
         {successMsg && (
@@ -615,8 +733,8 @@ export default function DomainControlCenterModal({
                   <span className="text-gray-500 text-xs font-medium">Expiration Date</span>
                   <div className="pt-1">
                     <span className="text-sm font-bold text-white">
-                      {(details?.expiry_date || domain.expiry_date)
-                        ? new Date(details?.expiry_date || domain.expiry_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                      {(details?.expiry_date || activeDomain.expiry_date)
+                        ? new Date(details?.expiry_date || activeDomain.expiry_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                         : "Not found"}
                     </span>
                   </div>
@@ -1025,8 +1143,8 @@ export default function DomainControlCenterModal({
                   </span>
                   <div className="pt-1">
                     <span className="text-sm font-bold text-white">
-                      {(details?.expiry_date || domain.expiry_date)
-                        ? new Date(details?.expiry_date || domain.expiry_date).toLocaleDateString("en-US", {
+                      {(details?.expiry_date || activeDomain.expiry_date)
+                        ? new Date(details?.expiry_date || activeDomain.expiry_date).toLocaleDateString("en-US", {
                             month: "short",
                             day: "numeric",
                             year: "numeric",
@@ -1096,8 +1214,8 @@ export default function DomainControlCenterModal({
                     </span>
                     <div className="pt-1">
                       <span className="text-sm font-bold text-white flex items-center gap-1.5">
-                        <span className={`w-2 h-2 rounded-full ${domain.status === "active" ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
-                        {domain.status === "active" ? "Active" : "Pending"}
+                        <span className={`w-2 h-2 rounded-full ${activeDomain.status === "active" ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
+                        {activeDomain.status === "active" ? "Active" : "Pending"}
                       </span>
                     </div>
                   </div>
@@ -1173,7 +1291,7 @@ export default function DomainControlCenterModal({
                                       {row.description}
                                     </span>
                                     <span className="text-[10px] text-gray-500">
-                                      {domain.domain_name}
+                                      {activeDomain.domain_name}
                                     </span>
                                   </div>
                                 </div>
@@ -1455,18 +1573,77 @@ export default function DomainControlCenterModal({
         {/* Footer */}
         <div className="px-6 py-4 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
           <span className="text-xs text-gray-400 flex items-center gap-2">
-            <Globe className="w-3.5 h-3.5 text-brand-400" />
-            <span className="font-medium text-white">{domain.domain_name}</span>
+            <span className="font-medium text-white">{activeDomain.domain_name}</span>
           </span>
-          <button
-            onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
-          >
-            Close
-          </button>
+          {isPage ? (
+            <Link
+              href={backHref || (isAdmin ? "/admin/web-services/domains" : "/dashboard/domains")}
+              className="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
+            >
+              Back to Domains
+            </Link>
+          ) : (
+            <button
+              onClick={onClose}
+              className="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          )}
         </div>
       </div>
+  );
+
+  if (isPage) {
+    return (
+      <div className="w-full max-w-6xl mx-auto space-y-4">
+        <div className="flex items-center justify-between pb-1">
+          <Link
+            href={backHref || (isAdmin ? "/admin/web-services/domains" : "/dashboard/domains")}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-gray-300 hover:text-white border border-white/5 text-xs font-medium transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Domains</span>
+          </Link>
+        </div>
+
+        {modalBody}
+
+        {payInvoice && (
+          <PayModal
+            isOpen={!!payInvoice}
+            onClose={() => {
+              setPayInvoice(null);
+              fetchDomainDetails();
+              fetchRenewalHistory();
+            }}
+            invoice={payInvoice}
+          />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
+      {modalBody}
+
+      {payInvoice && (
+        <PayModal
+          isOpen={!!payInvoice}
+          onClose={() => {
+            setPayInvoice(null);
+            fetchDomainDetails();
+            fetchRenewalHistory();
+          }}
+          invoice={payInvoice}
+        />
+      )}
     </div>
   );
+}
+
+export default function DomainControlCenterModal(props: DomainControlCenterModalProps) {
+  return <DomainControlCenterView {...props} isPage={props.isPage ?? false} />;
 }
 
