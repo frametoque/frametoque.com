@@ -1,16 +1,17 @@
 # Frametoque Engineering Platform
 
-Frametoque is a full-stack media production and digital engineering management platform built with Next.js 15 (App Router), TypeScript, Tailwind CSS v4, and PostgreSQL.
+Frametoque is a full-stack media production and digital engineering management platform built with Next.js 16 (App Router), TypeScript, Tailwind CSS v4, and PostgreSQL.
 
 ---
 
 ## 1. Architecture Overview
 
-- **Frontend & Web Application**: Next.js 15 App Router with server-rendered public portfolio pages, responsive client administration panels, and dynamic invoice generation.
+- **Frontend & Web Application**: Next.js 16 App Router with server-rendered public portfolio pages, responsive client administration panels, and dynamic invoice generation.
 - **Authentication & RBAC**: Clerk authentication with server-side session verification, role-based authorization guards (`src/lib/auth-guard.ts`), and strict path-level route protection.
 - **Database & Persistence**: PostgreSQL (Supabase Connection Pooler) accessed via authenticated queries with application-level cryptographic protections.
 - **Storage Infrastructure**: Primary object storage hosted on Cloudflare R2 (`src/lib/storage/r2-client.ts`) with fallback handling for Vercel Blob storage (`src/lib/storage/blob-client.ts`).
 - **Security & Cryptography**: AES-256-GCM envelope encryption with unique IVs, associated authenticated data (AAD) context binding, and HMAC-SHA256 blind indexing for searchable ciphertext (`src/lib/crypto-vault.ts`).
+- **Domain Reselling**: Self-service domain management, automated provisioning, and DNS editor integrated with Cloudflare Registrar & DNS APIs (`src/lib/domains/provider.ts`).
 
 ---
 
@@ -18,7 +19,7 @@ Frametoque is a full-stack media production and digital engineering management p
 
 - **Runtime**: Node.js `>= 20.0.0`
 - **Package Manager**: `pnpm` (lockfile: `pnpm-lock.yaml`)
-- **Framework**: Next.js 15.x (React 19)
+- **Framework**: Next.js 16.x (React 19)
 - **Styling**: Tailwind CSS v4 (`@theme` via CSS variables)
 - **Database**: PostgreSQL 15+ (Hosted on Supabase AWS Singapore)
 - **Authentication**: Clerk
@@ -38,6 +39,7 @@ Refer to `.env.example` for comprehensive definitions of all required and option
 - `CLERK_SECRET_KEY` / `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`: Clerk authentication keys.
 - `APP_FIELD_ENCRYPTION_KEY`: 32-byte hexadecimal key for AES-256-GCM field encryption.
 - `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`: Cloudflare R2 credentials.
+- `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`: Cloudflare Registrar & DNS management credentials.
 - `CRON_SECRET` & `CALENDAR_FEED_SECRET`: High-entropy secrets for background workers and calendar feeds.
 
 Startup environment validation is executed via `src/lib/env.ts` during production runtime to fail fast if required secrets are missing.
@@ -53,17 +55,24 @@ pnpm install --frozen-lockfile
 # Run local development server
 pnpm dev
 
-# Run security and cryptographic regression test suite
-pnpm test
+# Run all test suites (Security + Domain Provider)
+pnpm run test:all
+
+# Run individual test suites
+pnpm run test:security
+pnpm run test:domains
 
 # Run TypeScript type verification
-pnpm typecheck
+pnpm run typecheck
+
+# Run ESLint check
+pnpm run lint
 
 # Run production build
-pnpm build
+pnpm run build
 
 # Start production server
-pnpm start
+pnpm run start
 ```
 
 ---
@@ -87,11 +96,13 @@ All personally identifiable information (PII) and financial records are protecte
 
 Operational procedures and security policies are maintained in the repository:
 - Security Policy & Disclosure: `SECURITY.md`
+- Cloudflare Domain Reselling: `docs/domains.md`
 - Backup & Disaster Recovery: `docs/security/backup-and-recovery.md`
 - Incident Response Plan: `docs/security/incident-response.md`
 - Cryptographic Key Rotation: `docs/security/key-rotation.md`
 - Security Monitoring & Alerting: `docs/security/monitoring-and-alerts.md`
 - Secret Leakage Remediation: `docs/security/secret-leakage.md`
+- Database Security Checklist: `docs/security/database-checklist.md`
 
 ---
 
