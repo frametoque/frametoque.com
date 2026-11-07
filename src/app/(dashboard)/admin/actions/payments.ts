@@ -519,7 +519,7 @@ export async function processPaymentSucceeded(params: {
 
     // If invoice is already paid and remaining due is 0, reject duplicate entries
     if (currentDue <= 0.009 && (invoice.payment_status === "paid" || invoice.payment_status === "fully paid")) {
-      console.log(`[Payments] Invoice ${invoiceId} is already fully settled (total_due: ${currentDue}). Skipping duplicate.`);
+      await logSystemAction(`[Payments] Invoice ${invoiceId} is already fully settled. Skipping duplicate.`);
       return { success: true, alreadyProcessed: true };
     }
 

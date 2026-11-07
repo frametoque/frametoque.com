@@ -40,11 +40,6 @@ const dmMono = localFont({
   variable: "--font-geist-mono",
 });
 
-// const aestera = localFont({
-//   src: "./fonts/aestera.ttf",
-//   variable: "--font-geist-sans",
-// });
-
 export const metadata = {
   metadataBase: new URL("https://frametoque.com"),
 
