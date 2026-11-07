@@ -1537,7 +1537,7 @@ export function DomainControlCenterView({
             </Link>
             <div className="h-5 w-px bg-white/10 hidden sm:block" />
             <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5 flex-wrap">
-              <span>{activeDomain.domain_name || "Domain Control Center"}</span>
+              <span>{activeDomain.domain_name || "Manage Domains"}</span>
               <span className="text-[10px] px-2.5 py-0.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 font-semibold uppercase tracking-wider">
                 {details?.live_zone?.status || details?.status || activeDomain.status || "Active"}
               </span>
@@ -1618,7 +1618,7 @@ export function DomainControlCenterView({
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 bg-white/[0.02]">
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold text-white tracking-wide">{activeDomain.domain_name || "Domain Control Center"}</h2>
+          <h2 className="text-xl font-bold text-white tracking-wide">{activeDomain.domain_name || "Manage Domains"}</h2>
           <span className="text-[10px] px-2 py-0.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 font-semibold uppercase tracking-wider">
             {details?.live_zone?.status || details?.status || activeDomain.status || "Active"}
           </span>

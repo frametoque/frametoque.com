@@ -365,8 +365,8 @@ export default function ClientDomainsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Domain</span>
-            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Control Center</span>
+            <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Manage</span>
+            <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Domains</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl">
             Register domain names, configure global DNS records, security locks, free WHOIS privacy, and nameservers powered by Frametoque Digital.
