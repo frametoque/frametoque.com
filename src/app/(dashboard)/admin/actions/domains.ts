@@ -6,6 +6,9 @@ import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 import { generateUniqueInvoiceId } from "./actions";
 import { putBlob } from '@/lib/storage';
+import { ensureDomainTables } from "@/lib/domains/migration";
+import { getDomainProvider } from "@/lib/domains/provider";
+import { logDomainAudit, getDomainAuditLogs } from "@/lib/domains/audit";
 
 export async function uploadProviderInvoice(formData: FormData): Promise<string> {
   await requireAdminSession();
@@ -57,6 +60,15 @@ export interface DomainOrder {
   renewal_cost_currency?: string;
   provider_invoice_url?: string | null;
   actual_price_currency?: string;
+  zone_id?: string | null;
+  locked?: boolean;
+  auto_renew?: boolean;
+  privacy_enabled?: boolean;
+  nameservers?: any;
+  registrant_contacts?: any;
+  dnssec_status?: string;
+  transfer_status?: string;
+  cloudflare_sync_at?: string | null;
 }
 
 export interface DomainRenewalHistoryRow {
@@ -158,9 +170,10 @@ function countsTowardProfit(o: DomainOrder): boolean {
 
 export async function getDomainOrders(): Promise<DomainOrder[]> {
   await requireAdminSession();
+  await ensureDomainTables();
 
   try {
-    // Batch-expire all overdue active domains in a single SQL statement
+    // 1. Batch-expire all overdue active domains in a single SQL statement
     const now = new Date().toISOString();
     await sql`
       UPDATE admin_domain_orders
@@ -170,10 +183,73 @@ export async function getDomainOrders(): Promise<DomainOrder[]> {
         AND expiry_date <= ${now}::timestamptz
     `;
 
+    // 2. Query live Cloudflare zones dynamically to verify actual purchase status
+    const provider = getDomainProvider();
+    let cfZonesMap = new Map<string, { id: string; name_servers: string[]; status: string }>();
+    try {
+      const liveZones = await provider.listAllAccountZones();
+      for (const z of liveZones) {
+        cfZonesMap.set(z.name.toLowerCase().trim(), z);
+      }
+    } catch (cfErr) {
+      console.warn("[Domains] Cloudflare live zone query notice:", cfErr);
+    }
+
     const rows = await sql`
       SELECT * FROM admin_domain_orders
       ORDER BY created_at DESC
     `;
+
+    // 3. Dynamically synchronize status with Cloudflare truth
+    for (const r of rows) {
+      const clean = String(r.domain_name || "").toLowerCase().trim();
+      const isLk = clean.endsWith(".lk");
+      if (isLk) continue; // .lk is managed outside Cloudflare
+
+      if (cfZonesMap.size > 0) {
+        if (cfZonesMap.has(clean)) {
+          const cfZone = cfZonesMap.get(clean)!;
+          // Domain is verified on Cloudflare -> Mark ACTIVE
+          if (r.status !== "active" || r.zone_id !== cfZone.id) {
+            r.status = "active";
+            r.zone_id = cfZone.id;
+            r.nameservers = cfZone.name_servers || [];
+            if (!r.expiry_date) {
+              const exp = new Date();
+              exp.setFullYear(exp.getFullYear() + 1);
+              r.expiry_date = exp.toISOString();
+            }
+            sql`
+              UPDATE admin_domain_orders
+              SET 
+                status = 'active',
+                zone_id = ${cfZone.id},
+                nameservers = ${JSON.stringify(r.nameservers)}::jsonb,
+                expiry_date = COALESCE(expiry_date, ${r.expiry_date}::timestamp),
+                cloudflare_sync_at = NOW()
+              WHERE id = ${r.id}
+            `.catch(() => {});
+          }
+        } else {
+          // Domain does NOT exist in Cloudflare account -> CANNOT be active!
+          if (r.status === "active" || (r.zone_id && r.zone_id.startsWith("zone-"))) {
+            r.status = r.invoice_id ? "pending_manual_registration" : "pending";
+            r.zone_id = null;
+            r.expiry_date = null;
+            r.nameservers = [];
+            sql`
+              UPDATE admin_domain_orders
+              SET 
+                status = ${r.status},
+                zone_id = NULL,
+                expiry_date = NULL,
+                nameservers = '[]'::jsonb
+              WHERE id = ${r.id}
+            `.catch(() => {});
+          }
+        }
+      }
+    }
     return rows.map((r: any) => ({
       ...r,
       actual_price: parseFloat(r.actual_price || 0),
@@ -181,7 +257,7 @@ export async function getDomainOrders(): Promise<DomainOrder[]> {
       profit: parseFloat(r.profit || 0),
       renewal_cost: parseFloat(r.renewal_cost || 0),
       renewal_price: parseFloat(r.renewal_price || 0),
-      registrar: r.registrar || 'Internet.bs',
+      registrar: r.registrar || 'Cloudflare',
       purchase_date: r.purchase_date ? new Date(r.purchase_date).toISOString() : '',
       expiry_date: r.expiry_date ? new Date(r.expiry_date).toISOString() : '',
       created_at: r.created_at ? new Date(r.created_at).toISOString() : '',
@@ -194,6 +270,15 @@ export async function getDomainOrders(): Promise<DomainOrder[]> {
       renewal_cost_currency: r.renewal_cost_currency || 'USD',
       provider_invoice_url: r.provider_invoice_url || null,
       actual_price_currency: r.actual_price_currency || 'USD',
+      zone_id: r.zone_id || null,
+      locked: r.locked ?? true,
+      auto_renew: r.auto_renew ?? false,
+      privacy_enabled: r.privacy_enabled ?? true,
+      nameservers: r.nameservers || [],
+      registrant_contacts: r.registrant_contacts || null,
+      dnssec_status: r.dnssec_status || 'disabled',
+      transfer_status: r.transfer_status || 'none',
+      cloudflare_sync_at: r.cloudflare_sync_at ? new Date(r.cloudflare_sync_at).toISOString() : null,
     }));
   } catch (error) {
     console.error("Failed to get domain orders:", error);
@@ -236,6 +321,15 @@ export async function getDomainOrderById(id: number): Promise<DomainOrder | null
       renewal_cost_currency: r.renewal_cost_currency || 'USD',
       provider_invoice_url: r.provider_invoice_url || null,
       actual_price_currency: r.actual_price_currency || 'USD',
+      zone_id: r.zone_id || null,
+      locked: r.locked ?? true,
+      auto_renew: r.auto_renew ?? false,
+      privacy_enabled: r.privacy_enabled ?? true,
+      nameservers: r.nameservers || [],
+      registrant_contacts: r.registrant_contacts || null,
+      dnssec_status: r.dnssec_status || 'disabled',
+      transfer_status: r.transfer_status || 'none',
+      cloudflare_sync_at: r.cloudflare_sync_at ? new Date(r.cloudflare_sync_at).toISOString() : null,
     };
   } catch (error) {
     console.error("Failed to get domain order by id:", error);
@@ -859,4 +953,380 @@ export async function renewExpiredDomain(id: number): Promise<CreateInvoiceResul
     console.error("Failed to renew expired domain:", err);
     return { success: false, error: err.message };
   }
+}
+
+// ---------------------------------------------------------------------------
+// Cloudflare Sync & TLD Pricing Actions
+// ---------------------------------------------------------------------------
+
+export interface TldPricingItem {
+  id?: number;
+  tld: string;
+  cost_price: number;
+  markup: number;
+  selling_price: number;
+  renewal_cost: number;
+  renewal_price: number;
+  currency?: string;
+  provider?: string;
+  is_active?: boolean;
+  updated_at?: string;
+}
+
+/**
+ * Sync domain status, zone, expiry, lock, and DNSSEC directly from Cloudflare.
+ */
+export async function syncDomainFromCloudflare(
+  id: number
+): Promise<{ success: boolean; error?: string; details?: any }> {
+  await requireAdminSession();
+  await ensureDomainTables();
+
+  try {
+    const orders = await sql`SELECT * FROM admin_domain_orders WHERE id = ${id}`;
+    if (orders.length === 0) return { success: false, error: "Domain not found." };
+    const order = orders[0];
+
+    const provider = getDomainProvider();
+    const cleanDomain = String(order.domain_name).toLowerCase().trim();
+
+    // 1. Verify if domain exists as a live zone on Cloudflare
+    const liveZone = await provider.getLiveZone(cleanDomain);
+    if (!liveZone) {
+      // Domain is NOT registered/present on Cloudflare
+      const newStatus = order.invoice_id ? "pending_manual_registration" : "pending";
+      await sql`
+        UPDATE admin_domain_orders
+        SET 
+          status = ${newStatus},
+          zone_id = NULL,
+          expiry_date = NULL,
+          nameservers = '[]'::jsonb,
+          cloudflare_sync_at = NOW()
+        WHERE id = ${id}
+      `;
+
+      await logSystemAction(
+        `Cloudflare Sync: Domain "${cleanDomain}" was not found in your Cloudflare account. Status set to ${newStatus}.`
+      );
+
+      revalidatePath("/admin", "layout");
+      revalidatePath("/admin/web-services", "page");
+      revalidatePath("/dashboard/domains", "page");
+
+      return {
+        success: false,
+        error: `Domain "${cleanDomain}" is not found in your Cloudflare account yet. Please purchase it on Cloudflare Registrar first, then click Sync.`,
+      };
+    }
+
+    // 2. Domain is confirmed on Cloudflare
+    const cfDetails = await provider.getDomain(cleanDomain);
+    const dnssecInfo = await provider.getDnssec(liveZone.zoneId);
+
+    const locked = cfDetails?.locked ?? order.locked ?? true;
+    const autoRenew = cfDetails?.autoRenew ?? order.auto_renew ?? false;
+    const dnssecStatus = dnssecInfo.status || order.dnssec_status || 'disabled';
+    const status = 'active';
+
+    let expiryDate = cfDetails?.expiresAt || order.expiry_date;
+    if (!expiryDate) {
+      const exp = new Date();
+      exp.setFullYear(exp.getFullYear() + 1);
+      expiryDate = exp.toISOString().split("T")[0] + " 00:00:00";
+    }
+
+    await sql`
+      UPDATE admin_domain_orders
+      SET 
+        zone_id = ${liveZone.zoneId},
+        nameservers = ${JSON.stringify(liveZone.nameservers)}::jsonb,
+        locked = ${locked},
+        auto_renew = ${autoRenew},
+        status = 'active',
+        expiry_date = ${expiryDate},
+        dnssec_status = ${dnssecStatus},
+        cloudflare_sync_at = NOW()
+      WHERE id = ${id}
+    `;
+
+    await logDomainAudit(
+      "admin",
+      cleanDomain,
+      "ADMIN_SYNC_CLOUDFLARE",
+      { zone_id: liveZone.zoneId, status, locked, expiryDate }
+    );
+
+    await logSystemAction(
+      `Domain "${cleanDomain}" synchronized with Cloudflare: Zone ID ${liveZone.zoneId}, Status: ${status}`
+    );
+
+    revalidatePath("/admin", "layout");
+    revalidatePath("/admin/web-services", "page");
+    revalidatePath("/dashboard/domains", "page");
+    return {
+      success: true,
+      details: {
+        zoneId: liveZone.zoneId,
+        nameservers: liveZone.nameservers,
+        locked,
+        autoRenew,
+        status,
+        expiryDate,
+        dnssecStatus,
+      },
+    };
+  } catch (err: any) {
+    console.error("Failed to sync domain from Cloudflare:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Sync all domains from Cloudflare
+ */
+export async function syncAllDomainsFromCloudflare(): Promise<{
+  success: boolean;
+  totalSynced: number;
+  errors: string[];
+}> {
+  await requireAdminSession();
+  await ensureDomainTables();
+
+  const orders = await sql`SELECT id FROM admin_domain_orders ORDER BY id DESC`;
+  let synced = 0;
+  const errors: string[] = [];
+
+  for (const o of orders) {
+    try {
+      const res = await syncDomainFromCloudflare(o.id);
+      if (res.success) synced += 1;
+      else if (res.error) errors.push(`Domain #${o.id}: ${res.error}`);
+    } catch (e: any) {
+      errors.push(`Domain #${o.id}: ${e.message}`);
+    }
+  }
+
+  revalidatePath("/admin", "layout");
+  return { success: true, totalSynced: synced, errors };
+}
+
+/**
+ * Manually activate and link a domain with Cloudflare DNS zone
+ * (Used when domain is purchased directly on Cloudflare Registrar)
+ */
+export async function manualRegisterDomain(
+  id: number
+): Promise<{ success: boolean; error?: string; orderId?: string }> {
+  await requireAdminSession();
+  await ensureDomainTables();
+
+  try {
+    const orders = await sql`SELECT * FROM admin_domain_orders WHERE id = ${id}`;
+    if (orders.length === 0) return { success: false, error: "Domain not found." };
+    const order = orders[0];
+
+    const provider = getDomainProvider();
+    const cleanDomain = String(order.domain_name).toLowerCase().trim();
+
+    // Fetch or create live zone in Cloudflare
+    const zoneInfo = await provider.getOrCreateZone(cleanDomain);
+
+    const expiry = new Date();
+    expiry.setFullYear(expiry.getFullYear() + 1);
+    const expiryStr = expiry.toISOString().split("T")[0] + " 00:00:00";
+
+    await sql`
+      UPDATE admin_domain_orders
+      SET 
+        status = 'active',
+        expiry_date = COALESCE(expiry_date, ${expiryStr}::timestamp),
+        zone_id = ${zoneInfo.zoneId},
+        nameservers = ${JSON.stringify(zoneInfo.nameservers)}::jsonb,
+        cloudflare_sync_at = NOW()
+      WHERE id = ${id}
+    `;
+
+    await logDomainAudit(
+      "admin",
+      cleanDomain,
+      "ADMIN_MANUAL_REGISTRATION_SYNC",
+      { zone_id: zoneInfo.zoneId, nameservers: zoneInfo.nameservers }
+    );
+
+    await logSystemAction(
+      `Admin activated and linked domain "${cleanDomain}" with Cloudflare Zone ${zoneInfo.zoneId}`
+    );
+
+    revalidatePath("/admin", "layout");
+    revalidatePath("/admin/web-services", "page");
+    revalidatePath("/dashboard/domains", "page");
+    return { success: true, orderId: zoneInfo.zoneId };
+  } catch (err: any) {
+    console.error("Manual registration failed:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Get TLD Pricing catalog for Admin
+ */
+export async function getTldPricing(): Promise<TldPricingItem[]> {
+  await requireAdminSession();
+  await ensureDomainTables();
+
+  try {
+    const rows = await sql`
+      SELECT * FROM tld_pricing ORDER BY tld ASC
+    `;
+    return rows.map((r: any) => ({
+      id: r.id,
+      tld: r.tld,
+      cost_price: parseFloat(r.cost_price),
+      markup: parseFloat(r.markup),
+      selling_price: parseFloat(r.selling_price),
+      renewal_cost: parseFloat(r.renewal_cost),
+      renewal_price: parseFloat(r.renewal_price),
+      currency: r.currency || 'USD',
+      provider: r.provider || 'Cloudflare',
+      is_active: r.is_active ?? true,
+      updated_at: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
+    }));
+  } catch (err) {
+    console.error("Failed to get TLD pricing:", err);
+    return [];
+  }
+}
+
+/**
+ * Sync all TLD Cost Prices in real time from Cloudflare Registrar API
+ */
+export async function syncAllTldPricingFromCloudflare(): Promise<{
+  success: boolean;
+  syncedCount: number;
+  pricings: TldPricingItem[];
+  error?: string;
+}> {
+  await requireAdminSession();
+  await ensureDomainTables();
+
+  try {
+    const provider = getDomainProvider();
+    const rows = await sql`SELECT * FROM tld_pricing WHERE is_active = true ORDER BY tld ASC`;
+    let syncedCount = 0;
+
+    for (const row of rows) {
+      const tld = row.tld.toLowerCase().trim();
+      if (tld === "lk") {
+        await sql`
+          UPDATE tld_pricing
+          SET provider = 'LK Domain Registry', updated_at = NOW()
+          WHERE id = ${row.id}
+        `;
+        continue;
+      }
+
+      try {
+        const probeRes = await provider.checkAvailability(`pricing-probe-${tld}.${tld}`);
+        if (probeRes.costPrice && probeRes.costPrice > 0) {
+          const liveCost = Number(probeRes.costPrice);
+          const currentMarkup = Number(row.markup) || 5.50;
+          const newSelling = parseFloat((liveCost + currentMarkup).toFixed(2));
+          const newRenewal = parseFloat((liveCost + currentMarkup).toFixed(2));
+
+          await sql`
+            UPDATE tld_pricing
+            SET 
+              cost_price = ${liveCost},
+              renewal_cost = ${liveCost},
+              selling_price = ${newSelling},
+              renewal_price = ${newRenewal},
+              provider = 'Cloudflare',
+              updated_at = NOW()
+            WHERE id = ${row.id}
+          `;
+          syncedCount++;
+        }
+      } catch (err: any) {
+        console.warn(`[TLD Cloudflare Sync] Error for .${tld}:`, err.message);
+      }
+    }
+
+    const updatedRows = await sql`SELECT * FROM tld_pricing ORDER BY tld ASC`;
+    const pricings = updatedRows.map((r: any) => ({
+      id: r.id,
+      tld: r.tld,
+      cost_price: parseFloat(r.cost_price),
+      markup: parseFloat(r.markup),
+      selling_price: parseFloat(r.selling_price),
+      renewal_cost: parseFloat(r.renewal_cost),
+      renewal_price: parseFloat(r.renewal_price),
+      currency: r.currency || 'USD',
+      provider: r.provider || 'Cloudflare',
+      is_active: r.is_active ?? true,
+      updated_at: r.updated_at ? new Date(r.updated_at).toISOString() : undefined,
+    }));
+
+    await logSystemAction(`Admin synced live TLD cost prices from Cloudflare (${syncedCount} TLDs updated)`);
+    revalidatePath("/admin", "layout");
+
+    return { success: true, syncedCount, pricings };
+  } catch (err: any) {
+    console.error("Failed to sync TLD pricing from Cloudflare:", err);
+    return { success: false, syncedCount: 0, pricings: [], error: err.message };
+  }
+}
+
+/**
+ * Update or insert TLD pricing in Admin
+ */
+export async function updateTldPricing(
+  item: TldPricingItem
+): Promise<{ success: boolean; error?: string }> {
+  await requireAdminSession();
+  await ensureDomainTables();
+
+  try {
+    const cleanTld = item.tld.replace(/^\./, "").toLowerCase().trim();
+    const cost = Number(item.cost_price);
+    const markup = Number(item.markup);
+    const selling = Number(item.selling_price || cost + markup);
+    const renewCost = Number(item.renewal_cost || cost);
+    const renewPrice = Number(item.renewal_price || renewCost + markup);
+
+    await sql`
+      INSERT INTO tld_pricing (
+        tld, cost_price, markup, selling_price, renewal_cost, renewal_price, provider, is_active, updated_at
+      ) VALUES (
+        ${cleanTld}, ${cost}, ${markup}, ${selling}, ${renewCost}, ${renewPrice}, ${item.provider || (cleanTld === 'lk' ? 'LK Domain Registry' : 'Cloudflare')}, ${item.is_active ?? true}, NOW()
+      )
+      ON CONFLICT (tld) DO UPDATE SET
+        cost_price = EXCLUDED.cost_price,
+        markup = EXCLUDED.markup,
+        selling_price = EXCLUDED.selling_price,
+        renewal_cost = EXCLUDED.renewal_cost,
+        renewal_price = EXCLUDED.renewal_price,
+        provider = EXCLUDED.provider,
+        is_active = EXCLUDED.is_active,
+        updated_at = NOW()
+    `;
+
+    await logSystemAction(`Admin updated TLD pricing for .${cleanTld} (Cost: $${cost}, Sell: $${selling})`);
+    revalidatePath("/admin", "layout");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to update TLD pricing:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Fetch domain audit log entries for Admin
+ */
+export async function getAdminAuditLogs(
+  domainName?: string,
+  limit = 50
+) {
+  await requireAdminSession();
+  return getDomainAuditLogs(domainName, limit);
 }

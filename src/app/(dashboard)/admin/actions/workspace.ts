@@ -78,6 +78,7 @@ export async function ensureWorkspaceSchema(): Promise<void> {
           updated_at TIMESTAMP DEFAULT now()
         )
       `;
+      await sql`ALTER TABLE workspace_content_planner ENABLE ROW LEVEL SECURITY`;
     } catch (e) {
       console.warn("Could not create workspace_content_planner:", e);
     }
@@ -103,6 +104,7 @@ export async function ensureWorkspaceSchema(): Promise<void> {
           CONSTRAINT uq_workspace_month_project UNIQUE(project_id, year_month)
         )
       `;
+      await sql`ALTER TABLE workspace_month_links ENABLE ROW LEVEL SECURITY`;
     } catch (e) {
       console.warn("Could not create workspace_month_links:", e);
     }

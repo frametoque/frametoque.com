@@ -119,8 +119,60 @@ export function getR2PublicBaseUrl(): string {
 }
 
 const DANGEROUS_EXTENSIONS = new Set([
-  ".html", ".htm", ".exe", ".sh", ".php", ".bat", ".cmd", ".js", ".mjs", ".cgi", ".jar", ".vbs", ".dll"
+  ".html", ".htm", ".exe", ".sh", ".php", ".bat", ".cmd", ".js", ".mjs", ".cgi", ".jar", ".vbs", ".dll",
+  ".svg", ".xml", ".xhtml", ".shtml", ".jsp", ".asp", ".aspx"
 ]);
+
+const ALLOWED_STORAGE_HOST_PATTERNS = [
+  /\.public\.blob\.vercel-storage\.com$/,
+  /\.r2\.dev$/,
+  /\.cloudflarestorage\.com$/,
+  /^(.*\.)?frametoque\.com$/,
+];
+
+/**
+ * Validates whether an external URL is an approved storage host and not an internal/private address.
+ */
+export function isAllowedStorageUrl(urlStr: string): boolean {
+  try {
+    const parsed = new URL(urlStr);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return false;
+    }
+    const host = parsed.hostname.toLowerCase();
+    // Block loopback, local, internal, and cloud metadata addresses
+    if (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "0.0.0.0" ||
+      host === "::1" ||
+      host === "169.254.169.254" ||
+      host.endsWith(".internal") ||
+      host.endsWith(".local") ||
+      host.endsWith(".lan")
+    ) {
+      return false;
+    }
+    // Block private IPv4 ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8, 169.254.0.0/16)
+    const ipv4Match = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4Match) {
+      const [_, a, b] = ipv4Match.map(Number);
+      if (
+        a === 10 ||
+        a === 127 ||
+        (a === 169 && b === 254) ||
+        (a === 172 && b >= 16 && b <= 31) ||
+        (a === 192 && b === 168) ||
+        a === 0
+      ) {
+        return false;
+      }
+    }
+    return ALLOWED_STORAGE_HOST_PATTERNS.some((pattern) => pattern.test(host));
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Normalizes pathname, prevents directory traversal, and blocks executable extensions.
@@ -353,8 +405,11 @@ export function getEquivalentR2Url(vercelUrl: string): string | null {
 export async function fetchWithFallback(urlOrKey: string, init?: RequestInit): Promise<Response> {
   let isVercelUrl = urlOrKey.includes("blob.vercel-storage.com");
 
-  // If it's a URL, attempt fetching it first
+  // If it's a URL, validate origin and attempt fetching it first
   if (urlOrKey.startsWith("http://") || urlOrKey.startsWith("https://")) {
+    if (!isAllowedStorageUrl(urlOrKey)) {
+      throw new Error(`Access to external, unapproved, or private media URL is prohibited.`);
+    }
     try {
       const res = await fetch(urlOrKey, init);
       if (res.ok) {

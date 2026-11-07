@@ -1,7 +1,7 @@
 "use server";
 
 import sql from "@/lib/db";
-import { secureAction } from "@/lib/safe-action";
+import { secureAdminAction } from "@/lib/safe-action";
 import { revalidatePath } from "next/cache";
 
 // 1. Define the internal logic expecting a userId (guaranteed by wrapper)
@@ -22,4 +22,4 @@ async function updateAnalyticsSettingInternal(userId: string, settingName: strin
 
 // 4. Export the wrapped action for client use
 export const updateAnalyticsSetting = (settingName: string, value: string) => 
-  secureAction(updateAnalyticsSettingInternal, settingName, value);
+  secureAdminAction(updateAnalyticsSettingInternal, settingName, value);

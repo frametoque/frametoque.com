@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PKPass } from "passkit-generator";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { getSessionUser } from "@/lib/auth-guard";
 import sql from "@/lib/db";
 import * as forge from "node-forge";
 import fs from "fs";
@@ -101,38 +101,49 @@ export async function POST(
     );
   }
 
-  /* 1. Authenticate via Clerk (same request context — no cookie forwarding needed) */
-  const { userId } = await auth();
-  if (!userId) {
+  /* 1. Authenticate via Clerk session */
+  const session = await getSessionUser();
+  if (!session || !session.userId) {
     return NextResponse.json({ error: "Unauthorized — please sign in" }, { status: 401 });
-  }
-  const clerk    = await clerkClient();
-  const user     = await clerk.users.getUser(userId);
-  const userEmail = user.emailAddresses[0]?.emailAddress;
-  if (!userEmail) {
-    return NextResponse.json({ error: "User email not found" }, { status: 400 });
   }
 
   try {
     const { invoice_id } = await params;
 
-    /* 2. Fetch invoice from DB (owns-check included) */
-     const result = await sql`
-      SELECT
-        i.invoice_id,
-        i.project_name,
-        i.date,
-        i.currency,
-        i.subtotal,
-        i.discount,
-        i.total,
-        i.advance,
-        i.total_due,
-        i.work_status,
-        i.payment_status
-       FROM public.invoices i
-       WHERE i.invoice_id = ${invoice_id} AND LOWER(i.user_email) = LOWER(${userEmail})
-    `;
+    /* 2. Fetch invoice from DB (owns-check included, admins can access any) */
+    const result = session.isAdmin
+      ? await sql`
+          SELECT
+            i.invoice_id,
+            i.project_name,
+            i.date,
+            i.currency,
+            i.subtotal,
+            i.discount,
+            i.total,
+            i.advance,
+            i.total_due,
+            i.work_status,
+            i.payment_status
+          FROM public.invoices i
+          WHERE i.invoice_id = ${invoice_id}
+        `
+      : await sql`
+          SELECT
+            i.invoice_id,
+            i.project_name,
+            i.date,
+            i.currency,
+            i.subtotal,
+            i.discount,
+            i.total,
+            i.advance,
+            i.total_due,
+            i.work_status,
+            i.payment_status
+          FROM public.invoices i
+          WHERE i.invoice_id = ${invoice_id} AND LOWER(i.user_email) = LOWER(${session.email})
+        `;
 
     if (result.length === 0) {
       return NextResponse.json({ error: "Invoice not found or access denied" }, { status: 404 });

@@ -18,6 +18,19 @@ export async function uploadReceipt(formData: FormData, type: 'income' | 'expens
     throw new Error("No file uploaded");
   }
 
+  // File size validation (max 15MB)
+  const MAX_FILE_SIZE = 15 * 1024 * 1024;
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error("File exceeds maximum allowed size of 15MB.");
+  }
+
+  // Allowed file extensions
+  const allowedExts = [".jpg", ".jpeg", ".png", ".webp", ".pdf"];
+  const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+  if (!allowedExts.includes(ext)) {
+    throw new Error(`Invalid file type (${ext}). Only JPG, PNG, WEBP, and PDF receipts are allowed.`);
+  }
+
   try {
     const filename = `admin/receipts/${type}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
     const blob = await putBlob(filename, file, {
@@ -51,7 +64,8 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     incomeBreakdownRange,
     clientsCountRows,
     accounts,
-    clientDueAmountRows
+    clientDueAmountRows,
+    pendingDomainOrdersRaw
   ] = await Promise.all([
     sql`
       SELECT 
@@ -154,7 +168,24 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
       GROUP BY COALESCE(c.full_name, i.user_email)
       HAVING SUM(i.total_due) > 0
       ORDER BY due_amount DESC
-    `
+    `,
+    sql`
+      SELECT 
+        d.id, 
+        d.domain_name, 
+        d.client_email, 
+        d.invoice_id, 
+        d.status,
+        d.created_at,
+        i.payment_status,
+        i.total as invoice_total
+      FROM admin_domain_orders d
+      LEFT JOIN invoices i ON d.invoice_id = i.invoice_id
+      WHERE d.status IN ('pending_manual_registration', 'manual_review')
+         OR (d.status = 'pending' AND (LOWER(i.payment_status) = 'paid' OR LOWER(i.payment_status) = 'fully paid'))
+      ORDER BY d.id DESC
+      LIMIT 10
+    `.catch(() => [])
   ]);
 
   const incomesStats = incomesStatsRow[0] || {};
@@ -225,6 +256,16 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     unpaidCount,
     unpaidAmount,
     clientDueAmounts,
+    pendingDomainPurchases: ((pendingDomainOrdersRaw as any[]) || []).map((row: any) => ({
+      id: row.id,
+      domain_name: row.domain_name,
+      client_email: row.client_email,
+      invoice_id: row.invoice_id,
+      invoice_total: row.invoice_total ? parseFloat(row.invoice_total) : 0,
+      status: row.status,
+      payment_status: row.payment_status || "PAID",
+      created_at: row.created_at,
+    })),
     currentMonthStats: {
       income: parseFloat(incomesStats.this_month || 0),
       expenses: parseFloat(expensesStats.this_month || 0),
@@ -517,6 +558,25 @@ export async function deleteIncome(id: number) {
     if (incomeRows.length > 0) {
       incomeDesc = incomeRows[0].description || "";
       incomeAmount = parseFloat(incomeRows[0].amount || "0");
+
+      // If this was a card payment, mark it deleted in online_payments and remove associated fee expense
+      const refMatch = incomeDesc.match(/Ref:\s*([^\s)]+)/i);
+      if (refMatch) {
+        const txId = refMatch[1];
+        try {
+          await sql`
+            INSERT INTO online_payments (checkout_id, invoice_id, amount, status)
+            VALUES (${txId}, ${incomeRows[0].invoice_id || ''}, ${incomeAmount}, 'deleted')
+            ON CONFLICT (checkout_id) DO UPDATE SET status = 'deleted', updated_at = CURRENT_TIMESTAMP
+          `;
+          await sql`
+            DELETE FROM admin_expenses
+            WHERE description LIKE ${`%${txId}%`}
+          `;
+        } catch (opErr) {
+          console.warn("[deleteIncome] Failed to record deleted status for online payment:", opErr);
+        }
+      }
     }
 
     if (incomeRows.length > 0 && incomeRows[0].invoice_id) {
@@ -670,6 +730,21 @@ export async function deleteExpense(id: number) {
     if (existing.length > 0) {
       expDesc = existing[0].description || "";
       expAmount = parseFloat(existing[0].amount || "0");
+
+      // If this was a Payments.lk transaction fee expense, mark fee as deleted in online_payments
+      const refMatch = expDesc.match(/Ref:\s*([^\s)]+)/i);
+      if (refMatch) {
+        const txId = refMatch[1];
+        try {
+          await sql`
+            UPDATE online_payments 
+            SET gateway_response = jsonb_set(COALESCE(gateway_response, '{}'::jsonb), '{fee_deleted}', 'true'::jsonb)
+            WHERE checkout_id = ${txId}
+          `;
+        } catch (opErr) {
+          // ignore
+        }
+      }
     }
   } catch (e) {}
 
@@ -1072,6 +1147,14 @@ export async function deleteInvoice(id: string) {
       WHERE invoice_id = ${id}
     `;
   }
+
+  try {
+    await sql`
+      UPDATE online_payments
+      SET status = 'deleted', updated_at = CURRENT_TIMESTAMP
+      WHERE invoice_id = ${id}
+    `;
+  } catch (e) {}
 
   await sql`DELETE FROM invoices WHERE invoice_id = ${id}`;
   await logSystemAction(`Deleted invoice: "${projectName}" (${id})`);
@@ -2686,3 +2769,4 @@ export async function getTopClients() {
     value: parseFloat(r.value)
   }));
 }
+

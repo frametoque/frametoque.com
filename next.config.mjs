@@ -1,3 +1,18 @@
+const cspHeader = `
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://clerk.frametoque.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://*.umami.is;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com data:;
+  img-src 'self' data: blob: https:;
+  media-src 'self' https://*.public.blob.vercel-storage.com https://*.r2.dev https://*.cloudflarestorage.com data: blob:;
+  connect-src 'self' https: wss: https://*.clerk.accounts.dev https://clerk.frametoque.com https://api.payments.lk https://api.cloudflare.com https://photon.komoot.io https://open.er-api.com https://api.open-meteo.com;
+  frame-src 'self' https://challenges.cloudflare.com https://*.youtube.com https://www.youtube.com;
+  frame-ancestors 'self';
+  form-action 'self';
+  base-uri 'self';
+  upgrade-insecure-requests;
+`.replace(/\s{2,}/g, ' ').trim();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   turbopack: {
@@ -6,6 +21,9 @@ const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '100mb',
+    },
+    staleTimes: {
+      dynamic: 0,
     },
   },
   compiler: {
@@ -83,6 +101,10 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: cspHeader,
+          },
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff',

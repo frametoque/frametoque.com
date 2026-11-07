@@ -21,7 +21,16 @@ import {
   addDomainOrder,
   linkInvoiceToDomainOrder,
   getInvoicesForLinking,
+  syncDomainFromCloudflare,
+  syncAllDomainsFromCloudflare,
+  manualRegisterDomain,
+  getTldPricing,
+  updateTldPricing,
+  getAdminAuditLogs,
+  TldPricingItem,
 } from "../actions/domains";
+import { TldPricingModal, AdminAuditLogsModal } from "./AdminDomainModals";
+import DomainControlCenterModal from "@/components/services/DomainControlCenterModal";
 import {
   Globe,
   AlertTriangle,
@@ -44,6 +53,12 @@ import {
   Link2,
   Unlink,
   ExternalLink,
+  Settings2,
+  Sliders,
+  Sparkles,
+  ShieldCheck,
+  Server,
+  Loader2,
 } from "lucide-react";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { StatCard } from "@/components/ui/StatCard";
@@ -450,6 +465,70 @@ export default function AdminOrdersPage() {
 
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [activeFilter, setActiveFilter] = useState("All");
+
+  // Advanced Filters
+  const [selectedTldFilter, setSelectedTldFilter] = useState("All");
+  const [onlyExpiringSoon, setOnlyExpiringSoon] = useState(false);
+
+  // Cloudflare Admin Control & Sync States
+  const [selectedControlDomain, setSelectedControlDomain] = useState<DomainOrder | null>(null);
+  const [syncingId, setSyncingId] = useState<number | null>(null);
+  const [syncingAll, setSyncingAll] = useState(false);
+  const [provisioningId, setProvisioningId] = useState<number | null>(null);
+
+  // TLD Pricing Manager Modal
+  const [isTldPricingOpen, setIsTldPricingOpen] = useState(false);
+
+  // Audit Log Modal
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+
+  // Cloudflare Admin Handlers
+  const handleSyncDomain = async (id: number) => {
+    setSyncingId(id);
+    try {
+      const res = await syncDomainFromCloudflare(id);
+      if (!res.success) throw new Error(res.error || "Failed to sync domain");
+      await loadData();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSyncingId(null);
+    }
+  };
+
+  const handleSyncAll = async () => {
+    setSyncingAll(true);
+    try {
+      const res = await syncAllDomainsFromCloudflare();
+      alert(`Cloudflare sync complete: ${res.totalSynced} domains synchronized.`);
+      await loadData();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSyncingAll(false);
+    }
+  };
+
+  const handleManualProvision = async (id: number) => {
+    const isSandboxConfirmed = confirm(
+      "🛡️ SAFETY NOTICE (Sandbox Active):\n\n" +
+      "This operation runs in Sandbox Mode (CLOUDFLARE_ENV=sandbox).\n" +
+      "NO real money or credit card charges will be made to your Cloudflare account.\n\n" +
+      "Proceed with simulated registration and DNS zone establishment?"
+    );
+    if (!isSandboxConfirmed) return;
+    setProvisioningId(id);
+    try {
+      const res = await manualRegisterDomain(id);
+      if (!res.success) throw new Error(res.error || "Provisioning failed");
+      alert("Domain successfully provisioned in Sandbox and DNS zone established!");
+      await loadData();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setProvisioningId(null);
+    }
+  };
 
   // Renewal history state per domain id
   const [expandedHistory, setExpandedHistory] = useState<Record<number, boolean>>({});
@@ -1041,6 +1120,8 @@ export default function AdminOrdersPage() {
       case "active":
         return "text-green-400 bg-green-400/10 border border-green-400/20";
       case "pending":
+      case "pending_manual_registration":
+      case "manual_review":
         return "text-amber-400 bg-amber-400/10 border border-amber-400/20";
       case "expired":
         return "text-red-400 bg-red-400/10 border border-red-400/20";
@@ -1078,12 +1159,25 @@ export default function AdminOrdersPage() {
 
   const totalProfitLkr = totalRegProfitLkr + totalRenewalProfitLkr;
 
+  const availableTlds = Array.from(
+    new Set(orders.map((o) => o.domain_name.split(".").pop()?.toLowerCase()).filter(Boolean))
+  );
+
   const filteredOrders = orders.filter((o) => {
     const statusMatch = activeFilter === "All" || o.status.toLowerCase() === activeFilter.toLowerCase();
     const searchMatch =
       o.domain_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.client_email.toLowerCase().includes(searchQuery.toLowerCase());
-    return statusMatch && searchMatch;
+
+    const tld = o.domain_name.split(".").pop()?.toLowerCase();
+    const tldMatch = selectedTldFilter === "All" || tld === selectedTldFilter.toLowerCase();
+
+    const daysToExpiry = o.expiry_date
+      ? Math.ceil((new Date(o.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      : null;
+    const expiryMatch = !onlyExpiringSoon || (daysToExpiry !== null && daysToExpiry > 0 && daysToExpiry <= 30);
+
+    return statusMatch && searchMatch && tldMatch && expiryMatch;
   });
 
   // ---------------------------------------------------------------------------
@@ -1186,7 +1280,101 @@ export default function AdminOrdersPage() {
         onPrimaryAction={() => router.push("/admin/web-services/domains/new")}
       />
 
-    
+      {/* Action Required: Domains Pending Manual Cloudflare Purchase */}
+      {orders.filter((o) => o.status === "pending_manual_registration" || o.status === "manual_review").length > 0 && (
+        <div className="p-5 rounded-3xl bg-amber-500/10 border border-amber-500/30 space-y-3.5 backdrop-blur-md">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5 text-amber-400 font-bold text-sm">
+              <AlertTriangle className="w-5 h-5 shrink-0 animate-pulse" />
+              <span>Action Required: Domain Payment Received &mdash; Register on Cloudflare, then click Sync</span>
+            </div>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
+              {orders.filter((o) => o.status === "pending_manual_registration" || o.status === "manual_review").length} pending purchase
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {orders
+              .filter((o) => o.status === "pending_manual_registration" || o.status === "manual_review")
+              .map((o) => (
+                <div key={o.id} className="p-3.5 rounded-2xl bg-black/40 border border-amber-500/20 flex items-center justify-between gap-3 text-xs">
+                  <div>
+                    <div className="font-bold text-white tracking-wide text-sm">{o.domain_name}</div>
+                    <div className="text-gray-400 text-xs mt-0.5">{o.client_email} &bull; Inv: {o.invoice_id || "Paid"}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleSyncDomain(o.id)}
+                      disabled={syncingId === o.id}
+                      className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title="Fetch live zone from Cloudflare and activate client DNS"
+                    >
+                      {syncingId === o.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      )}
+                      <span>Sync Live CF</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Domain Operations Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* TLD Extension Filter */}
+          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <span>TLD:</span>
+            <select
+              value={selectedTldFilter}
+              onChange={(e) => setSelectedTldFilter(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-xl px-2.5 py-1.5 text-white focus:outline-none"
+            >
+              <option value="All">All Extensions</option>
+              {availableTlds.map((tld) => (
+                <option key={tld} value={tld}>.{tld}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Expiring Soon Toggle */}
+          <label className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-gray-300 cursor-pointer hover:bg-white/10 transition-colors">
+            <input
+              type="checkbox"
+              checked={onlyExpiringSoon}
+              onChange={(e) => setOnlyExpiringSoon(e.target.checked)}
+              className="rounded text-brand-500 cursor-pointer"
+            />
+            <span>Expiring Soon (&le;30d)</span>
+          </label>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setIsTldPricingOpen(true)}
+            className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Sliders className="w-3.5 h-3.5 text-brand-400" />
+            <span>TLD Pricing</span>
+          </button>
+
+          <button
+            onClick={handleSyncAll}
+            disabled={syncingAll}
+            className="px-3.5 py-1.5 rounded-xl bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 text-brand-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            {syncingAll ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5" />
+            )}
+            <span>Sync Cloudflare</span>
+          </button>
+        </div>
+      </div>
 
       {/* Table */}
       <Table>
@@ -1239,9 +1427,9 @@ export default function AdminOrdersPage() {
                   const renewProfitUsd = renewPriceUsd - renewCostUsd;
                   const renewProfitLkr = lockedRenPriceLkr - lockedRenCostLkr;
                   const isRenLocked = o.renewal_lkr_cost != null || o.renewal_lkr_price != null;
-                  const isRenCostDiff = Math.abs(lockedRenCostLkr - lockedRegCostLkr) > 0.01;
-                  const isRenPriceDiff = Math.abs(lockedRenPriceLkr - lockedRegPriceLkr) > 0.01;
-                  const isRenProfitDiff = Math.abs(renewProfitLkr - regProfitLkr) > 0.01;
+                  const isRenCostDiff = Math.abs(lockedRenCostLkr - lockedRegCostLkr) >= 0.05;
+                  const isRenPriceDiff = Math.abs(lockedRenPriceLkr - lockedRegPriceLkr) >= 0.05;
+                  const isRenProfitDiff = Math.abs(renewProfitLkr - regProfitLkr) >= 0.05;
 
                   const isHistoryOpen = expandedHistory[o.id] ?? false;
                   const historyRows = historyData[o.id] ?? [];
@@ -1367,14 +1555,27 @@ export default function AdminOrdersPage() {
                         {/* Status */}
                         <TableCell className="text-center">
                           <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full border ${getStatusColor(o.status)}`}>
-                            {o.status}
+                            {o.status === "pending_manual_registration"
+                              ? "Paid (Needs CF Purchase)"
+                              : o.status === "manual_review"
+                              ? "Manual Review"
+                              : o.status}
                           </span>
                         </TableCell>
 
                         {/* Actions */}
                         <TableCell>
                           <div className="flex items-center justify-end gap-1">
-                            {o.status === "pending" && (
+                            {/* Cloudflare Control Center */}
+                            <button
+                              onClick={() => setSelectedControlDomain(o)}
+                              className="p-2 hover:bg-brand-500/20 text-brand-400 rounded-xl transition-colors flex items-center justify-center cursor-pointer"
+                              title="Domain Control Center (DNS, Lock, DNSSEC, Nameservers)"
+                            >
+                              <Settings2 className="w-4 h-4" />
+                            </button>
+
+                            {(o.status === "pending" || o.status === "pending_manual_registration" || o.status === "manual_review") && (
                               <>
                                 {!o.invoice_id ? (
                                   <button
@@ -1890,6 +2091,30 @@ export default function AdminOrdersPage() {
           </div>
         </div>
       )}
+
+      {/* Domain Control Center Modal */}
+      {selectedControlDomain && (
+        <DomainControlCenterModal
+          isOpen={!!selectedControlDomain}
+          onClose={() => setSelectedControlDomain(null)}
+          domain={selectedControlDomain}
+          userEmail={selectedControlDomain.client_email}
+          onRefresh={loadData}
+          isAdmin={true}
+        />
+      )}
+
+      {/* TLD Pricing Manager Modal */}
+      <TldPricingModal
+        isOpen={isTldPricingOpen}
+        onClose={() => setIsTldPricingOpen(false)}
+      />
+
+      {/* Domain Audit Log Modal */}
+      <AdminAuditLogsModal
+        isOpen={isAuditModalOpen}
+        onClose={() => setIsAuditModalOpen(false)}
+      />
     </div>
   );
 }

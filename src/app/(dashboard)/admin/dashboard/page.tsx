@@ -150,6 +150,41 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       
+      {/* Pending Domain Cloudflare Purchases Notification */}
+      {data?.pendingDomainPurchases && data.pendingDomainPurchases.length > 0 && (
+        <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/30 rounded-3xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg backdrop-blur-xl">
+          <div className="flex items-center gap-3.5">
+            <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400 shrink-0">
+              <AlertCircle className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-white tracking-wide">
+                  Action Required: {data.pendingDomainPurchases.length} Domain Payment Received
+                </h3>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                  Manual Cloudflare Purchase
+                </span>
+              </div>
+              <p className="text-xs text-gray-300 mt-1">
+                Client paid for{" "}
+                <span className="font-semibold text-white">
+                  {data.pendingDomainPurchases.map((p: any) => p.domain_name).join(", ")}
+                </span>
+                . Please register on Cloudflare Registrar, then click Sync to activate live DNS.
+              </p>
+            </div>
+          </div>
+          <a
+            href="/admin/web-services"
+            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition-colors flex items-center gap-2 shrink-0 cursor-pointer shadow-md"
+          >
+            <span>Open Domains &amp; Sync</span>
+            <ArrowUpRight className="w-4 h-4" />
+          </a>
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         {stats.map((stat, i) => (

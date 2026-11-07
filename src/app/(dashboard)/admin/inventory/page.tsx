@@ -17,7 +17,7 @@ import AnimatedNumber from "../components/AnimatedNumber";
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount || 0);
 
-const R2_PUBLIC_BASE = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "https://pub-efe1896ad7dc4cbc9be5a02f01f6f99f.r2.dev").replace(/\/+$/, "");
+const R2_PUBLIC_BASE = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "").replace(/\/+$/, "");
 
 function extractStoragePath(urlOrPath: string): string {
   if (!urlOrPath) return "";

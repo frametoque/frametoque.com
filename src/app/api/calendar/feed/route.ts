@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import crypto from "node:crypto";
 import sql from "@/lib/db";
 import { getSriLankaHolidays } from "@/app/(dashboard)/admin/actions/workspace";
 import { requireAdminSession } from "@/lib/auth-guard";
@@ -61,8 +62,10 @@ export async function GET(request: NextRequest) {
     const configuredSecret = process.env.CALENDAR_FEED_SECRET || process.env.CRON_SECRET;
 
     let isAuthorized = false;
-    if (token && configuredSecret && token === configuredSecret) {
-      isAuthorized = true;
+    if (token && configuredSecret && token.length === configuredSecret.length) {
+      if (crypto.timingSafeEqual(Buffer.from(token), Buffer.from(configuredSecret))) {
+        isAuthorized = true;
+      }
     }
 
     if (!isAuthorized) {

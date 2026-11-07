@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
@@ -32,8 +32,7 @@ export interface HostingOrder {
 }
 
 export async function getHostingOrders(): Promise<HostingOrder[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const rows = await sql`
@@ -72,6 +71,7 @@ export async function getHostingOrders(): Promise<HostingOrder[]> {
 export async function addHostingOrder(
   order: Omit<HostingOrder, "id" | "created_at">
 ): Promise<{ success: boolean; error?: string }> {
+  await requireAdminSession();
   try {
     const purchaseDate = order.purchase_date ? order.purchase_date.split("T")[0] : null;
     const expiryDate = order.expiry_date ? order.expiry_date.split("T")[0] : null;
@@ -102,6 +102,7 @@ export async function updateHostingOrder(
   id: number,
   order: Partial<HostingOrder>
 ): Promise<{ success: boolean; error?: string }> {
+  await requireAdminSession();
   try {
     const purchaseDate = order.purchase_date ? order.purchase_date.split("T")[0] : null;
     const expiryDate = order.expiry_date ? order.expiry_date.split("T")[0] : null;
@@ -144,8 +145,7 @@ export async function linkInvoiceToHostingOrder(
   hostingOrderId: number,
   invoiceId: string | null
 ): Promise<{ success: boolean; error?: string }> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     await sql`
@@ -163,6 +163,7 @@ export async function linkInvoiceToHostingOrder(
 }
 
 export async function deleteHostingOrder(id: number): Promise<{ success: boolean; error?: string }> {
+  await requireAdminSession();
   try {
     await sql`DELETE FROM admin_hosting_orders WHERE id = ${id}`;
     await logSystemAction(`Deleted hosting order ID ${id}`);
@@ -175,11 +176,21 @@ export async function deleteHostingOrder(id: number): Promise<{ success: boolean
 }
 
 export async function uploadProviderInvoice(formData: FormData): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const file = formData.get('file') as File;
   if (!file) throw new Error('No file uploaded');
+
+  const MAX_FILE_SIZE = 15 * 1024 * 1024;
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error("File exceeds maximum allowed size of 15MB.");
+  }
+  const allowedExts = [".jpg", ".jpeg", ".png", ".webp", ".pdf"];
+  const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+  if (!allowedExts.includes(ext)) {
+    throw new Error(`Invalid file type (${ext}). Only JPG, PNG, WEBP, and PDF invoices are allowed.`);
+  }
+
   try {
     const filename = `admin/hosting-invoices/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
     const blob = await putBlob(filename, file, { access: 'public' });
@@ -191,11 +202,21 @@ export async function uploadProviderInvoice(formData: FormData): Promise<string>
 }
 
 export async function uploadRenewalInvoiceForHosting(formData: FormData): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const file = formData.get('file') as File;
   if (!file) throw new Error('No file uploaded');
+
+  const MAX_FILE_SIZE = 15 * 1024 * 1024;
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error("File exceeds maximum allowed size of 15MB.");
+  }
+  const allowedExts = [".jpg", ".jpeg", ".png", ".webp", ".pdf"];
+  const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+  if (!allowedExts.includes(ext)) {
+    throw new Error(`Invalid file type (${ext}). Only JPG, PNG, WEBP, and PDF invoices are allowed.`);
+  }
+
   try {
     const filename = `admin/hosting-renewal-invoices/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
     const blob = await putBlob(filename, file, { access: 'public' });
@@ -211,6 +232,7 @@ export async function addHostingRenewalInvoiceUrl(
   url: string,
   note?: string
 ): Promise<{ success: boolean; error?: string }> {
+  await requireAdminSession();
   try {
 
     const entry = JSON.stringify({ url, note: note || '', date: new Date().toISOString() });

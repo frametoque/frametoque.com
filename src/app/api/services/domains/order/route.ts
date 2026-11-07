@@ -2,58 +2,13 @@ import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
-
-interface RegistrarPricing {
-  registrar: string;
-  regCost: number;
-  renewCost: number;
-}
-
-const REGISTRARS_DB: Record<string, RegistrarPricing[]> = {
-  com: [
-    { registrar: "Cloudflare", regCost: 10.46, renewCost: 10.46 },
-    { registrar: "Namecheap", regCost: 13.98, renewCost: 15.88 },
-    { registrar: "Internet.bs", regCost: 13.45, renewCost: 14.25 },
-    { registrar: "GoDaddy", regCost: 11.99, renewCost: 21.99 }
-  ],
-  net: [
-    { registrar: "Cloudflare", regCost: 11.86, renewCost: 11.86 },
-    { registrar: "Internet.bs", regCost: 15.50, renewCost: 16.50 },
-    { registrar: "Namecheap", regCost: 14.98, renewCost: 17.98 }
-  ],
-  org: [
-    { registrar: "Cloudflare", regCost: 8.50, renewCost: 11.20 },
-    { registrar: "Internet.bs", regCost: 16.00, renewCost: 17.00 },
-    { registrar: "Namecheap", regCost: 15.98, renewCost: 18.98 }
-  ],
-  engineering: [
-    { registrar: "Cloudflare", regCost: 50.20, renewCost: 50.20 }
-  ],
-  ca: [
-    { registrar: "Cloudflare", regCost: 9.19, renewCost: 9.19 }
-  ],
-  uk: [
-    { registrar: "Cloudflare", regCost: 5.30, renewCost: 5.30 }
-  ],
-  biz: [
-    { registrar: "Cloudflare", regCost: 18.20, renewCost: 18.20 }
-  ],
-  icu: [
-    { registrar: "Cloudflare", regCost: 15.20, renewCost: 15.20 }
-  ],
-  info: [
-    { registrar: "Internet.bs", regCost: 4.50, renewCost: 12.50 },
-    { registrar: "Namecheap", regCost: 3.98, renewCost: 17.98 }
-  ],
-  xyz: [
-    { registrar: "Cloudflare", regCost: 2.99, renewCost: 12.99 },
-    { registrar: "Internet.bs", regCost: 2.99, renewCost: 12.99 },
-    { registrar: "Namecheap", regCost: 2.48, renewCost: 14.98 }
-  ]
-};
+import { logDomainAudit } from "@/lib/domains/audit";
+import { validateDomainName, checkRateLimit } from "@/lib/domains/validation";
+import { ensureDomainTables } from "@/lib/domains/migration";
 
 export async function POST(req: Request) {
   try {
+    await ensureDomainTables();
     const user = await currentUser();
     const email = user?.primaryEmailAddress?.emailAddress;
 
@@ -61,43 +16,120 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized. Please log in." }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { domain } = body;
-
-    if (!domain || typeof domain !== "string" || !domain.includes(".")) {
-      return NextResponse.json({ error: "Invalid domain name provided." }, { status: 400 });
+    const rate = checkRateLimit(`domain:order:${email}`, 15, 60000);
+    if (!rate.allowed) {
+      return NextResponse.json(
+        { error: `Too many order requests. Please wait ${rate.resetInSec} seconds.` },
+        { status: 429 }
+      );
     }
 
-    const cleanDomain = domain.trim().toLowerCase();
+    const body = await req.json();
+    const { domain, contacts, autoRenew } = body;
+
+    const val = validateDomainName(domain);
+    if (!val.valid) {
+      return NextResponse.json({ error: val.error }, { status: 400 });
+    }
+
+    const cleanDomain = val.cleanDomain;
     const parts = cleanDomain.split(".");
     const tld = parts[parts.length - 1] || "com";
 
-    const options = REGISTRARS_DB[tld] || [
-      { registrar: "Cloudflare", regCost: 10.46, renewCost: 10.46 }
-    ];
-    let cheapest = options[0];
-    for (const opt of options) {
-      if (opt.regCost < cheapest.regCost) {
-        cheapest = opt;
-      }
+    // Query TLD pricing table
+    const pricingRows = await sql`
+      SELECT * FROM tld_pricing WHERE LOWER(tld) = LOWER(${tld}) LIMIT 1
+    `;
+
+    const costPrice = pricingRows.length > 0 ? parseFloat(pricingRows[0].cost_price) : 10.46;
+    const sellPrice = pricingRows.length > 0 ? parseFloat(pricingRows[0].selling_price) : 15.96;
+    const renewCost = pricingRows.length > 0 ? parseFloat(pricingRows[0].renewal_cost) : costPrice;
+    const renewPrice = pricingRows.length > 0 ? parseFloat(pricingRows[0].renewal_price) : sellPrice;
+    const profit = parseFloat((sellPrice - costPrice).toFixed(2));
+    const provider = pricingRows.length > 0 ? pricingRows[0].provider : (tld === "lk" ? "LK Domain Registry" : "Cloudflare");
+
+    // Generate unique invoice ID
+    const existingInv = await sql`SELECT invoice_id FROM invoices WHERE invoice_id LIKE 'INV-%'`;
+    const usedIds = existingInv
+      .map((row: any) => parseInt(row.invoice_id.replace('INV-', ''), 10))
+      .filter((num: number) => !isNaN(num))
+      .sort((a: number, b: number) => a - b);
+    let nextId = 1;
+    for (const num of usedIds) {
+      if (num === nextId) nextId++;
+      else if (num > nextId) break;
     }
+    const invoiceId = `INV-${String(nextId).padStart(5, '0')}`;
 
-    const regRetail = parseFloat((cheapest.regCost + 5.50).toFixed(2));
-    const renewRetail = parseFloat((cheapest.renewCost + 5.50).toFixed(2));
-    const profit = parseFloat((regRetail - cheapest.regCost).toFixed(2));
+    // Compute localized LKR amount with exact point-to-cent precision (no extra rounding up)
+    let lkrRate = 310;
+    try {
+      const rateRes = await fetch("https://open.er-api.com/v6/latest/USD", { next: { revalidate: 3600 } });
+      const rateData = await rateRes.json();
+      if (rateData?.rates?.LKR) lkrRate = rateData.rates.LKR;
+    } catch {
+      // fallback
+    }
+    const lkrPrice = parseFloat((sellPrice * lkrRate).toFixed(2));
+    const lkrCost = parseFloat((costPrice * lkrRate).toFixed(2));
+    const lkrRenewPrice = parseFloat((renewPrice * lkrRate).toFixed(2));
+    const lkrRenewCost = parseFloat((renewCost * lkrRate).toFixed(2));
 
+    // 1. Create linked invoice
     await sql`
-      INSERT INTO admin_domain_orders (
-        client_email, domain_name, actual_price, selling_price, profit, renewal_cost, renewal_price, registrar, expiry_date, status
+      INSERT INTO invoices (
+        invoice_id, user_email, project_name, date,
+        subtotal, discount, total, advance, total_due,
+        work_status, payment_status, currency, category
       ) VALUES (
-        ${email}, ${cleanDomain}, ${cheapest.regCost}, ${regRetail}, 
-        ${profit}, ${cheapest.renewCost}, ${renewRetail}, ${cheapest.registrar}, null, 'pending'
+        ${invoiceId}, ${email},
+        ${`Domain Registration: ${cleanDomain}`}, CURRENT_DATE,
+        ${lkrPrice}, 0, ${lkrPrice}, 0, ${lkrPrice},
+        'pending', 'unpaid', 'LKR', 'Domain'
       )
     `;
 
-    await logSystemAction(`Client "${email}" ordered domain: "${cleanDomain}" directly via dashboard`);
+    // 2. Create invoice item
+    await sql`
+      INSERT INTO invoice_items (invoice_id, description, quantity, price, total)
+      VALUES (${invoiceId}, ${`1 Year Domain Registration for ${cleanDomain}`}, 1, ${lkrPrice}, ${lkrPrice})
+    `;
 
-    return NextResponse.json({ success: true, domain: cleanDomain });
+    // 3. Create domain order linked to invoice
+    const inserted = await sql`
+      INSERT INTO admin_domain_orders (
+        client_email, domain_name, actual_price, selling_price, profit,
+        renewal_cost, renewal_price, registrar, expiry_date, status,
+        locked, auto_renew, privacy_enabled, registrant_contacts,
+        invoice_id, activation_lkr_price, activation_lkr_cost, activation_lkr_rate,
+        renewal_lkr_price, renewal_lkr_cost, renewal_lkr_rate
+      ) VALUES (
+        ${email}, ${cleanDomain}, ${costPrice}, ${sellPrice}, 
+        ${profit}, ${renewCost}, ${renewPrice}, ${provider}, null, 'pending',
+        true, ${autoRenew ?? false}, true, ${contacts ? JSON.stringify(contacts) : '{}'}::jsonb,
+        ${invoiceId}, ${lkrPrice}, ${lkrCost}, ${lkrRate},
+        ${lkrRenewPrice}, ${lkrRenewCost}, ${lkrRate}
+      )
+      RETURNING id
+    `;
+
+    await logDomainAudit(
+      email,
+      cleanDomain,
+      "CREATE_DOMAIN_ORDER",
+      { order_id: inserted[0].id, invoice_id: invoiceId, selling_price: sellPrice }
+    );
+
+    await logSystemAction(`Client "${email}" ordered domain: "${cleanDomain}" (Inv: ${invoiceId})`);
+
+    return NextResponse.json({
+      success: true,
+      domain: cleanDomain,
+      id: inserted[0].id,
+      invoice_id: invoiceId,
+      total_due: lkrPrice,
+      currency: "LKR",
+    });
   } catch (err: any) {
     console.error("Failed to place direct domain order:", err);
     return NextResponse.json({ error: err.message || "Failed to order domain." }, { status: 500 });
@@ -106,6 +138,7 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
+    await ensureDomainTables();
     const user = await currentUser();
     const email = user?.primaryEmailAddress?.emailAddress;
 
@@ -138,6 +171,13 @@ export async function DELETE(req: Request) {
       DELETE FROM admin_domain_orders
       WHERE id = ${id} AND LOWER(client_email) = ${email.toLowerCase()} AND status = 'pending'
     `;
+
+    await logDomainAudit(
+      email,
+      order.domain_name,
+      "CANCEL_DOMAIN_ORDER",
+      { order_id: id }
+    );
 
     await logSystemAction(`Client "${email}" cancelled pending domain order: "${order.domain_name}" (ID: ${id})`);
 

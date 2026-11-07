@@ -5,6 +5,7 @@ import { Package, MessageCircle, Plus, Eye, CreditCard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import PayModal from "@/components/PayModal";
+import { syncAllCardPayments } from "@/app/(dashboard)/admin/actions/payments";
 
 const workStatusStyles = {
   "in progress": "bg-brand-500/20 text-brand-400 border-brand-500/30",
@@ -39,7 +40,9 @@ const formatDate = (dateString) => {
 const formatPrice = (price, currency = "LKR") => {
   if (!price || isNaN(parseFloat(price))) return "N/A";
   const formatted = parseFloat(price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return currency === "USD" ? `$ ${formatted}` : `Rs. ${formatted}`;
+  const raw = String(currency || "LKR").toUpperCase();
+  const label = raw === "USD" ? "$ " : "LKR ";
+  return `${label}${formatted}`;
 };
 
 export default function DashboardProjectsPage() {
@@ -57,11 +60,36 @@ export default function DashboardProjectsPage() {
         try {
           setLoading(true);
           const userEmail = user.primaryEmailAddress.emailAddress;
-          const response = await fetch(`/api/requests?user_email=${encodeURIComponent(userEmail)}`, { cache: "no-store" });
+          const response = await fetch(
+            `/api/requests?user_email=${encodeURIComponent(userEmail)}&t=${Date.now()}`,
+            {
+              cache: "no-store",
+              headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+            }
+          );
           if (!response.ok) throw new Error('Failed to fetch requests');
           const data = await response.json();
           setMyRequests(data);
-        } catch (err) {
+
+          // Automatically sync card payments in background
+          syncAllCardPayments()
+            .then((res) => {
+              if (res?.syncedCount && res.syncedCount > 0) {
+                // Refresh list if new payments synced
+                fetch(
+                  `/api/requests?user_email=${encodeURIComponent(userEmail)}&t=${Date.now()}`,
+                  {
+                    cache: "no-store",
+                    headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+                  }
+                )
+                  .then((r) => r.json())
+                  .then((updated) => setMyRequests(updated))
+                  .catch(() => {});
+              }
+            })
+            .catch(() => {});
+        } catch (err: any) {
           setError(err.message);
           console.error('Error fetching requests:', err);
         } finally {
@@ -70,6 +98,22 @@ export default function DashboardProjectsPage() {
       };
 
       fetchRequests();
+
+      const handleFocus = () => fetchRequests();
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === "visible") fetchRequests();
+      };
+      const handlePageShow = () => fetchRequests();
+
+      window.addEventListener("focus", handleFocus);
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      window.addEventListener("pageshow", handlePageShow);
+
+      return () => {
+        window.removeEventListener("focus", handleFocus);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        window.removeEventListener("pageshow", handlePageShow);
+      };
     } else if (isUserLoaded && !user) {
       setLoading(false);
       setError("Please sign in to view your requests");
@@ -175,7 +219,7 @@ export default function DashboardProjectsPage() {
                     </span>
                   </div>
                   <p className="text-gray-400 text-sm mb-3">
-                    Invoice ID: {request.invoice_number || request.id} • Type: {request.type || "N/A"} • Submitted: {formatDate(request.submitted_at)}
+                    Invoice ID: {request.invoice_number || request.id} • Type: {request.type || "N/A"} • Created: {formatDate(request.submitted_at)}
                   </p>
                   {request.payment_status === 'on review' && (
                     <p className="text-amber-300 text-xs mt-2">Bank transfer receipt uploaded. Awaiting admin review.</p>
@@ -206,6 +250,11 @@ export default function DashboardProjectsPage() {
                           project_name: request.title,
                           total_due: request.total_due,
                           currency: request.currency,
+                          bank_account_id: request.bank_account_id,
+                          bank_account_bank: request.bank_account_bank,
+                          bank_account_number: request.bank_account_number,
+                          bank_account_name: request.bank_account_name,
+                          bank_account_branch: request.bank_account_branch,
                         });
                         setIsPayModalOpen(true);
                       }}
