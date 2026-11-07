@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import crypto from "node:crypto";
 import { encryptField, decryptField, generateBlindIndex } from "../src/lib/crypto-vault.ts";
 import { sanitizeKey } from "../src/lib/storage.ts";
 
@@ -131,7 +130,7 @@ runTest("SSRF: Internal and Cloud Metadata Addresses Blocked", () => {
     }
     const match = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
     if (match) {
-      const [_, a, b] = match.map(Number);
+      const [, a, b] = match.map(Number);
       if (a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || a === 0) return true;
     }
     return false;
