@@ -6,20 +6,33 @@ import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 import { putBlob } from "@/lib/storage";
 
+let _inventorySchemaPromise: Promise<void> | null = null;
+async function ensureInventorySchema(): Promise<void> {
+  if (_inventorySchemaPromise) return _inventorySchemaPromise;
+
+  _inventorySchemaPromise = (async () => {
+    try {
+      await sql`
+        ALTER TABLE admin_inventory 
+          ADD COLUMN IF NOT EXISTS purchase_invoice_url TEXT,
+          ADD COLUMN IF NOT EXISTS warranty_letter_url TEXT,
+          ADD COLUMN IF NOT EXISTS expense_id INTEGER,
+          ADD COLUMN IF NOT EXISTS is_to_buy BOOLEAN DEFAULT false,
+          ADD COLUMN IF NOT EXISTS product_link TEXT,
+          ADD COLUMN IF NOT EXISTS estimated_price NUMERIC(12, 2),
+          ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0;
+      `;
+    } catch (e) {
+      console.warn("Could not ensure admin_inventory schema:", e);
+    }
+  })();
+
+  return _inventorySchemaPromise;
+}
+
 export async function getInventoryItems() {
   await requireAdminSession();
-
-  try {
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS purchase_invoice_url TEXT`;
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS warranty_letter_url TEXT`;
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS expense_id INTEGER`;
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS is_to_buy BOOLEAN DEFAULT false`;
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS product_link TEXT`;
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS estimated_price NUMERIC(12, 2)`;
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0`;
-  } catch (e) {
-    console.error("Failed to add columns to admin_inventory", e);
-  }
+  await ensureInventorySchema();
 
   const items = await sql`
     SELECT i.*, 
@@ -69,13 +82,7 @@ export async function createToBuyItem(data: {
   estimated_price?: number | null;
 }) {
   await requireAdminSession();
-
-  try {
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS is_to_buy BOOLEAN DEFAULT false`;
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS product_link TEXT`;
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS estimated_price NUMERIC(12, 2)`;
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0`;
-  } catch (e) {}
+  await ensureInventorySchema();
 
   const minOrder = await sql`SELECT MIN(order_index) as min_idx FROM admin_inventory WHERE is_to_buy = true`;
   const nextOrder = (minOrder[0]?.min_idx !== null && minOrder[0]?.min_idx !== undefined) ? Number(minOrder[0].min_idx) - 1 : 0;
@@ -102,9 +109,9 @@ export async function createToBuyItem(data: {
 
 export async function reorderToBuyItems(itemIds: (string | number)[]) {
   await requireAdminSession();
+  await ensureInventorySchema();
 
   try {
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0`;
     for (let i = 0; i < itemIds.length; i++) {
       await sql`
         UPDATE admin_inventory 
@@ -122,12 +129,7 @@ export async function reorderToBuyItems(itemIds: (string | number)[]) {
 
 export async function createInventoryItem(data: any) {
   await requireAdminSession();
-
-  try {
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS is_to_buy BOOLEAN DEFAULT false`;
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS product_link TEXT`;
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS estimated_price NUMERIC(12, 2)`;
-  } catch (e) {}
+  await ensureInventorySchema();
 
   const result = await sql`
     INSERT INTO admin_inventory (
@@ -149,12 +151,7 @@ export async function createInventoryItem(data: any) {
 
 export async function updateInventoryItem(id: string, data: any) {
   await requireAdminSession();
-
-  try {
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS is_to_buy BOOLEAN DEFAULT false`;
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS product_link TEXT`;
-    await sql`ALTER TABLE admin_inventory ADD COLUMN IF NOT EXISTS estimated_price NUMERIC(12, 2)`;
-  } catch (e) {}
+  await ensureInventorySchema();
 
   await sql`
     UPDATE admin_inventory SET
