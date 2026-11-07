@@ -8,6 +8,8 @@ interface DomainSearchProps {
   lkrRate?: number;
 }
 
+const roundToNearest10 = (amount: number) => Math.ceil((amount || 0) / 10) * 10;
+
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" }).format(amount || 0);
 
@@ -96,7 +98,7 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
   };
 
   const handleAddToCart = (targetDomain: string, usdPrice: number) => {
-    const lkrPrice = parseFloat((usdPrice * lkrRate).toFixed(2));
+    const lkrPrice = roundToNearest10(usdPrice * lkrRate);
     addToCart({
       id: `domain-${targetDomain.toLowerCase()}`,
       serviceId: "domain-reg",
@@ -184,9 +186,11 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
                 <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                   <div className="text-right">
                     <p className="text-xs text-gray-500">Price (1st Yr)</p>
-                    <p className="text-2xl font-black text-white">{formatLKR(parseFloat(result.reg_price_usd || 0) * lkrRate)}</p>
-                    <p className="text-[10px] text-gray-400 mt-1">
-                      Renews at {formatLKR(parseFloat(result.renew_price_usd || 0) * lkrRate)}/yr
+                    <p className="text-2xl font-black text-white">
+                      {formatLKR(roundToNearest10(parseFloat(result.reg_price_usd || 0) * lkrRate))}
+                    </p>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      Est. Renews at <span className="text-gray-300 font-semibold">~{formatLKR(roundToNearest10(parseFloat(result.renew_price_usd || 0) * lkrRate))}/yr</span>*
                     </p>
                   </div>
                   {orderedDomains.includes(result.domain.toLowerCase()) ? (
@@ -228,10 +232,15 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
               </div>
             )}
 
-            {/* Price Validity Notice */}
-            <p className="text-[11px] text-gray-500 text-center leading-relaxed bg-white/[0.01] border border-white/5 py-2.5 px-4 rounded-2xl">
-              ⚠️ Note: Prices are valid only for 3 days. Domain orders generate an invoice automatically for online or bank payment.
-            </p>
+            {/* Price Validity & Renewal Disclaimer Notice */}
+            <div className="text-[11px] text-gray-400 text-center leading-relaxed bg-white/[0.02] border border-white/5 py-3 px-4 rounded-2xl space-y-1">
+              <p>
+                ⚠️ Note: First year registration prices are valid for 3 days. Domain orders generate an invoice automatically for online or bank payment.
+              </p>
+              <p className="text-gray-400/80">
+                * Renewal fees are estimated values based on current exchange rates and can vary slightly according to the USD to LKR conversion rate at the time of renewal.
+              </p>
+            </div>
 
             {/* Suggestions List */}
             {result.suggestions && result.suggestions.length > 0 && (
@@ -246,13 +255,15 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
                       <div key={s.domain} className="flex items-center justify-between p-4 bg-white/[0.02] border border-neutral-900 rounded-xl gap-4 hover:border-neutral-800 transition-colors">
                         <div>
                           <span className="font-semibold text-white text-sm">{s.domain}</span>
-                          <div className="text-[10px] text-gray-500 mt-1">
-                            Renews at {formatLKR(parseFloat(s.renew_price_usd || 0) * lkrRate)}/yr
+                          <div className="text-[10px] text-gray-400 mt-1">
+                            Est. Renews at ~{formatLKR(roundToNearest10(parseFloat(s.renew_price_usd || 0) * lkrRate))}/yr*
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <span className="text-sm font-bold text-white block">{formatLKR(parseFloat(s.reg_price_usd || 0) * lkrRate)}</span>
+                            <span className="text-sm font-bold text-white block">
+                              {formatLKR(roundToNearest10(parseFloat(s.reg_price_usd || 0) * lkrRate))}
+                            </span>
                           </div>
                           {isOrdered ? (
                             <span className="px-4 py-2 text-xs font-semibold rounded-2xl bg-slate-800/45 text-emerald-400 border border-emerald-500/20">

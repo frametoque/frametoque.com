@@ -508,7 +508,8 @@ export async function createDomainRenewalInvoice(id: number, currency: "USD" | "
     // Fetch live LKR rate — or use saved renewal LKR rate/price
     const liveRate = await getUsdToLkrRate();
     const lkrRate = o.renewal_lkr_rate ? parseFloat(o.renewal_lkr_rate) : liveRate;
-    const lkrPrice = o.renewal_lkr_price ? parseFloat(o.renewal_lkr_price) : parseFloat((renewalPrice * lkrRate).toFixed(2));
+    const roundToNearest10 = (amount: number): number => Math.ceil((amount || 0) / 10) * 10;
+    const lkrPrice = o.renewal_lkr_price ? roundToNearest10(parseFloat(o.renewal_lkr_price)) : roundToNearest10(parseFloat((renewalPrice * lkrRate).toFixed(2)));
 
     let finalPrice = renewalPrice;
     const invCurrency = currency;
@@ -913,7 +914,8 @@ export async function renewExpiredDomain(id: number): Promise<CreateInvoiceResul
 
     // Get live exchange rate
     const lkrRate = await getUsdToLkrRate();
-    const lkrPrice = parseFloat((renewalPriceUsd * lkrRate).toFixed(2));
+    const roundToNearest10 = (amount: number): number => Math.ceil((amount || 0) / 10) * 10;
+    const lkrPrice = roundToNearest10(renewalPriceUsd * lkrRate);
 
     const invoiceId = await generateUniqueInvoiceId();
 

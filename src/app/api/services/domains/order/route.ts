@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     }
     const invoiceId = `INV-${String(nextId).padStart(5, '0')}`;
 
-    // Compute localized LKR amount with exact point-to-cent precision (no extra rounding up)
+    // Compute localized LKR amount with nearest-10 round-up (e.g. 5,305.91 -> 5,310.00)
     let lkrRate = 310;
     try {
       const rateRes = await fetch("https://open.er-api.com/v6/latest/USD", { next: { revalidate: 3600 } });
@@ -70,9 +70,10 @@ export async function POST(req: Request) {
     } catch {
       // fallback
     }
-    const lkrPrice = parseFloat((sellPrice * lkrRate).toFixed(2));
+    const roundToNearest10 = (amount: number): number => Math.ceil((amount || 0) / 10) * 10;
+    const lkrPrice = roundToNearest10(sellPrice * lkrRate);
     const lkrCost = parseFloat((costPrice * lkrRate).toFixed(2));
-    const lkrRenewPrice = parseFloat((renewPrice * lkrRate).toFixed(2));
+    const lkrRenewPrice = roundToNearest10(renewPrice * lkrRate);
     const lkrRenewCost = parseFloat((renewCost * lkrRate).toFixed(2));
 
     // 1. Create linked invoice

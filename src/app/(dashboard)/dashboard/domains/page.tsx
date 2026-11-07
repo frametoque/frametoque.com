@@ -299,12 +299,14 @@ export default function ClientDomainsPage() {
     }
   };
 
+  const roundToNearest10 = (amount: number): number => Math.ceil((amount || 0) / 10) * 10;
+
   const getRegPriceDisplay = (d: ClientDomain) => {
     const usd = parseFloat(d.selling_price) || 0;
     const isActivated = d.status.toLowerCase() !== "pending";
     const lockedLkr = d.activation_lkr_price ? parseFloat(d.activation_lkr_price) : null;
     const lockedRate = d.activation_lkr_rate ? parseFloat(d.activation_lkr_rate) : null;
-    const lkrValue = isActivated && lockedLkr != null ? lockedLkr : usd * lkrRate;
+    const lkrValue = isActivated && lockedLkr != null ? roundToNearest10(lockedLkr) : roundToNearest10(usd * lkrRate);
     const rate = isActivated && lockedRate != null ? lockedRate : lkrRate;
     const isFixed = isActivated && lockedLkr != null;
 
@@ -315,7 +317,7 @@ export default function ClientDomainsPage() {
     const usd = parseFloat(d.renewal_price || d.selling_price) || 0;
     const lockedLkr = d.renewal_lkr_price ? parseFloat(d.renewal_lkr_price) : null;
     const lockedRate = d.renewal_lkr_rate ? parseFloat(d.renewal_lkr_rate) : null;
-    const lkrValue = lockedLkr != null ? lockedLkr : usd * lkrRate;
+    const lkrValue = lockedLkr != null ? roundToNearest10(lockedLkr) : roundToNearest10(usd * lkrRate);
     const rate = lockedRate != null ? lockedRate : lkrRate;
     const isFixed = lockedLkr != null;
     return { usd, lkrValue, rate, isFixed };
@@ -444,7 +446,7 @@ export default function ClientDomainsPage() {
             <TableHeader>
               <TableHead>Domain & Control</TableHead>
               <TableHead className="text-right">Registration Price</TableHead>
-              <TableHead className="text-right">Renewal Price</TableHead>
+              <TableHead className="text-right">Renewal Price (Est.)</TableHead>
               <TableHead>Expiry Date</TableHead>
               <TableHead className="text-center">Status</TableHead>
               <TableHead className="text-right">Invoice & Action</TableHead>
@@ -500,8 +502,9 @@ export default function ClientDomainsPage() {
 
                         {/* Renewal Price */}
                         <TableCell className="text-right">
-                          <div className="text-gray-300 font-medium">
-                            {formatLKR(renew.lkrValue)}
+                          <div className="text-gray-300 font-medium" title="Renewal fees are estimated values based on current exchange rates and may vary slightly according to the USD to LKR conversion rate at the time of renewal.">
+                            ~{formatLKR(renew.lkrValue)}
+                            <span className="block text-[10px] text-gray-400 font-normal">Est. / yr</span>
                           </div>
                         </TableCell>
 

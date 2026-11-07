@@ -486,12 +486,14 @@ export function DomainControlCenterView({
     }
   };
 
+  const roundToNearest10 = (amount: number): number => Math.ceil((amount || 0) / 10) * 10;
+
   const renewalLkr = activeDomain.renewal_lkr_price
-    ? parseFloat(activeDomain.renewal_lkr_price)
+    ? roundToNearest10(parseFloat(activeDomain.renewal_lkr_price))
     : activeDomain.renewal_price
-    ? parseFloat(activeDomain.renewal_price) * 310
+    ? roundToNearest10(parseFloat(activeDomain.renewal_price) * 310)
     : activeDomain.activation_lkr_price
-    ? parseFloat(activeDomain.activation_lkr_price)
+    ? roundToNearest10(parseFloat(activeDomain.activation_lkr_price))
     : 0;
 
   const renewalUsd = activeDomain.renewal_price
@@ -1117,14 +1119,22 @@ export function DomainControlCenterView({
 
                 {/* Renewal Fee Card */}
                 <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-gray-500 text-xs font-medium flex items-center gap-1.5">
-                    <CreditCard className="w-3.5 h-3.5 text-brand-400" />
-                    Renewal Price
-                  </span>
+                  <div className="flex items-center justify-between text-gray-500 text-xs font-medium">
+                    <span className="flex items-center gap-1.5">
+                      <CreditCard className="w-3.5 h-3.5 text-brand-400" />
+                      Renewal Price
+                    </span>
+                    <span className="text-[10px] text-amber-400/90 font-semibold uppercase tracking-wider bg-amber-400/10 px-1.5 py-0.5 rounded">
+                      Estimated
+                    </span>
+                  </div>
                   <div className="pt-1">
                     <span className="text-sm font-bold text-amber-300">
-                      {formatLKR(renewalLkr)}
+                      ~{formatLKR(renewalLkr)}
                     </span>
+                    <p className="text-[10px] text-gray-400 mt-1 leading-relaxed">
+                      Estimated renewal fee based on current exchange rates; can vary slightly according to USD/LKR rate fluctuations at the time of renewal.
+                    </p>
                   </div>
                 </div>
 
