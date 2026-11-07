@@ -629,71 +629,79 @@ export function DomainControlCenterView({
     <>
       {/* TAB 1: OVERVIEW */}
           {activeTab === "overview" && (
-            <div className="space-y-6">
+            <div className="space-y-6 sm:space-y-8">
               {/* Quick Status Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-gray-500 text-xs font-medium">Registrar Lock</span>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className={`text-sm font-bold ${isLocked ? "text-emerald-400" : "text-amber-400"}`}>
-                      {isLocked ? "Locked (Protected)" : "Unlocked"}
-                    </span>
-                    <button
-                      onClick={handleToggleLock}
-                      disabled={togglingLock}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 transition-colors"
-                      title={isLocked ? "Unlock Domain" : "Lock Domain"}
-                    >
-                      {togglingLock ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-                    </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <span className="text-sm font-semibold text-gray-400">Registrar Lock</span>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className={`text-xl sm:text-2xl font-bold ${isLocked ? "text-emerald-400" : "text-amber-400"}`}>
+                        {isLocked ? "Locked (Protected)" : "Unlocked"}
+                      </span>
+                      <button
+                        onClick={handleToggleLock}
+                        disabled={togglingLock}
+                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 transition-colors"
+                        title={isLocked ? "Unlock Domain" : "Lock Domain"}
+                      >
+                        {togglingLock ? <Loader2 className="w-4 h-4 animate-spin" /> : isLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
-                  <span className="text-[10px] text-gray-500">
+                  <span className="text-xs sm:text-sm text-gray-400 font-medium">
                     {isLocked ? "Transfers Blocked" : "Ready for Transfer"}
                   </span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-gray-500 text-xs font-medium">Auto-Renewal</span>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-sm font-bold text-gray-400">
-                      Disabled
-                    </span>
-                    <button
-                      disabled={true}
-                      className="p-1.5 rounded-lg bg-white/5 text-gray-600 cursor-not-allowed opacity-40"
-                      title="Auto-renewal is disabled. Manual renewal required."
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                    </button>
+                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <span className="text-sm font-semibold text-gray-400">Auto-Renewal</span>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xl sm:text-2xl font-bold text-gray-300">
+                        Disabled
+                      </span>
+                      <button
+                        disabled={true}
+                        className="p-2 rounded-xl bg-white/5 text-gray-600 cursor-not-allowed opacity-40"
+                        title="Auto-renewal is disabled. Manual renewal required."
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <span className="text-[10px] text-gray-500">
+                  <span className="text-xs sm:text-sm text-gray-400 font-medium">
                     Manual Renewal Required
                   </span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-gray-500 text-xs font-medium">WHOIS Privacy</span>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className={`text-sm font-bold ${details?.privacy ?? true ? "text-emerald-400" : "text-gray-400"}`}>
-                      {details?.privacy ?? true ? "Active" : "Standard"}
-                    </span>
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <span className="text-sm font-semibold text-gray-400">WHOIS Privacy</span>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className={`text-xl sm:text-2xl font-bold ${details?.privacy ?? true ? "text-emerald-400" : "text-gray-400"}`}>
+                        {details?.privacy ?? true ? "Active" : "Standard"}
+                      </span>
+                      <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                    </div>
                   </div>
-                  <span className="text-[10px] text-gray-500">
+                  <span className="text-xs sm:text-sm text-gray-400 font-medium">
                     {details?.privacy ?? true ? "Included Free with Frametoque" : "Public Registry"}
                   </span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-gray-500 text-xs font-medium">Expiration Date</span>
-                  <div className="pt-1">
-                    <span className="text-sm font-bold text-white">
-                      {(details?.expiry_date || activeDomain.expiry_date)
-                        ? new Date(details?.expiry_date || activeDomain.expiry_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                        : "Not found"}
-                    </span>
+                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <span className="text-sm font-semibold text-gray-400">Expiration Date</span>
+                    <div className="pt-1">
+                      <span className="text-xl sm:text-2xl font-bold text-white">
+                        {(details?.expiry_date || activeDomain.expiry_date)
+                          ? new Date(details?.expiry_date || activeDomain.expiry_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                          : "Not found"}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-[10px] text-gray-400">
+                  <span className="text-xs sm:text-sm text-gray-400 font-medium">
                     {details?.days_remaining !== undefined && details?.days_remaining !== null
                       ? details.days_remaining > 0
                         ? `Expires in ${details.days_remaining} days`
@@ -704,24 +712,24 @@ export function DomainControlCenterView({
               </div>
 
               {/* Active Nameservers */}
-              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <Server className="w-4 h-4 text-brand-400" />
+              <div className="p-6 sm:p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2.5">
+                    <Server className="w-5 h-5 text-brand-400" />
                     <span>Active Nameservers</span>
                   </h3>
                   {activeNameservers.length > 0 && (
-                    <span className="text-[10px] text-emerald-400 font-medium bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                    <span className="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
                       Active
                     </span>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2 pt-1">
+                <div className="flex flex-wrap gap-3 pt-2">
                   {activeNameservers.length > 0 ? (
                     activeNameservers.map((ns: string) => (
                       <div
                         key={ns}
-                        className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-gray-200 text-xs font-medium flex items-center gap-2"
+                        className="px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-mono text-sm sm:text-base flex items-center gap-3 hover:border-white/20 transition-colors"
                       >
                         <span>{ns}</span>
                         <button
@@ -730,15 +738,15 @@ export function DomainControlCenterView({
                           title="Copy Nameserver"
                         >
                           {copiedKey === ns ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <Check className="w-4 h-4 text-emerald-400" />
                           ) : (
-                            <Copy className="w-3.5 h-3.5" />
+                            <Copy className="w-4 h-4" />
                           )}
                         </button>
                       </div>
                     ))
                   ) : (
-                    <span className="text-gray-500 text-xs py-1 font-medium">Not found</span>
+                    <span className="text-gray-400 text-sm py-1 font-medium">Not found</span>
                   )}
                 </div>
               </div>
@@ -747,13 +755,14 @@ export function DomainControlCenterView({
 
           {/* TAB 2: DNS EDITOR */}
           {activeTab === "dns" && (
-            <div className="space-y-6">
+            <div className="space-y-6 sm:space-y-8">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-sm font-bold text-white">DNS Records Management</h3>
+                  <h3 className="text-xl sm:text-2xl font-bold text-white">DNS Records Management</h3>
+                  <p className="text-sm text-gray-400 mt-1">Configure authoritative DNS records, host routing, and Cloudflare proxying.</p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3 flex-wrap">
                   {/* Preset Templates */}
                   <select
                     onChange={(e) => {
@@ -763,7 +772,7 @@ export function DomainControlCenterView({
                       }
                     }}
                     defaultValue=""
-                    className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-200 cursor-pointer focus:outline-none"
+                    className="bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-sm text-gray-200 cursor-pointer focus:outline-none hover:bg-white/10 transition-colors"
                   >
                     <option value="" disabled>Quick Presets...</option>
                     <option value="google-workspace">Google Workspace Email</option>
@@ -778,9 +787,9 @@ export function DomainControlCenterView({
                       setEditingRecordId(null);
                       setDnsForm({ type: "A", name: "@", content: "", ttl: 1, proxied: false, priority: 10 });
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-semibold text-xs transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors cursor-pointer shadow-lg shadow-brand-500/20"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-4 h-4" />
                     <span>Add Record</span>
                   </button>
                 </div>
@@ -788,27 +797,27 @@ export function DomainControlCenterView({
 
               {/* Add / Edit DNS Form */}
               {isAddingDns && (
-                <form onSubmit={handleSaveDnsRecord} className="p-4 rounded-2xl bg-white/[0.03] border border-brand-500/30 space-y-4">
+                <form onSubmit={handleSaveDnsRecord} className="p-6 sm:p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-brand-500/30 space-y-5">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-white">
+                    <h4 className="text-base font-bold text-white">
                       {editingRecordId ? "Edit DNS Record" : "Create New DNS Record"}
                     </h4>
                     <button
                       type="button"
                       onClick={() => setIsAddingDns(false)}
-                      className="text-gray-400 hover:text-white text-xs"
+                      className="text-gray-400 hover:text-white text-sm font-medium"
                     >
                       Cancel
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <label className="block text-gray-400 mb-1">Type</label>
+                      <label className="block text-gray-300 font-medium mb-1.5">Type</label>
                       <select
                         value={dnsForm.type}
                         onChange={(e) => setDnsForm({ ...dnsForm, type: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-white focus:outline-none focus:border-brand-400"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white focus:outline-none focus:border-brand-400"
                       >
                         <option value="A">A (IPv4)</option>
                         <option value="AAAA">AAAA (IPv6)</option>
@@ -820,23 +829,23 @@ export function DomainControlCenterView({
                     </div>
 
                     <div>
-                      <label className="block text-gray-400 mb-1">Name / Host</label>
+                      <label className="block text-gray-300 font-medium mb-1.5">Name / Host</label>
                       <input
                         type="text"
                         value={dnsForm.name}
                         onChange={(e) => setDnsForm({ ...dnsForm, name: e.target.value })}
                         placeholder="@ or subdomain"
                         required
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-white focus:outline-none focus:border-brand-400"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white focus:outline-none focus:border-brand-400"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-gray-400 mb-1">TTL</label>
+                      <label className="block text-gray-300 font-medium mb-1.5">TTL</label>
                       <select
                         value={dnsForm.ttl}
                         onChange={(e) => setDnsForm({ ...dnsForm, ttl: Number(e.target.value) })}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-white focus:outline-none focus:border-brand-400"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white focus:outline-none focus:border-brand-400"
                       >
                         <option value="1">Auto</option>
                         <option value="60">1 min</option>
@@ -848,25 +857,25 @@ export function DomainControlCenterView({
 
                     {dnsForm.type === "MX" ? (
                       <div>
-                        <label className="block text-gray-400 mb-1">Priority</label>
+                        <label className="block text-gray-300 font-medium mb-1.5">Priority</label>
                         <input
                           type="number"
                           value={dnsForm.priority}
                           onChange={(e) => setDnsForm({ ...dnsForm, priority: Number(e.target.value) })}
                           min="0"
                           max="65535"
-                          className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-white focus:outline-none focus:border-brand-400"
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white focus:outline-none focus:border-brand-400"
                         />
                       </div>
                     ) : (
                       <div className="flex flex-col justify-end">
-                        <label className="block text-gray-400 mb-1">Proxy Status</label>
+                        <label className="block text-gray-300 font-medium mb-1.5">Proxy Status</label>
                         <button
                           type="button"
                           onClick={() => setDnsForm({ ...dnsForm, proxied: !dnsForm.proxied })}
-                          className="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer w-full h-[42px]"
+                          className="flex items-center justify-between p-2.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer w-full h-[46px]"
                         >
-                          <span className={`text-xs font-semibold ${dnsForm.proxied ? "text-amber-400" : "text-gray-400"}`}>
+                          <span className={`text-sm font-semibold ${dnsForm.proxied ? "text-amber-400" : "text-gray-400"}`}>
                             {dnsForm.proxied ? "Proxy On" : "Proxy Off"}
                           </span>
                           <div
@@ -886,28 +895,28 @@ export function DomainControlCenterView({
                   </div>
 
                   <div>
-                    <label className="block text-gray-400 text-xs mb-1">Content / Target Value</label>
+                    <label className="block text-gray-300 font-medium text-sm mb-1.5">Content / Target Value</label>
                     <input
                       type="text"
                       value={dnsForm.content}
                       onChange={(e) => setDnsForm({ ...dnsForm, content: e.target.value })}
                       placeholder={dnsForm.type === "A" ? "192.0.2.1" : dnsForm.type === "CNAME" ? "target.example.com" : "Record target value"}
                       required
-                      className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-white text-xs focus:outline-none focus:border-brand-400"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white text-sm focus:outline-none focus:border-brand-400"
                     />
                   </div>
 
-                  <div className="flex justify-end gap-2 pt-2">
+                  <div className="flex justify-end gap-3 pt-2">
                     <button
                       type="button"
                       onClick={() => setIsAddingDns(false)}
-                      className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs"
+                      className="px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-medium transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-semibold text-xs"
+                      className="px-6 py-2.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors"
                     >
                       Save Record
                     </button>
@@ -917,15 +926,15 @@ export function DomainControlCenterView({
 
               {/* Error Notice */}
               {dnsError && (
-                <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center justify-between gap-3">
-                  <div className="flex items-start gap-2.5">
-                    <AlertTriangle className="w-4 h-4 shrink-0 text-red-400 mt-0.5" />
+                <div className="p-4 rounded-3xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm flex items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 shrink-0 text-red-400 mt-0.5" />
                     <span>{dnsError}</span>
                   </div>
                   <button
                     type="button"
                     onClick={fetchDnsRecords}
-                    className="px-3 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-white font-medium text-xs transition-colors shrink-0"
+                    className="px-4 py-2 rounded-2xl bg-red-500/20 hover:bg-red-500/30 text-white font-semibold text-xs transition-colors shrink-0"
                   >
                     Retry
                   </button>
@@ -933,72 +942,72 @@ export function DomainControlCenterView({
               )}
 
               {/* Records Table */}
-              <div className="overflow-x-auto rounded-2xl border border-white/5 bg-white/[0.01]">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-white/5 text-gray-400">
+              <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-white/5 text-gray-300 font-semibold border-b border-white/10">
                     <tr>
-                      <th className="px-4 py-3">Type</th>
-                      <th className="px-4 py-3">Name</th>
-                      <th className="px-4 py-3">Content</th>
-                      <th className="px-4 py-3">Proxy Status</th>
-                      <th className="px-4 py-3">TTL</th>
-                      <th className="px-4 py-3 text-right">Actions</th>
+                      <th className="px-6 py-4">Type</th>
+                      <th className="px-6 py-4">Name</th>
+                      <th className="px-6 py-4">Content</th>
+                      <th className="px-6 py-4">Proxy Status</th>
+                      <th className="px-6 py-4">TTL</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
                     {loadingDns ? (
                       <tr>
-                        <td colSpan={6} className="text-center py-8 text-gray-500">
-                          <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-brand-400" />
+                        <td colSpan={6} className="text-center py-12 text-gray-400 text-sm">
+                          <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3 text-brand-400" />
                           Loading live DNS records...
                         </td>
                       </tr>
                     ) : dnsRecords.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="text-center py-8 text-gray-500">
+                        <td colSpan={6} className="text-center py-12 text-gray-400 text-sm">
                           No DNS records configured yet. Click "Add Record" or choose a quick preset above.
                         </td>
                       </tr>
                     ) : (
                       dnsRecords.map((r) => (
                         <tr key={r.id} className="hover:bg-white/5 transition-colors">
-                          <td className="px-4 py-3">
-                            <span className="font-bold text-brand-400 bg-brand-400/10 px-2 py-0.5 rounded">
+                          <td className="px-6 py-4">
+                            <span className="font-bold text-brand-400 bg-brand-400/10 px-2.5 py-1 rounded-lg text-xs">
                               {r.type}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-white font-medium">{r.name}</td>
-                          <td className="px-4 py-3 text-gray-300 max-w-xs truncate">{r.content}</td>
-                          <td className="px-4 py-3">
+                          <td className="px-6 py-4 text-white font-semibold">{r.name}</td>
+                          <td className="px-6 py-4 text-gray-300 font-mono text-xs max-w-xs truncate">{r.content}</td>
+                          <td className="px-6 py-4">
                             {["A", "AAAA", "CNAME"].includes(r.type) ? (
                               <button
                                 type="button"
                                 onClick={() => handleQuickToggleProxy(r)}
                                 disabled={togglingRecordId === r.id}
                                 title={r.proxied ? "Proxy is On (Click to turn off)" : "Proxy is Off (Click to turn on)"}
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer border ${
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
                                   r.proxied
                                     ? "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
                                     : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-gray-200"
                                 }`}
                               >
                                 {togglingRecordId === r.id ? (
-                                  <Loader2 className="w-2.5 h-2.5 animate-spin text-brand-400" />
+                                  <Loader2 className="w-3 h-3 animate-spin text-brand-400" />
                                 ) : (
                                   <span className={`w-2 h-2 rounded-full ${r.proxied ? "bg-amber-400" : "bg-gray-500"}`} />
                                 )}
                                 <span>{r.proxied ? "Proxy On" : "Proxy Off"}</span>
                               </button>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 text-gray-500 text-[11px] font-medium">
+                              <span className="inline-flex items-center gap-1.5 text-gray-500 text-xs font-medium">
                                 <span className="w-2 h-2 rounded-full bg-gray-600"></span>
                                 DNS only
                               </span>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-gray-400">{r.ttl === 1 ? "Auto" : `${r.ttl}s`}</td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end gap-1">
+                          <td className="px-6 py-4 text-gray-400 text-xs">{r.ttl === 1 ? "Auto" : `${r.ttl}s`}</td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
                               <button
                                 onClick={() => {
                                   setEditingRecordId(r.id);
@@ -1012,17 +1021,17 @@ export function DomainControlCenterView({
                                   });
                                   setIsAddingDns(true);
                                 }}
-                                className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white"
+                                className="p-2 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-colors"
                                 title="Edit Record"
                               >
-                                <Edit2 className="w-3.5 h-3.5" />
+                                <Edit2 className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleDeleteDns(r.id)}
-                                className="p-1.5 hover:bg-red-500/20 rounded-lg text-gray-400 hover:text-red-400"
+                                className="p-2 hover:bg-red-500/20 rounded-xl text-gray-400 hover:text-red-400 transition-colors"
                                 title="Delete Record"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
                           </td>
@@ -1037,27 +1046,30 @@ export function DomainControlCenterView({
 
           {/* TAB 3: NAMESERVERS */}
           {activeTab === "nameservers" && (
-            <div className="space-y-6">
+            <div className="space-y-6 sm:space-y-8">
               <div>
-                <h3 className="text-sm font-bold text-white">Authoritative Nameservers</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-white">Authoritative Nameservers</h3>
+                <p className="text-sm text-gray-400 mt-1">Nameservers delegate DNS authority for your domain across Cloudflare's global edge network.</p>
               </div>
 
-              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4">
-                <span className="text-xs font-semibold text-gray-400">Current Nameservers:</span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-6 sm:p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-4">
+                <span className="text-sm font-semibold text-gray-400">Current Authoritative Nameservers:</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   {activeNameservers.length > 0 ? (
                     activeNameservers.map((ns: string, idx: number) => (
                       <div
                         key={idx}
-                        className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-xs"
+                        className="p-5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-base font-mono text-white hover:border-white/20 transition-colors"
                       >
-                        <span className="font-medium text-white">{ns}</span>
-                        <span className="text-[10px] text-green-400 font-medium">Active</span>
+                        <span className="font-semibold">{ns}</span>
+                        <span className="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                          Active
+                        </span>
                       </div>
                     ))
                   ) : (
-                    <div className="col-span-2 text-gray-500 text-xs py-3 text-center bg-white/[0.02] rounded-xl border border-white/5 font-medium">
-                      Not found
+                    <div className="col-span-2 text-gray-400 text-sm py-8 text-center bg-white/5 rounded-2xl border border-white/10 font-medium">
+                      No nameservers found
                     </div>
                   )}
                 </div>
@@ -1067,47 +1079,50 @@ export function DomainControlCenterView({
 
           {/* TAB 4: RENEWAL & PAYMENT HISTORY */}
           {activeTab === "renewals" && (
-            <div className="space-y-6">
+            <div className="space-y-6 sm:space-y-8">
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <History className="w-4 h-4 text-brand-400" />
+                  <h3 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5">
+                    <History className="w-5 h-5 text-brand-400" />
                     <span>Renewal & Payment History</span>
                   </h3>
+                  <p className="text-sm text-gray-400 mt-1">Review your expiration timeline, renewal rates, and past invoices.</p>
                 </div>
                 <button
                   type="button"
                   onClick={fetchRenewalHistory}
                   disabled={loadingHistory}
-                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 transition-colors self-start sm:self-auto flex items-center gap-1.5 text-xs cursor-pointer"
+                  className="px-4 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white transition-colors self-start sm:self-auto flex items-center gap-2 text-sm font-semibold border border-white/10 cursor-pointer"
                   title="Refresh History"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loadingHistory ? "animate-spin text-brand-400" : ""}`} />
+                  <RefreshCw className={`w-4 h-4 ${loadingHistory ? "animate-spin text-brand-400" : ""}`} />
                   <span>Refresh</span>
                 </button>
               </div>
 
               {/* Metric Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {/* Expiration Date Card */}
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-gray-500 text-xs font-medium flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-brand-400" />
-                    Expiration Date
-                  </span>
-                  <div className="pt-1">
-                    <span className="text-sm font-bold text-white">
-                      {(details?.expiry_date || activeDomain.expiry_date)
-                        ? new Date(details?.expiry_date || activeDomain.expiry_date).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        : "Not found"}
+                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <span className="text-sm font-semibold text-gray-400 flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-brand-400" />
+                      Expiration Date
                     </span>
+                    <div className="pt-1">
+                      <span className="text-xl sm:text-2xl font-bold text-white">
+                        {(details?.expiry_date || activeDomain.expiry_date)
+                          ? new Date(details?.expiry_date || activeDomain.expiry_date).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })
+                          : "Not found"}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-[10px] text-gray-400 block">
+                  <span className="text-xs sm:text-sm text-gray-400 font-medium">
                     {details?.days_remaining !== undefined && details?.days_remaining !== null
                       ? details.days_remaining > 0
                         ? `Expires in ${details.days_remaining} days`
@@ -1117,102 +1132,109 @@ export function DomainControlCenterView({
                 </div>
 
                 {/* Renewal Fee Card */}
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <div className="flex items-center justify-between text-gray-500 text-xs font-medium">
-                    <span className="flex items-center gap-1.5">
-                      <CreditCard className="w-3.5 h-3.5 text-brand-400" />
-                      Renewal Price
-                    </span>
-                    <span className="text-[10px] text-amber-400/90 font-semibold uppercase tracking-wider bg-amber-400/10 px-1.5 py-0.5 rounded">
-                      Estimated
-                    </span>
+                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm font-semibold text-gray-400">
+                      <span className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-brand-400" />
+                        Renewal Price
+                      </span>
+                      <span className="text-[10px] text-amber-400/90 font-semibold uppercase tracking-wider bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
+                        Estimated
+                      </span>
+                    </div>
+                    <div className="pt-1">
+                      <span className="text-xl sm:text-2xl font-bold text-amber-300">
+                        ~{formatLKR(renewalLkr)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="pt-1">
-                    <span className="text-sm font-bold text-amber-300">
-                      ~{formatLKR(renewalLkr)}
-                    </span>
-                    <p className="text-[10px] text-gray-400 mt-1 leading-relaxed">
-                      Estimated renewal fee based on current exchange rates; can vary slightly according to USD/LKR rate fluctuations at the time of renewal.
-                    </p>
-                  </div>
+                  <p className="text-xs text-gray-400 leading-relaxed font-medium">
+                    Estimated renewal fee based on current exchange rates; can vary slightly according to USD/LKR rate fluctuations at renewal.
+                  </p>
                 </div>
 
                 {/* Auto-Renewal Status Card */}
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-gray-500 text-xs font-medium flex items-center gap-1.5">
-                    <RefreshCw className="w-3.5 h-3.5 text-brand-400" />
-                    Auto-Renewal
-                  </span>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-sm font-bold text-gray-400">
-                      Disabled
+                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <span className="text-sm font-semibold text-gray-400 flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 text-brand-400" />
+                      Auto-Renewal
                     </span>
-                    <button
-                      type="button"
-                      disabled={true}
-                      className="relative inline-flex h-5 w-9 shrink-0 cursor-not-allowed opacity-40 rounded-full border-2 border-transparent bg-white/10"
-                      title="Auto-renewal is disabled. Manual payment required."
-                    >
-                      <span className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white/40 shadow-md ring-0 translate-x-0" />
-                    </button>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xl sm:text-2xl font-bold text-gray-300">
+                        Disabled
+                      </span>
+                      <button
+                        type="button"
+                        disabled={true}
+                        className="relative inline-flex h-5 w-9 shrink-0 cursor-not-allowed opacity-40 rounded-full border-2 border-transparent bg-white/10"
+                        title="Auto-renewal is disabled. Manual payment required."
+                      >
+                        <span className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white/40 shadow-md ring-0 translate-x-0" />
+                      </button>
+                    </div>
                   </div>
-                  <span className="text-[10px] text-gray-400 block">
+                  <span className="text-xs sm:text-sm text-gray-400 font-medium">
                     Manual payment required
                   </span>
                 </div>
 
                 {/* Registry Protection Card */}
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1 flex flex-col justify-between">
-                  <div>
-                    <span className="text-gray-500 text-xs font-medium flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <div className="p-6 sm:p-7 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 space-y-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <span className="text-sm font-semibold text-gray-400 flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
                       Registry Status
                     </span>
                     <div className="pt-1">
-                      <span className="text-sm font-bold text-white flex items-center gap-1.5">
-                        <span className={`w-2 h-2 rounded-full ${activeDomain.status === "active" ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
+                      <span className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+                        <span className={`w-2.5 h-2.5 rounded-full ${activeDomain.status === "active" ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
                         {activeDomain.status === "active" ? "Active" : "Pending"}
                       </span>
                     </div>
                   </div>
+                  <span className="text-xs sm:text-sm text-emerald-400 font-medium">
+                    Registry Active & Protected
+                  </span>
                 </div>
               </div>
 
               {/* Invoices & Payment Ledger */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-white flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5 text-brand-400" />
+                  <h4 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-brand-400" />
                     <span>Invoices & Payment History</span>
                   </h4>
-                  <span className="text-[11px] text-gray-400">
+                  <span className="text-sm text-gray-400 font-medium">
                     {allLedgerRows.length} record{allLedgerRows.length === 1 ? "" : "s"}
                   </span>
                 </div>
 
-                <div className="overflow-x-auto rounded-2xl border border-white/5 bg-white/[0.01]">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-white/5 text-gray-400">
+                <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-white/5 text-gray-300 font-semibold border-b border-white/10">
                       <tr>
-                        <th className="px-4 py-3">Description</th>
-                        <th className="px-4 py-3">Invoice</th>
-                        <th className="px-4 py-3">Date</th>
-                        <th className="px-4 py-3 text-right">Amount</th>
-                        <th className="px-4 py-3 text-center">Status</th>
-                        <th className="px-4 py-3 text-right">Actions</th>
+                        <th className="px-6 py-4">Description</th>
+                        <th className="px-6 py-4">Invoice</th>
+                        <th className="px-6 py-4">Date</th>
+                        <th className="px-6 py-4 text-right">Amount</th>
+                        <th className="px-6 py-4 text-center">Status</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {loadingHistory ? (
                         <tr>
-                          <td colSpan={6} className="text-center py-8 text-gray-500">
-                            <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-brand-400" />
+                          <td colSpan={6} className="text-center py-12 text-gray-400 text-sm">
+                            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3 text-brand-400" />
                             Loading payment history...
                           </td>
                         </tr>
                       ) : allLedgerRows.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="text-center py-8 text-gray-500">
+                          <td colSpan={6} className="text-center py-12 text-gray-400 text-sm">
                             No payment or renewal history records found.
                           </td>
                         </tr>
@@ -1227,41 +1249,41 @@ export function DomainControlCenterView({
 
                           return (
                             <tr key={row.id} className="hover:bg-white/5 transition-colors">
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
                                   <div
-                                    className={`p-1.5 rounded-lg ${
+                                    className={`p-2 rounded-xl ${
                                       row.isRenewal
                                         ? "bg-amber-400/10 text-amber-400"
                                         : "bg-blue-400/10 text-blue-400"
                                     }`}
                                   >
                                     {row.isRenewal ? (
-                                      <RefreshCw className="w-3.5 h-3.5" />
+                                      <RefreshCw className="w-4 h-4" />
                                     ) : (
-                                      <Globe className="w-3.5 h-3.5" />
+                                      <Globe className="w-4 h-4" />
                                     )}
                                   </div>
                                   <div>
                                     <span className="font-semibold text-white block">
                                       {row.description}
                                     </span>
-                                    <span className="text-[10px] text-gray-500">
+                                    <span className="text-xs text-gray-400">
                                       {activeDomain.domain_name}
                                     </span>
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-4 py-3">
+                              <td className="px-6 py-4">
                                 <Link
                                   href={invoiceUrl}
-                                  className="font-semibold text-brand-400 hover:text-brand-300 hover:underline flex items-center gap-1"
+                                  className="font-semibold text-brand-400 hover:text-brand-300 hover:underline inline-flex items-center gap-1.5"
                                 >
                                   <span>{row.invoice_id}</span>
-                                  <ExternalLink className="w-3 h-3 text-gray-500" />
+                                  <ExternalLink className="w-3.5 h-3.5 text-gray-500" />
                                 </Link>
                               </td>
-                              <td className="px-4 py-3 text-gray-400">
+                              <td className="px-6 py-4 text-gray-400 text-sm">
                                 {row.date
                                   ? new Date(row.date).toLocaleDateString("en-US", {
                                       month: "short",
@@ -1270,14 +1292,14 @@ export function DomainControlCenterView({
                                     })
                                   : "—"}
                               </td>
-                              <td className="px-4 py-3 text-right">
-                                <span className="font-semibold text-white">
+                              <td className="px-6 py-4 text-right">
+                                <span className="font-bold text-white text-base">
                                   {formatLKR(row.amount)}
                                 </span>
                               </td>
-                              <td className="px-4 py-3 text-center">
+                              <td className="px-6 py-4 text-center">
                                 <span
-                                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${
+                                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
                                     isPaid
                                       ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                                       : isOnReview
@@ -1285,13 +1307,13 @@ export function DomainControlCenterView({
                                       : "bg-red-500/10 text-red-400 border-red-500/20"
                                   }`}
                                 >
-                                  {isPaid && <CheckCircle2 className="w-2.5 h-2.5" />}
-                                  {isOnReview && <Clock className="w-2.5 h-2.5" />}
+                                  {isPaid && <CheckCircle2 className="w-3 h-3" />}
+                                  {isOnReview && <Clock className="w-3 h-3" />}
                                   <span>{isPaid ? "Paid" : isOnReview ? "On Review" : "Unpaid"}</span>
                                 </span>
                               </td>
-                              <td className="px-4 py-3 text-right">
-                                <div className="flex items-center justify-end gap-1.5">
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
                                   {!isPaid && !isOnReview && onOpenPayModal && (
                                     <button
                                       type="button"
@@ -1303,19 +1325,19 @@ export function DomainControlCenterView({
                                           currency: "LKR",
                                         })
                                       }
-                                      className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 hover:opacity-95 text-white font-semibold text-[11px] transition-opacity cursor-pointer shadow-sm"
+                                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:opacity-95 text-white font-semibold text-xs transition-opacity cursor-pointer shadow-sm"
                                     >
-                                      <CreditCard className="w-3 h-3" />
+                                      <CreditCard className="w-3.5 h-3.5" />
                                       <span>Pay Now</span>
                                     </button>
                                   )}
                                   <Link href={invoiceUrl}>
                                     <button
                                       type="button"
-                                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                                      className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
                                       title="View Invoice Document"
                                     >
-                                      <Eye className="w-3.5 h-3.5" />
+                                      <Eye className="w-4 h-4" />
                                     </button>
                                   </Link>
                                 </div>
@@ -1335,12 +1357,13 @@ export function DomainControlCenterView({
           {activeTab === "settings" && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-semibold text-white">Domain Settings</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-white">Domain & Security Controls</h3>
+                <p className="text-sm text-gray-400 mt-1">Configure registry lock, DNSSEC, auto-renewal, and privacy settings.</p>
               </div>
 
               {transferMessage && (
-                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-3">
-                  <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                <div className="p-5 rounded-3xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400 mt-0.5" />
                   <div className="space-y-1">
                     <span className="font-semibold block">Transfer Request Initiated</span>
                     <p className="text-amber-300/90">{transferMessage}</p>
@@ -1348,17 +1371,17 @@ export function DomainControlCenterView({
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Transfer Lock Card */}
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col justify-between space-y-3">
-                  <div className="space-y-1.5">
+                <div className="p-6 sm:p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-white flex items-center gap-2">
-                        <Lock className="w-4 h-4 text-brand-400" />
+                      <span className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
+                        <Lock className="w-5 h-5 text-brand-400" />
                         Transfer Lock
                       </span>
                       <span
-                        className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${
+                        className={`text-xs font-semibold px-3 py-1 rounded-full border ${
                           isLocked
                             ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                             : "bg-amber-500/10 text-amber-400 border-amber-500/20"
@@ -1367,47 +1390,47 @@ export function DomainControlCenterView({
                         {isLocked ? "Locked" : "Unlocked"}
                       </span>
                     </div>
-                    <p className="text-[11px] text-gray-400 leading-relaxed">
+                    <p className="text-sm text-gray-400 leading-relaxed">
                       Prevents this domain from being transferred away to another provider.
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                    <span className="text-[11px] text-gray-400">
+                  <div className="pt-3 border-t border-white/5 flex items-center justify-between">
+                    <span className="text-sm text-gray-400">
                       {isLocked ? "Transfers blocked" : "Transfers allowed"}
                     </span>
                     <button
                       type="button"
                       onClick={handleToggleLock}
                       disabled={togglingLock}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold transition-all cursor-pointer border ${
                         isLocked
                           ? "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
                           : "bg-emerald-500 hover:bg-emerald-600 text-white border-transparent"
                       }`}
                     >
                       {togglingLock ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : isLocked ? (
-                        <Unlock className="w-3.5 h-3.5" />
+                        <Unlock className="w-4 h-4" />
                       ) : (
-                        <Lock className="w-3.5 h-3.5" />
+                        <Lock className="w-4 h-4" />
                       )}
-                      <span>{isLocked ? "Unlock" : "Lock"}</span>
+                      <span>{isLocked ? "Unlock Domain" : "Lock Domain"}</span>
                     </button>
                   </div>
                 </div>
 
                 {/* DNSSEC Card */}
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col justify-between space-y-3">
-                  <div className="space-y-1.5">
+                <div className="p-6 sm:p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-white flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-brand-400" />
-                        DNSSEC
+                      <span className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
+                        <Shield className="w-5 h-5 text-brand-400" />
+                        DNSSEC Protection
                       </span>
                       <span
-                        className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${
+                        className={`text-xs font-semibold px-3 py-1 rounded-full border ${
                           dnssecEnabled
                             ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                             : "bg-white/5 text-gray-400 border-white/10"
@@ -1416,55 +1439,55 @@ export function DomainControlCenterView({
                         {dnssecEnabled ? "Active" : "Disabled"}
                       </span>
                     </div>
-                    <p className="text-[11px] text-gray-400 leading-relaxed">
-                      Protects your visitors against DNS spoofing and cache poisoning.
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      Cryptographically signs DNS responses to protect against DNS spoofing and cache poisoning.
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                    <span className="text-[11px] text-gray-400">
-                      {dnssecEnabled ? "Enabled" : "Disabled"}
+                  <div className="pt-3 border-t border-white/5 flex items-center justify-between">
+                    <span className="text-sm text-gray-400">
+                      {dnssecEnabled ? "DNSSEC is active" : "DNSSEC is disabled"}
                     </span>
                     <button
                       type="button"
                       onClick={handleToggleDnssec}
                       disabled={togglingDnssec}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold transition-all cursor-pointer border ${
                         dnssecEnabled
                           ? "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
                           : "bg-brand-500 hover:bg-brand-600 text-white border-transparent"
                       }`}
                     >
                       {togglingDnssec ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : dnssecEnabled ? (
-                        <span>Disable</span>
+                        <span>Disable DNSSEC</span>
                       ) : (
-                        <span>Enable</span>
+                        <span>Enable DNSSEC</span>
                       )}
                     </button>
                   </div>
                 </div>
 
                 {/* Auto-Renewal Card */}
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col justify-between space-y-3">
-                  <div className="space-y-1.5">
+                <div className="p-6 sm:p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-white flex items-center gap-2">
+                      <span className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
                         <RefreshCw className="w-4 h-4 text-brand-400" />
-                        Auto-Renew
+                        Auto-Renewal
                       </span>
-                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border bg-white/5 text-gray-400 border-white/10">
+                      <span className="text-xs font-semibold px-3 py-1 rounded-full border bg-white/5 text-gray-400 border-white/10">
                         Disabled
                       </span>
                     </div>
-                    <p className="text-[11px] text-gray-400 leading-relaxed">
-                      Auto-renewal is disabled. Domains are renewed manually upon invoice payment.
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      Auto-renewal is disabled. Domains are renewed manually upon invoice payment to prevent unexpected charges.
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                    <span className="text-[11px] text-gray-400">
+                  <div className="pt-3 border-t border-white/5 flex items-center justify-between">
+                    <span className="text-sm text-gray-400">
                       Auto-renew is permanently off
                     </span>
                     <button
@@ -1481,27 +1504,27 @@ export function DomainControlCenterView({
                 </div>
 
                 {/* WHOIS Privacy Card */}
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col justify-between space-y-3">
-                  <div className="space-y-1.5">
+                <div className="p-6 sm:p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-white flex items-center gap-2">
+                      <span className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
                         <ShieldCheck className="w-4 h-4 text-emerald-400" />
                         WHOIS Privacy
                       </span>
-                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                      <span className="text-xs font-semibold px-3 py-1 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
                         Active
                       </span>
                     </div>
-                    <p className="text-[11px] text-gray-400 leading-relaxed">
-                      Hides your personal contact details from public WHOIS records.
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      Masks your contact details on public WHOIS registries to prevent spam and identity exposure.
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                    <span className="text-[11px] text-emerald-400/90 font-medium">
-                      Included free
+                  <div className="pt-3 border-t border-white/5 flex items-center justify-between">
+                    <span className="text-sm text-emerald-400 font-medium">
+                      Included free with Frametoque
                     </span>
-                    <Check className="w-4 h-4 text-emerald-400" />
+                    <Check className="w-5 h-5 text-emerald-400" />
                   </div>
                 </div>
               </div>
@@ -1512,27 +1535,29 @@ export function DomainControlCenterView({
 
   if (isPage) {
     return (
-      <div className="w-full space-y-6 pb-12">
+      <div className="w-full space-y-8 pb-16">
         {/* Top Header Row */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-4 flex-wrap">
             <Link
               href={backHref || (isAdmin ? "/admin/web-services/domains" : "/dashboard/domains")}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs font-medium transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-sm font-semibold transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Domains</span>
             </Link>
-            <div className="h-5 w-px bg-white/10 hidden sm:block" />
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5 flex-wrap">
-              <span>{activeDomain.domain_name || "Manage Domains"}</span>
-              <span className="text-[10px] px-2.5 py-0.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 font-semibold uppercase tracking-wider">
+            <div className="h-6 w-px bg-white/10 hidden sm:block" />
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
+                {activeDomain.domain_name || "Manage Domains"}
+              </h1>
+              <span className="text-xs px-3 py-1 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 font-semibold uppercase tracking-wider">
                 {details?.live_zone?.status || details?.status || activeDomain.status || "Active"}
               </span>
-            </h1>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => {
@@ -1541,10 +1566,10 @@ export function DomainControlCenterView({
                 if (activeTab === "renewals") fetchRenewalHistory();
               }}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-gray-300 hover:text-white transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-semibold text-gray-200 hover:text-white transition-colors cursor-pointer"
               title="Refresh Domain Data"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-brand-400" : ""}`} />
               <span>Refresh</span>
             </button>
           </div>
@@ -1552,14 +1577,14 @@ export function DomainControlCenterView({
 
         {/* Success Alert Banner */}
         {successMsg && (
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-3 flex items-center gap-2.5 text-emerald-400 text-xs font-medium">
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-3.5 flex items-center gap-3 text-emerald-400 text-sm font-medium">
             <Check className="w-4 h-4 shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}
 
-        {/* Tab Switcher - pill buttons matching admin dashboard style */}
-        <div className="flex flex-wrap gap-2">
+        {/* Tab Switcher - modern pill buttons matching other dashboard pages */}
+        <div className="flex flex-wrap gap-2.5">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1568,21 +1593,21 @@ export function DomainControlCenterView({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-5 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer inline-flex items-center gap-2 ${
+                className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all cursor-pointer inline-flex items-center gap-2.5 ${
                   isActive
-                    ? "bg-white text-black shadow-lg"
+                    ? "bg-white text-black shadow-lg shadow-white/10"
                     : "bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10"
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" />
+                <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Main Content Area - Full-width glassmorphism container matching other admin pages */}
-        <div className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 space-y-6">
+        {/* Tab Content - Renders directly on page with no double-nested grey border box */}
+        <div className="w-full space-y-8">
           {tabContent}
         </div>
 
