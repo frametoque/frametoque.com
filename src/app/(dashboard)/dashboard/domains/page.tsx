@@ -473,7 +473,16 @@ export default function ClientDomainsPage() {
                         <TableCell>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-white text-base block">{d.domain_name}</span>
+                              {d.status.toLowerCase() === "active" ? (
+                                <Link
+                                  href={`/dashboard/domains/${d.id}`}
+                                  className="font-bold text-white text-base block hover:text-brand-400 transition-colors"
+                                >
+                                  {d.domain_name}
+                                </Link>
+                              ) : (
+                                <span className="font-bold text-white text-base block">{d.domain_name}</span>
+                              )}
                             </div>
                             <span className="text-[10px] text-gray-500">
                               Ordered: {new Date(d.created_at).toLocaleDateString()}
@@ -539,14 +548,14 @@ export default function ClientDomainsPage() {
                                       Invoice Paid
                                     </span>
                                     {d.status.toLowerCase() === "active" ? (
-                                      <button
-                                        onClick={() => setSelectedControlDomain(d)}
+                                      <Link
+                                        href={`/dashboard/domains/${d.id}`}
                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/20 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
                                         title="Configure DNS records, Nameservers & Security"
                                       >
                                         <Settings2 className="w-3.5 h-3.5" />
                                         <span>Manage DNS</span>
-                                      </button>
+                                      </Link>
                                     ) : (
                                       <span className="text-[11px] text-amber-400/90 font-medium bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
                                         Setting up live DNS...
