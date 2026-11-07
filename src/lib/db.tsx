@@ -1,4 +1,8 @@
 import postgres from 'postgres';
+import { validateEnvironment } from './env';
+
+// Fail fast on startup in production if required environment variables are missing
+validateEnvironment();
 
 const globalForPostgres = globalThis as unknown as {
   sql: postgres.Sql | undefined;

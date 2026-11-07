@@ -31,6 +31,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Run Typecheck
+        run: pnpm run typecheck
+
+      - name: Run Security and Domain Tests
+        run: pnpm run test:all
+
       - name: Install Vercel CLI
         run: pnpm add -g vercel
 

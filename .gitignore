@@ -42,5 +42,6 @@ yarn-error.log*
 next-env.d.ts
 src/app/layout.js
 
-# clerk configuration (can include secrets)
+# pnpm store and clerk
 /.clerk/
+/.pnpm-store/

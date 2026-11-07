@@ -147,7 +147,6 @@ export async function GET(request: Request) {
     }
     
     if (error.message.includes('column "user_email" does not exist')) {
-      console.log('user_email column does not exist in projects table');
       return NextResponse.json(
         { error: 'Database schema missing user_email column. Please run migrations.' },
         { status: 500 }
