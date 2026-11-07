@@ -248,6 +248,58 @@ export function DomainControlCenterView({
     }
   }, [isOpen, isPage, targetId]);
 
+  // Build unified Invoices & Payment Ledger rows (hook must be called before any early return)
+  const allLedgerRows = useMemo(() => {
+    const rows: Array<{
+      id: string | number;
+      invoice_id: string;
+      description: string;
+      date: string;
+      amount: number;
+      status: string;
+      isRenewal: boolean;
+    }> = [];
+
+    const seenInvoices = new Set<string>();
+
+    // 1. Initial registration invoice
+    if (activeDomain?.invoice_id) {
+      seenInvoices.add(activeDomain.invoice_id);
+      const regAmount = activeDomain.activation_lkr_price
+        ? parseFloat(activeDomain.activation_lkr_price)
+        : activeDomain.total_due
+        ? parseFloat(activeDomain.total_due)
+        : 0;
+      rows.push({
+        id: `reg-${activeDomain.invoice_id}`,
+        invoice_id: activeDomain.invoice_id,
+        description: `Initial Domain Registration (1 Year)`,
+        date: activeDomain.created_at || activeDomain.purchase_date || new Date().toISOString(),
+        amount: regAmount,
+        status: activeDomain.payment_status || (activeDomain.status === "active" ? "paid" : "unpaid"),
+        isRenewal: false,
+      });
+    }
+
+    // 2. Renewal invoices from renewal-history
+    for (const h of historyRows) {
+      if (h.invoice_id && seenInvoices.has(h.invoice_id)) continue;
+      if (h.invoice_id) seenInvoices.add(h.invoice_id);
+      rows.push({
+        id: h.id || `ren-${h.invoice_id}`,
+        invoice_id: h.invoice_id,
+        description: `Annual Domain Renewal (1 Year)`,
+        date: h.renewal_date,
+        amount: parseFloat(h.lkr_price || 0),
+        status: h.status || "unpaid",
+        isRenewal: true,
+      });
+    }
+
+    // Sort descending by date
+    return rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [activeDomain, historyRows]);
+
   if (!isPage && !isOpen) return null;
 
   if (!details && !domain && loading) {
@@ -416,58 +468,6 @@ export function DomainControlCenterView({
       setRequestingTransfer(false);
     }
   };
-
-  // Build unified Invoices & Payment Ledger rows
-  const allLedgerRows = useMemo(() => {
-    const rows: Array<{
-      id: string | number;
-      invoice_id: string;
-      description: string;
-      date: string;
-      amount: number;
-      status: string;
-      isRenewal: boolean;
-    }> = [];
-
-    const seenInvoices = new Set<string>();
-
-    // 1. Initial registration invoice
-    if (activeDomain.invoice_id) {
-      seenInvoices.add(activeDomain.invoice_id);
-      const regAmount = activeDomain.activation_lkr_price
-        ? parseFloat(activeDomain.activation_lkr_price)
-        : activeDomain.total_due
-        ? parseFloat(activeDomain.total_due)
-        : 0;
-      rows.push({
-        id: `reg-${activeDomain.invoice_id}`,
-        invoice_id: activeDomain.invoice_id,
-        description: `Initial Domain Registration (1 Year)`,
-        date: activeDomain.created_at || activeDomain.purchase_date || new Date().toISOString(),
-        amount: regAmount,
-        status: activeDomain.payment_status || (activeDomain.status === "active" ? "paid" : "unpaid"),
-        isRenewal: false,
-      });
-    }
-
-    // 2. Renewal invoices from renewal-history
-    for (const h of historyRows) {
-      if (h.invoice_id && seenInvoices.has(h.invoice_id)) continue;
-      if (h.invoice_id) seenInvoices.add(h.invoice_id);
-      rows.push({
-        id: h.id || `ren-${h.invoice_id}`,
-        invoice_id: h.invoice_id,
-        description: `Annual Domain Renewal (1 Year)`,
-        date: h.renewal_date,
-        amount: parseFloat(h.lkr_price || 0),
-        status: h.status || "unpaid",
-        isRenewal: true,
-      });
-    }
-
-    // Sort descending by date
-    return rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [activeDomain, historyRows]);
 
   const renewalLkr = activeDomain.renewal_lkr_price
     ? parseFloat(activeDomain.renewal_lkr_price)
