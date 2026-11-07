@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     const rows = await sql`
       SELECT 
         d.id,
+        d.domain_uid,
         d.domain_name,
         d.selling_price,
         d.renewal_price,

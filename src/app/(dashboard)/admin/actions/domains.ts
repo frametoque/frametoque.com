@@ -31,6 +31,7 @@ export async function uploadProviderInvoice(formData: FormData): Promise<string>
 
 export interface DomainOrder {
   id: number;
+  domain_uid?: string | null;
   client_email: string;
   domain_name: string;
   actual_price: number;
@@ -286,19 +287,28 @@ export async function getDomainOrders(): Promise<DomainOrder[]> {
   }
 }
 
-export async function getDomainOrderById(id: number): Promise<DomainOrder | null> {
+export async function getDomainOrderById(id: number | string): Promise<DomainOrder | null> {
   await requireAdminSession();
 
   try {
-    const rows = await sql`
-      SELECT * FROM admin_domain_orders
-      WHERE id = ${id}
-      LIMIT 1
-    `;
+    const raw = String(id ?? "").trim();
+    const isNum = /^\d+$/.test(raw);
+    const rows = isNum
+      ? await sql`
+          SELECT * FROM admin_domain_orders
+          WHERE id = ${Number(raw)}
+          LIMIT 1
+        `
+      : await sql`
+          SELECT * FROM admin_domain_orders
+          WHERE domain_uid = ${raw} OR LOWER(domain_name) = LOWER(${raw})
+          LIMIT 1
+        `;
     if (rows.length === 0) return null;
     const r = rows[0] as any;
     return {
       id: r.id,
+      domain_uid: r.domain_uid || null,
       client_email: r.client_email,
       domain_name: r.domain_name,
       status: r.status,

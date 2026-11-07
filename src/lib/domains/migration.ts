@@ -18,10 +18,10 @@ export async function ensureDomainTables(): Promise<void> {
 
   const migrationPromise = (async () => {
     try {
-      // Fast check: if zone_id column already exists, tables are already migrated
+      // Fast check: if domain_uid column already exists, tables are already migrated
       const check = await sql`
         SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'admin_domain_orders' AND column_name = 'zone_id' 
+        WHERE table_name = 'admin_domain_orders' AND column_name = 'domain_uid' 
         LIMIT 1
       `;
       if (check.length > 0) {
@@ -29,9 +29,10 @@ export async function ensureDomainTables(): Promise<void> {
         return;
       }
 
-      // 1. Extend admin_domain_orders with domain control columns
+      // 1. Extend admin_domain_orders with domain control columns & unique random string identifier
       await sql`
         ALTER TABLE admin_domain_orders 
+          ADD COLUMN IF NOT EXISTS domain_uid VARCHAR(64),
           ADD COLUMN IF NOT EXISTS zone_id VARCHAR(255),
           ADD COLUMN IF NOT EXISTS locked BOOLEAN DEFAULT TRUE,
           ADD COLUMN IF NOT EXISTS auto_renew BOOLEAN DEFAULT FALSE,
@@ -41,6 +42,22 @@ export async function ensureDomainTables(): Promise<void> {
           ADD COLUMN IF NOT EXISTS transfer_status VARCHAR(50) DEFAULT 'none',
           ADD COLUMN IF NOT EXISTS dnssec_status VARCHAR(50) DEFAULT 'disabled',
           ADD COLUMN IF NOT EXISTS cloudflare_sync_at TIMESTAMPTZ;
+      `;
+
+      // Backfill any missing domain_uid
+      await sql`
+        UPDATE admin_domain_orders 
+        SET domain_uid = 'dom_' || substring(md5(random()::text || id::text || clock_timestamp()::text) from 1 for 12)
+        WHERE domain_uid IS NULL;
+      `;
+
+      await sql`
+        ALTER TABLE admin_domain_orders 
+        ALTER COLUMN domain_uid SET DEFAULT ('dom_' || substring(md5(random()::text || clock_timestamp()::text) from 1 for 12));
+      `;
+
+      await sql`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_admin_domain_orders_domain_uid ON admin_domain_orders(domain_uid);
       `;
 
       // 2. Create domain_audit_log table

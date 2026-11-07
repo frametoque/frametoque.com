@@ -31,6 +31,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 
 interface ClientDomain {
   id: number;
+  domain_uid?: string;
   domain_name: string;
   selling_price: string;
   renewal_price: string;
@@ -475,7 +476,7 @@ export default function ClientDomainsPage() {
                             <div className="flex items-center gap-2">
                               {d.status.toLowerCase() === "active" ? (
                                 <Link
-                                  href={`/dashboard/domains/${d.id}`}
+                                  href={`/dashboard/domains/${d.domain_uid || d.id}`}
                                   className="font-bold text-white text-base block hover:text-brand-400 transition-colors"
                                 >
                                   {d.domain_name}
@@ -549,7 +550,7 @@ export default function ClientDomainsPage() {
                                     </span>
                                     {d.status.toLowerCase() === "active" ? (
                                       <Link
-                                        href={`/dashboard/domains/${d.id}`}
+                                        href={`/dashboard/domains/${d.domain_uid || d.id}`}
                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/20 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
                                         title="Configure DNS records, Nameservers & Security"
                                       >

@@ -124,7 +124,7 @@ export function DomainControlCenterView({
   const [details, setDetails] = useState<any>(domain || null);
   const [isForbidden, setIsForbidden] = useState(false);
   const activeDomain = details || domain || {};
-  const targetId = activeDomain?.id || domain?.id || domainId;
+  const targetId = activeDomain?.domain_uid || domain?.domain_uid || domainId || activeDomain?.id || domain?.id;
   const activeNameservers = parseNameservers(details?.nameservers ?? activeDomain?.nameservers);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -367,7 +367,7 @@ export function DomainControlCenterView({
     );
   }
 
-  if (!activeDomain || (!activeDomain.id && !domainId)) return null;
+  if (!activeDomain || (!activeDomain.id && !domainId && !activeDomain.domain_uid)) return null;
 
   // Handlers
   const handleToggleLock = async () => {

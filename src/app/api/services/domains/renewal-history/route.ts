@@ -27,20 +27,28 @@ export async function GET(req: NextRequest) {
 
     let rows;
     if (domainId) {
-      // Validate that the domain belongs to this user
-      const ownerCheck = await sql`
-        SELECT id FROM admin_domain_orders
-        WHERE id = ${parseInt(domainId)} AND LOWER(client_email) = LOWER(${userEmail})
-      `;
+      // Validate that the domain belongs to this user (supports numeric ID, domain_uid, or domain name)
+      const isNum = /^\d+$/.test(domainId);
+      const ownerCheck = isNum
+        ? await sql`
+            SELECT id FROM admin_domain_orders
+            WHERE id = ${parseInt(domainId)} AND LOWER(client_email) = LOWER(${userEmail})
+          `
+        : await sql`
+            SELECT id FROM admin_domain_orders
+            WHERE (domain_uid = ${domainId} OR LOWER(domain_name) = LOWER(${domainId}))
+              AND LOWER(client_email) = LOWER(${userEmail})
+          `;
       if (ownerCheck.length === 0) {
         return NextResponse.json({ error: "Domain not found" }, { status: 404 });
       }
 
+      const realDomainId = ownerCheck[0].id;
       rows = await sql`
         SELECT h.*, i.payment_status AS invoice_payment_status
         FROM domain_renewal_history h
         LEFT JOIN invoices i ON h.invoice_id = i.invoice_id
-        WHERE h.domain_order_id = ${parseInt(domainId)}
+        WHERE h.domain_order_id = ${realDomainId}
           AND LOWER(h.client_email) = LOWER(${userEmail})
         ORDER BY h.renewal_date DESC
       `;

@@ -4,6 +4,7 @@ import { ensureDomainTables } from "./migration";
 
 export interface OwnedDomain {
   id: number;
+  domain_uid?: string;
   client_email: string;
   domain_name: string;
   status: string;
@@ -22,6 +23,7 @@ export interface OwnedDomain {
 /**
  * Validates that the active session user owns the domain, or is an Administrator.
  * Prevents Insecure Direct Object References (IDOR).
+ * Accepts random string UID (e.g. dom_941002ed7a0b), numeric ID (11), or domain name.
  */
 export async function requireDomainOwnership(
   domainIdOrName: string | number
@@ -33,16 +35,23 @@ export async function requireDomainOwnership(
     throw new AuthError("Unauthorized: Authentication required", 401);
   }
 
-  const isNumeric = typeof domainIdOrName === "number" || /^\d+$/.test(String(domainIdOrName));
+  const raw = String(domainIdOrName || "").trim();
+  const isNumeric = typeof domainIdOrName === "number" || /^\d+$/.test(raw);
 
   let rows;
   if (isNumeric) {
     rows = await sql`
-      SELECT * FROM admin_domain_orders WHERE id = ${Number(domainIdOrName)} LIMIT 1
+      SELECT * FROM admin_domain_orders WHERE id = ${Number(raw)} LIMIT 1
+    `;
+  } else if (raw.startsWith("dom_")) {
+    rows = await sql`
+      SELECT * FROM admin_domain_orders WHERE domain_uid = ${raw} LIMIT 1
     `;
   } else {
     rows = await sql`
-      SELECT * FROM admin_domain_orders WHERE LOWER(domain_name) = LOWER(${String(domainIdOrName).trim()}) LIMIT 1
+      SELECT * FROM admin_domain_orders 
+      WHERE domain_uid = ${raw} OR LOWER(domain_name) = LOWER(${raw})
+      LIMIT 1
     `;
   }
 

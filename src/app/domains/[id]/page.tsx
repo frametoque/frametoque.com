@@ -18,11 +18,12 @@ export default async function DirectDomainRedirectPage({ params }: DirectDomainP
 
   try {
     const { domain, isAdmin } = await requireDomainOwnership(id);
+    const targetUid = domain.domain_uid || domain.id;
 
     if (isAdmin) {
-      redirect(`/admin/web-services/domains/${domain.id}`);
+      redirect(`/admin/web-services/domains/${targetUid}`);
     } else {
-      redirect(`/dashboard/domains/${domain.id}`);
+      redirect(`/dashboard/domains/${targetUid}`);
     }
   } catch (err: any) {
     if (err.statusCode === 403 || err.message?.toLowerCase().includes("forbidden") || err.message?.toLowerCase().includes("permission")) {

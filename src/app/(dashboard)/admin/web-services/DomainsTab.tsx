@@ -1442,7 +1442,7 @@ export default function AdminOrdersPage() {
                           <div className="font-semibold text-white flex items-center gap-1.5 flex-wrap">
                             <Globe className="w-4 h-4 text-brand-400" />
                             <Link
-                              href={`/admin/web-services/domains/${o.id}`}
+                              href={`/admin/web-services/domains/${o.domain_uid || o.id}`}
                               className="hover:text-brand-400 transition-colors"
                             >
                               {o.domain_name}
@@ -1573,7 +1573,7 @@ export default function AdminOrdersPage() {
                           <div className="flex items-center justify-end gap-1">
                             {/* Cloudflare Control Center */}
                             <Link
-                              href={`/admin/web-services/domains/${o.id}`}
+                              href={`/admin/web-services/domains/${o.domain_uid || o.id}`}
                               className="p-2 hover:bg-brand-500/20 text-brand-400 rounded-xl transition-colors flex items-center justify-center cursor-pointer"
                               title="Domain Control Center (DNS, Lock, DNSSEC, Nameservers)"
                             >
@@ -1670,7 +1670,7 @@ export default function AdminOrdersPage() {
                             </button>
 
                             <Link
-                              href={`/admin/web-services/domains/${o.id}/edit`}
+                              href={`/admin/web-services/domains/${o.domain_uid || o.id}/edit`}
                               className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl transition-colors flex items-center justify-center cursor-pointer"
                               title="Edit Order"
                             >

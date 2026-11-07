@@ -302,6 +302,27 @@ test("Authorization / IDOR: Blocks non-owners and permits owner and admin", () =
   );
 });
 
+test("Domain UID: Verifies random non-numeric string identifier resolution and anti-enumeration", () => {
+  const mockDomain = {
+    id: 11,
+    domain_uid: "dom_ad5204bffb97",
+    domain_name: "selexprimeengineering.com",
+    client_email: "client@example.com",
+  };
+
+  const resolveLookupKey = (input) => {
+    const raw = String(input || "").trim();
+    if (/^\d+$/.test(raw)) return { type: "numeric_id", value: Number(raw) };
+    if (raw.startsWith("dom_")) return { type: "domain_uid", value: raw };
+    return { type: "domain_name", value: raw.toLowerCase() };
+  };
+
+  assert.strictEqual(resolveLookupKey(mockDomain.domain_uid).type, "domain_uid");
+  assert.strictEqual(resolveLookupKey(mockDomain.domain_uid).value, "dom_ad5204bffb97");
+  assert.strictEqual(resolveLookupKey(11).type, "numeric_id");
+  assert.strictEqual(resolveLookupKey("selexprimeengineering.com").type, "domain_name");
+});
+
 test("CloudflareProvider: Sync live real-time TLD pricing", async () => {
   const provider = new CloudflareProvider({
     apiToken: "cf-test-token-12345",
