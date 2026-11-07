@@ -655,20 +655,19 @@ export function DomainControlCenterView({
                 <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
                   <span className="text-gray-500 text-xs font-medium">Auto-Renewal</span>
                   <div className="flex items-center justify-between pt-1">
-                    <span className={`text-sm font-bold ${isAutoRenew ? "text-emerald-400" : "text-gray-400"}`}>
-                      {isAutoRenew ? "Enabled" : "Disabled"}
+                    <span className="text-sm font-bold text-gray-400">
+                      Disabled
                     </span>
                     <button
-                      onClick={handleToggleAutoRenew}
-                      disabled={togglingAutoRenew}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 transition-colors"
-                      title="Toggle Auto-Renewal"
+                      disabled={true}
+                      className="p-1.5 rounded-lg bg-white/5 text-gray-600 cursor-not-allowed opacity-40"
+                      title="Auto-renewal is disabled. Manual renewal required."
                     >
-                      {togglingAutoRenew ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                      <RefreshCw className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   <span className="text-[10px] text-gray-500">
-                    {isAutoRenew ? "Renews Automatically" : "Manual Renewal Required"}
+                    Manual Renewal Required
                   </span>
                 </div>
 
@@ -1145,27 +1144,20 @@ export function DomainControlCenterView({
                     Auto-Renewal
                   </span>
                   <div className="flex items-center justify-between pt-1">
-                    <span className={`text-sm font-bold ${isAutoRenew ? "text-emerald-400" : "text-gray-400"}`}>
-                      {isAutoRenew ? "Enabled" : "Disabled"}
+                    <span className="text-sm font-bold text-gray-400">
+                      Disabled
                     </span>
                     <button
                       type="button"
-                      onClick={handleToggleAutoRenew}
-                      disabled={togglingAutoRenew}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                        isAutoRenew ? "bg-emerald-500" : "bg-white/20"
-                      }`}
-                      title="Toggle Auto-Renewal"
+                      disabled={true}
+                      className="relative inline-flex h-5 w-9 shrink-0 cursor-not-allowed opacity-40 rounded-full border-2 border-transparent bg-white/10"
+                      title="Auto-renewal is disabled. Manual payment required."
                     >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                          isAutoRenew ? "translate-x-4" : "translate-x-0"
-                        }`}
-                      />
+                      <span className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white/40 shadow-md ring-0 translate-x-0" />
                     </button>
                   </div>
                   <span className="text-[10px] text-gray-400 block">
-                    {isAutoRenew ? "Automatic invoice before expiry" : "Manual payment required"}
+                    Manual payment required
                   </span>
                 </div>
 
@@ -1462,41 +1454,27 @@ export function DomainControlCenterView({
                         <RefreshCw className="w-4 h-4 text-brand-400" />
                         Auto-Renew
                       </span>
-                      <span
-                        className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${
-                          isAutoRenew
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            : "bg-white/5 text-gray-400 border-white/10"
-                        }`}
-                      >
-                        {isAutoRenew ? "Enabled" : "Disabled"}
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border bg-white/5 text-gray-400 border-white/10">
+                        Disabled
                       </span>
                     </div>
                     <p className="text-[11px] text-gray-400 leading-relaxed">
-                      Automatically renews your domain before expiration so it doesn't expire.
+                      Auto-renewal is disabled. Domains are renewed manually upon invoice payment.
                     </p>
                   </div>
 
                   <div className="pt-2 border-t border-white/5 flex items-center justify-between">
                     <span className="text-[11px] text-gray-400">
-                      {isAutoRenew ? "Auto-renew is on" : "Auto-renew is off"}
+                      Auto-renew is permanently off
                     </span>
                     <button
                       type="button"
-                      onClick={handleToggleAutoRenew}
-                      disabled={togglingAutoRenew}
-                      className="flex items-center gap-2 cursor-pointer"
+                      disabled={true}
+                      className="flex items-center gap-2 cursor-not-allowed opacity-40"
+                      title="Auto-renewal is disabled"
                     >
-                      <div
-                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                          isAutoRenew ? "bg-emerald-500" : "bg-white/20"
-                        }`}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                            isAutoRenew ? "translate-x-4" : "translate-x-0"
-                          }`}
-                        />
+                      <div className="relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent bg-white/10">
+                        <span className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white/40 shadow-md ring-0 translate-x-0" />
                       </div>
                     </button>
                   </div>
