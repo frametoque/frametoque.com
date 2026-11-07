@@ -1334,9 +1334,6 @@ export function DomainControlCenterView({
             <div className="space-y-6">
               <div>
                 <h3 className="text-sm font-semibold text-white">Domain Settings</h3>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Manage security controls, auto-renewal, and domain transfer options.
-                </p>
               </div>
 
               {transferMessage && (
