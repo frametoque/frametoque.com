@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchWithFallback, extractStorageKey, detectContentType } from "@/lib/storage";
+import { fetchWithFallback, extractStorageKey, detectContentType, isAllowedStorageUrl } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +26,13 @@ export async function GET(
 
     if (!target) {
       return NextResponse.json({ error: "No media path or url provided" }, { status: 400 });
+    }
+
+    if ((target.startsWith("http://") || target.startsWith("https://")) && !isAllowedStorageUrl(target)) {
+      return NextResponse.json(
+        { error: "Access to external or unapproved media URL is prohibited" },
+        { status: 403 }
+      );
     }
 
     const response = await fetchWithFallback(target);

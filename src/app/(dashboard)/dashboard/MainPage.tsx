@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, UserCheck, FilePenLine, CreditCard, CalendarDays } from "lucide-react";
+import { Sparkles, UserCheck, FilePenLine, CreditCard, CalendarDays, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import useSWR from "swr";
 import PayModal from "@/components/PayModal";
@@ -12,6 +12,7 @@ import RecentProjectsWidget from "./invoices/RecentProjectsWidget";
 import RecentQuotationsWidget from "./quotations/RecentQuotationsWidget";
 import { getAgreementsByClient, AgreementData } from "../admin/actions/agreements";
 import { getClientContentPlanner } from "../admin/actions/workspace";
+import { verifyAndSyncCardPayment } from "../admin/actions/payments";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -23,8 +24,12 @@ function getGreeting() {
 
 export default function DashboardHome() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const paymentParam = searchParams.get("payment");
+  const invoiceIdParam = searchParams.get("invoice_id");
   const { isSignedIn, isLoaded, user } = useUser();
 
+  const [paymentBanner, setPaymentBanner] = useState<"success" | "cancelled" | null>(null);
   const [progress, setProgress] = useState(100);
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -124,10 +129,16 @@ export default function DashboardHome() {
   useEffect(() => {
     if (isLoaded && user?.primaryEmailAddress?.emailAddress) {
       const email = user.primaryEmailAddress.emailAddress;
-      const fetchUnpaidInvoices = async () => {
+      const fetchUnpaidInvoices = async (showLoading = false) => {
         try {
-          setLoadingInvoices(true);
-          const response = await fetch(`/api/requests?user_email=${encodeURIComponent(email)}`, { cache: "no-store" });
+          if (showLoading) setLoadingInvoices(true);
+          const response = await fetch(
+            `/api/requests?user_email=${encodeURIComponent(email)}&t=${Date.now()}`,
+            {
+              cache: "no-store",
+              headers: { "Cache-Control": "no-cache, no-store, must-revalidate", Pragma: "no-cache" },
+            }
+          );
           if (response.ok) {
             const data = await response.json();
             const unpaid = data.filter(
@@ -146,9 +157,61 @@ export default function DashboardHome() {
           setLoadingInvoices(false);
         }
       };
-      fetchUnpaidInvoices();
+
+      fetchUnpaidInvoices(true);
+
+      const handleFocus = () => fetchUnpaidInvoices(false);
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === "visible") fetchUnpaidInvoices(false);
+      };
+      const handlePageShow = () => fetchUnpaidInvoices(false);
+
+      window.addEventListener("focus", handleFocus);
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      window.addEventListener("pageshow", handlePageShow);
+
+      return () => {
+        window.removeEventListener("focus", handleFocus);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        window.removeEventListener("pageshow", handlePageShow);
+      };
     }
   }, [isLoaded, user]);
+
+  useEffect(() => {
+    if (!paymentParam) return;
+    if (paymentParam === "success") {
+      setPaymentBanner("success");
+      if (invoiceIdParam) {
+        verifyAndSyncCardPayment({ invoiceId: String(invoiceIdParam) })
+          .then(() => {
+            if (user?.primaryEmailAddress?.emailAddress) {
+              const email = user.primaryEmailAddress.emailAddress;
+              fetch(`/api/requests?user_email=${encodeURIComponent(email)}&t=${Date.now()}`, {
+                cache: "no-store",
+                headers: { "Cache-Control": "no-cache, no-store, must-revalidate", Pragma: "no-cache" },
+              })
+                .then((res) => res.json())
+                .then((data) => {
+                  const unpaid = data.filter(
+                    (r: any) =>
+                      r.invoice_number &&
+                      r.invoice_number !== "null" &&
+                      r.total_due > 0 &&
+                      r.payment_status !== "fully paid" &&
+                      r.payment_status !== "paid"
+                  );
+                  setUnpaidInvoices(unpaid);
+                })
+                .catch((e) => console.error("Refresh error:", e));
+            }
+          })
+          .catch((e) => console.error("Auto-sync error on dashboard:", e));
+      }
+    } else if (paymentParam === "cancelled") {
+      setPaymentBanner("cancelled");
+    }
+  }, [paymentParam, invoiceIdParam, user]);
 
   if (!isLoaded || !isSignedIn) {
     return null;
@@ -156,6 +219,47 @@ export default function DashboardHome() {
 
   return (
     <div className="space-y-8">
+      {/* Payment Notification Banners */}
+      {paymentBanner === "success" && (
+        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-3xl p-4 flex items-center justify-between gap-3 text-emerald-400">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <div>
+              <p className="font-semibold text-sm">Payment Completed Successfully!</p>
+              <p className="text-xs text-emerald-400/80">
+                Your payment has been received and your invoice has been updated.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setPaymentBanner(null)}
+            className="text-emerald-400/60 hover:text-emerald-400 p-1 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {paymentBanner === "cancelled" && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-3xl p-4 flex items-center justify-between gap-3 text-amber-400">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <div>
+              <p className="font-semibold text-sm">Payment Cancelled</p>
+              <p className="text-xs text-amber-400/80">
+                The payment checkout was cancelled. You can retry anytime whenever you are ready.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setPaymentBanner(null)}
+            className="text-amber-400/60 hover:text-amber-400 p-1 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Welcome & Profile Section */}
       <div className="relative overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8">
         <div className={`grid grid-cols-1 ${progress < 100 && !loadingProfile ? "lg:grid-cols-3" : "grid-cols-1"} gap-8 items-center`}>
@@ -256,52 +360,70 @@ export default function DashboardHome() {
       )}
 
       {/* Unpaid Invoices Alert Widget */}
-      {!loadingInvoices && unpaidInvoices.length > 0 && (
-        <div className="bg-gradient-to-r from-blue-500/10 to-brand-500/10 border border-blue-500/20 backdrop-blur-xl rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-blue-500/20 text-blue-400 rounded-2xl shrink-0">
-              <CreditCard className="w-6 h-6" />
+      {!loadingInvoices && unpaidInvoices.length > 0 && (() => {
+        const singleInv = unpaidInvoices[0];
+        const isPartiallyPaid =
+          unpaidInvoices.length === 1 &&
+          (singleInv.payment_status === "partially paid" ||
+            singleInv.payment_status === "advance-paid" ||
+            (singleInv.total != null && singleInv.total_due < singleInv.total - 0.01));
+
+        return (
+          <div className="bg-gradient-to-r from-blue-500/10 to-brand-500/10 border border-blue-500/20 backdrop-blur-xl rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-blue-500/20 text-blue-400 rounded-2xl shrink-0">
+                <CreditCard className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-1">
+                  {unpaidInvoices.length === 1 
+                    ? isPartiallyPaid
+                      ? "Remaining Balance Pending Payment"
+                      : "Outstanding Invoice Pending Payment" 
+                    : `${unpaidInvoices.length} Outstanding Invoices Pending Payment`}
+                </h3>
+                <p className="text-sm text-gray-300 max-w-xl">
+                  {unpaidInvoices.length === 1
+                    ? isPartiallyPaid
+                      ? `You have a remaining balance of LKR ${singleInv.total_due.toLocaleString("en-US", { minimumFractionDigits: 2 })} on your invoice for "${singleInv.title}".`
+                      : `You have a pending invoice for "${singleInv.title}" of LKR ${singleInv.total_due.toLocaleString("en-US", { minimumFractionDigits: 2 })}.`
+                    : `You have ${unpaidInvoices.length} pending invoices to pay. Please review them to settle your project due balances.`}
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-white mb-1">
-                {unpaidInvoices.length === 1 
-                  ? "Outstanding Invoice Pending Payment" 
-                  : `${unpaidInvoices.length} Outstanding Invoices Pending Payment`}
-              </h3>
-              <p className="text-sm text-gray-300 max-w-xl">
-                {unpaidInvoices.length === 1
-                  ? `You have a pending invoice for "${unpaidInvoices[0].title}" of Rs. ${unpaidInvoices[0].total_due.toLocaleString("en-US", { minimumFractionDigits: 2 })}.`
-                  : `You have ${unpaidInvoices.length} pending invoices to pay. Please review them to settle your project due balances.`}
-              </p>
+            <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+              {unpaidInvoices.length === 1 ? (
+                <button
+                  onClick={() => {
+                    setSelectedInvoice({
+                      invoice_id: singleInv.invoice_number,
+                      project_name: singleInv.title,
+                      total_due: singleInv.total_due,
+                      currency: singleInv.currency,
+                      bank_account_id: singleInv.bank_account_id,
+                      bank_account_bank: singleInv.bank_account_bank,
+                      bank_account_number: singleInv.bank_account_number,
+                      bank_account_name: singleInv.bank_account_name,
+                      bank_account_branch: singleInv.bank_account_branch,
+                    });
+                    setIsPayModalOpen(true);
+                  }}
+                  className="flex-1 sm:flex-initial text-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold rounded-3xl text-sm transition-all shadow-lg shadow-blue-500/10 cursor-pointer"
+                >
+                  Pay Now
+                </button>
+              ) : (
+                <Link
+                  href="/dashboard/invoices"
+                  className="flex-1 sm:flex-initial text-center px-5 py-2.5 bg-zinc-900 border border-white/10 hover:bg-white/5 text-white font-bold rounded-3xl text-sm transition-all"
+                >
+                  View & Pay Invoices
+                </Link>
+              )}
             </div>
           </div>
-          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
-            {unpaidInvoices.length === 1 ? (
-              <button
-                onClick={() => {
-                  setSelectedInvoice({
-                    invoice_id: unpaidInvoices[0].invoice_number,
-                    project_name: unpaidInvoices[0].title,
-                    total_due: unpaidInvoices[0].total_due,
-                    currency: unpaidInvoices[0].currency,
-                  });
-                  setIsPayModalOpen(true);
-                }}
-                className="flex-1 sm:flex-initial text-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold rounded-3xl text-sm transition-all shadow-lg shadow-blue-500/10 cursor-pointer"
-              >
-                Pay Now
-              </button>
-            ) : (
-              <Link
-                href="/dashboard/invoices"
-                className="flex-1 sm:flex-initial text-center px-5 py-2.5 bg-zinc-900 border border-white/10 hover:bg-white/5 text-white font-bold rounded-3xl text-sm transition-all"
-              >
-                View & Pay Invoices
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Content Planner Schedule Banner (Only visible if client has assigned projects) */}
       {hasPlanner && (

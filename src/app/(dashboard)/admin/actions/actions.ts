@@ -8,6 +8,7 @@ import { logSystemAction } from "@/lib/logger";
 import { getGravatarUrl } from "@/lib/gravatar";
 import { reactivateDomainAfterRenewalPayment } from "./domains-shared";
 import { revalidatePath } from "next/cache";
+import { encryptField, decryptField, generateBlindIndex } from "@/lib/crypto-vault";
 
 export async function uploadReceipt(formData: FormData, type: 'income' | 'expenses'): Promise<string> {
   await requireAdminSession();
@@ -16,6 +17,19 @@ export async function uploadReceipt(formData: FormData, type: 'income' | 'expens
   if (!file) {
     await logSystemAction(`Upload Error: No file provided for ${type} receipt`);
     throw new Error("No file uploaded");
+  }
+
+  // File size validation (max 15MB)
+  const MAX_FILE_SIZE = 15 * 1024 * 1024;
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error("File exceeds maximum allowed size of 15MB.");
+  }
+
+  // Allowed file extensions
+  const allowedExts = [".jpg", ".jpeg", ".png", ".webp", ".pdf"];
+  const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+  if (!allowedExts.includes(ext)) {
+    throw new Error(`Invalid file type (${ext}). Only JPG, PNG, WEBP, and PDF receipts are allowed.`);
   }
 
   try {
@@ -51,7 +65,8 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     incomeBreakdownRange,
     clientsCountRows,
     accounts,
-    clientDueAmountRows
+    clientDueAmountRows,
+    pendingDomainOrdersRaw
   ] = await Promise.all([
     sql`
       SELECT 
@@ -154,7 +169,24 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
       GROUP BY COALESCE(c.full_name, i.user_email)
       HAVING SUM(i.total_due) > 0
       ORDER BY due_amount DESC
-    `
+    `,
+    sql`
+      SELECT 
+        d.id, 
+        d.domain_name, 
+        d.client_email, 
+        d.invoice_id, 
+        d.status,
+        d.created_at,
+        i.payment_status,
+        i.total as invoice_total
+      FROM admin_domain_orders d
+      LEFT JOIN invoices i ON d.invoice_id = i.invoice_id
+      WHERE d.status IN ('pending_manual_registration', 'manual_review')
+         OR (d.status = 'pending' AND (LOWER(i.payment_status) = 'paid' OR LOWER(i.payment_status) = 'fully paid'))
+      ORDER BY d.id DESC
+      LIMIT 10
+    `.catch(() => [])
   ]);
 
   const incomesStats = incomesStatsRow[0] || {};
@@ -225,6 +257,16 @@ export async function getDashboardData(startDate?: string, endDate?: string) {
     unpaidCount,
     unpaidAmount,
     clientDueAmounts,
+    pendingDomainPurchases: ((pendingDomainOrdersRaw as any[]) || []).map((row: any) => ({
+      id: row.id,
+      domain_name: row.domain_name,
+      client_email: row.client_email,
+      invoice_id: row.invoice_id,
+      invoice_total: row.invoice_total ? parseFloat(row.invoice_total) : 0,
+      status: row.status,
+      payment_status: row.payment_status || "PAID",
+      created_at: row.created_at,
+    })),
     currentMonthStats: {
       income: parseFloat(incomesStats.this_month || 0),
       expenses: parseFloat(expensesStats.this_month || 0),
@@ -395,10 +437,22 @@ export async function createClient(data: { name: string; email?: string | null; 
     addressToSave = data.email.trim();
   }
 
-  await sql`
-    INSERT INTO admin_clients (id, full_name, email, company, phone, address, active, legal_name)
-    VALUES (${clientId}, ${data.name}, ${emailToSave}, ${data.company || null}, ${data.phone || null}, ${addressToSave}, true, ${legalNameToSave})
-  `;
+  const encPhone = data.phone ? encryptField(data.phone, `client:phone:${clientId}`) : null;
+  const bidxPhone = data.phone ? generateBlindIndex(data.phone, "phone") : null;
+  const encAddress = addressToSave ? encryptField(addressToSave, `client:address:${clientId}`) : null;
+
+  try {
+    await sql`
+      INSERT INTO admin_clients (id, full_name, email, company, phone, phone_encrypted, phone_bidx, address, address_encrypted, active, legal_name)
+      VALUES (${clientId}, ${data.name}, ${emailToSave}, ${data.company || null}, ${data.phone || null}, ${encPhone}, ${bidxPhone}, ${addressToSave}, ${encAddress}, true, ${legalNameToSave})
+    `;
+  } catch {
+    await sql`
+      INSERT INTO admin_clients (id, full_name, email, company, phone, address, active, legal_name)
+      VALUES (${clientId}, ${data.name}, ${emailToSave}, ${data.company || null}, ${data.phone || null}, ${addressToSave}, true, ${legalNameToSave})
+    `;
+  }
+
   await logSystemAction(`Created client: "${data.name}" (${data.email || data.phone || 'No contact'})`);
   return clientId;
 }
@@ -433,18 +487,39 @@ export async function updateClient(clientId: string, data: { name?: string; emai
     }
   }
 
+  const encPhone = data.phone !== undefined ? (data.phone ? encryptField(data.phone, `client:phone:${clientId}`) : null) : undefined;
+  const bidxPhone = data.phone !== undefined ? (data.phone ? generateBlindIndex(data.phone, "phone") : null) : undefined;
+  const encAddress = addressToSave !== undefined ? (addressToSave ? encryptField(addressToSave, `client:address:${clientId}`) : null) : undefined;
+
   // Update admin_clients row
-  await sql`
-    UPDATE admin_clients
-    SET 
-      full_name = COALESCE(${data.name  || null}, full_name),
-      email   = ${newEmail},
-      company = ${data.company !== undefined ? data.company : null},
-      phone   = ${data.phone   ?? null},
-      address = ${addressToSave !== undefined ? addressToSave : null},
-      legal_name = ${legalNameToSave !== undefined ? legalNameToSave : null}
-    WHERE id = ${clientId}
-  `;
+  try {
+    await sql`
+      UPDATE admin_clients
+      SET 
+        full_name = COALESCE(${data.name  || null}, full_name),
+        email   = ${newEmail},
+        company = ${data.company !== undefined ? data.company : null},
+        phone   = ${data.phone   ?? null},
+        phone_encrypted = ${encPhone !== undefined ? encPhone : null},
+        phone_bidx = ${bidxPhone !== undefined ? bidxPhone : null},
+        address = ${addressToSave !== undefined ? addressToSave : null},
+        address_encrypted = ${encAddress !== undefined ? encAddress : null},
+        legal_name = ${legalNameToSave !== undefined ? legalNameToSave : null}
+      WHERE id = ${clientId}
+    `;
+  } catch {
+    await sql`
+      UPDATE admin_clients
+      SET 
+        full_name = COALESCE(${data.name  || null}, full_name),
+        email   = ${newEmail},
+        company = ${data.company !== undefined ? data.company : null},
+        phone   = ${data.phone   ?? null},
+        address = ${addressToSave !== undefined ? addressToSave : null},
+        legal_name = ${legalNameToSave !== undefined ? legalNameToSave : null}
+      WHERE id = ${clientId}
+    `;
+  }
 
   // Cascade email change to every table that stores user_email
   if (emailChanged) {
@@ -517,6 +592,25 @@ export async function deleteIncome(id: number) {
     if (incomeRows.length > 0) {
       incomeDesc = incomeRows[0].description || "";
       incomeAmount = parseFloat(incomeRows[0].amount || "0");
+
+      // If this was a card payment, mark it deleted in online_payments and remove associated fee expense
+      const refMatch = incomeDesc.match(/Ref:\s*([^\s)]+)/i);
+      if (refMatch) {
+        const txId = refMatch[1];
+        try {
+          await sql`
+            INSERT INTO online_payments (checkout_id, invoice_id, amount, status)
+            VALUES (${txId}, ${incomeRows[0].invoice_id || ''}, ${incomeAmount}, 'deleted')
+            ON CONFLICT (checkout_id) DO UPDATE SET status = 'deleted', updated_at = CURRENT_TIMESTAMP
+          `;
+          await sql`
+            DELETE FROM admin_expenses
+            WHERE description LIKE ${`%${txId}%`}
+          `;
+        } catch (opErr) {
+          console.warn("[deleteIncome] Failed to record deleted status for online payment:", opErr);
+        }
+      }
     }
 
     if (incomeRows.length > 0 && incomeRows[0].invoice_id) {
@@ -670,6 +764,21 @@ export async function deleteExpense(id: number) {
     if (existing.length > 0) {
       expDesc = existing[0].description || "";
       expAmount = parseFloat(existing[0].amount || "0");
+
+      // If this was a Payments.lk transaction fee expense, mark fee as deleted in online_payments
+      const refMatch = expDesc.match(/Ref:\s*([^\s)]+)/i);
+      if (refMatch) {
+        const txId = refMatch[1];
+        try {
+          await sql`
+            UPDATE online_payments 
+            SET gateway_response = jsonb_set(COALESCE(gateway_response, '{}'::jsonb), '{fee_deleted}', 'true'::jsonb)
+            WHERE checkout_id = ${txId}
+          `;
+        } catch (opErr) {
+          // ignore
+        }
+      }
     }
   } catch (e) {}
 
@@ -1073,6 +1182,14 @@ export async function deleteInvoice(id: string) {
     `;
   }
 
+  try {
+    await sql`
+      UPDATE online_payments
+      SET status = 'deleted', updated_at = CURRENT_TIMESTAMP
+      WHERE invoice_id = ${id}
+    `;
+  } catch (e) {}
+
   await sql`DELETE FROM invoices WHERE invoice_id = ${id}`;
   await logSystemAction(`Deleted invoice: "${projectName}" (${id})`);
 }
@@ -1235,24 +1352,48 @@ export async function getClients() {
     console.warn("Failed to fetch clerk users for images", e);
   }
 
-  const rows = await sql`
-    SELECT c.id,
-           c.full_name as name,
-           c.email,
-           c.active,
-           c.company,
-           c.phone,
-           c.address,
-           c.clerk_id,
-           c.legal_name,
-           (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email)) as invoices,
-           COALESCE((SELECT SUM(amount) FROM admin_incomes inc WHERE inc.client_id = c.id), 0) as revenue,
-           (SELECT COUNT(*) FROM admin_incomes inc WHERE inc.client_id = c.id) as income_count,
-           (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email) AND i.work_status IS NOT NULL) as project_count,
-           (SELECT COUNT(*) FROM admin_quotations q WHERE q.client_id = c.id) as quotation_count
-    FROM admin_clients c
-    ORDER BY c.id DESC
-  `;
+  let rows: any[] = [];
+  try {
+    rows = await sql`
+      SELECT c.id,
+             c.full_name as name,
+             c.email,
+             c.active,
+             c.company,
+             c.phone,
+             c.phone_encrypted,
+             c.address,
+             c.address_encrypted,
+             c.clerk_id,
+             c.legal_name,
+             (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email)) as invoices,
+             COALESCE((SELECT SUM(amount) FROM admin_incomes inc WHERE inc.client_id = c.id), 0) as revenue,
+             (SELECT COUNT(*) FROM admin_incomes inc WHERE inc.client_id = c.id) as income_count,
+             (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email) AND i.work_status IS NOT NULL) as project_count,
+             (SELECT COUNT(*) FROM admin_quotations q WHERE q.client_id = c.id) as quotation_count
+      FROM admin_clients c
+      ORDER BY c.id DESC
+    `;
+  } catch {
+    rows = await sql`
+      SELECT c.id,
+             c.full_name as name,
+             c.email,
+             c.active,
+             c.company,
+             c.phone,
+             c.address,
+             c.clerk_id,
+             c.legal_name,
+             (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email)) as invoices,
+             COALESCE((SELECT SUM(amount) FROM admin_incomes inc WHERE inc.client_id = c.id), 0) as revenue,
+             (SELECT COUNT(*) FROM admin_incomes inc WHERE inc.client_id = c.id) as income_count,
+             (SELECT COUNT(*) FROM invoices i WHERE LOWER(i.user_email) = LOWER(c.email) AND i.work_status IS NOT NULL) as project_count,
+             (SELECT COUNT(*) FROM admin_quotations q WHERE q.client_id = c.id) as quotation_count
+      FROM admin_clients c
+      ORDER BY c.id DESC
+    `;
+  }
 
   const clients = await Promise.all(
     rows.map(async (r) => {
@@ -1265,6 +1406,9 @@ export async function getClients() {
         imageUrl = getGravatarUrl(r.email.trim());
       }
 
+      const effectivePhone = (r.phone_encrypted ? decryptField(r.phone_encrypted, `client:phone:${r.id}`) : null) || r.phone;
+      const effectiveAddress = (r.address_encrypted ? decryptField(r.address_encrypted, `client:address:${r.id}`) : null) || r.address;
+
       return {
         id: r.id,
         name: r.name || r.email.split('@')[0],
@@ -1275,8 +1419,8 @@ export async function getClients() {
           (r.email && clerkEmailSet.has(r.email.toLowerCase())),
         active: r.active,
         company: r.company,
-        phone: r.phone,
-        address: r.address,
+        phone: effectivePhone,
+        address: effectiveAddress,
         legalName: r.legal_name || "",
         imageUrl,
         invoices: parseInt(r.invoices),
@@ -1297,20 +1441,40 @@ export async function getClientById(clientId: string) {
 
   const clerk = await clerkClient();
 
-  const rows = await sql`
-    SELECT c.id,
-           c.full_name as name,
-           c.email,
-           c.active,
-           c.company,
-           c.phone,
-           c.address,
-           c.clerk_id,
-           c.website,
-           c.legal_name
-    FROM admin_clients c
-    WHERE c.id = ${clientId}
-  `;
+  let rows: any[] = [];
+  try {
+    rows = await sql`
+      SELECT c.id,
+             c.full_name as name,
+             c.email,
+             c.active,
+             c.company,
+             c.phone,
+             c.phone_encrypted,
+             c.address,
+             c.address_encrypted,
+             c.clerk_id,
+             c.website,
+             c.legal_name
+      FROM admin_clients c
+      WHERE c.id = ${clientId}
+    `;
+  } catch {
+    rows = await sql`
+      SELECT c.id,
+             c.full_name as name,
+             c.email,
+             c.active,
+             c.company,
+             c.phone,
+             c.address,
+             c.clerk_id,
+             c.website,
+             c.legal_name
+      FROM admin_clients c
+      WHERE c.id = ${clientId}
+    `;
+  }
 
   if (rows.length === 0) return null;
   const c = rows[0];
@@ -1388,14 +1552,17 @@ export async function getClientById(clientId: string) {
   const orders = [...invoiceOrders, ...incomeOrders]
     .sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime());
 
+  const effectivePhone = (c.phone_encrypted ? decryptField(c.phone_encrypted, `client:phone:${c.id}`) : null) || c.phone;
+  const effectiveAddress = (c.address_encrypted ? decryptField(c.address_encrypted, `client:address:${c.id}`) : null) || c.address;
+
   return {
     id: c.id,
     name: c.name || c.email.split('@')[0],
     email: c.email,
     active: c.active,
     company: c.company,
-    phone: c.phone,
-    address: c.address,
+    phone: effectivePhone,
+    address: effectiveAddress,
     website: c.website,
     legalName: c.legal_name || "",
     imageUrl,
@@ -2686,3 +2853,4 @@ export async function getTopClients() {
     value: parseFloat(r.value)
   }));
 }
+

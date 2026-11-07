@@ -1,3 +1,7 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export const metadata = {
   title: "Invoices",
   description: "View, track, and manage all your invoices in one place & Get real-time updates.",

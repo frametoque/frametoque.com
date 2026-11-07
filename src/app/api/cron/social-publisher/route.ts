@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import crypto from "node:crypto";
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 import { publishToPlatform } from "@/app/(dashboard)/admin/actions/social-media";
@@ -14,7 +15,13 @@ export async function GET(request: Request) {
   }
 
   const authHeader = request.headers.get('authorization');
-  if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
+  const expectedBearer = `Bearer ${cronSecret}`;
+  const isAuthorized =
+    authHeader &&
+    authHeader.length === expectedBearer.length &&
+    crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(expectedBearer));
+
+  if (!isAuthorized) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 

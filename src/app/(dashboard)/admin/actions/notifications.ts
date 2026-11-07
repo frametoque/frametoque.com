@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { getAnalyticsData, getActiveVisitors } from "./analytics";
@@ -16,8 +16,7 @@ export interface NotificationItem {
 }
 
 export async function fetchLiveNotifications(): Promise<NotificationItem[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   return [];
   const notifications: NotificationItem[] = [];

@@ -57,3 +57,30 @@ The site credentials vault (`admin_site_credentials`) uses `CREDENTIALS_ENCRYPTI
 4. Restart application.
 5. Delete the retired API token in Cloudflare.
 
+### Cloudflare Registrar & DNS API Token (`CLOUDFLARE_API_TOKEN`)
+1. Log in to Cloudflare Dashboard -> My Profile -> API Tokens.
+2. Create a new token with permissions:
+   - `Zone - DNS - Edit` (All zones or specific domains)
+   - `Zone - Zone - Read` (All zones)
+3. Update `CLOUDFLARE_API_TOKEN` in server environment (`.env.local` / systemd / PM2).
+4. Run `pm2 reload frametoque` to apply.
+5. Test domain synchronization via Admin -> Domains -> Sync.
+6. Delete or revoke the previous token in Cloudflare Dashboard.
+
+### Internal Job & Feed Secrets (`CRON_SECRET` & `CALENDAR_FEED_SECRET`)
+1. Generate new high-entropy secrets (minimum 32 bytes):
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+2. Update external callers (e.g. Vercel Cron, GitHub Actions, Google Calendar subscribe URL) with the new secret.
+3. Update `CRON_SECRET` and `CALENDAR_FEED_SECRET` in `.env.local`.
+4. Reload the application process: `pm2 reload frametoque`.
+
+### Database Connection String (`DATABASE_URL`)
+1. Log in to Supabase Dashboard -> Project Settings -> Database.
+2. Select **Reset database password** to generate a new strong password.
+3. Note: This will temporarily invalidate existing connections.
+4. Update `DATABASE_URL` with the new credentials in production environment.
+5. Restart the application process: `pm2 restart frametoque`.
+6. Verify active connection health via `/api/health` or admin portal.
+

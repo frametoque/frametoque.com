@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import sql from "@/lib/db";
 import { requireUserSession, AuthError } from "@/lib/auth-guard";
+import { verifyAndSyncCardPayment } from "@/app/(dashboard)/admin/actions/payments";
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 export async function GET(request: Request) {
   try {
@@ -28,27 +31,57 @@ export async function GET(request: Request) {
       );
     }
 
+    // Auto-sync any recently created card payments for this client so status updates instantaneously
+    try {
+      const recentPending = await sql`
+        SELECT DISTINCT invoice_id FROM online_payments
+        WHERE (LOWER(customer_email) = LOWER(${effectiveEmail}) OR invoice_id IN (
+          SELECT invoice_id FROM invoices WHERE LOWER(user_email) = LOWER(${effectiveEmail})
+        ))
+        AND status IN ('created', 'pending')
+        AND created_at > NOW() - INTERVAL '2 hours'
+        LIMIT 5
+      `;
+      if (recentPending.length > 0) {
+        await Promise.all(
+          recentPending.map((p: any) =>
+            verifyAndSyncCardPayment({ invoiceId: p.invoice_id }).catch((e) =>
+              console.warn(`[api/requests] Auto-sync payment failed for ${p.invoice_id}:`, e)
+            )
+          )
+        );
+      }
+    } catch (syncErr) {
+      // non-blocking
+    }
+
     const rows = await sql`
       SELECT 
-        invoice_id,
-        user_email,
-        project_name,
-        date,
-        due_date,
-        subtotal,
-        discount,
-        advance,
-        tax_rate,
-        total,
-        total_due,
-        work_status,
-        payment_status,
-        currency,
-        category,
-        created_at
-      FROM public.invoices
-      WHERE LOWER(user_email) = LOWER(${effectiveEmail}) 
-      ORDER BY created_at DESC
+        i.invoice_id,
+        i.user_email,
+        i.project_name,
+        i.date,
+        i.due_date,
+        i.subtotal,
+        i.discount,
+        i.advance,
+        i.tax_rate,
+        i.total,
+        i.total_due,
+        i.work_status,
+        i.payment_status,
+        i.currency,
+        i.category,
+        i.created_at,
+        i.bank_account_id,
+        ba.name as bank_account_name,
+        ba.account_number as bank_account_number,
+        ba.bank_name as bank_account_bank,
+        ba.branch as bank_account_branch
+      FROM public.invoices i
+      LEFT JOIN public.admin_accounts ba ON COALESCE(i.bank_account_id, (SELECT id FROM public.admin_accounts WHERE type = 'Bank Account' LIMIT 1)) = ba.id
+      WHERE LOWER(i.user_email) = LOWER(${effectiveEmail}) 
+      ORDER BY i.created_at DESC
     `;
     
     const nonAdvancePaymentsRows = await sql`
@@ -90,10 +123,21 @@ export async function GET(request: Request) {
         total_due: calculatedTotalDue,
         total: finalTotal,
         currency: row.currency || 'LKR',
+        bank_account_id: row.bank_account_id,
+        bank_account_name: row.bank_account_name,
+        bank_account_number: row.bank_account_number,
+        bank_account_bank: row.bank_account_bank,
+        bank_account_branch: row.bank_account_branch,
       };
     });
 
-    return NextResponse.json(formattedRequests);
+    return NextResponse.json(formattedRequests, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
     
   } catch (error: any) {
     console.error('Database error:', error);

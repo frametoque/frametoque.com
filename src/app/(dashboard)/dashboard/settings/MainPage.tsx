@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser, UserProfile } from "@clerk/nextjs";
 import {
   User,
   IdCard,
@@ -16,7 +16,12 @@ import {
   CreditCard,
   Download,
   Copy,
-  Check
+  Check,
+  ShieldCheck,
+  KeyRound,
+  Smartphone,
+  Activity,
+  Lock,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -175,6 +180,7 @@ export default function SettingsPage() {
   const tabs = [
     { id: "profile", name: "Profile", icon: User },
     { id: "payment", name: "Payment", icon: CreditCard },
+    { id: "security", name: "Security & 2FA", icon: ShieldCheck },
   ];
 
   if (!isLoaded || loading) {
@@ -690,6 +696,55 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div> */}
+              </div>
+            )}
+            {activeTab === "security" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-1">Account Security & Authentication</h2>
+                  <p className="text-sm text-gray-400">
+                    Manage Two-Factor Authentication (2FA), password changes, and active login sessions.
+                  </p>
+                </div>
+
+                {/* Security Overview Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
+                    <span className="text-gray-400 text-xs font-medium flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      Two-Factor Auth (2FA)
+                    </span>
+                    <p className="text-sm font-bold text-white pt-1">
+                      {user.twoFactorEnabled ? "Active & Protected" : "Configured via Clerk"}
+                    </p>
+                    <span className="text-[10px] text-gray-500">Authenticator App / SMS</span>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
+                    <span className="text-gray-400 text-xs font-medium flex items-center gap-1.5">
+                      <Lock className="w-4 h-4 text-brand-400" />
+                      Password Security
+                    </span>
+                    <p className="text-sm font-bold text-white pt-1">
+                      {user.passwordEnabled ? "Password Set" : "SSO / Social Login"}
+                    </p>
+                    <span className="text-[10px] text-gray-500">Encrypted credentials</span>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
+                    <span className="text-gray-400 text-xs font-medium flex items-center gap-1.5">
+                      <Activity className="w-4 h-4 text-cyan-400" />
+                      Active Devices
+                    </span>
+                    <p className="text-sm font-bold text-white pt-1">Current Session Verified</p>
+                    <span className="text-[10px] text-gray-500">Last active: Just now</span>
+                  </div>
+                </div>
+
+                {/* Embedded Clerk UserProfile Security Management */}
+                <div className="rounded-2xl overflow-hidden border border-white/10 bg-black/40 p-2">
+                  <UserProfile routing="hash" />
+                </div>
               </div>
             )}
           </div>

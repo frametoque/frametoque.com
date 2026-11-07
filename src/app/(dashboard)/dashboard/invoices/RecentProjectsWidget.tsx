@@ -45,27 +45,46 @@ export default function RecentProjectsWidget() {
 
   useEffect(() => {
     if (isUserLoaded && user?.primaryEmailAddress?.emailAddress) {
-      const fetchRequests = async () => {
+      const userEmail = user.primaryEmailAddress.emailAddress;
+      const fetchRequests = async (showLoading = true) => {
         try {
-          setLoading(true);
-          const userEmail = user.primaryEmailAddress.emailAddress;
+          if (showLoading) setLoading(true);
           const response = await fetch(
-            `/api/requests?user_email=${encodeURIComponent(userEmail)}`,
-            { cache: "no-store" }
+            `/api/requests?user_email=${encodeURIComponent(userEmail)}&t=${Date.now()}`,
+            {
+              cache: "no-store",
+              headers: { "Cache-Control": "no-cache, no-store, must-revalidate", Pragma: "no-cache" },
+            }
           );
 
           if (!response.ok) throw new Error("Failed to fetch requests");
 
           const data = await response.json();
           setRequests(data.slice(0, 3));
-        } catch (err) {
+        } catch (err: any) {
           setError(err.message);
         } finally {
           setLoading(false);
         }
       };
 
-      fetchRequests();
+      fetchRequests(true);
+
+      const handleFocus = () => fetchRequests(false);
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === "visible") fetchRequests(false);
+      };
+      const handlePageShow = () => fetchRequests(false);
+
+      window.addEventListener("focus", handleFocus);
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      window.addEventListener("pageshow", handlePageShow);
+
+      return () => {
+        window.removeEventListener("focus", handleFocus);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        window.removeEventListener("pageshow", handlePageShow);
+      };
     } else if (isUserLoaded && !user) {
       setLoading(false);
     }

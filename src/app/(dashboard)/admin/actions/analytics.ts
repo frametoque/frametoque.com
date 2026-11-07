@@ -1,33 +1,25 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/auth-guard";
 
 import * as shared from "./analytics-shared";
 
 export async function getAnalyticsData(dateRange = "all time") {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
-
+  await requireAdminSession();
   return shared.getAnalyticsData(dateRange);
 }
 
 export async function getActiveVisitors() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
-
+  await requireAdminSession();
   return shared.getActiveVisitors();
 }
 
 export async function getActiveVisitors30m() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
-
+  await requireAdminSession();
   return shared.getActiveVisitors30m();
 }
 
 export async function getChartData(zoomLevel: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
-
+  await requireAdminSession();
   return shared.getChartData(zoomLevel);
 }

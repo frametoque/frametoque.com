@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Search, CheckCircle, XCircle, Globe, Server, ShieldCheck, Mail, ShoppingCart, Loader2 } from "lucide-react";
+import { Search, CheckCircle, XCircle, Globe, Server, ShieldCheck, Mail, ShoppingCart, Loader2, PlusCircle } from "lucide-react";
+import { useCart } from "@/context/CartContext";
 
 interface DomainSearchProps {
   lkrRate?: number;
@@ -10,9 +11,8 @@ interface DomainSearchProps {
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" }).format(amount || 0);
 
-const formatUSD = (amount: number) => `$${amount.toFixed(2)}`;
-
 export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
+  const { addToCart } = useCart();
   const [domainInput, setDomainInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -23,17 +23,23 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!domainInput || !domainInput.includes(".")) {
-      setError("Please enter a valid domain name (e.g. mycompany.com)");
+    let query = domainInput.trim().toLowerCase();
+    if (!query) {
+      setError("Please enter a domain name.");
       return;
     }
+    if (!query.includes(".")) {
+      query = `${query}.com`;
+      setDomainInput(query);
+    }
+
     setError("");
     setSuccessMsg("");
     setLoading(true);
     setResult(null);
 
     try {
-      const res = await fetch(`/api/services/domains/check?domain=${encodeURIComponent(domainInput)}`);
+      const res = await fetch(`/api/services/domains/check?domain=${encodeURIComponent(query)}`);
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || "Failed to check domain availability.");
@@ -65,15 +71,43 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
       }
 
       setOrderedDomains((prev) => [...prev, targetDomain.toLowerCase()]);
-      setSuccessMsg(`Domain order placed for "${targetDomain}"! Your order is now pending invoice processing.`);
+      setSuccessMsg(`Domain order placed for "${targetDomain}"! Opening payment...`);
 
       // Notify the domains table on dashboard to refresh
       window.dispatchEvent(new CustomEvent("domains:refresh"));
+
+      if (data.invoice_id) {
+        window.dispatchEvent(
+          new CustomEvent("domains:openPay", {
+            detail: {
+              invoice_id: data.invoice_id,
+              project_name: `Domain: ${targetDomain}`,
+              total_due: data.total_due,
+              currency: data.currency || "LKR",
+            },
+          })
+        );
+      }
     } catch (err: any) {
       setError(err.message || "Could not complete domain order.");
     } finally {
       setOrderingDomain(null);
     }
+  };
+
+  const handleAddToCart = (targetDomain: string, usdPrice: number) => {
+    const lkrPrice = parseFloat((usdPrice * lkrRate).toFixed(2));
+    addToCart({
+      id: `domain-${targetDomain.toLowerCase()}`,
+      serviceId: "domain-reg",
+      serviceTitle: `Domain Registration: ${targetDomain}`,
+      categorySlug: "domain",
+      categoryName: "Domain Services",
+      tier: "1 Year",
+      price: lkrPrice.toFixed(2),
+      duration: "1 year",
+    });
+    setSuccessMsg(`Added "${targetDomain}" to your cart. Proceed to checkout to finalize order.`);
   };
 
   return (
@@ -85,7 +119,7 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
             Find the Perfect <span className="text-brand-400">Domain</span>
           </h3>
           <p className="text-gray-400 text-sm max-w-md mx-auto leading-relaxed">
-            Search domain availability and check real-time registrar rates instantly.
+            Search multi-TLD availability (.com, .lk, .net, .org, .io, .xyz) with instant registrar rates powered by Frametoque Digital.
           </p>
         </div>
 
@@ -97,7 +131,7 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
               placeholder="Enter domain name (e.g. yourbusiness.com)..."
               value={domainInput}
               onChange={(e) => setDomainInput(e.target.value)}
-              className="w-full bg-neutral-950 border-0 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-gray-500 outline-none transition-all duration-300 text-base focus:ring-0"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-gray-500 outline-none transition-all duration-300 text-base focus:border-brand-500"
             />
           </div>
           <button
@@ -138,15 +172,21 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
                   <div>
                     <h4 className="text-lg font-bold text-white leading-snug">{result.domain}</h4>
                     <p className="text-emerald-400 text-xs font-semibold uppercase tracking-wider mt-0.5">Available for registration</p>
+                    {result.note &&
+                      !result.note.includes("Code") &&
+                      !result.note.includes("error") &&
+                      !result.note.toLowerCase().includes("sandbox") &&
+                      !result.note.toLowerCase().includes("cloudflare") && (
+                        <p className="text-gray-400 text-[10px] mt-1">{result.note}</p>
+                      )}
                   </div>
                 </div>
-                <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                   <div className="text-right">
                     <p className="text-xs text-gray-500">Price (1st Yr)</p>
                     <p className="text-2xl font-black text-white">{formatLKR(parseFloat(result.reg_price_usd || 0) * lkrRate)}</p>
-                    <p className="text-xs text-white/70 mt-0.5">({formatUSD(parseFloat(result.reg_price_usd || 0))})</p>
                     <p className="text-[10px] text-gray-400 mt-1">
-                      Renews at {formatLKR(parseFloat(result.renew_price_usd || 0) * lkrRate)} ({formatUSD(parseFloat(result.renew_price_usd || 0))})/yr
+                      Renews at {formatLKR(parseFloat(result.renew_price_usd || 0) * lkrRate)}/yr
                     </p>
                   </div>
                   {orderedDomains.includes(result.domain.toLowerCase()) ? (
@@ -154,18 +194,27 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
                       <CheckCircle className="w-4 h-4" /> Ordered
                     </span>
                   ) : (
-                    <button
-                      onClick={() => handleOrderDomain(result.domain)}
-                      disabled={orderingDomain === result.domain}
-                      className="px-6 py-3 rounded-3xl font-bold flex items-center gap-2 transition-all cursor-pointer bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 disabled:opacity-50"
-                    >
-                      {orderingDomain === result.domain ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <ShoppingCart className="w-4 h-4" />
-                      )}
-                      <span>{orderingDomain === result.domain ? "Ordering..." : "Buy Domain"}</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleAddToCart(result.domain, parseFloat(result.reg_price_usd || 15.96))}
+                        className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                        title="Add to Cart"
+                      >
+                        <PlusCircle className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleOrderDomain(result.domain)}
+                        disabled={orderingDomain === result.domain}
+                        className="px-6 py-3 rounded-3xl font-bold flex items-center gap-2 transition-all cursor-pointer bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 disabled:opacity-50 text-xs"
+                      >
+                        {orderingDomain === result.domain ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <ShoppingCart className="w-4 h-4" />
+                        )}
+                        <span>{orderingDomain === result.domain ? "Ordering..." : "Buy Domain"}</span>
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -181,46 +230,51 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
 
             {/* Price Validity Notice */}
             <p className="text-[11px] text-gray-500 text-center leading-relaxed bg-white/[0.01] border border-white/5 py-2.5 px-4 rounded-2xl">
-              ⚠️ Note: Prices are valid only for 3 days. If the order is unpaid after 3 days, domain pricing may change slightly due to registrar rate fluctuations.
+              ⚠️ Note: Prices are valid only for 3 days. Domain orders generate an invoice automatically for online or bank payment.
             </p>
 
             {/* Suggestions List */}
             {result.suggestions && result.suggestions.length > 0 && (
               <div className="pt-6 border-t border-neutral-900 space-y-4">
-                <h4 className="text-sm font-semibold text-gray-400">Suggested domain names</h4>
+                <h4 className="text-sm font-semibold text-gray-400">Alternative extensions available:</h4>
                 <div className="space-y-3">
                   {result.suggestions.map((s: any) => {
                     const isOrdered = orderedDomains.includes(s.domain.toLowerCase());
                     const isOrdering = orderingDomain === s.domain;
-                    
+
                     return (
                       <div key={s.domain} className="flex items-center justify-between p-4 bg-white/[0.02] border border-neutral-900 rounded-xl gap-4 hover:border-neutral-800 transition-colors">
                         <div>
                           <span className="font-semibold text-white text-sm">{s.domain}</span>
                           <div className="text-[10px] text-gray-500 mt-1">
-                            Renews at {formatLKR(parseFloat(s.renew_price_usd || 0) * lkrRate)} ({formatUSD(parseFloat(s.renew_price_usd || 0))})/yr
+                            Renews at {formatLKR(parseFloat(s.renew_price_usd || 0) * lkrRate)}/yr
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
                             <span className="text-sm font-bold text-white block">{formatLKR(parseFloat(s.reg_price_usd || 0) * lkrRate)}</span>
-                            <span className="text-[10px] text-gray-500 block">({formatUSD(parseFloat(s.reg_price_usd || 0))})</span>
                           </div>
                           {isOrdered ? (
                             <span className="px-4 py-2 text-xs font-semibold rounded-2xl bg-slate-800/45 text-emerald-400 border border-emerald-500/20">
                               Ordered
                             </span>
                           ) : (
-                            <button
-                              onClick={() => handleOrderDomain(s.domain)}
-                              disabled={isOrdering}
-                              className="px-4 py-2 text-xs font-semibold rounded-2xl transition-all cursor-pointer bg-white hover:bg-neutral-200 text-black shadow-md disabled:opacity-50 flex items-center gap-1.5"
-                            >
-                              {isOrdering ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : null}
-                              <span>{isOrdering ? "Ordering..." : "Confirm"}</span>
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleAddToCart(s.domain, parseFloat(s.reg_price_usd || 15.96))}
+                                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300"
+                                title="Add to Cart"
+                              >
+                                <PlusCircle className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleOrderDomain(s.domain)}
+                                disabled={isOrdering}
+                                className="px-4 py-2 text-xs font-semibold rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-colors cursor-pointer"
+                              >
+                                {isOrdering ? "Ordering..." : "Buy"}
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -231,45 +285,6 @@ export default function DomainSearch({ lkrRate = 300 }: DomainSearchProps) {
             )}
           </div>
         )}
-      </div>
-
-      {/* Selling Points / Features */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-black border border-neutral-900 p-6 rounded-2xl flex items-start gap-4 hover:border-neutral-800 transition-all duration-300">
-          <div className="p-3 bg-brand-500/10 rounded-xl text-brand-400 shrink-0">
-            <Server className="w-6 h-6" />
-          </div>
-          <div>
-            <h4 className="font-bold text-white mb-2 text-lg">Free DNS Setup</h4>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              We configure your domain’s DNS settings professionally at zero extra cost to guarantee peak speed.
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-black border border-neutral-900 p-6 rounded-2xl flex items-start gap-4 hover:border-neutral-800 transition-all duration-300">
-          <div className="p-3 bg-brand-500/10 rounded-xl text-brand-400 shrink-0">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-          <div>
-            <h4 className="font-bold text-white mb-2 text-lg">Hosting Connection</h4>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Seamlessly link your domain to any web hosting platform or cloud server with our expert assistance.
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-black border border-neutral-900 p-6 rounded-2xl flex items-start gap-4 hover:border-neutral-800 transition-all duration-300">
-          <div className="p-3 bg-brand-500/10 rounded-xl text-brand-400 shrink-0">
-            <Mail className="w-6 h-6" />
-          </div>
-          <div>
-            <h4 className="font-bold text-white mb-2 text-lg">Renewal Reminders</h4>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Never lose ownership of your domain. Receive automated notifications and reminders before expiration.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

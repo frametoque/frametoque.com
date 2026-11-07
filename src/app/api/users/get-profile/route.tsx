@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { requireUserSession, AuthError } from '@/lib/auth-guard';
+import { decryptField } from '@/lib/crypto-vault';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,21 +26,24 @@ export async function GET(request: Request) {
     const email = (session.isAdmin && requestedEmail) ? requestedEmail : session.email;
 
     // Fetch client profile from admin_clients using clerk_id or matching email
-    let rows = await sql`
-      SELECT
-        clerk_id,
-        email,
-        full_name,
-        phone,
-        company,
-        website,
-        address
-      FROM admin_clients
-      WHERE clerk_id = ${clerkId}
-      LIMIT 1
-    `;
-
-    if (rows.length === 0 && email) {
+    let rows: any[] = [];
+    try {
+      rows = await sql`
+        SELECT
+          clerk_id,
+          email,
+          full_name,
+          phone,
+          phone_encrypted,
+          company,
+          website,
+          address,
+          address_encrypted
+        FROM admin_clients
+        WHERE clerk_id = ${clerkId}
+        LIMIT 1
+      `;
+    } catch {
       rows = await sql`
         SELECT
           clerk_id,
@@ -50,9 +54,43 @@ export async function GET(request: Request) {
           website,
           address
         FROM admin_clients
-        WHERE LOWER(email) = LOWER(${email})
+        WHERE clerk_id = ${clerkId}
         LIMIT 1
       `;
+    }
+
+    if (rows.length === 0 && email) {
+      try {
+        rows = await sql`
+          SELECT
+            clerk_id,
+            email,
+            full_name,
+            phone,
+            phone_encrypted,
+            company,
+            website,
+            address,
+            address_encrypted
+          FROM admin_clients
+          WHERE LOWER(email) = LOWER(${email})
+          LIMIT 1
+        `;
+      } catch {
+        rows = await sql`
+          SELECT
+            clerk_id,
+            email,
+            full_name,
+            phone,
+            company,
+            website,
+            address
+          FROM admin_clients
+          WHERE LOWER(email) = LOWER(${email})
+          LIMIT 1
+        `;
+      }
 
       if (rows.length > 0) {
         // Auto-link clerk_id to this client record
@@ -73,13 +111,16 @@ export async function GET(request: Request) {
       });
     }
 
+    const effectivePhone = (user.phone_encrypted ? decryptField(user.phone_encrypted, `client:phone:${user.clerk_id || clerkId}`) : null) || user.phone || '';
+    const effectiveAddress = (user.address_encrypted ? decryptField(user.address_encrypted, `client:address:${user.clerk_id || clerkId}`) : null) || user.address || '';
+
     return NextResponse.json({
       success: true,
       profile: {
-        phone: user.phone || '',
+        phone: effectivePhone,
         company: user.company || '',
         website: user.website || '',
-        address: user.address || '',
+        address: effectiveAddress,
         fullName: user.full_name || '',
         email: user.email || '',
         clerk_id: user.clerk_id || '',

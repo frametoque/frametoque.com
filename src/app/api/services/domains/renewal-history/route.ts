@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import sql from "@/lib/db";
+import { requireUserSession, AuthError } from "@/lib/auth-guard";
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,15 @@ export async function GET(req: NextRequest) {
 
     if (!userEmail) {
       return NextResponse.json({ error: "user_email is required" }, { status: 400 });
+    }
+
+    try {
+      await requireUserSession(userEmail);
+    } catch (authErr) {
+      if (authErr instanceof AuthError) {
+        return NextResponse.json({ error: authErr.message }, { status: authErr.statusCode });
+      }
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
 

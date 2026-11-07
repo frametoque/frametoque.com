@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
@@ -9,8 +9,7 @@ import { google } from "googleapis";
 import { Readable } from "stream";
 
 export async function processDueScheduledPosts() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const duePosts = await sql`
@@ -65,8 +64,7 @@ export interface SocialPost {
 
 
 export async function uploadSocialMedia(formData: FormData) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const file = formData.get("file") as File;
   const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
@@ -75,8 +73,7 @@ export async function uploadSocialMedia(formData: FormData) {
 }
 
 export async function getSocialPosts() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const result = await sql`SELECT * FROM social_posts ORDER BY created_at DESC`;
@@ -92,8 +89,7 @@ export async function getSocialPosts() {
 }
 
 export async function getSocialPostById(id: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const result = await sql`SELECT * FROM social_posts WHERE id = ${id}`;
@@ -108,8 +104,7 @@ export async function getSocialPostById(id: number) {
 }
 
 export async function createSocialPostRecord(platforms: string[], default_caption: string, custom_captions: any, media_urls: string[], scheduled_time: Date | null, status: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const res = await sql`
@@ -122,8 +117,7 @@ export async function createSocialPostRecord(platforms: string[], default_captio
 }
 
 export async function updateSocialPostRecord(id: number, platforms: string[], default_caption: string, custom_captions: any, media_urls: string[], scheduled_time: Date | null, status: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     await sql`
@@ -136,8 +130,7 @@ export async function updateSocialPostRecord(id: number, platforms: string[], de
 }
 
 export async function publishToPlatform(postId: number, platform: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const res = await sql`SELECT * FROM social_posts WHERE id = ${postId}`;
@@ -344,8 +337,7 @@ export async function publishToPlatform(postId: number, platform: string) {
 }
 
 export async function updatePlatformPost(postId: number, platform: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const res = await sql`SELECT * FROM social_posts WHERE id = ${postId}`;
@@ -425,8 +417,7 @@ export async function updatePlatformPost(postId: number, platform: string) {
 }
 
 export async function deletePlatformPost(postId: number, platform: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   try {
     const res = await sql`SELECT * FROM social_posts WHERE id = ${postId}`;
@@ -484,8 +475,7 @@ export async function deletePlatformPost(postId: number, platform: string) {
 }
 
 export async function finalizeSocialPost(postId: number, status: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await sql`UPDATE social_posts SET status = ${status} WHERE id = ${postId}`;
   revalidatePath("/admin", "layout");
@@ -493,8 +483,7 @@ export async function finalizeSocialPost(postId: number, status: string) {
 }
 
 export async function finalizeDelete(postId: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   await sql`DELETE FROM social_posts WHERE id = ${postId}`;
   revalidatePath("/admin", "layout");

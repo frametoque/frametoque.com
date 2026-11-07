@@ -1,3 +1,7 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export const metadata = {
   title: "Dashboard",
   description: "We craft fast websites, bold graphic, and pro videos that make your brand shine.",

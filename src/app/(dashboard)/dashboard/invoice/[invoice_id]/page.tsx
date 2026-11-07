@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useParams } from "next/navigation";
-import { Download, ArrowLeft, Loader2, FileText, Calendar, Clock, Tag, Briefcase, CreditCard } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { Download, ArrowLeft, Loader2, FileText, Calendar, Clock, Tag, Briefcase, CreditCard, CheckCircle2, AlertCircle, X } from "lucide-react";
 import Link from "next/link";
 import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
 import PayModal from "@/components/PayModal";
+import { verifyAndSyncCardPayment } from "@/app/(dashboard)/admin/actions/payments";
 
 const workStatusStyles = {
   "in progress": "bg-brand-500/20 text-brand-400 border-brand-500/30",
@@ -83,29 +84,63 @@ const GoogleWalletIcon = () => (
 
 export default function InvoicePage() {
   const { invoice_id } = useParams();
+  const searchParams = useSearchParams();
+  const paymentParam = searchParams.get("payment");
+
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [addingToWallet, setAddingToWallet] = useState<string | null>(null);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [paymentBanner, setPaymentBanner] = useState<"success" | "cancelled" | null>(null);
+
+  const fetchInvoice = useCallback(async () => {
+    if (!invoice_id) return;
+    try {
+      const res = await fetch(`/api/invoice/${invoice_id}?t=${Date.now()}`, { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Invoice not found");
+      }
+      setInvoice(data);
+    } catch (err: any) {
+      setError(err.message || "Failed to load invoice");
+    } finally {
+      setLoading(false);
+    }
+  }, [invoice_id]);
 
   useEffect(() => {
-    if (!invoice_id) return;
-    const fetchInvoice = async () => {
-      try {
-        const res = await fetch(`/api/invoice/${invoice_id}?t=${Date.now()}`, { cache: "no-store" });
-        if (!res.ok) throw new Error("Invoice not found");
-        const data = await res.json();
-        setInvoice(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchInvoice();
-  }, [invoice_id]);
+
+    const handleFocus = () => fetchInvoice();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") fetchInvoice();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [fetchInvoice]);
+
+  useEffect(() => {
+    if (!paymentParam) return;
+    if (paymentParam === "success") {
+      setPaymentBanner("success");
+      if (invoice_id) {
+        verifyAndSyncCardPayment({ invoiceId: String(invoice_id) })
+          .then(() => fetchInvoice())
+          .catch((e) => console.error("Auto-sync error:", e));
+      }
+    } else if (paymentParam === "cancelled") {
+      setPaymentBanner("cancelled");
+    }
+  }, [paymentParam, invoice_id, fetchInvoice]);
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -233,6 +268,46 @@ export default function InvoicePage() {
 
   return (
     <div className="space-y-6">
+      {/* Payment Notification Banners */}
+      {paymentBanner === "success" && (
+        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-3xl p-4 flex items-center justify-between gap-3 text-emerald-400">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <div>
+              <p className="font-semibold text-sm">Payment Completed Successfully!</p>
+              <p className="text-xs text-emerald-400/80">
+                Your card payment has been confirmed via Payments.lk and your invoice balance has been updated.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setPaymentBanner(null)}
+            className="text-emerald-400/60 hover:text-emerald-400 p-1 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {paymentBanner === "cancelled" && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-3xl p-4 flex items-center justify-between gap-3 text-amber-400">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <div>
+              <p className="font-semibold text-sm">Card Payment Cancelled</p>
+              <p className="text-xs text-amber-400/80">
+                The card checkout was cancelled. You can retry anytime whenever you are ready.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setPaymentBanner(null)}
+            className="text-amber-400/60 hover:text-amber-400 p-1 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Main Layout */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
@@ -311,6 +386,53 @@ export default function InvoicePage() {
                   {paymentStatusLabels[invoice?.payment_status] || invoice?.payment_status || "unpaid"}
                 </span>
               </div>
+            </div>
+          </div>
+
+          {/* Line Items Table */}
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm text-gray-300">
+                <thead>
+                  <tr className="border-b border-white/10 text-gray-400 text-xs uppercase tracking-wider">
+                    <th className="py-2.5">Item Description</th>
+                    <th className="py-2.5 text-center w-20">Qty</th>
+                    <th className="py-2.5 text-right w-36">Rate</th>
+                    <th className="py-2.5 text-right w-36">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {(invoice?.items && invoice.items.length > 0
+                    ? invoice.items
+                    : [
+                        {
+                          description: invoice?.project_name || "Service",
+                          quantity: 1,
+                          price: subtotal || total,
+                          total: subtotal || total,
+                        },
+                      ]
+                  ).map((item: any, idx: number) => (
+                    <tr key={idx} className="hover:bg-white/5 transition-colors">
+                      <td className="py-3.5 font-medium text-white whitespace-pre-line leading-relaxed">
+                        {item.description}
+                      </td>
+                      <td className="py-3.5 text-center text-gray-400">
+                        {item.quantity != null ? item.quantity : 1}
+                      </td>
+                      <td className="py-3.5 text-right text-gray-300">
+                        {formatMoney(item.price, invoice?.currency)}
+                      </td>
+                      <td className="py-3.5 text-right font-semibold text-white">
+                        {formatMoney(
+                          item.total != null ? item.total : item.price,
+                          invoice?.currency
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -457,6 +579,11 @@ export default function InvoicePage() {
             project_name: invoice.project_name,
             total_due: totalDue,
             currency: invoice.currency,
+            bank_account_id: invoice.bank_account_id,
+            bank_account_bank: invoice.bank_account_bank,
+            bank_account_number: invoice.bank_account_number,
+            bank_account_name: invoice.bank_account_name,
+            bank_account_branch: invoice.bank_account_branch,
           }}
         />
       )}

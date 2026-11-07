@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { promises as fs } from "fs";
@@ -12,8 +12,7 @@ import { TABLE_MAP } from "@/lib/services";
  * Fetch all services for a specific category
  */
 export async function getServicesByCategory(categorySlug: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const table = TABLE_MAP[categorySlug];
   if (!table) {
@@ -29,8 +28,7 @@ export async function getServicesByCategory(categorySlug: string) {
  * Create a new service under a specific category
  */
 export async function createService(categorySlug: string, data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const table = TABLE_MAP[categorySlug];
   if (!table) {
@@ -64,8 +62,7 @@ export async function createService(categorySlug: string, data: any) {
  * Update an existing service in a specific category
  */
 export async function updateService(categorySlug: string, id: number, data: any) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const table = TABLE_MAP[categorySlug];
   if (!table) {
@@ -100,8 +97,7 @@ export async function updateService(categorySlug: string, id: number, data: any)
  * Delete a service from a specific category
  */
 export async function deleteService(categorySlug: string, id: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const table = TABLE_MAP[categorySlug];
   if (!table) {
@@ -119,8 +115,7 @@ export async function reorderServices(
   idA: number,
   idB: number
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const table = TABLE_MAP[categorySlug];
   if (!table) {
@@ -148,8 +143,7 @@ export async function reorderServicesBatch(
   categorySlug: string,
   orderedIds: number[]
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const table = TABLE_MAP[categorySlug];
   if (!table) {
@@ -168,8 +162,7 @@ export async function reorderServicesBatch(
  * Upload a service cover image
  */
 export async function uploadServiceCover(formData: FormData): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  await requireAdminSession();
 
   const file = formData.get("file") as File;
   if (!file) {

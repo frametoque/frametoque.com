@@ -4,6 +4,7 @@ import { requireAdminSession, requireUserSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { PREDEFINED_REPRESENTATIVES } from "@/lib/representatives";
+import { encryptField, decryptField } from "@/lib/crypto-vault";
 
 export type AgreementData = {
   id?: number;
@@ -120,8 +121,10 @@ export async function getAgreementById(id: number): Promise<AgreementData | null
         throw new Error("Unauthorized: You do not have permission to view this agreement");
       }
     }
+    const decryptedSig = (r.client_sig_image_encrypted ? decryptField(r.client_sig_image_encrypted, `agreement:sig:${r.id}`) : null) || r.client_sig_image;
     return {
       ...r,
+      client_sig_image: decryptedSig,
       total_fee: parseFloat(r.total_fee || 0),
       deposit: parseFloat(r.deposit || 0),
       ui_payment: parseFloat(r.ui_payment || 0),
@@ -258,15 +261,29 @@ export async function signAgreement(
         throw new Error("Unauthorized: You do not have permission to sign this agreement");
       }
     }
-    await sql`
-      UPDATE admin_agreements SET
-        client_sig_name = ${clientSigName},
-        client_sig_date = ${clientSigDate},
-        client_sig_image = ${clientSigImage},
-        status = 'signed',
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${id}
-    `;
+    const encSig = clientSigImage ? encryptField(clientSigImage, `agreement:sig:${id}`) : null;
+    try {
+      await sql`
+        UPDATE admin_agreements SET
+          client_sig_name = ${clientSigName},
+          client_sig_date = ${clientSigDate},
+          client_sig_image = ${clientSigImage},
+          client_sig_image_encrypted = ${encSig},
+          status = 'signed',
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${id}
+      `;
+    } catch {
+      await sql`
+        UPDATE admin_agreements SET
+          client_sig_name = ${clientSigName},
+          client_sig_date = ${clientSigDate},
+          client_sig_image = ${clientSigImage},
+          status = 'signed',
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${id}
+      `;
+    }
     revalidatePath("/admin", "layout");
     return { success: true };
   } catch (error) {
