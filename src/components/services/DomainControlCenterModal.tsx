@@ -303,66 +303,83 @@ export function DomainControlCenterView({
   if (!isPage && !isOpen) return null;
 
   if (!details && !domain && loading) {
-    const loadingView = (
-      <div className="relative w-full max-w-6xl mx-auto bg-[#0c0d12] border border-white/10 rounded-3xl p-16 text-center flex flex-col items-center justify-center space-y-3 shadow-2xl">
-        <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
-        <p className="text-sm text-gray-400">Loading domain details...</p>
-      </div>
-    );
     if (isPage) {
       return (
-        <div className="w-full max-w-6xl mx-auto space-y-4">
+        <div className="w-full space-y-6">
           <Link
             href={backHref || (isAdmin ? "/admin/web-services/domains" : "/dashboard/domains")}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-gray-300 hover:text-white border border-white/5 text-xs font-medium transition-all"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs font-medium transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Domains</span>
           </Link>
-          {loadingView}
+          <div className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-16 text-center flex flex-col items-center justify-center space-y-3">
+            <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
+            <p className="text-sm text-gray-400">Loading domain details...</p>
+          </div>
         </div>
       );
     }
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-        {loadingView}
+        <div className="relative w-full max-w-lg bg-[#0c0d12] border border-white/10 rounded-3xl p-16 text-center flex flex-col items-center justify-center space-y-3 shadow-2xl">
+          <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
+          <p className="text-sm text-gray-400">Loading domain details...</p>
+        </div>
       </div>
     );
   }
 
   if (!details && !domain && (error || isForbidden)) {
-    const errorView = (
-      <div className="relative w-full max-w-6xl mx-auto bg-[#0c0d12] border border-white/10 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-2xl">
-        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
-          <ShieldAlert className="w-8 h-8" />
-        </div>
-        <h2 className="text-xl font-bold text-white">
-          {isForbidden ? "Access Denied" : "Domain Unavailable"}
-        </h2>
-        <p className="text-sm text-gray-400 max-w-md">
-          {isForbidden
-            ? "You do not have permission to view or manage this domain. This domain belongs to another client account."
-            : error || "The requested domain could not be found."}
-        </p>
-        <Link
-          href={backHref || (isAdmin ? "/admin/web-services/domains" : "/dashboard/domains")}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Return to Domains</span>
-        </Link>
-      </div>
-    );
     if (isPage) {
       return (
-        <div className="w-full max-w-6xl mx-auto space-y-4">
-          {errorView}
+        <div className="w-full space-y-6">
+          <Link
+            href={backHref || (isAdmin ? "/admin/web-services/domains" : "/dashboard/domains")}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs font-medium transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Domains</span>
+          </Link>
+          <div className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+              <ShieldAlert className="w-8 h-8" />
+            </div>
+            <h2 className="text-xl font-bold text-white">
+              {isForbidden ? "Access Denied" : "Domain Unavailable"}
+            </h2>
+            <p className="text-sm text-gray-400 max-w-md">
+              {isForbidden
+                ? "You do not have permission to view or manage this domain. This domain belongs to another client account."
+                : error || "The requested domain could not be found."}
+            </p>
+          </div>
         </div>
       );
     }
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-        {errorView}
+        <div className="relative w-full max-w-lg bg-[#0c0d12] border border-white/10 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-bold text-white">
+            {isForbidden ? "Access Denied" : "Domain Unavailable"}
+          </h2>
+          <p className="text-sm text-gray-400 max-w-md">
+            {isForbidden
+              ? "You do not have permission to view or manage this domain."
+              : error || "The requested domain could not be found."}
+          </p>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors"
+            >
+              <span>Close</span>
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -598,80 +615,17 @@ export function DomainControlCenterView({
     }
   };
 
-  const modalBody = (
-    <div className={`relative w-full ${isPage ? "max-w-6xl mx-auto" : "max-w-5xl my-auto max-h-[90vh]"} bg-[#0c0d12] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col`}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 bg-white/[0.02]">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold text-white tracking-wide">{activeDomain.domain_name || "Domain Control Center"}</h2>
-          <span className="text-[10px] px-2 py-0.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 font-semibold uppercase tracking-wider">
-            {details?.live_zone?.status || details?.status || activeDomain.status || "Active"}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              fetchDomainDetails();
-              if (activeTab === "dns") fetchDnsRecords();
-              if (activeTab === "renewals") fetchRenewalHistory();
-            }}
-            disabled={loading}
-            className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-            title="Refresh Domain Data"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
-          {!isPage && onClose && (
-            <button
-              onClick={onClose}
-              className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-              title="Close Modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
-        </div>
-      </div>
+  const tabs = [
+    { id: "overview", label: "Overview", icon: Globe },
+    { id: "dns", label: "DNS Editor", icon: Server },
+    { id: "nameservers", label: "Nameservers", icon: ArrowRightLeft },
+    { id: "renewals", label: "Renewal & History", icon: History },
+    { id: "settings", label: "Settings", icon: Settings },
+  ] as const;
 
-        {/* Success Alert Banner */}
-        {successMsg && (
-          <div className="bg-emerald-500/10 border-b border-emerald-500/20 px-6 py-2.5 flex items-center gap-2 text-emerald-400 text-xs font-medium">
-            <Check className="w-4 h-4 shrink-0" />
-            <span>{successMsg}</span>
-          </div>
-        )}
-
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-white/5 px-6 gap-2 bg-white/[0.01] overflow-x-auto scrollbar-none">
-          {[
-            { id: "overview", label: "Overview", icon: Globe },
-            { id: "dns", label: "DNS Editor", icon: Server },
-            { id: "nameservers", label: "Nameservers", icon: ArrowRightLeft },
-            { id: "renewals", label: "Renewal & History", icon: History },
-            { id: "settings", label: "Settings", icon: Settings },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 py-3.5 px-3 border-b-2 font-medium text-xs whitespace-nowrap transition-all cursor-pointer ${
-                  isActive
-                    ? "border-brand-400 text-brand-400 font-bold bg-brand-400/[0.04]"
-                    : "border-transparent text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Tab Content Body */}
-        <div className="p-6 pb-12 overflow-y-auto flex-1 space-y-6">
-          {/* TAB 1: OVERVIEW */}
+  const tabContent = (
+    <>
+      {/* TAB 1: OVERVIEW */}
           {activeTab === "overview" && (
             <div className="space-y-6">
               {/* Quick Status Cards */}
@@ -1568,46 +1522,84 @@ export function DomainControlCenterView({
               </div>
             </div>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
-          <span className="text-xs text-gray-400 flex items-center gap-2">
-            <span className="font-medium text-white">{activeDomain.domain_name}</span>
-          </span>
-          {isPage ? (
-            <Link
-              href={backHref || (isAdmin ? "/admin/web-services/domains" : "/dashboard/domains")}
-              className="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
-            >
-              Back to Domains
-            </Link>
-          ) : (
-            <button
-              onClick={onClose}
-              className="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
-            >
-              Close
-            </button>
-          )}
-        </div>
-      </div>
+    </>
   );
 
   if (isPage) {
     return (
-      <div className="w-full max-w-6xl mx-auto space-y-4">
-        <div className="flex items-center justify-between pb-1">
-          <Link
-            href={backHref || (isAdmin ? "/admin/web-services/domains" : "/dashboard/domains")}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-gray-300 hover:text-white border border-white/5 text-xs font-medium transition-all"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Domains</span>
-          </Link>
+      <div className="w-full space-y-6 pb-12">
+        {/* Top Header Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Link
+              href={backHref || (isAdmin ? "/admin/web-services/domains" : "/dashboard/domains")}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs font-medium transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Domains</span>
+            </Link>
+            <div className="h-5 w-px bg-white/10 hidden sm:block" />
+            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5 flex-wrap">
+              <span>{activeDomain.domain_name || "Domain Control Center"}</span>
+              <span className="text-[10px] px-2.5 py-0.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 font-semibold uppercase tracking-wider">
+                {details?.live_zone?.status || details?.status || activeDomain.status || "Active"}
+              </span>
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                fetchDomainDetails();
+                if (activeTab === "dns") fetchDnsRecords();
+                if (activeTab === "renewals") fetchRenewalHistory();
+              }}
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-gray-300 hover:text-white transition-colors cursor-pointer"
+              title="Refresh Domain Data"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
 
-        {modalBody}
+        {/* Success Alert Banner */}
+        {successMsg && (
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-3 flex items-center gap-2.5 text-emerald-400 text-xs font-medium">
+            <Check className="w-4 h-4 shrink-0" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        {/* Tab Switcher - pill buttons matching admin dashboard style */}
+        <div className="flex flex-wrap gap-2">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-5 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer inline-flex items-center gap-2 ${
+                  isActive
+                    ? "bg-white text-black shadow-lg"
+                    : "bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Main Content Area - Full-width glassmorphism container matching other admin pages */}
+        <div className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 space-y-6">
+          {tabContent}
+        </div>
 
         {payInvoice && (
           <PayModal
@@ -1623,6 +1615,93 @@ export function DomainControlCenterView({
       </div>
     );
   }
+
+  const modalBody = (
+    <div className="relative w-full max-w-5xl my-auto max-h-[90vh] bg-[#0c0d12] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 bg-white/[0.02]">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-bold text-white tracking-wide">{activeDomain.domain_name || "Domain Control Center"}</h2>
+          <span className="text-[10px] px-2 py-0.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 font-semibold uppercase tracking-wider">
+            {details?.live_zone?.status || details?.status || activeDomain.status || "Active"}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              fetchDomainDetails();
+              if (activeTab === "dns") fetchDnsRecords();
+              if (activeTab === "renewals") fetchRenewalHistory();
+            }}
+            disabled={loading}
+            className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+            title="Refresh Domain Data"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          </button>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+              title="Close Modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Success Alert Banner */}
+      {successMsg && (
+        <div className="bg-emerald-500/10 border-b border-emerald-500/20 px-6 py-2.5 flex items-center gap-2 text-emerald-400 text-xs font-medium">
+          <Check className="w-4 h-4 shrink-0" />
+          <span>{successMsg}</span>
+        </div>
+      )}
+
+      {/* Navigation Tabs */}
+      <div className="flex border-b border-white/5 px-6 gap-2 bg-white/[0.01] overflow-x-auto scrollbar-none">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 py-3.5 px-3 border-b-2 font-medium text-xs whitespace-nowrap transition-all cursor-pointer ${
+                isActive
+                  ? "border-brand-400 text-brand-400 font-bold bg-brand-400/[0.04]"
+                  : "border-transparent text-gray-400 hover:text-gray-200"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab Content Body */}
+      <div className="p-6 pb-12 overflow-y-auto flex-1 space-y-6">
+        {tabContent}
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
+        <span className="text-xs text-gray-400 flex items-center gap-2">
+          <span className="font-medium text-white">{activeDomain.domain_name}</span>
+        </span>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
+          >
+            Close
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">

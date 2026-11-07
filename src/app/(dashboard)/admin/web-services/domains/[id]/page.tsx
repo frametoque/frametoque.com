@@ -15,7 +15,7 @@ export default function AdminDomainDetailsPage({ params }: PageProps) {
   const userEmail = user?.primaryEmailAddress?.emailAddress || "";
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       <DomainControlCenterView
         domainId={id}
         userEmail={userEmail}
