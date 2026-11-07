@@ -44,16 +44,22 @@ export async function ensureDomainTables(): Promise<void> {
           ADD COLUMN IF NOT EXISTS cloudflare_sync_at TIMESTAMPTZ;
       `;
 
-      // Backfill any missing domain_uid
+      // Backfill any missing domain_uid and strip old dom_ prefix if present
       await sql`
         UPDATE admin_domain_orders 
-        SET domain_uid = 'dom_' || substring(md5(random()::text || id::text || clock_timestamp()::text) from 1 for 12)
+        SET domain_uid = substring(md5(random()::text || id::text || clock_timestamp()::text) from 1 for 12)
         WHERE domain_uid IS NULL;
       `;
 
       await sql`
+        UPDATE admin_domain_orders 
+        SET domain_uid = REGEXP_REPLACE(domain_uid, '^dom_', '')
+        WHERE domain_uid LIKE 'dom_%';
+      `;
+
+      await sql`
         ALTER TABLE admin_domain_orders 
-        ALTER COLUMN domain_uid SET DEFAULT ('dom_' || substring(md5(random()::text || clock_timestamp()::text) from 1 for 12));
+        ALTER COLUMN domain_uid SET DEFAULT (substring(md5(random()::text || clock_timestamp()::text) from 1 for 12));
       `;
 
       await sql`

@@ -293,6 +293,7 @@ export async function getDomainOrderById(id: number | string): Promise<DomainOrd
   try {
     const raw = String(id ?? "").trim();
     const isNum = /^\d+$/.test(raw);
+    const stripped = raw.replace(/^dom_/, "");
     const rows = isNum
       ? await sql`
           SELECT * FROM admin_domain_orders
@@ -301,7 +302,7 @@ export async function getDomainOrderById(id: number | string): Promise<DomainOrd
         `
       : await sql`
           SELECT * FROM admin_domain_orders
-          WHERE domain_uid = ${raw} OR LOWER(domain_name) = LOWER(${raw})
+          WHERE domain_uid = ${raw} OR domain_uid = ${stripped} OR LOWER(domain_name) = LOWER(${raw})
           LIMIT 1
         `;
     if (rows.length === 0) return null;

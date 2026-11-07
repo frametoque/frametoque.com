@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
     if (domainId) {
       // Validate that the domain belongs to this user (supports numeric ID, domain_uid, or domain name)
       const isNum = /^\d+$/.test(domainId);
+      const stripped = domainId.replace(/^dom_/, "");
       const ownerCheck = isNum
         ? await sql`
             SELECT id FROM admin_domain_orders
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
           `
         : await sql`
             SELECT id FROM admin_domain_orders
-            WHERE (domain_uid = ${domainId} OR LOWER(domain_name) = LOWER(${domainId}))
+            WHERE (domain_uid = ${domainId} OR domain_uid = ${stripped} OR LOWER(domain_name) = LOWER(${domainId}))
               AND LOWER(client_email) = LOWER(${userEmail})
           `;
       if (ownerCheck.length === 0) {

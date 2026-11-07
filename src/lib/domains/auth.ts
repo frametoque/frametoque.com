@@ -23,7 +23,7 @@ export interface OwnedDomain {
 /**
  * Validates that the active session user owns the domain, or is an Administrator.
  * Prevents Insecure Direct Object References (IDOR).
- * Accepts random string UID (e.g. dom_941002ed7a0b), numeric ID (11), or domain name.
+ * Accepts random string UID (e.g. 941002ed7a0b), numeric ID (11), or domain name.
  */
 export async function requireDomainOwnership(
   domainIdOrName: string | number
@@ -43,14 +43,14 @@ export async function requireDomainOwnership(
     rows = await sql`
       SELECT * FROM admin_domain_orders WHERE id = ${Number(raw)} LIMIT 1
     `;
-  } else if (raw.startsWith("dom_")) {
-    rows = await sql`
-      SELECT * FROM admin_domain_orders WHERE domain_uid = ${raw} LIMIT 1
-    `;
   } else {
+    const stripped = raw.replace(/^dom_/, "");
     rows = await sql`
       SELECT * FROM admin_domain_orders 
-      WHERE domain_uid = ${raw} OR LOWER(domain_name) = LOWER(${raw})
+      WHERE domain_uid = ${raw}
+         OR domain_uid = ${stripped}
+         OR domain_uid = ${'dom_' + raw}
+         OR LOWER(domain_name) = LOWER(${raw})
       LIMIT 1
     `;
   }
