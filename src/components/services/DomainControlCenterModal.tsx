@@ -1250,28 +1250,13 @@ export function DomainControlCenterView({
                           return (
                             <tr key={row.id} className="hover:bg-white/5 transition-colors">
                               <td className="px-6 py-4">
-                                <div className="flex items-center gap-3">
-                                  <div
-                                    className={`p-2 rounded-xl ${
-                                      row.isRenewal
-                                        ? "bg-amber-400/10 text-amber-400"
-                                        : "bg-blue-400/10 text-blue-400"
-                                    }`}
-                                  >
-                                    {row.isRenewal ? (
-                                      <RefreshCw className="w-4 h-4" />
-                                    ) : (
-                                      <Globe className="w-4 h-4" />
-                                    )}
-                                  </div>
-                                  <div>
-                                    <span className="font-semibold text-white block">
-                                      {row.description}
-                                    </span>
-                                    <span className="text-xs text-gray-400">
-                                      {activeDomain.domain_name}
-                                    </span>
-                                  </div>
+                                <div>
+                                  <span className="font-semibold text-white block">
+                                    {row.description}
+                                  </span>
+                                  <span className="text-xs text-gray-400">
+                                    {activeDomain.domain_name}
+                                  </span>
                                 </div>
                               </td>
                               <td className="px-6 py-4">
