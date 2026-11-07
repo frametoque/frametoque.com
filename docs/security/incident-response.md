@@ -14,7 +14,32 @@ This runbook defines the operational procedure for detecting, triaging, containi
 
 ---
 
-## 2. Response Phases
+## 2. First 60 Minutes Checklist
+
+In the first hour of a suspected security breach:
+1. **Minute 0–15: Triage & Evidence Preservation**
+   - [ ] Do NOT reboot or delete affected servers/containers.
+   - [ ] Export running PM2 / Next.js logs immediately:
+     ```bash
+     pm2 logs frametoque --lines 10000 --nostream > /tmp/incident_$(date +%s)_pm2.log
+     ```
+   - [ ] Take a snapshot of EBS volume or container disk for forensic examination.
+   - [ ] Dump `admin_system_logs` for recent administrative actions:
+     ```bash
+     psql "$DATABASE_URL" -c "SELECT * FROM admin_system_logs ORDER BY created_at DESC LIMIT 500;" > /tmp/incident_system_logs.txt
+     ```
+2. **Minute 15–30: Containment & Secret Revocation**
+   - [ ] If credentials may be leaked, rotate `CLERK_SECRET_KEY`, `APP_FIELD_ENCRYPTION_KEY`, and `DATABASE_URL` per `key-rotation.md`.
+   - [ ] In Cloudflare, enable "Under Attack Mode" or block suspicious ASN/IP ranges if undergoing high-velocity attacks.
+   - [ ] Terminate active admin sessions in Clerk dashboard.
+3. **Minute 30–60: Exposure Assessment & Escalation**
+   - [ ] Determine whether field-encrypted columns (`phone_encrypted`, `address_encrypted`, `account_number_encrypted`) or plaintext columns were queried.
+   - [ ] Identify all impacted client accounts and emails.
+   - [ ] Brief Communications Lead and prepare regulatory notification if PII was exposed (72h GDPR clock starts from moment of confirmation).
+
+---
+
+## 3. Response Phases
 
 ### Phase 1: Triage (Within 15 minutes of detection)
 1. **Confirm the alert**: Verify whether anomalous activity is a true positive or false alarm.
