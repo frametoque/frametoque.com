@@ -369,7 +369,7 @@ export default function ClientDomainsPage() {
             <span className="bg-gradient-to-r from-brand-400 to-brand-500 bg-clip-text text-transparent">&nbsp;Domains</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl">
-            Register domain names, configure global DNS records, security locks, free WHOIS privacy, and nameservers powered by Frametoque Digital.
+            Register and manage your domain names, DNS records, and security.
           </p>
         </div>
 
