@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import chromium from "@sparticuz/chromium";
-import puppeteerCore from "puppeteer-core";
-import puppeteer from "puppeteer";
 import fs from "fs";
 import { requireAdminSession } from "@/lib/auth-guard";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // Allow up to 60 seconds for screenshot generation on Next.js/Vercel
+export const maxDuration = 30;
 
 function isBlockedHost(hostname: string): boolean {
   const host = hostname.toLowerCase();
@@ -89,13 +86,44 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Malformed URL" }, { status: 400 });
   }
 
-  let browser = null;
+  // 1. Preferred portable approach: lightweight external capture adapter
+  // Avoids launching 500MB headless browser instances on serverless / shared hosting
+  const customServiceUrl = process.env.SCREENSHOT_SERVICE_URL;
+  const externalCaptureUrl = customServiceUrl
+    ? `${customServiceUrl}?url=${encodeURIComponent(formattedUrl)}&width=${width}&height=${height}`
+    : `https://s0.wp.com/mshots/v1/${encodeURIComponent(formattedUrl)}?w=${Math.min(width, 1440)}&h=${Math.min(height, 900)}`;
 
+  try {
+    const extRes = await fetch(externalCaptureUrl, {
+      headers: {
+        "User-Agent": "FrametoqueBot/1.0",
+      },
+      next: { revalidate: 3600 },
+    });
+    if (extRes.ok) {
+      const imgBuffer = await extRes.arrayBuffer();
+      const contentType = extRes.headers.get("content-type") || "image/jpeg";
+      if (imgBuffer.byteLength > 1000) {
+        return new NextResponse(imgBuffer, {
+          headers: {
+            "Content-Type": contentType,
+            "Cache-Control": "public, max-age=3600, s-maxage=86400",
+          },
+        });
+      }
+    }
+  } catch (extErr) {
+    console.warn("External screenshot capture fallback triggered:", extErr);
+  }
+
+  // 2. Optional local puppeteer fallback if specifically enabled and available
+  let browser: any = null;
   try {
     const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL;
 
-    if (isProduction) {
-      // Use sparticuz/chromium for serverless environment (Vercel)
+    if (isProduction && process.env.ENABLE_PUPPETEER_SCREENSHOT === "true") {
+      const { default: chromium } = await import("@sparticuz/chromium");
+      const { default: puppeteerCore } = await import("puppeteer-core");
       const executablePath = await chromium.executablePath();
       browser = await puppeteerCore.launch({
         args: [
@@ -103,14 +131,14 @@ export async function GET(req: NextRequest) {
           "--no-sandbox",
           "--disable-setuid-sandbox",
           "--disable-blink-features=AutomationControlled",
-          "--window-size=1920,1080",
+          `--window-size=${width},${height}`,
         ],
         defaultViewport: { width, height },
         executablePath,
         headless: true,
       });
-    } else {
-      // Local dev environment: try local Chrome/Brave/Edge or bundled puppeteer
+    } else if (!isProduction) {
+      const { default: puppeteer } = await import("puppeteer");
       const executablePath = getLocalChromePath();
       const launchOptions: any = {
         headless: true,
@@ -122,91 +150,43 @@ export async function GET(req: NextRequest) {
         ],
         defaultViewport: { width, height },
       };
-
       if (executablePath) {
         launchOptions.executablePath = executablePath;
       }
-
       browser = await puppeteer.launch(launchOptions);
     }
 
-    const page = await browser.newPage();
-
-    // Set realistic User-Agent & Language headers
-    await page.setUserAgent(
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
-    );
-
-    await page.setExtraHTTPHeaders({
-      "accept-language": "en-US,en;q=0.9",
-    });
-
-    // Inject stealth masks to bypass Cloudflare & bot checks
-    await page.evaluateOnNewDocument(() => {
-      // Remove webdriver flag
-      Object.defineProperty(navigator, "webdriver", {
-        get: () => undefined,
-      });
-
-      // Mock window.chrome runtime
-      (window as any).chrome = {
-        runtime: {},
-        loadTimes: function () {},
-        csi: function () {},
-        app: {},
-      };
-
-      // Mock navigator plugins & languages
-      Object.defineProperty(navigator, "plugins", {
-        get: () => [1, 2, 3, 4, 5],
-      });
-
-      Object.defineProperty(navigator, "languages", {
-        get: () => ["en-US", "en"],
-      });
-    });
-
-    // Navigate to target URL
-    try {
-      await page.goto(formattedUrl, {
-        waitUntil: "domcontentloaded",
-        timeout: 30000,
-      });
-    } catch (e: any) {
-      if (e.name === "TimeoutError" || e.message.includes("timeout")) {
-        console.warn(`Navigation timeout for ${formattedUrl}, attempting screenshot anyway.`);
-      } else {
-        throw e;
+    if (browser) {
+      const page = await browser.newPage();
+      await page.setUserAgent(
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+      );
+      await page.goto(formattedUrl, { waitUntil: "domcontentloaded", timeout: 15000 });
+      if (delayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, Math.min(delayMs, 3000)));
       }
+      const screenshotBuffer = await page.screenshot({ type: "png", fullPage: false });
+      await browser.close();
+      browser = null;
+
+      return new NextResponse(screenshotBuffer, {
+        headers: {
+          "Content-Type": "image/png",
+          "Cache-Control": "public, max-age=3600, s-maxage=86400",
+        },
+      });
     }
 
-    // Wait for specified delay to allow page rendering to complete
-    if (delayMs > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
-
-    // Capture screenshot
-    const screenshotBuffer = await page.screenshot({
-      type: "png",
-      fullPage: false,
-    });
-
-    await browser.close();
-    browser = null;
-
-    return new NextResponse(Uint8Array.from(screenshotBuffer), {
-      headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=3600, s-maxage=86400",
-      },
-    });
+    return NextResponse.json(
+      { error: "Screenshot generation completed via fallback or unavailable on this host" },
+      { status: 502 }
+    );
   } catch (error: any) {
-    console.error("Stealth screenshot error:", error);
     if (browser) {
       try {
         await browser.close();
       } catch (closeErr) {
-        console.error("Failed closing browser:", closeErr);
+        // ignore
       }
     }
     return NextResponse.json(

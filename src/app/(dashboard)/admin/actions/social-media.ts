@@ -5,7 +5,6 @@ import { requireAdminSession } from "@/lib/auth-guard";
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 import { putBlob, fetchWithFallback } from "@/lib/storage";
-import { google } from "googleapis";
 import { Readable } from "stream";
 
 export async function processDueScheduledPosts() {
@@ -313,6 +312,7 @@ export async function publishToPlatform(postId: number, platform: string) {
         if (!clientId || !clientSecret || !refreshToken) return { success: false, error: "Missing YouTube credentials" };
         if (media_urls.length === 0) return { success: false, error: "YouTube requires a video." };
         
+        const { google } = await import("googleapis");
         const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
         oauth2Client.setCredentials({ refresh_token: refreshToken });
         const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
@@ -463,6 +463,7 @@ export async function deletePlatformPost(postId: number, platform: string) {
     }
     
     if (platform === 'youtube' && ids['youtube']) {
+        const { google } = await import("googleapis");
         const oauth2Client = new google.auth.OAuth2(process.env.YOUTUBE_CLIENT_ID, process.env.YOUTUBE_CLIENT_SECRET);
         oauth2Client.setCredentials({ refresh_token: process.env.YOUTUBE_REFRESH_TOKEN });
         const youtube = google.youtube({ version: 'v3', auth: oauth2Client });

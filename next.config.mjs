@@ -27,6 +27,24 @@ const nextConfig = {
       static: 180,
     },
   },
+  output: 'standalone',
+  serverExternalPackages: [
+    '@sparticuz/chromium',
+    'puppeteer-core',
+    'puppeteer',
+    'googleapis',
+  ],
+  outputFileTracingExcludes: {
+    '*': [
+      'node_modules/@sparticuz/chromium/**',
+      'node_modules/puppeteer/**',
+      'node_modules/puppeteer-core/**',
+      'node_modules/googleapis/**',
+      'scripts/**',
+      'docs/**',
+      '.git/**',
+    ],
+  },
   compiler: {
     removeConsole: {
       exclude: ['error', 'warn'],
