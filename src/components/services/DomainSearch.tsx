@@ -517,7 +517,7 @@ export default function DomainSearch({
             {/* Price Validity & Renewal Disclaimer Notice */}
             <div className="text-[11px] text-gray-400 text-center leading-relaxed bg-white/[0.02] border border-white/5 py-3 px-4 rounded-2xl space-y-1">
               <p>
-                ⚠️ Note: First year registration prices are valid for 3 days.
+                Note: First year registration prices are valid for 3 days.
               </p>
               <p className="text-gray-400/80">
                 * Renewal fees are estimated values and may adjust slightly based on standard registry and market rates at the time of renewal.

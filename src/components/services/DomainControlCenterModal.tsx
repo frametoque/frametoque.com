@@ -861,6 +861,8 @@ export function DomainControlCenterView({
                 </div>
               </div>
 
+
+
               {/* Active Nameservers */}
               <div className="p-5 sm:p-6 rounded-2xl bg-white/5 border border-white/10 space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
@@ -899,6 +901,23 @@ export function DomainControlCenterView({
                   )}
                 </div>
               </div>
+
+
+
+              {/* Cloudflare DNS & Security Tip */}
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 flex items-start gap-3 text-xs">
+                <ShieldCheck className="w-4 h-4 text-brand-400 shrink-0 mt-0.5" />
+                <div className="space-y-1 text-gray-300">
+                  <p>
+                    <strong className="text-white">Cloudflare DNS &amp; Free DDoS Protection:</strong> Your domain is already connected and managed here. Please do not add it to a personal Cloudflare account.
+                  </p>
+                  <p className="text-gray-400 text-[11px]">
+                    Need custom WAF rules, email routing, or custom SSL? <a href="https://frametoque.com/contact" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:underline">Contact us</a> and we&apos;ll set it up.
+                  </p>
+                </div>
+              </div>
+
+
             </div>
           )}
 
@@ -908,6 +927,9 @@ export function DomainControlCenterView({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-xl sm:text-2xl font-bold text-white">DNS Records Management</h3>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Configure authoritative DNS records, host routing, and Cloudflare proxying.
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-3 flex-wrap">
@@ -942,6 +964,8 @@ export function DomainControlCenterView({
                   </button>
                 </div>
               </div>
+
+
 
               {/* Add / Edit DNS Form */}
               {isAddingDns && (
@@ -1371,6 +1395,8 @@ export function DomainControlCenterView({
                 </div>
               </div>
 
+
+
               {/* Invoices & Payment Ledger */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -1505,6 +1531,8 @@ export function DomainControlCenterView({
                   </table>
                 </div>
               </div>
+
+
             </div>
           )}
 
@@ -1694,6 +1722,8 @@ export function DomainControlCenterView({
                   </div>
                 </div>
               </div>
+
+
             </div>
           )}
     </>

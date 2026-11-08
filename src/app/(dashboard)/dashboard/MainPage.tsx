@@ -10,6 +10,7 @@ import PayModal from "@/components/PayModal";
 
 import RecentProjectsWidget from "./invoices/RecentProjectsWidget";
 import RecentQuotationsWidget from "./quotations/RecentQuotationsWidget";
+import RecentDomainsWidget from "./domains/RecentDomainsWidget";
 import { getAgreementsByClient, AgreementData } from "../admin/actions/agreements";
 import { getClientContentPlanner } from "../admin/actions/workspace";
 import { verifyAndSyncCardPayment } from "../admin/actions/payments";
@@ -451,6 +452,14 @@ export default function DashboardHome() {
           </Link>
         </div>
       )}
+
+      {/* Client Domains Widget */}
+      <RecentDomainsWidget
+        onOpenPayModal={(invoice) => {
+          setSelectedInvoice(invoice);
+          setIsPayModalOpen(true);
+        }}
+      />
 
       {/* Side-by-side Projects and Quotations */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

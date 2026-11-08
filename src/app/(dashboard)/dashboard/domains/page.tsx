@@ -8,6 +8,7 @@ import {
   Eye,
   HelpCircle,
   ShieldAlert,
+  ShieldCheck,
   CheckCircle,
   Plus,
   X,
@@ -655,6 +656,22 @@ export default function ClientDomainsPage() {
               )}
             </TableBody>
           </Table>
+
+          {/* Cloudflare DNS & Security Note */}
+          <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-gray-400">
+            <div className="flex items-center gap-2 text-gray-300">
+              <ShieldCheck className="w-4 h-4 text-brand-400 shrink-0" />
+              <span>All domains include free Cloudflare DNS &amp; DDoS protection. No setup needed.</span>
+            </div>
+            <a
+              href="https://frametoque.com/contact"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-400 hover:text-brand-300 text-xs font-medium shrink-0"
+            >
+              Need custom WAF or email routing? Contact us &rarr;
+            </a>
+          </div>
         </>
       ) : (
         <div />
