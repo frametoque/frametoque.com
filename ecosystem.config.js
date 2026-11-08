@@ -1,16 +1,15 @@
 module.exports = {
   apps: [{
     name: 'frametoque',
-    script: 'node_modules/next/dist/bin/next',
-    args: 'start',
-    cwd: '/home/ec2-user/frametoque',
+    script: 'server.js',
     instances: 1,
     autorestart: true,
     watch: false,
-    max_memory_restart: '1G',
+    max_memory_restart: '450M',
+    node_args: '--max-old-space-size=384',
     env: {
       NODE_ENV: 'production',
-      PORT: 3000
+      PORT: process.env.PORT || 3000
     }
   }]
 };
