@@ -481,41 +481,10 @@ export default function IncomePage() {
     return Array.from(all);
   }, [allIncomeItems]);
 
-  if (loading || !data) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4 animate-pulse">
-              <div className="p-4 rounded-2xl bg-white/5 w-14 h-14" />
-              <div className="space-y-2 flex-1">
-                <div className="h-4 bg-white/5 rounded-full w-24" />
-                <div className="h-6 bg-white/10 rounded-full w-32" />
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-4">
-          <div className="h-6 bg-white/10 rounded-full w-48 mb-6" />
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex justify-between items-center py-4 border-b border-white/5 last:border-0">
-              <div className="space-y-2 flex-1">
-                <div className="h-4 bg-white/10 rounded-full w-1/3" />
-                <div className="h-3 bg-white/5 rounded-full w-1/4" />
-              </div>
-              <div className="h-6 bg-white/10 rounded-full w-20" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   const stats = [
-    { label: "This Month", value: formatLKR(data.thisMonth), icon: Wallet, color: "text-green-400", bg: "bg-green-400/10" },
-    { label: "Last Month", value: formatLKR(data.lastMonth), icon: Calendar, color: "text-blue-400", bg: "bg-blue-400/10" },
-    { label: "Year to Date", value: formatLKR(data.ytd), icon: TrendingUp, color: "text-brand-400", bg: "bg-brand-400/10" },
+    { label: "This Month", value: formatLKR(data?.thisMonth || 0), icon: Wallet, color: "text-green-400", bg: "bg-green-400/10" },
+    { label: "Last Month", value: formatLKR(data?.lastMonth || 0), icon: Calendar, color: "text-blue-400", bg: "bg-blue-400/10" },
+    { label: "Year to Date", value: formatLKR(data?.ytd || 0), icon: TrendingUp, color: "text-brand-400", bg: "bg-brand-400/10" },
   ];
 
 
@@ -562,7 +531,13 @@ export default function IncomePage() {
 
       {/* Table */}
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden">
-        <div className="overflow-x-auto">
+        {loading || !data ? (
+          <div className="flex justify-center items-center py-16 text-gray-400 gap-2">
+            <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
+            <span>Loading income...</span>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/10 text-gray-400 text-sm">
@@ -673,6 +648,7 @@ export default function IncomePage() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Record Income Modal */}

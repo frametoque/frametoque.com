@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Settings, Plus, CreditCard } from "lucide-react";
+import { ArrowRight, Settings, Plus, CreditCard, Loader2 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 
 export interface ClientDomainSummary {
@@ -136,23 +136,16 @@ export default function RecentDomainsWidget({ onOpenPayModal, hideIfEmpty = true
       </div>
 
       {/* Loading State */}
-      {loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-28 rounded-2xl bg-white/5 animate-pulse border border-white/5" />
-          ))}
+      {loading ? (
+        <div className="flex justify-center items-center py-10 text-gray-400 gap-2">
+          <Loader2 className="w-5 h-5 animate-spin text-brand-500" />
+          <span>Loading domains...</span>
         </div>
-      )}
-
-      {/* Error State */}
-      {!loading && error && (
+      ) : error ? (
         <div className="text-center py-6">
           <p className="text-red-400 text-xs">{error}</p>
         </div>
-      )}
-
-      {/* Domain Cards List */}
-      {!loading && !error && domains.length > 0 && (
+      ) : domains.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {domains.slice(0, 6).map((d) => {
             const rawStatus = (d.status || "active").toLowerCase();
@@ -238,7 +231,7 @@ export default function RecentDomainsWidget({ onOpenPayModal, hideIfEmpty = true
             );
           })}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import useSWR from 'swr';
-import { TrendingUp, TrendingDown, DollarSign, Percent, Download, FileText, Calendar, Users, BookOpen, Search, ArrowUpRight, ArrowDownRight, Link as LinkIcon } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Percent, Download, FileText, Calendar, Users, BookOpen, Search, ArrowUpRight, ArrowDownRight, Link as LinkIcon, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getReports, getClients } from "../actions/actions";
 import AnimatedNumber from "../components/AnimatedNumber";
@@ -98,74 +98,9 @@ export default function ReportsPage() {
 
 
 
-  if (loading || !data) {
-    return (
-      <div className="space-y-6">
-        {/* Four Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4">
-              <div className="p-4 rounded-2xl bg-white/5 w-14 h-14" />
-              <div className="space-y-2 flex-1">
-                <div className="h-4 bg-white/5 rounded-full w-24" />
-                <div className="h-6 bg-white/10 rounded-full w-32" />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Tab Buttons */}
-        <div className="flex flex-wrap gap-2 animate-pulse">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-10 bg-white/5 border border-white/10 rounded-full w-32" />
-          ))}
-        </div>
-        
-        {/* Two side-by-side charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-pulse">
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
-            <div className="h-6 bg-white/10 rounded-full w-40" />
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <div className="h-4 bg-white/5 rounded-full w-20" />
-                  <div className="h-8 bg-white/10 rounded-2xl flex-1" />
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
-            <div className="h-6 bg-white/10 rounded-full w-40" />
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <div className="h-4 bg-white/5 rounded-full w-20" />
-                  <div className="h-8 bg-white/10 rounded-2xl flex-1" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Client Revenue Chart */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-6">
-          <div className="h-6 bg-white/10 rounded-full w-48" />
-          <div className="space-y-3">
-            {[...Array(2)].map((_, i) => (
-              <div key={i} className="flex items-center gap-4">
-                <div className="h-4 bg-white/5 rounded-full w-20" />
-                <div className="h-8 bg-white/10 rounded-2xl flex-1" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Compute chronological running balance
   let runningBalance = 0;
-  const journalEntriesWithBalance = [...(data.journalEntries || [])]
+  const journalEntriesWithBalance = [...(data?.journalEntries || [])]
     .reverse() // older transactions first to compute running balance
     .map((entry: any) => {
       if (entry.type === "income") {
@@ -193,10 +128,10 @@ export default function ReportsPage() {
     });
 
   const stats = [
-    { label: "Total Income", value: formatLKR(data.totalIncome), icon: TrendingUp, color: "text-green-400", bg: "bg-green-400/10" },
-    { label: "Total Expenses", value: formatLKR(data.totalExpenses), icon: TrendingDown, color: "text-red-400", bg: "bg-red-400/10" },
-    { label: "Net Profit", value: formatLKR(data.netProfit), icon: DollarSign, color: "text-brand-400", bg: "bg-brand-400/10" },
-    { label: "Profit Margin", value: `${data.profitMargin}%`, icon: Percent, color: "text-blue-400", bg: "bg-blue-400/10" },
+    { label: "Total Income", value: formatLKR(data?.totalIncome || 0), icon: TrendingUp, color: "text-green-400", bg: "bg-green-400/10" },
+    { label: "Total Expenses", value: formatLKR(data?.totalExpenses || 0), icon: TrendingDown, color: "text-red-400", bg: "bg-red-400/10" },
+    { label: "Net Profit", value: formatLKR(data?.netProfit || 0), icon: DollarSign, color: "text-brand-400", bg: "bg-brand-400/10" },
+    { label: "Profit Margin", value: `${data?.profitMargin || 0}%`, icon: Percent, color: "text-blue-400", bg: "bg-blue-400/10" },
   ];
 
   // Top 5 clients by revenue for the chart
@@ -275,7 +210,14 @@ export default function ReportsPage() {
         )}
       </div>
 
-      {activeTab === "overview" && (
+      {loading || !data ? (
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-16 flex justify-center items-center text-gray-400 gap-2">
+          <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
+          <span>Loading reports...</span>
+        </div>
+      ) : (
+        <>
+          {activeTab === "overview" && (
         <>
 
           {/* Charts Section */}
@@ -703,6 +645,8 @@ export default function ReportsPage() {
             </table>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

@@ -114,51 +114,19 @@ export default function ClientsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        {/* Skeleton Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4">
-              <div className="p-4 rounded-2xl bg-white/5 w-14 h-14" />
-              <div className="space-y-2 flex-1">
-                <div className="h-4 bg-white/5 rounded-full w-24" />
-                <div className="h-6 bg-white/10 rounded-full w-32" />
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        {/* Skeleton List */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-4">
-          <div className="h-6 bg-white/10 rounded-full w-48 mb-6" />
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex justify-between items-center py-4 border-b border-white/5 last:border-0">
-              <div className="space-y-2 flex-1">
-                <div className="h-4 bg-white/10 rounded-full w-1/3" />
-                <div className="h-3 bg-white/5 rounded-full w-1/4" />
-              </div>
-              <div className="h-6 bg-white/10 rounded-full w-20" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   // ----- Derived stats -----
+  const clientList = data || [];
   // Sort by revenue to find top client
-  const byRevenue = [...data].sort((a, b) => b.revenue - a.revenue);
+  const byRevenue = [...clientList].sort((a, b) => b.revenue - a.revenue);
   const topClient = byRevenue[0] ?? null;
 
   // Most recent = first in list (getClients now orders by c.id DESC which encodes Date.now())
-  const recentClient = data[0] ?? null;
+  const recentClient = clientList[0] ?? null;
 
   const stats = [
     {
       label: "Total Clients",
-      value: data.length.toString(),
+      value: clientList.length.toString(),
       sub: null,
       icon: Users,
       color: "text-brand-400",
@@ -190,7 +158,7 @@ export default function ClientsPage() {
     },
   ];
 
-  const filteredClients = data.filter((client: any) => {
+  const filteredClients = clientList.filter((client: any) => {
     const isClient = client.invoices > 0 || client.incomeCount > 0;
     const isLead = !isClient && client.quotationCount > 0;
     const type = isClient ? 'Client' : isLead ? 'Quoted' : 'New';
@@ -278,7 +246,13 @@ export default function ClientsPage() {
 
       {/* Table */}
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden">
-        <div className="overflow-x-auto">
+        {loading ? (
+          <div className="flex justify-center items-center py-16 text-gray-400 gap-2">
+            <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
+            <span>Loading clients...</span>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/10 text-gray-400 text-sm">
@@ -402,6 +376,7 @@ export default function ClientsPage() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Add / Edit Client Modal */}

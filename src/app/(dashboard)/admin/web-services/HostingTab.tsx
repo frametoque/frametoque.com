@@ -15,7 +15,7 @@ import {
 } from "../actions/hosting";
 import { uploadProviderInvoice, getInvoicesForLinking } from "../actions/domains";
 import {
-  Server, Shield, HardDrive, Cpu, Cloud, Settings, Plus, Edit2, Trash2, X, FileText, Mail, Clock, Check, Search, AlertTriangle, TrendingUp, ChevronLeft, ChevronRight, Upload, Lock, RefreshCw, Link2, Unlink, ExternalLink
+  Server, Shield, HardDrive, Cpu, Cloud, Settings, Plus, Edit2, Trash2, X, FileText, Mail, Clock, Check, Search, AlertTriangle, TrendingUp, ChevronLeft, ChevronRight, Upload, Lock, RefreshCw, Link2, Unlink, ExternalLink, Loader2
 } from "lucide-react";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { StatCard } from "@/components/ui/StatCard";
@@ -443,27 +443,6 @@ export default function HostingPage() {
     return statusMatch && searchMatch;
   });
 
-  if (loading) {
-    return (
-      <div className="space-y-6 pb-10 mt-2">
-        {/* Skeleton Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
-          {[1, 2, 3].map((idx) => (
-            <div key={idx} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center justify-between h-[104px]">
-              <div className="space-y-2.5">
-                <div className="h-3 w-24 bg-white/10 rounded-full" />
-                <div className="h-7 w-12 bg-white/10 rounded-full" />
-              </div>
-              <div className="p-3 bg-white/5 rounded-2xl w-12 h-12" />
-            </div>
-          ))}
-        </div>
-        {/* Skeleton Table */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden animate-pulse h-96" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 pb-10 mt-2">
       {/* Controls */}
@@ -490,7 +469,23 @@ export default function HostingPage() {
           <TableHead className="text-right">Actions</TableHead>
         </TableHeader>
         <TableBody>
-          {filteredOrders.map((o) => {
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={9} className="text-center py-20">
+                <div className="flex justify-center items-center text-gray-400 gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
+                  <span>Loading hosting accounts...</span>
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : filteredOrders.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={9} className="text-center text-gray-500 py-20 font-medium">
+                No hosting subscriptions found matching search criteria.
+              </TableCell>
+            </TableRow>
+          ) : (
+            filteredOrders.map((o) => {
                 const isUsd = o.actual_price_currency === "USD";
                 const lockedRate = o.activation_lkr_rate ?? null;
                 const effectiveRate = lockedRate != null ? lockedRate : lkrRate;
@@ -662,7 +657,8 @@ export default function HostingPage() {
                     </TableCell>
                   </TableRow>
                 );
-              })}
+              })
+          )}
         </TableBody>
       </Table>
 

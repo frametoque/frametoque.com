@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, ArrowRight, Calendar } from "lucide-react";
+import { FileText, ArrowRight, Calendar, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 
@@ -73,29 +73,21 @@ export default function RecentQuotationsWidget() {
       </div>
 
       {/* Loading */}
-      {loading && (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse" />
-          ))}
+      {loading ? (
+        <div className="flex justify-center items-center py-10 text-gray-400 gap-2">
+          <Loader2 className="w-5 h-5 animate-spin text-brand-500" />
+          <span>Loading quotations...</span>
         </div>
-      )}
-
-      {!loading && error && (
+      ) : error ? (
         <div className="text-center py-6">
           <p className="text-red-400 text-sm">{error}</p>
         </div>
-      )}
-
-      {!loading && !error && quotations.length === 0 && (
+      ) : quotations.length === 0 ? (
         <div className="text-center py-8">
           <FileText className="w-10 h-10 text-gray-600 mx-auto mb-3" />
           <p className="text-gray-400 text-sm">No quotations yet.</p>
         </div>
-      )}
-
-      {/* Quotation List */}
-      {!loading && !error && quotations.length > 0 && (
+      ) : (
         <div className="space-y-3">
           {quotations.map((q) => {
             const statusClass = statusStyles[q.status] || "bg-slate-500/20 text-slate-400 border-slate-500/30";
