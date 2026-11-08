@@ -8,7 +8,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { getDashboardData } from "../actions/actions";
 import { getAnalyticsData } from "../actions/analytics";
 import { getCalendarEvents } from "../actions/workspace";
-import { processDueScheduledPosts } from "../actions/social-media";
 import ExpenseBreakdownWidget from "../components/ExpenseBreakdownWidget";
 import TopClientsWidget from "../components/TopClientsWidget";
 import AnimatedNumber from "../components/AnimatedNumber";
@@ -64,11 +63,6 @@ export default function DashboardPage() {
     fetcher,
     { keepPreviousData: true, revalidateOnFocus: false }
   );
-
-  useEffect(() => {
-    // Trigger scheduled posts processing in background
-    processDueScheduledPosts().catch(() => {});
-  }, []);
 
   const { data, analytics, upcomingEvents, bookingForecasts } = swrData || {};
 

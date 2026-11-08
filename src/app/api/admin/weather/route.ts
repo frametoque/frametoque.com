@@ -3,11 +3,24 @@ import { getActiveVisitors } from "../../../(dashboard)/admin/actions/analytics-
 import sql from "@/lib/db";
 import { requireAdminSession } from "@/lib/auth-guard";
 
+let cachedPayload: any = null;
+let lastFetchTimestamp = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export async function GET() {
   try {
     await requireAdminSession();
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  const now = Date.now();
+  if (cachedPayload && now - lastFetchTimestamp < CACHE_TTL_MS) {
+    return NextResponse.json(cachedPayload, {
+      headers: {
+        "Cache-Control": "private, max-age=300",
+      },
+    });
   }
 
   // 1. Fetch active visitors and DB bookings simultaneously
@@ -154,9 +167,16 @@ export async function GET() {
 
   await Promise.all(weatherPromises);
 
-  return NextResponse.json({
+  cachedPayload = {
     activeVisitors,
     weather,
-    bookingForecasts
+    bookingForecasts,
+  };
+  lastFetchTimestamp = Date.now();
+
+  return NextResponse.json(cachedPayload, {
+    headers: {
+      "Cache-Control": "private, max-age=300",
+    },
   });
 }

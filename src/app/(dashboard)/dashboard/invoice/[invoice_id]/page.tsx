@@ -113,19 +113,6 @@ export default function InvoicePage() {
 
   useEffect(() => {
     fetchInvoice();
-
-    const handleFocus = () => fetchInvoice();
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") fetchInvoice();
-    };
-
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
   }, [fetchInvoice]);
 
   useEffect(() => {

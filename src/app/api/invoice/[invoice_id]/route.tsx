@@ -10,6 +10,8 @@ export const fetchCache = "force-no-store";
 
 export async function GET(request, { params }) {
   const { invoice_id } = await params;
+  const { searchParams } = new URL(request.url);
+  const shouldSync = searchParams.get("sync") === "true";
 
   try {
     const session = await getSessionUser();
@@ -22,7 +24,8 @@ export async function GET(request, { params }) {
     }
 
     let userEmails: string[] = session.email ? [session.email.toLowerCase().trim()] : [];
-    if (!session.isAdmin) {
+    // Only call Clerk API if session doesn't contain user email
+    if (!session.isAdmin && userEmails.length === 0) {
       try {
         const client = await clerkClient();
         const user = await client.users.getUser(session.userId);
@@ -190,7 +193,7 @@ export async function GET(request, { params }) {
     invoice.total_due = calculatedTotalDue;
     invoice.payments_total = nonAdvancePayments;
 
-    if (invoice.payment_status !== "paid" && invoice.payment_status !== "fully paid") {
+    if (shouldSync && invoice.payment_status !== "paid" && invoice.payment_status !== "fully paid") {
       try {
         const syncResult = await verifyAndSyncCardPayment({ invoiceId: String(invoice_id) });
         if (syncResult && syncResult.status === "succeeded") {
