@@ -32,3 +32,4 @@ export default function IncomeVsExpenseChart({ data, chartYear, formatLKR }: Inc
     </div>
   );
 }
+

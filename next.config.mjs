@@ -27,7 +27,6 @@ const nextConfig = {
       static: 180,
     },
   },
-  output: 'standalone',
   serverExternalPackages: [
     '@sparticuz/chromium',
     'puppeteer-core',

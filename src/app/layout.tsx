@@ -187,7 +187,7 @@ export default function RootLayout({ children }) {
             <SWRegister />
             <SmoothScroll />
             {children}
-            {process.env.VERCEL ? <Analytics /> : null}
+            <Analytics />
             <FloatingButtons />
             <SnowfallWrapper />
             <UmamiScript />

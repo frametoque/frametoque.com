@@ -140,3 +140,4 @@ If a regression occurs, switch the symlink back to `v1` and click **Restart Appl
 A zero-cost health check endpoint is available for uptime monitors:
 - **URL**: `GET /api/health`
 - **Response**: `{ "status": "healthy", "service": "frametoque-web", "uptime": 1234 }`
+

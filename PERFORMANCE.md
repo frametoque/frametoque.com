@@ -97,3 +97,4 @@ Go to **Vercel Dashboard → Your Team / Account Settings → Usage & Billing**:
 In cPanel / CloudLinux:
 1. Enable **Resource Usage Notifications** for memory usage > 80%.
 2. Configure external free uptime monitoring (e.g. UptimeRobot or Better Uptime) targeting `https://frametoque.com/api/health` with a 5-minute interval.
+
