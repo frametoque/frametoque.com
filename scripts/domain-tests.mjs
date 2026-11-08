@@ -9,6 +9,7 @@
 
 import assert from "node:assert";
 import test from "node:test";
+import dns from "node:dns";
 
 // 1. Test Input Validation
 import {
@@ -155,7 +156,20 @@ test("CloudflareProvider: Nameserver policy restricts external third-party names
 
 test("CloudflareProvider: Mock HTTP checkAvailability in sandbox", async () => {
   const originalFetch = globalThis.fetch;
+  const originalResolveNs = dns.promises.resolveNs;
+  const originalResolveSoa = dns.promises.resolveSoa;
   try {
+    dns.promises.resolveNs = async () => {
+      const err = new Error("ENODATA");
+      err.code = "ENODATA";
+      throw err;
+    };
+    dns.promises.resolveSoa = async () => {
+      const err = new Error("ENODATA");
+      err.code = "ENODATA";
+      throw err;
+    };
+
     globalThis.fetch = async (url) => {
       if (String(url).includes("domain-check") || String(url).includes("availability")) {
         return {
@@ -167,7 +181,7 @@ test("CloudflareProvider: Mock HTTP checkAvailability in sandbox", async () => {
               result: {
                 domains: [
                   {
-                    name: "freshdomain.com",
+                    name: "freshavailabletest123.com",
                     registrable: true,
                     pricing: { registration_cost: "10.46", currency: "USD" },
                   },
@@ -185,11 +199,13 @@ test("CloudflareProvider: Mock HTTP checkAvailability in sandbox", async () => {
       env: "sandbox",
     });
 
-    const res = await provider.checkAvailability("freshdomain.com");
+    const res = await provider.checkAvailability("freshavailabletest123.com");
     assert.strictEqual(res.available, true);
     assert.strictEqual(res.costPrice, 10.46);
   } finally {
     globalThis.fetch = originalFetch;
+    dns.promises.resolveNs = originalResolveNs;
+    dns.promises.resolveSoa = originalResolveSoa;
   }
 });
 
