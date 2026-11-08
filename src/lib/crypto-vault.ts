@@ -3,10 +3,16 @@ import crypto from "node:crypto";
 const CIPHER_ALGORITHM = "aes-256-gcm";
 const CURRENT_VERSION = "v1";
 
+let cachedMasterKey: Buffer | null = null;
+let cachedBlindIndexKey: Buffer | null = null;
+
 /**
  * Derives the 256-bit Master Key (KEK) from environment variables.
+ * Cached in memory per instance to avoid re-hashing on every field.
  */
 function getMasterKey(): Buffer {
+  if (cachedMasterKey) return cachedMasterKey;
+
   const rawKey =
     process.env.APP_FIELD_ENCRYPTION_KEY ||
     process.env.CREDENTIALS_ENCRYPTION_KEY ||
@@ -19,19 +25,24 @@ function getMasterKey(): Buffer {
       );
     }
     // Development fallback key
-    return crypto.createHash("sha256").update("dev-frametoque-field-vault-master-key-2026").digest();
+    cachedMasterKey = crypto.createHash("sha256").update("dev-frametoque-field-vault-master-key-2026").digest();
+    return cachedMasterKey;
   }
 
   // Derive exactly 32 bytes using SHA-256
-  return crypto.createHash("sha256").update(rawKey).digest();
+  cachedMasterKey = crypto.createHash("sha256").update(rawKey).digest();
+  return cachedMasterKey;
 }
 
 /**
  * Derives a blind index secret key for deterministic exact-match search hashes.
+ * Cached in memory per instance.
  */
 function getBlindIndexKey(): Buffer {
+  if (cachedBlindIndexKey) return cachedBlindIndexKey;
   const master = getMasterKey();
-  return crypto.createHmac("sha256", master).update("frametoque:blind-index:salt-v1").digest();
+  cachedBlindIndexKey = crypto.createHmac("sha256", master).update("frametoque:blind-index:salt-v1").digest();
+  return cachedBlindIndexKey;
 }
 
 /**
