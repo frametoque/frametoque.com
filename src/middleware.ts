@@ -4,8 +4,13 @@ import { NextResponse } from "next/server";
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 const isProtectedRoute = createRouteMatcher(["/admin(.*)", "/dashboard(.*)"]);
+const isPublicRoute = createRouteMatcher(["/api/health", "/api/payments/webhook(.*)", "/api/webhooks(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
+  if (isPublicRoute(req)) {
+    return;
+  }
+
   if (isProtectedRoute(req)) {
     const { userId, sessionClaims } = await auth();
 
