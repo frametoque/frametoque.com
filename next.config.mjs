@@ -23,8 +23,7 @@ const nextConfig = {
       bodySizeLimit: '100mb',
     },
     staleTimes: {
-      dynamic: 30,
-      static: 180,
+      dynamic: 0,
     },
   },
   serverExternalPackages: [

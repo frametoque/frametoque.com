@@ -7,10 +7,8 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --webpack",
-    "build:standalone": "next build --webpack",
+    "build": "next build",
     "start": "next start",
-    "start:standalone": "node server.js",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/security-tests.mjs",

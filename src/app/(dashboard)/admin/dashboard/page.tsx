@@ -12,14 +12,7 @@ import ExpenseBreakdownWidget from "../components/ExpenseBreakdownWidget";
 import TopClientsWidget from "../components/TopClientsWidget";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
-
-const IncomeVsExpenseChart = dynamic(
-  () => import("../components/IncomeVsExpenseChart"),
-  {
-    ssr: false,
-    loading: () => <div className="h-[300px] w-full bg-white/5 rounded-2xl animate-pulse" />
-  }
-);
+import IncomeVsExpenseChart from "../components/IncomeVsExpenseChart";
 
 const formatLKR = (amount: number) => {
   return new Intl.NumberFormat('en-LK', {
