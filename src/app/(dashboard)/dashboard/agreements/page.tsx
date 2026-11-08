@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { FilePenLine, Eye, Calendar, Tag, AlertCircle, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { getAgreementsByClient, AgreementData } from "../../admin/actions/agreements";
+import { getAgreementsByClient, type AgreementData } from "../../admin/actions/agreements";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   signed:  { label: "Signed",  color: "text-green-400 bg-green-400/10 border-green-400/20",  icon: CheckCircle2 },

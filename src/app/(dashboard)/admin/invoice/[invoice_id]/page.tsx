@@ -4,8 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Download, ArrowLeft, Loader2, FileText, Calendar, Clock, Tag, Briefcase, Image, CheckCircle2, ShieldCheck, XCircle, DollarSign, X, ChevronLeft, ChevronRight, Trash2, Upload, Image as ImageIcon, FileText as FileIcon } from "lucide-react";
 import Link from "next/link";
-import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
-import { generateReceiptPDF } from "@/app/(dashboard)/dashboard/receipt/ReceiptDocument";
 import { getInvoiceByIdAdmin, approveBankSlip, declineBankSlip, undoApprovedBankSlipPayment, recordInvoicePayment, deleteIncome, adminUploadPaymentSlip } from "../../actions/actions";
 
 const workStatusStyles = {
@@ -219,6 +217,7 @@ export default function AdminInvoicePage() {
   const handleDownload = async () => {
     setDownloading(true);
     try {
+      const { generateInvoicePDF } = await import("@/app/(dashboard)/dashboard/invoice/InvoiceDocument");
       const pdfBytes = await generateInvoicePDF(invoice);
       const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
@@ -294,6 +293,7 @@ export default function AdminInvoicePage() {
         client: client,
         account: account
       };
+      const { generateReceiptPDF } = await import("@/app/(dashboard)/dashboard/receipt/ReceiptDocument");
       const pdfBytes = await generateReceiptPDF(receiptData);
       const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);

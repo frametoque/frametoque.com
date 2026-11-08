@@ -3,8 +3,8 @@ import useSWR from "swr";
 import Link from "next/link";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { Landmark, Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, ArrowDownLeft, FileText, Users, Eye, Calendar, Folder, MapPin, CheckSquare, Droplets, ChevronLeft, ChevronRight } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { getDashboardData } from "../actions/actions";
 import { getAnalyticsData } from "../actions/analytics";
 import { getCalendarEvents } from "../actions/workspace";
@@ -12,6 +12,14 @@ import ExpenseBreakdownWidget from "../components/ExpenseBreakdownWidget";
 import TopClientsWidget from "../components/TopClientsWidget";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
+
+const IncomeVsExpenseChart = dynamic(
+  () => import("../components/IncomeVsExpenseChart"),
+  {
+    ssr: false,
+    loading: () => <div className="h-[300px] w-full bg-white/5 rounded-2xl animate-pulse" />
+  }
+);
 
 const formatLKR = (amount: number) => {
   return new Intl.NumberFormat('en-LK', {
@@ -352,24 +360,7 @@ export default function DashboardPage() {
               <button onClick={() => setChartYear(y => y + 1)} className="hover:text-white transition-colors p-1"><ChevronRight className="w-4 h-4" /></button>
             </div>
           </div>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.chartData.filter((d: any) => d.year === chartYear)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `LKR ${value/1000}k`} />
-                <Tooltip 
-                  cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                  contentStyle={{ backgroundColor: 'rgba(10,10,15,0.9)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px' }}
-                  itemStyle={{ color: '#fff' }}
-                  formatter={(value: any) => formatLKR(value)}
-                />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}/>
-                <Bar dataKey="income" name="Income" fill="#4ade80" radius={[4, 4, 0, 0]} barSize={20} />
-                <Bar dataKey="expenses" name="Expenses" fill="#f87171" radius={[4, 4, 0, 0]} barSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <IncomeVsExpenseChart data={data.chartData} chartYear={chartYear} formatLKR={formatLKR} />
         </div>
 
         {/* Expense Breakdown Widget */}

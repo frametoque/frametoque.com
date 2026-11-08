@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import CurrencyToggle from './Currencytoggle';
-import AIChatbot from './AIChatbot';
+
+const AIChatbot = dynamic(() => import('./AIChatbot'), { ssr: false });
 
 export default function FloatingButtons() {
   const [mounted, setMounted] = useState(false);

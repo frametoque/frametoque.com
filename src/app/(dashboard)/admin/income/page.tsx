@@ -6,7 +6,6 @@ import { Wallet, TrendingUp, Calendar, Plus, Edit2, Trash2, FileText, X, Loader2
 import ClientCombobox from "../components/ClientCombobox";
 import Link from "next/link";
 import { getIncomes, createIncome, deleteIncome, updateIncome, uploadReceipt, getClients, createClient, createInvoice, getInvoices, getInvoiceByIdAdmin } from "../actions/actions";
-import { generateReceiptPDF } from "@/app/(dashboard)/dashboard/receipt/ReceiptDocument";
 import { Download } from "lucide-react";
 import { getAccounts } from "../actions/accounts";
 import CategoryPicker from "../components/CategoryPicker";
@@ -206,6 +205,7 @@ export default function IncomePage() {
         account: account
       };
       
+      const { generateReceiptPDF } = await import("@/app/(dashboard)/dashboard/receipt/ReceiptDocument");
       const pdfBytes = await generateReceiptPDF(receiptData);
       const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);

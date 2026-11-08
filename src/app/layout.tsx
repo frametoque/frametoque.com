@@ -17,6 +17,7 @@ const bricolage = localFont({
   src: "./fonts/BricolageGrotesque-Variable.ttf",
   variable: "--font-geist-sans",
   weight: "400 800",
+  display: "swap",
 });
 
 const dmMono = localFont({
@@ -38,6 +39,7 @@ const dmMono = localFont({
     },
   ],
   variable: "--font-geist-mono",
+  display: "swap",
 });
 
 export const metadata = {
@@ -185,7 +187,7 @@ export default function RootLayout({ children }) {
             <SWRegister />
             <SmoothScroll />
             {children}
-            <Analytics />
+            {process.env.VERCEL ? <Analytics /> : null}
             <FloatingButtons />
             <SnowfallWrapper />
             <UmamiScript />

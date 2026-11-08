@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Download, ArrowLeft, Loader2, FileText, Calendar, Clock, Tag, Briefcase, CreditCard, CheckCircle2, AlertCircle, X } from "lucide-react";
 import Link from "next/link";
-import { generateInvoicePDF } from "@/app/(dashboard)/dashboard/invoice/InvoiceDocument";
 import PayModal from "@/components/PayModal";
 import { verifyAndSyncCardPayment } from "@/app/(dashboard)/admin/actions/payments";
 
@@ -132,6 +131,7 @@ export default function InvoicePage() {
   const handleDownload = async () => {
     setDownloading(true);
     try {
+      const { generateInvoicePDF } = await import("@/app/(dashboard)/dashboard/invoice/InvoiceDocument");
       const pdfBytes = await generateInvoicePDF(invoice);
       const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
