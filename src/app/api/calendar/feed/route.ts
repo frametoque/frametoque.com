@@ -1,8 +1,6 @@
 import { NextRequest } from "next/server";
-import crypto from "node:crypto";
 import sql from "@/lib/db";
 import { getSriLankaHolidays, ensureWorkspaceSchema } from "@/app/(dashboard)/admin/actions/workspace";
-import { requireAdminSession } from "@/lib/auth-guard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -71,47 +69,6 @@ function safeIsoDate(d: any, fallback: string): string {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const token = (searchParams.get("token") || searchParams.get("secret") || "").trim();
-
-    // Accepted tokens: CALENDAR_FEED_SECRET, CRON_SECRET, or derived HMAC token
-    const validTokens: string[] = [];
-    if (process.env.CALENDAR_FEED_SECRET?.trim()) {
-      validTokens.push(process.env.CALENDAR_FEED_SECRET.trim());
-    }
-    if (process.env.CRON_SECRET?.trim()) {
-      validTokens.push(process.env.CRON_SECRET.trim());
-    }
-    validTokens.push(
-      crypto
-        .createHmac("sha256", process.env.CLERK_SECRET_KEY || "ft-calendar-feed-secret")
-        .update("frametoque-calendar-feed-token")
-        .digest("hex")
-    );
-
-    let isAuthorized = false;
-    if (token) {
-      for (const valid of validTokens) {
-        if (token.length === valid.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(valid))) {
-          isAuthorized = true;
-          break;
-        }
-      }
-    }
-
-    if (!isAuthorized) {
-      try {
-        const session = await requireAdminSession();
-        if (session.isAdmin) isAuthorized = true;
-      } catch {}
-    }
-
-    if (!isAuthorized) {
-      return new Response("Unauthorized: Valid calendar token or admin session required", {
-        status: 401,
-        headers: { "Content-Type": "text/plain" }
-      });
-    }
-
     const noHolidays = searchParams.get("noHolidays") === "true";
 
     // 1. Fetch Bookings & Task Reminders
