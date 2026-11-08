@@ -47,6 +47,92 @@ export default function DashboardPage() {
 
   const { data, analytics } = swrData || {};
 
+  if (loading || !data) {
+    return (
+      <div className="space-y-6">
+        {/* Skeleton Stats Cards (Row 1) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4 animate-pulse">
+              <div className="p-4 rounded-2xl bg-white/5 w-14 h-14" />
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/5 rounded-full w-24" />
+                <div className="h-6 bg-white/10 rounded-full w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Skeleton Stats Cards (Row 2) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4 animate-pulse">
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/5 rounded-full w-32" />
+                <div className="h-8 bg-white/10 rounded-full w-40" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Skeleton Analytics Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4 animate-pulse">
+              <div className="p-4 rounded-2xl bg-white/5 w-14 h-14" />
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/5 rounded-full w-24" />
+                <div className="h-6 bg-white/10 rounded-full w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Skeleton Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Skeleton Chart */}
+          <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-6">
+            <div className="h-6 bg-white/10 rounded-full w-40" />
+            <div className="h-[280px] bg-white/5 rounded-2xl" />
+          </div>
+          {/* Skeleton Expense Breakdown */}
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-6">
+            <div className="h-6 bg-white/10 rounded-full w-40" />
+            <div className="h-[280px] bg-white/5 rounded-2xl" />
+          </div>
+        </div>
+
+        {/* Skeleton Invoices, Quotations, Net Income */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-4">
+              <div className="h-6 bg-white/10 rounded-full w-36 mb-4" />
+              {[...Array(3)].map((_, j) => (
+                <div key={j} className="h-16 bg-white/5 rounded-2xl border border-white/5" />
+              ))}
+            </div>
+          ))}
+        </div>
+
+        {/* Skeleton Bottom Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-4">
+            <div className="h-6 bg-white/10 rounded-full w-40 mb-4" />
+            {[...Array(3)].map((_, j) => (
+              <div key={j} className="h-16 bg-white/5 rounded-2xl border border-white/5" />
+            ))}
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-4">
+            <div className="h-6 bg-white/10 rounded-full w-32 mb-4" />
+            {[...Array(3)].map((_, j) => (
+              <div key={j} className="h-14 bg-white/5 rounded-2xl border border-white/5" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const stats = [
     {
       label: "Available Funds",

@@ -74,9 +74,10 @@ export default function RecentQuotationsWidget() {
 
       {/* Loading */}
       {loading ? (
-        <div className="flex justify-center items-center py-10 text-gray-400 gap-2">
-          <Loader2 className="w-5 h-5 animate-spin text-brand-500" />
-          <span>Loading quotations...</span>
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse" />
+          ))}
         </div>
       ) : error ? (
         <div className="text-center py-6">

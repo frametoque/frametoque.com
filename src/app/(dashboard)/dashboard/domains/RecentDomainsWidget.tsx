@@ -137,9 +137,10 @@ export default function RecentDomainsWidget({ onOpenPayModal, hideIfEmpty = true
 
       {/* Loading State */}
       {loading ? (
-        <div className="flex justify-center items-center py-10 text-gray-400 gap-2">
-          <Loader2 className="w-5 h-5 animate-spin text-brand-500" />
-          <span>Loading domains...</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-28 rounded-2xl bg-white/5 animate-pulse border border-white/5" />
+          ))}
         </div>
       ) : error ? (
         <div className="text-center py-6">
