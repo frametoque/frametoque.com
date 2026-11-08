@@ -154,13 +154,30 @@ export default function ContentPlannerCalendar({
   // Default to calendar view mode
   const [viewMode, setViewMode] = useState<"calendar" | "timeline">("calendar");
 
-  // Portal target for client view topbar
+  // Portal target for client view topbar or admin view topbar
   const [portalNode, setPortalNode] = useState<HTMLElement | null>(null);
+  const [adminPortalNode, setAdminPortalNode] = useState<HTMLElement | null>(null);
+  const [adminStatsPortalNode, setAdminStatsPortalNode] = useState<HTMLElement | null>(null);
+
   useEffect(() => {
-    const el = document.getElementById("client-planner-topbar-portal");
-    if (el) {
-      setPortalNode(el);
-    }
+    const updatePortalNodes = () => {
+      const clientEl = document.getElementById("client-planner-topbar-portal");
+      setPortalNode(clientEl);
+      const adminEl = document.getElementById("admin-planner-topbar-portal") || document.getElementById("inpage-planner-topbar-portal");
+      setAdminPortalNode(adminEl);
+      const statsEl = document.getElementById("admin-planner-stats-portal") || document.getElementById("inpage-planner-stats-portal");
+      setAdminStatsPortalNode(statsEl);
+    };
+
+    updatePortalNodes();
+    const t1 = setTimeout(updatePortalNodes, 60);
+    const t2 = setTimeout(updatePortalNodes, 250);
+    window.addEventListener("workspace-project:set-tab", updatePortalNodes);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener("workspace-project:set-tab", updatePortalNodes);
+    };
   }, []);
 
   // Filter state
@@ -328,6 +345,32 @@ export default function ContentPlannerCalendar({
       return false;
     });
   }, [filteredItems, monthPrefix]);
+
+  // Today's Date String and Formatted String for Mobile Today's Plan
+  const todayDateStr = useMemo(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  }, []);
+
+  const todayHoliday = sriLankaHolidays ? sriLankaHolidays[todayDateStr] : undefined;
+
+  const todayFormatted = useMemo(() => {
+    const now = new Date();
+    return now.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  }, []);
+
+  const todayPlanItems = useMemo(() => {
+    const matching = filteredItems.filter(
+      (item) =>
+        item.start_date === todayDateStr ||
+        (item.end_date && todayDateStr >= item.start_date && todayDateStr <= item.end_date)
+    );
+    return matching.sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""));
+  }, [filteredItems, todayDateStr]);
 
   // Summary Metrics
   const summaryMetrics = useMemo(() => {
@@ -663,11 +706,6 @@ export default function ContentPlannerCalendar({
 
             {/* Full Stats Badges on Extra Large Screens */}
             <div className="hidden xl:flex items-center gap-1.5 shrink-0">
-              <div className="bg-white/5 border border-white/10 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
-                <span className="text-[11px] text-gray-400">Total:</span>
-                <span className="text-xs font-bold text-white">{summaryMetrics.total}</span>
-              </div>
-
               <div className="bg-emerald-500/[0.08] border border-emerald-500/20 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
                 <span className="text-[11px] text-emerald-300">Shoots:</span>
                 <span className="text-xs font-bold text-emerald-300">{summaryMetrics.shootingCount}</span>
@@ -738,10 +776,157 @@ export default function ContentPlannerCalendar({
           portalNode
         )}
 
-      {/* Fallback In-Page Top Controls Card (when not portaled to layout header, e.g. in Admin View) */}
-      {!portalNode && (
+      {/* If Admin Topbar Portal exists, render Month Switcher, Day/Month Switcher, and Add Item into the Admin Topbar */}
+      {adminPortalNode &&
+        createPortal(
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap">
+            {/* Month Navigator */}
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 bg-white/5 border border-white/10 px-1.5 py-1 rounded-xl">
+              <button
+                onClick={prevMonth}
+                className="p-1 rounded-lg hover:bg-white/10 text-gray-300 hover:text-white transition-colors cursor-pointer"
+                title="Previous Month"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+
+              <span className="text-xs sm:text-sm font-bold text-white tracking-wide px-1 sm:px-1.5 min-w-[65px] sm:min-w-[105px] text-center">
+                <span className="sm:hidden">{monthNames[month].slice(0, 3)} {year}</span>
+                <span className="hidden sm:inline">{monthNames[month]} {year}</span>
+              </span>
+
+              <button
+                onClick={nextMonth}
+                className="p-1 rounded-lg hover:bg-white/10 text-gray-300 hover:text-white transition-colors cursor-pointer"
+                title="Next Month"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* View Mode Toggle (Month vs Day View) */}
+            <div className="flex items-center gap-0.5 bg-black/40 border border-white/10 p-0.5 rounded-xl shrink-0">
+              <button
+                onClick={() => setViewMode("calendar")}
+                className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
+                  viewMode === "calendar" ? "bg-white/20 text-white shadow font-bold" : "text-gray-400 hover:text-white"
+                }`}
+                title="Month View"
+              >
+                <CalendarIcon className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Month</span>
+              </button>
+              <button
+                onClick={() => setViewMode("timeline")}
+                className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
+                  viewMode === "timeline" ? "bg-white/20 text-white shadow font-bold" : "text-gray-400 hover:text-white"
+                }`}
+                title="Day View"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Day</span>
+              </button>
+            </div>
+
+            {/* Add Item Button */}
+            {!readOnly && (
+              <button
+                onClick={() => openNewModal()}
+                className="bg-brand-600 hover:bg-brand-500 text-white font-semibold py-1.5 px-2.5 sm:px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs shadow-md shadow-brand-600/20 transition-all cursor-pointer active:scale-95 shrink-0"
+                title="Add Content Planner Item"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Add Item</span>
+              </button>
+            )}
+          </div>,
+          adminPortalNode
+        )}
+
+      {/* If Admin Stats Portal exists, render Statuses (clickable -> ?tab=tasks) and Link Button */}
+      {adminStatsPortalNode &&
+        createPortal(
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 whitespace-nowrap">
+            {/* Statuses Strip - Display metrics without link */}
+            <div className="flex items-center gap-1.5 shrink-0 select-none">
+              <div className="bg-emerald-500/[0.08] border border-emerald-500/20 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
+                <span className="text-[11px] text-emerald-400">Shooting:</span>
+                <span className="text-xs font-bold text-emerald-300">{summaryMetrics.shootingCount} Days</span>
+              </div>
+
+              <div className="bg-purple-500/[0.08] border border-purple-500/20 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
+                <span className="text-[11px] text-purple-400">Editing:</span>
+                <span className="text-xs font-bold text-purple-300">{summaryMetrics.editingCount} Items</span>
+              </div>
+
+              <div className="bg-blue-500/[0.08] border border-blue-500/20 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
+                <span className="text-[11px] text-blue-400">Uploads:</span>
+                <span className="text-xs font-bold text-blue-300">{summaryMetrics.uploadCount} Posts</span>
+              </div>
+
+              <div className="bg-amber-500/[0.08] border border-amber-500/20 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
+                <span className="text-[11px] text-amber-400">Boosting:</span>
+                <span className="text-xs font-bold text-amber-300">
+                  {summaryMetrics.boostingCount} {summaryMetrics.formattedBudget ? `(${summaryMetrics.formattedBudget})` : ""}
+                </span>
+              </div>
+            </div>
+
+            {/* Link Invoice / Quotation / Billing Badges */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {currentMonthBilling?.quotation && (
+                <a
+                  href={readOnly ? "/dashboard/quotations" : "/admin/quotations"}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-500/10 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20 text-xs font-semibold transition-all shrink-0 cursor-pointer"
+                  title={`View Quotation #${currentMonthBilling.quotation.id}`}
+                >
+                  <span>Quotation #{currentMonthBilling.quotation.id}</span>
+                  <span className="text-[10px] uppercase font-bold text-purple-400">({currentMonthBilling.quotation.status})</span>
+                  <ExternalLink className="w-3 h-3 text-purple-400/80" />
+                </a>
+              )}
+
+              {currentMonthBilling?.invoice && (
+                <a
+                  href={readOnly ? `/dashboard/invoice/${currentMonthBilling.invoice.invoice_id}` : "/admin/invoices"}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold border transition-all shrink-0 cursor-pointer ${
+                    currentMonthBilling.invoice.payment_status === 'paid' || currentMonthBilling.invoice.payment_status === 'fully_paid'
+                      ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+                      : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
+                  }`}
+                  title={`View Invoice #${currentMonthBilling.invoice.invoice_id}`}
+                >
+                  <span>Invoice #{currentMonthBilling.invoice.invoice_id.replace(/^INV-/, '')}</span>
+                  <span className="text-[10px] uppercase font-bold opacity-80">
+                    ({currentMonthBilling.invoice.payment_status === 'fully_paid' ? 'Paid' : currentMonthBilling.invoice.payment_status})
+                  </span>
+                  <ExternalLink className="w-3 h-3 opacity-80" />
+                </a>
+              )}
+
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={openBillingModal}
+                  className="inline-flex items-center px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs font-semibold transition-colors cursor-pointer shrink-0"
+                  title="Link or edit invoice and quotation for this month"
+                >
+                  <span>{currentMonthBilling?.invoice || currentMonthBilling?.quotation ? "Edit Billing" : "Link Invoice / Quotation"}</span>
+                </button>
+              )}
+            </div>
+          </div>,
+          adminStatsPortalNode
+        )}
+
+      {/* Fallback In-Page Top Controls Card (when not portaled to layout header) */}
+      {!portalNode && !adminPortalNode && (
         <div className="bg-[#111115] border border-white/10 rounded-2xl p-2.5 sm:px-4 sm:py-3 shadow-xl backdrop-blur-xl">
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2.5 pb-2.5 border-b border-white/10">
             {/* Top Row: Month Navigation + Project Title + Right Controls */}
             <div className="flex items-center justify-between gap-2 w-full">
               {/* Month Navigator */}
@@ -854,12 +1039,7 @@ export default function ContentPlannerCalendar({
           </div>
 
           {/* Compact Micro-Stats Strip (Always Visible, Compact) */}
-          <div className="pt-2 border-t border-white/10 grid grid-cols-2 sm:grid-cols-5 gap-1.5 mt-2.5">
-            <div className="bg-white/5 border border-white/5 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1">
-              <span className="text-gray-400 text-[11px] truncate font-medium">Total</span>
-              <span className="text-xs font-bold text-white shrink-0">{summaryMetrics.total} Items</span>
-            </div>
-
+          <div className="pt-2 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-2.5">
             <div className="bg-emerald-500/[0.05] border border-emerald-500/15 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1">
               <span className="text-emerald-400 text-[11px] truncate font-medium">Shooting</span>
               <span className="text-xs font-bold text-emerald-300 shrink-0">{summaryMetrics.shootingCount} Days</span>
@@ -887,7 +1067,8 @@ export default function ContentPlannerCalendar({
 
       {/* Main View: Calendar vs Timeline */}
       {viewMode === "calendar" ? (
-        <div className="bg-[#111115] border border-white/10 rounded-3xl p-1.5 sm:p-5 shadow-2xl backdrop-blur-xl overflow-hidden">
+        <div className="space-y-3.5">
+          <div className="bg-[#111115] border border-white/10 rounded-3xl p-1.5 sm:p-5 shadow-2xl backdrop-blur-xl overflow-hidden">
           {/* Weekday headers */}
           <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-center text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider">
             <span>Mon</span>
@@ -913,7 +1094,7 @@ export default function ContentPlannerCalendar({
                       setSelectedDayDetail({ dateStr: day.dateStr, items: day.items, holiday: day.holiday });
                     }
                   }}
-                  className={`min-h-[86px] sm:min-h-[120px] md:min-h-[135px] p-1 sm:p-2 rounded-xl sm:rounded-2xl border transition-all cursor-pointer flex flex-col justify-start gap-1 overflow-hidden ${
+                  className={`min-h-[86px] sm:min-h-[120px] md:min-h-[135px] p-1 sm:p-2 rounded-xl sm:rounded-2xl border transition-all cursor-pointer flex flex-col justify-start gap-1 overflow-visible ${
                     day.isCurrentMonth ? "bg-black/40 border-white/5 hover:border-white/20 hover:bg-white/[0.04]" : "bg-black/15 border-white/[0.02] opacity-30"
                   } ${day.isToday ? "ring-2 ring-brand-500/60 bg-brand-500/[0.07]" : ""} ${
                     hasHoliday ? "bg-amber-500/[0.03] border-amber-500/20" : ""
@@ -929,15 +1110,27 @@ export default function ContentPlannerCalendar({
                       {day.dayNumber}
                     </span>
 
-                    {/* Sri Lanka Holiday Tag on Desktop */}
+                    {/* Sri Lanka Holiday Tag */}
                     {hasHoliday && (
-                      <span
-                        className="hidden sm:inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-medium truncate max-w-[85px] border border-amber-500/30"
-                        title={day.holiday}
-                      >
-                        <span className="font-semibold">Holiday:</span>
-                        <span className="truncate">{day.holiday}</span>
-                      </span>
+                      <>
+                        {/* Mobile: Compact holiday pill in top bar so it doesn't shift event strip row alignment */}
+                        <span
+                          className="sm:hidden inline-flex items-center gap-0.5 text-[7px] leading-none px-1 py-0.5 rounded-[4px] bg-amber-500/20 text-amber-300 font-bold truncate max-w-[36px] border border-amber-500/30 shrink-0"
+                          title={`Holiday: ${day.holiday}`}
+                        >
+                          <span className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />
+                          <span className="truncate">{day.holiday}</span>
+                        </span>
+
+                        {/* Desktop Holiday Tag */}
+                        <span
+                          className="hidden sm:inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-medium truncate max-w-[85px] border border-amber-500/30"
+                          title={day.holiday}
+                        >
+                          <span className="font-semibold">Holiday:</span>
+                          <span className="truncate">{day.holiday}</span>
+                        </span>
+                      </>
                     )}
                   </div>
 
@@ -1016,34 +1209,56 @@ export default function ContentPlannerCalendar({
                     )}
                   </div>
 
-                  {/* Mobile View: Event & Holiday Preview Chips (iPhone Calendar Style) */}
-                  <div className="sm:hidden flex flex-col gap-1 w-full min-w-0 flex-1 overflow-hidden pt-0.5">
-                    {/* Holiday Badge on Mobile */}
-                    {hasHoliday && (
-                      <div
-                        className="text-[7.5px] leading-tight px-1 py-0.5 rounded-[4px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/35 truncate flex items-center gap-1 shadow-sm shrink-0"
-                        title={`Holiday: ${day.holiday}`}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                        <span className="truncate">{day.holiday}</span>
-                      </div>
-                    )}
-
-                    {/* Events Preview Chips */}
-                    {day.items.slice(0, hasHoliday ? 2 : 3).map((item) => {
+                  {/* Mobile View: Event Preview Chips & Connected Multi-day Strips */}
+                  <div className="sm:hidden flex flex-col gap-1 w-full min-w-0 flex-1 overflow-visible pt-0.5">
+                    {day.items.slice(0, 3).map((item) => {
                       const stat = STATUS_CONFIG[item.status] || STATUS_CONFIG.planned;
                       const isCompleted = item.status === "completed" || item.status === "approved" || item.status === "published";
 
-                      // Activity styling matching iPhone dark mode calendar chips
-                      let chipTheme = "bg-neutral-900/90 text-neutral-300 border-neutral-700/60";
+                      const isMulti = Boolean(item.end_date && item.end_date > item.start_date);
+                      const colIndex = idx % 7;
+                      const isEventStart = day.dateStr === item.start_date;
+                      const isEventEnd = day.dateStr === item.end_date;
+                      const isRowStart = colIndex === 0;
+                      const isRowEnd = colIndex === 6;
+
+                      const isSegmentStart = !isMulti || isEventStart || isRowStart;
+                      const isSegmentEnd = !isMulti || isEventEnd || isRowEnd;
+                      const isSegmentMiddle = isMulti && !isSegmentStart && !isSegmentEnd;
+
+                      // Solid theme colors to ensure clean continuous strip blending across column gaps
+                      let chipBg = "bg-neutral-900";
+                      let chipText = "text-neutral-300";
+                      let chipBorder = "border-neutral-700/60";
+
                       if (item.activity_type === "shooting") {
-                        chipTheme = "bg-emerald-950/80 text-emerald-300 border-emerald-500/40";
+                        chipBg = "bg-[#062d1f]";
+                        chipText = "text-emerald-300";
+                        chipBorder = "border-emerald-500/50";
                       } else if (item.activity_type === "editing") {
-                        chipTheme = "bg-purple-950/80 text-purple-300 border-purple-500/40";
+                        chipBg = "bg-[#25103a]";
+                        chipText = "text-purple-300";
+                        chipBorder = "border-purple-500/50";
                       } else if (item.activity_type === "boosting") {
-                        chipTheme = "bg-amber-950/80 text-amber-300 border-amber-500/40";
+                        chipBg = "bg-[#2d1b06]";
+                        chipText = "text-amber-300";
+                        chipBorder = "border-amber-500/50";
                       } else if (item.activity_type === "upload") {
-                        chipTheme = "bg-blue-950/80 text-blue-300 border-blue-500/40";
+                        chipBg = "bg-[#0c1f38]";
+                        chipText = "text-blue-300";
+                        chipBorder = "border-blue-500/50";
+                      }
+
+                      // Strip shape and negative margins to link multi-day events across cells
+                      let mobileShapeClasses = "rounded-[4px] border mx-0";
+                      if (isMulti) {
+                        if (isSegmentStart && !isSegmentEnd) {
+                          mobileShapeClasses = "rounded-l-[5px] rounded-r-none border-y border-l border-r-0 mr-[-8px] z-10 relative";
+                        } else if (isSegmentMiddle) {
+                          mobileShapeClasses = "rounded-none border-y border-x-0 ml-[-7px] mr-[-8px] z-10 relative";
+                        } else if (!isSegmentStart && isSegmentEnd) {
+                          mobileShapeClasses = "rounded-r-[5px] rounded-l-none border-y border-r border-l-0 ml-[-7px] z-10 relative";
+                        }
                       }
 
                       return (
@@ -1053,23 +1268,35 @@ export default function ContentPlannerCalendar({
                             e.stopPropagation();
                             setSelectedDayDetail({ dateStr: day.dateStr, items: day.items, holiday: day.holiday });
                           }}
-                          className={`text-[8px] leading-tight px-1 py-0.5 rounded-[4px] font-semibold border flex items-center gap-1 truncate shadow-sm shrink-0 ${chipTheme} ${
+                          className={`h-[18px] text-[8px] leading-tight px-1 py-0.5 font-semibold flex items-center gap-1 shadow-sm shrink-0 ${chipBg} ${chipText} ${chipBorder} ${mobileShapeClasses} ${
                             isCompleted ? "opacity-85" : ""
                           }`}
-                          title={`${item.title} (${stat.label})`}
+                          title={`${item.title} (${stat.label})${isMulti ? ` • ${item.start_date} to ${item.end_date}` : ""}`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${stat.color.replace('text-', 'bg-') || 'bg-current'}`} />
-                          <span className="truncate font-bold text-white/95">
-                            {item.title}
-                          </span>
+                          {isSegmentStart ? (
+                            <>
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${stat.color.replace('text-', 'bg-') || 'bg-current'}`} />
+                              <span className="truncate font-bold text-white/95 leading-none">
+                                {item.title}
+                              </span>
+                            </>
+                          ) : isSegmentMiddle ? (
+                            <span className="text-[7px] font-bold text-white/35 tracking-widest mx-auto leading-none select-none">
+                              •••
+                            </span>
+                          ) : (
+                            <span className="truncate font-bold text-white/90 leading-none pl-0.5">
+                              {item.title}
+                            </span>
+                          )}
                         </div>
                       );
                     })}
 
                     {/* Overflow count if more items exist */}
-                    {day.items.length > (hasHoliday ? 2 : 3) && (
+                    {day.items.length > 3 && (
                       <span className="text-[7.5px] font-bold text-gray-400 pl-0.5 leading-none shrink-0">
-                        +{day.items.length - (hasHoliday ? 2 : 3)} more
+                        +{day.items.length - 3} more
                       </span>
                     )}
                   </div>
@@ -1078,6 +1305,136 @@ export default function ContentPlannerCalendar({
             })}
           </div>
         </div>
+
+        {/* Client-side Mobile View: Today's Plan section in the empty bottom area */}
+        {readOnly && (
+          <div className="sm:hidden space-y-2.5 pb-8">
+            <div className="flex items-center justify-between px-1 pt-1">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
+                </span>
+                <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+                  <span>Today&apos;s Plan</span>
+                  <span className="text-gray-400 font-normal text-xs">({todayFormatted})</span>
+                </h3>
+              </div>
+              {todayHoliday && (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 truncate max-w-[140px]">
+                  {todayHoliday}
+                </span>
+              )}
+            </div>
+
+            {todayPlanItems.length > 0 ? (
+              <div className="space-y-2">
+                {todayPlanItems.map((item) => {
+                  const act = ACTIVITY_TYPES.find((a) => a.id === item.activity_type) || ACTIVITY_TYPES[2];
+                  const stat = STATUS_CONFIG[item.status] || STATUS_CONFIG.planned;
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => {
+                        setSelectedDayDetail({ dateStr: todayDateStr, items: todayPlanItems, holiday: todayHoliday });
+                      }}
+                      className="bg-[#111115] border border-white/10 rounded-2xl p-3.5 space-y-2.5 shadow-lg active:scale-[0.99] transition-all cursor-pointer"
+                    >
+                      {/* Top Row: Title & Status */}
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-sm font-bold text-white tracking-tight leading-snug">
+                            {item.title}
+                          </h4>
+                          {item.notes && (
+                            <div className="text-[11px] text-gray-300 flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3 text-rose-400 shrink-0" />
+                              <span className="truncate">{item.notes}</span>
+                            </div>
+                          )}
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold border shrink-0 ${stat.bg} ${stat.color} ${stat.border}`}>
+                          {stat.label}
+                        </span>
+                      </div>
+
+                      {/* Labels Row: Activity Type, Format, Time, Platforms */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${act.bg} ${act.color} ${act.border}`}>
+                          {act.label}
+                        </span>
+                        {item.format && (
+                          <span className="px-2 py-0.5 rounded-lg text-[10px] bg-white/5 text-gray-300 border border-white/10">
+                            {item.format}
+                          </span>
+                        )}
+                        {item.start_time && (
+                          <span className="text-[11px] text-gray-300 flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-gray-400" />
+                            {formatTimeDisplay(item.start_time)}
+                          </span>
+                        )}
+                        {item.platforms && item.platforms.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-1">
+                            {item.platforms.map((p) => (
+                              <span key={p} className="px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-brand-500/10 text-brand-300 border border-brand-500/20">
+                                {p}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Boosting info if boosting */}
+                      {item.activity_type === "boosting" && (item.boosting_budget || item.boosting_target) && (
+                        <div className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 flex flex-wrap items-center gap-2">
+                          {item.boosting_budget && (
+                            <span className="font-semibold">
+                              Budget: {formatCurrency(Number(item.boosting_budget), item.boosting_currency || "USD")}
+                            </span>
+                          )}
+                          {item.boosting_target && <span>Goal: {item.boosting_target}</span>}
+                        </div>
+                      )}
+
+                      {/* Deliverables URL Button */}
+                      {item.deliverables_url && (
+                        <a
+                          href={item.deliverables_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 border border-brand-500/30 transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Preview Creative / Asset</span>
+                        </a>
+                      )}
+
+                      {/* Caption preview if any */}
+                      {item.caption && (
+                        <div className="p-2 rounded-xl bg-white/[0.03] border border-white/5 text-[11px] text-gray-300">
+                          <span className="font-semibold text-gray-400 block mb-0.5">Caption:</span>
+                          <p className="whitespace-pre-line line-clamp-2">{item.caption}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-[#111115] border border-white/10 rounded-2xl p-5 text-center text-gray-400 space-y-1 shadow-lg">
+                <Sparkles className="w-6 h-6 text-gray-500 mx-auto mb-1" />
+                <p className="text-xs font-semibold text-white">No plans scheduled for today</p>
+                <p className="text-[11px] text-gray-400">
+                  {todayHoliday ? `Enjoy the ${todayHoliday} holiday!` : "Check upcoming dates on your calendar above."}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       ) : (
         /* Timeline / Agenda List View (Mobile-First!) */
         <div className="space-y-4">
@@ -1788,7 +2145,7 @@ export default function ContentPlannerCalendar({
                   Link Billing to Month
                 </h3>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  {activeProject?.name || "Project"} &bull; {activeProject?.client_name || activeProject?.client_company || "Client"} &bull; {monthNames[month]} {year}
+                  {activeProject?.name || "Project"} | {activeProject?.client_name || activeProject?.client_company || "Client"} | {monthNames[month]} {year}
                 </p>
               </div>
               <button
@@ -1821,7 +2178,7 @@ export default function ContentPlannerCalendar({
                     <option value="">(None / No Quotation Linked)</option>
                     {billingQuotationsList.map((q) => (
                       <option key={q.id} value={String(q.id)} className="bg-[#18181f] text-white">
-                        Quotation #{q.id} &bull; {q.client_name || "Quotation"} &bull; LKR {q.amount.toLocaleString()} &bull; {q.status} ({q.date})
+                        Quotation #{q.id} | {q.client_name || "Quotation"} | LKR {q.amount.toLocaleString()} | {q.status} ({q.date})
                       </option>
                     ))}
                   </select>
@@ -1843,7 +2200,7 @@ export default function ContentPlannerCalendar({
                     <option value="">(None / No Invoice Linked)</option>
                     {billingInvoicesList.map((inv) => (
                       <option key={inv.invoice_id} value={inv.invoice_id} className="bg-[#18181f] text-white">
-                        Invoice #{inv.invoice_id} &bull; {inv.project_name || "Invoice"} &bull; {inv.currency} {inv.total.toLocaleString()} &bull; {inv.payment_status} ({inv.date})
+                        Invoice #{inv.invoice_id} | {inv.project_name || "Invoice"} | {inv.currency} {inv.total.toLocaleString()} | {inv.payment_status} ({inv.date})
                       </option>
                     ))}
                   </select>

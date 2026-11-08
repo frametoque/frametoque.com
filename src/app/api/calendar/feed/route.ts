@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import crypto from "node:crypto";
 import sql from "@/lib/db";
-import { getSriLankaHolidays } from "@/app/(dashboard)/admin/actions/workspace";
+import { getSriLankaHolidays, ensureWorkspaceSchema } from "@/app/(dashboard)/admin/actions/workspace";
 import { requireAdminSession } from "@/lib/auth-guard";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +20,7 @@ function escapeICS(str: string): string {
 function formatDateOnly(d: any): string {
   if (!d) return "";
   if (d instanceof Date) {
+    if (isNaN(d.getTime())) return "";
     const y = d.getUTCFullYear();
     const m = String(d.getUTCMonth() + 1).padStart(2, "0");
     const day = String(d.getUTCDate()).padStart(2, "0");
@@ -33,6 +34,7 @@ function getNextDayDateOnly(d: any): string {
   if (!d) return "";
   let dateStr = "";
   if (d instanceof Date) {
+    if (isNaN(d.getTime())) return "";
     const y = d.getUTCFullYear();
     const m = String(d.getUTCMonth() + 1).padStart(2, "0");
     const day = String(d.getUTCDate()).padStart(2, "0");
@@ -55,16 +57,44 @@ function formatTimeICS(dateStr: any, timeStr?: string | null): string {
   return `${cleanDate}T${cleanTime}00`;
 }
 
+function safeIsoDate(d: any, fallback: string): string {
+  try {
+    if (!d) return fallback;
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return fallback;
+    return dt.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  } catch {
+    return fallback;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const token = searchParams.get("token") || searchParams.get("secret");
-    const configuredSecret = process.env.CALENDAR_FEED_SECRET || process.env.CRON_SECRET;
+    const token = (searchParams.get("token") || searchParams.get("secret") || "").trim();
+
+    // Accepted tokens: CALENDAR_FEED_SECRET, CRON_SECRET, or derived HMAC token
+    const validTokens: string[] = [];
+    if (process.env.CALENDAR_FEED_SECRET?.trim()) {
+      validTokens.push(process.env.CALENDAR_FEED_SECRET.trim());
+    }
+    if (process.env.CRON_SECRET?.trim()) {
+      validTokens.push(process.env.CRON_SECRET.trim());
+    }
+    validTokens.push(
+      crypto
+        .createHmac("sha256", process.env.CLERK_SECRET_KEY || "ft-calendar-feed-secret")
+        .update("frametoque-calendar-feed-token")
+        .digest("hex")
+    );
 
     let isAuthorized = false;
-    if (token && configuredSecret && token.length === configuredSecret.length) {
-      if (crypto.timingSafeEqual(Buffer.from(token), Buffer.from(configuredSecret))) {
-        isAuthorized = true;
+    if (token) {
+      for (const valid of validTokens) {
+        if (token.length === valid.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(valid))) {
+          isAuthorized = true;
+          break;
+        }
       }
     }
 
@@ -85,11 +115,16 @@ export async function GET(request: NextRequest) {
     const noHolidays = searchParams.get("noHolidays") === "true";
 
     // 1. Fetch Bookings & Task Reminders
-    const bookings = await sql`
-      SELECT id, title, description, booking_date, start_time, end_time, status, customer_name, customer_phone, location, event_type, created_at
-      FROM admin_bookings
-      WHERE status != 'cancelled'
-    `;
+    let bookings: any[] = [];
+    try {
+      bookings = await sql`
+        SELECT id, title, description, booking_date, start_time, end_time, status, customer_name, customer_phone, location, event_type, created_at
+        FROM admin_bookings
+        WHERE status != 'cancelled'
+      `;
+    } catch (e) {
+      console.warn("Calendar Feed: admin_bookings query skipped:", e);
+    }
 
     // 2. Fetch Domain Renewal / Expiry Reminders
     let domainOrders: any[] = [];
@@ -118,6 +153,7 @@ export async function GET(request: NextRequest) {
     // 4. Fetch Content Planner Events (Shooting Days, Uploads, Editing, Boosting)
     let plannerItems: any[] = [];
     try {
+      await ensureWorkspaceSchema().catch(() => {});
       plannerItems = await sql`
         SELECT cp.*, p.name as project_name, p.client_name, p.client_company
         FROM workspace_content_planner cp
@@ -125,7 +161,17 @@ export async function GET(request: NextRequest) {
         WHERE cp.status != 'cancelled' AND cp.start_date IS NOT NULL
       `;
     } catch (e) {
-      console.warn("Calendar Feed: workspace_content_planner query skipped:", e);
+      console.warn("Calendar Feed: primary workspace_content_planner query failed, trying fallback:", e);
+      try {
+        plannerItems = await sql`
+          SELECT cp.*, p.name as project_name
+          FROM workspace_content_planner cp
+          LEFT JOIN workspace_projects p ON cp.project_id = p.id
+          WHERE cp.status != 'cancelled' AND cp.start_date IS NOT NULL
+        `;
+      } catch (e2) {
+        console.warn("Calendar Feed: workspace_content_planner query skipped:", e2);
+      }
     }
 
     let icsContent = [
@@ -157,6 +203,9 @@ export async function GET(request: NextRequest) {
 
     // Add Bookings & Task Reminders
     bookings.forEach(b => {
+      const startDateOnly = formatDateOnly(b.booking_date);
+      if (!startDateOnly) return;
+
       const isTask = b.event_type === 'task_reminder';
       const typeLabel = isTask ? 'Reminder' : 'Booking';
       const formattedTitle = `Ft. - ${b.title}`;
@@ -170,7 +219,7 @@ export async function GET(request: NextRequest) {
         b.customer_phone ? `Phone: ${b.customer_phone}` : ""
       ].filter(Boolean).join("\n");
 
-      const eventLastMod = b.created_at ? new Date(b.created_at).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z" : nowStr;
+      const eventLastMod = safeIsoDate(b.created_at, nowStr);
 
       icsContent.push("BEGIN:VEVENT");
       icsContent.push(`UID:${uid}`);
@@ -179,7 +228,6 @@ export async function GET(request: NextRequest) {
       icsContent.push("SEQUENCE:0");
 
       if (isAllDay) {
-        const startDateOnly = formatDateOnly(b.booking_date);
         const endDateOnly = getNextDayDateOnly(b.booking_date);
         icsContent.push(`DTSTART;VALUE=DATE:${startDateOnly}`);
         icsContent.push(`DTEND;VALUE=DATE:${endDateOnly}`);
@@ -190,7 +238,7 @@ export async function GET(request: NextRequest) {
           endICS = formatTimeICS(b.booking_date, b.end_time);
         } else {
           const [h, m] = (b.start_time || "09:00").split(":");
-          const hr = (parseInt(h) + 1).toString().padStart(2, "0");
+          const hr = (parseInt(h, 10) + 1).toString().padStart(2, "0");
           endICS = formatTimeICS(b.booking_date, `${hr}:${m}`);
         }
         icsContent.push(`DTSTART;TZID=Asia/Colombo:${startICS}`);
@@ -249,9 +297,13 @@ export async function GET(request: NextRequest) {
         boosting: "Boosting",
         work: "Work",
       };
-      const label = typeLabels[cp.activity_type] || "Planner";
-      const plannerPrefix = cp.project_name ? `${cp.project_name}: ` : "";
-      const formattedTitle = `Ft. - ${plannerPrefix}[${label}] ${cp.title}`;
+      const label = typeLabels[cp.activity_type] || (cp.activity_type ? cp.activity_type.charAt(0).toUpperCase() + cp.activity_type.slice(1) : "Planner");
+      
+      const clientOrProject = (cp.project_name || cp.client_company || cp.client_name || "").trim();
+      const formattedTitle = clientOrProject 
+        ? `Ft. - ${clientOrProject} - ${cp.title} [${label}]`
+        : `Ft. - ${cp.title} [${label}]`;
+
       const uid = `content-planner-${cp.id}@frametoque.com`;
 
       const descriptionLines = [
@@ -267,7 +319,10 @@ export async function GET(request: NextRequest) {
         cp.notes ? `Notes: ${cp.notes}` : "",
       ].filter(Boolean).join("\n");
 
-      const eventLastMod = cp.created_at ? new Date(cp.created_at).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z" : nowStr;
+      const eventLastMod = safeIsoDate(cp.created_at, nowStr);
+
+      const startDateOnly = formatDateOnly(cp.start_date);
+      if (!startDateOnly) return;
 
       icsContent.push("BEGIN:VEVENT");
       icsContent.push(`UID:${uid}`);
@@ -277,7 +332,6 @@ export async function GET(request: NextRequest) {
 
       const isAllDay = !cp.start_time;
       if (isAllDay) {
-        const startDateOnly = formatDateOnly(cp.start_date);
         const endDateOnly = cp.end_date ? getNextDayDateOnly(cp.end_date) : getNextDayDateOnly(cp.start_date);
         icsContent.push(`DTSTART;VALUE=DATE:${startDateOnly}`);
         icsContent.push(`DTEND;VALUE=DATE:${endDateOnly}`);

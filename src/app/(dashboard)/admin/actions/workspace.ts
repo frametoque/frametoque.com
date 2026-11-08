@@ -1,4 +1,5 @@
 "use server";
+import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { clerkClient, auth } from "@clerk/nextjs/server";
 import { requireAdminSession, requireUserSession } from "@/lib/auth-guard";
@@ -455,11 +456,12 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
             prefix = 'Work';
           }
 
-          const plannerName = cp.project_name ? `${cp.project_name}: ` : '';
+          const clientOrProject = (cp.project_name || '').trim();
+          const title = clientOrProject ? `${clientOrProject} - ${cp.title} [${prefix}]` : `${cp.title} [${prefix}]`;
 
           events.push({
             id: `cp-${cp.id}`,
-            title: `${plannerName}[${prefix}] ${cp.title}`,
+            title,
             type: cp.activity_type || 'upload',
             date: formattedDate,
             time: cp.start_time || null,
@@ -476,6 +478,20 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
   ]);
 
   return events;
+}
+
+export async function getCalendarFeedToken(): Promise<string> {
+  await requireAdminSession();
+  if (process.env.CALENDAR_FEED_SECRET && process.env.CALENDAR_FEED_SECRET.trim()) {
+    return process.env.CALENDAR_FEED_SECRET.trim();
+  }
+  if (process.env.CRON_SECRET && process.env.CRON_SECRET.trim()) {
+    return process.env.CRON_SECRET.trim();
+  }
+  return crypto
+    .createHmac("sha256", process.env.CLERK_SECRET_KEY || "ft-calendar-feed-secret")
+    .update("frametoque-calendar-feed-token")
+    .digest("hex");
 }
 
 // Built-in Sri Lanka holidays (Mercantile, Public & Bank Holidays + Poya days)
@@ -1162,7 +1178,7 @@ export async function getBillingOptionsForMonth(projectId?: number): Promise<{
   await requireAdminSession();
 
   try {
-    let clientId: number | null = null;
+    let clientId: any = null;
     let clientEmail: string | null = null;
     let clientName: string | null = null;
     let clientCompany: string | null = null;
@@ -1176,7 +1192,7 @@ export async function getBillingOptionsForMonth(projectId?: number): Promise<{
       `;
       if (pRows.length > 0) {
         const p = pRows[0];
-        clientId = p.client_id ? Number(p.client_id) : null;
+        clientId = p.client_id || null;
         clientEmail = p.client_email ? p.client_email.trim().toLowerCase() : null;
         clientName = p.client_name ? p.client_name.trim().toLowerCase() : null;
         clientCompany = p.client_company ? p.client_company.trim().toLowerCase() : null;
@@ -1185,71 +1201,63 @@ export async function getBillingOptionsForMonth(projectId?: number): Promise<{
     }
 
     if (clientId) {
-      const cRows = await sql`SELECT id, email, full_name, company_name FROM admin_clients WHERE id = ${clientId}`;
-      if (cRows.length > 0) {
-        if (!clientEmail && cRows[0].email) clientEmail = cRows[0].email.trim().toLowerCase();
-        if (!clientName && cRows[0].full_name) clientName = cRows[0].full_name.trim().toLowerCase();
-        if (!clientCompany && cRows[0].company_name) clientCompany = cRows[0].company_name.trim().toLowerCase();
+      try {
+        const cRows = await sql`SELECT id, email, full_name, company FROM admin_clients WHERE id::text = ${String(clientId)}`;
+        if (cRows.length > 0) {
+          if (!clientEmail && cRows[0].email) clientEmail = cRows[0].email.trim().toLowerCase();
+          if (!clientName && cRows[0].full_name) clientName = cRows[0].full_name.trim().toLowerCase();
+          if (!clientCompany && cRows[0].company) clientCompany = cRows[0].company.trim().toLowerCase();
+        }
+      } catch (err) {
+        console.warn("Could not query admin_clients by clientId:", err);
       }
     } else if (clientEmail) {
-      const cRows = await sql`SELECT id, email, full_name, company_name FROM admin_clients WHERE LOWER(email) = ${clientEmail}`;
-      if (cRows.length > 0) {
-        clientId = Number(cRows[0].id);
-        if (!clientName && cRows[0].full_name) clientName = cRows[0].full_name.trim().toLowerCase();
-        if (!clientCompany && cRows[0].company_name) clientCompany = cRows[0].company_name.trim().toLowerCase();
+      try {
+        const cRows = await sql`SELECT id, email, full_name, company FROM admin_clients WHERE LOWER(email) = ${clientEmail}`;
+        if (cRows.length > 0) {
+          clientId = cRows[0].id;
+          if (!clientName && cRows[0].full_name) clientName = cRows[0].full_name.trim().toLowerCase();
+          if (!clientCompany && cRows[0].company) clientCompany = cRows[0].company.trim().toLowerCase();
+        }
+      } catch (err) {
+        console.warn("Could not query admin_clients by email:", err);
       }
     }
 
-    // If client is still not directly mapped, check company name / client name / project name against admin_clients
+    // If client is still not directly mapped, check company / client name / project name against admin_clients
     if (!clientId) {
       const searchTerms = [clientCompany, clientName, projectName].filter(Boolean) as string[];
       for (const term of searchTerms) {
-        const cRows = await sql`
-          SELECT id, email, full_name, company_name 
-          FROM admin_clients 
-          WHERE LOWER(company_name) = ${term} 
-             OR LOWER(full_name) = ${term}
-             OR (${term.length >= 3} AND (
-               LOWER(company_name) ILIKE ${`%${term}%`} 
-               OR LOWER(full_name) ILIKE ${`%${term}%`}
-             ))
-          LIMIT 1
-        `;
-        if (cRows.length > 0) {
-          clientId = Number(cRows[0].id);
-          if (!clientEmail && cRows[0].email) clientEmail = cRows[0].email.trim().toLowerCase();
-          if (!clientName && cRows[0].full_name) clientName = cRows[0].full_name.trim().toLowerCase();
-          if (!clientCompany && cRows[0].company_name) clientCompany = cRows[0].company_name.trim().toLowerCase();
-          break;
+        try {
+          const cRows = await sql`
+            SELECT id, email, full_name, company 
+            FROM admin_clients 
+            WHERE LOWER(company) = ${term} 
+               OR LOWER(full_name) = ${term}
+               OR (${term.length >= 3} AND (
+                 LOWER(company) ILIKE ${`%${term}%`} 
+                 OR LOWER(full_name) ILIKE ${`%${term}%`}
+               ))
+            LIMIT 1
+          `;
+          if (cRows.length > 0) {
+            clientId = cRows[0].id;
+            if (!clientEmail && cRows[0].email) clientEmail = cRows[0].email.trim().toLowerCase();
+            if (!clientName && cRows[0].full_name) clientName = cRows[0].full_name.trim().toLowerCase();
+            if (!clientCompany && cRows[0].company) clientCompany = cRows[0].company.trim().toLowerCase();
+            break;
+          }
+        } catch (err) {
+          console.warn("Could not search admin_clients terms:", err);
         }
       }
     }
 
     let invRows: any[] = [];
     let qRows: any[] = [];
+    const strClientId = clientId ? String(clientId) : null;
 
-    const hasClientFilter = Boolean(clientId || clientEmail || clientCompany || clientName);
-
-    if (hasClientFilter) {
-      invRows = await sql`
-        SELECT 
-          i.invoice_id, 
-          COALESCE(NULLIF(i.project_name, ''), NULLIF(c.full_name, ''), i.user_email) as project_name, 
-          i.total, 
-          i.currency, 
-          i.payment_status, 
-          i.date
-        FROM invoices i
-        LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
-        WHERE 
-          (${clientId || null}::integer IS NOT NULL AND c.id = ${clientId || null})
-          OR (${clientEmail || null}::text IS NOT NULL AND LOWER(i.user_email) = ${clientEmail || null})
-          OR (${clientCompany || null}::text IS NOT NULL AND (LOWER(i.legal_name) = ${clientCompany || null} OR LOWER(c.company_name) = ${clientCompany || null}))
-          OR (${clientName || null}::text IS NOT NULL AND (LOWER(c.full_name) = ${clientName || null} OR LOWER(i.project_name) = ${clientName || null}))
-        ORDER BY i.date DESC, i.invoice_id DESC
-        LIMIT 150
-      `;
-
+    try {
       qRows = await sql`
         SELECT 
           q.id, 
@@ -1257,17 +1265,64 @@ export async function getBillingOptionsForMonth(projectId?: number): Promise<{
           q.description,
           q.amount, 
           q.status, 
-          q.date
+          q.date,
+          CASE 
+            WHEN (${strClientId || null}::text IS NOT NULL AND (q.client_id::text = ${strClientId || null}::text OR c.id::text = ${strClientId || null}::text)) THEN 1
+            WHEN (${clientEmail || null}::text IS NOT NULL AND (LOWER(q.client_email) = ${clientEmail || null} OR LOWER(c.email) = ${clientEmail || null})) THEN 1
+            WHEN (${clientCompany || null}::text IS NOT NULL AND (LOWER(q.legal_name) = ${clientCompany || null} OR LOWER(c.company) = ${clientCompany || null})) THEN 1
+            WHEN (${clientName || null}::text IS NOT NULL AND (LOWER(q.client_name) = ${clientName || null} OR LOWER(c.full_name) = ${clientName || null})) THEN 1
+            WHEN (${projectName || null}::text IS NOT NULL AND (LOWER(q.description) ILIKE ${`%${projectName || ''}%`} OR LOWER(q.legal_name) ILIKE ${`%${projectName || ''}%`})) THEN 1
+            ELSE 0 
+          END as is_match
         FROM admin_quotations q
-        LEFT JOIN admin_clients c ON q.client_id = c.id
-        WHERE 
-          (${clientId || null}::integer IS NOT NULL AND (q.client_id = ${clientId || null} OR c.id = ${clientId || null}))
-          OR (${clientEmail || null}::text IS NOT NULL AND (LOWER(q.client_email) = ${clientEmail || null} OR LOWER(c.email) = ${clientEmail || null}))
-          OR (${clientCompany || null}::text IS NOT NULL AND (LOWER(q.legal_name) = ${clientCompany || null} OR LOWER(c.company_name) = ${clientCompany || null}))
-          OR (${clientName || null}::text IS NOT NULL AND (LOWER(q.client_name) = ${clientName || null} OR LOWER(c.full_name) = ${clientName || null}))
-        ORDER BY q.date DESC, q.id DESC
-        LIMIT 150
+        LEFT JOIN admin_clients c ON q.client_id::text = c.id::text
+        ORDER BY is_match DESC, q.date DESC, q.id DESC
+        LIMIT 100
       `;
+    } catch (err) {
+      console.warn("Could not query admin_quotations with join:", err);
+      try {
+        qRows = await sql`
+          SELECT id, description, amount, status, date, client_name 
+          FROM admin_quotations 
+          ORDER BY date DESC, id DESC 
+          LIMIT 50
+        `;
+      } catch {}
+    }
+
+    try {
+      invRows = await sql`
+        SELECT 
+          i.invoice_id, 
+          COALESCE(NULLIF(i.project_name, ''), NULLIF(c.full_name, ''), i.user_email) as project_name, 
+          i.total, 
+          i.currency, 
+          i.payment_status, 
+          i.date,
+          CASE 
+            WHEN (${strClientId || null}::text IS NOT NULL AND (i.client_id::text = ${strClientId || null}::text OR c.id::text = ${strClientId || null}::text)) THEN 1
+            WHEN (${clientEmail || null}::text IS NOT NULL AND (LOWER(i.user_email) = ${clientEmail || null} OR LOWER(c.email) = ${clientEmail || null})) THEN 1
+            WHEN (${clientCompany || null}::text IS NOT NULL AND (LOWER(i.legal_name) = ${clientCompany || null} OR LOWER(c.company) = ${clientCompany || null})) THEN 1
+            WHEN (${clientName || null}::text IS NOT NULL AND (LOWER(c.full_name) = ${clientName || null} OR LOWER(i.project_name) = ${clientName || null})) THEN 1
+            WHEN (${projectName || null}::text IS NOT NULL AND (LOWER(i.project_name) ILIKE ${`%${projectName || ''}%`} OR LOWER(i.legal_name) ILIKE ${`%${projectName || ''}%`})) THEN 1
+            ELSE 0 
+          END as is_match
+        FROM invoices i
+        LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email) OR i.client_id::text = c.id::text
+        ORDER BY is_match DESC, i.date DESC, i.invoice_id DESC
+        LIMIT 100
+      `;
+    } catch (err) {
+      console.warn("Could not query invoices with join:", err);
+      try {
+        invRows = await sql`
+          SELECT invoice_id, project_name, total, currency, payment_status, date 
+          FROM invoices 
+          ORDER BY date DESC, invoice_id DESC 
+          LIMIT 50
+        `;
+      } catch {}
     }
 
     // Also include any invoice or quotation currently linked to this project
@@ -1279,7 +1334,7 @@ export async function getBillingOptionsForMonth(projectId?: number): Promise<{
           WHERE project_id = ${projectId} AND (invoice_id IS NOT NULL OR quotation_id IS NOT NULL)
         `;
         for (const link of existingLinks) {
-          if (link.invoice_id && !invRows.some((inv: any) => inv.invoice_id === link.invoice_id)) {
+          if (link.invoice_id && !invRows.some((inv: any) => String(inv.invoice_id) === String(link.invoice_id))) {
             const extraInv = await sql`
               SELECT 
                 i.invoice_id, 
@@ -1289,7 +1344,7 @@ export async function getBillingOptionsForMonth(projectId?: number): Promise<{
                 i.payment_status, 
                 i.date
               FROM invoices i
-              LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email)
+              LEFT JOIN admin_clients c ON LOWER(i.user_email) = LOWER(c.email) OR i.client_id::text = c.id::text
               WHERE i.invoice_id = ${link.invoice_id}
             `;
             if (extraInv.length > 0) invRows.unshift(extraInv[0]);
@@ -1304,13 +1359,15 @@ export async function getBillingOptionsForMonth(projectId?: number): Promise<{
                 q.status, 
                 q.date
               FROM admin_quotations q
-              LEFT JOIN admin_clients c ON q.client_id = c.id
+              LEFT JOIN admin_clients c ON q.client_id::text = c.id::text
               WHERE q.id = ${parseInt(link.quotation_id)}
             `;
             if (extraQ.length > 0) qRows.unshift(extraQ[0]);
           }
         }
-      } catch {}
+      } catch (err) {
+        console.warn("Could not query existingLinks:", err);
+      }
     }
 
     return {

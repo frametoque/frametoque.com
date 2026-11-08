@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { 
   getBookings, createBooking, updateBooking, deleteBooking, getCalendarEvents,
-  getSriLankaHolidays, BookingData, CalendarEvent 
+  getSriLankaHolidays, getCalendarFeedToken, BookingData, CalendarEvent 
 } from "../actions/workspace";
 
 const statusStyles: Record<string, string> = {
@@ -43,9 +43,22 @@ export default function CalendarTab() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setCalendarUrl(`${window.location.origin}/api/calendar/feed`);
+      getCalendarFeedToken()
+        .then((token) => {
+          setCalendarUrl(`${window.location.origin}/api/calendar/feed?token=${token}`);
+        })
+        .catch(() => {
+          setCalendarUrl(`${window.location.origin}/api/calendar/feed`);
+        });
     }
   }, []);
+
+  const getFullFeedUrl = (protocol: "https" | "webcal" = "https") => {
+    if (!calendarUrl) return "";
+    const base = protocol === "webcal" ? calendarUrl.replace(/^https?:/, "webcal:") : calendarUrl;
+    const separator = base.includes("?") ? "&" : "?";
+    return `${base}${separator}noHolidays=${!includeHolidays}`;
+  };
 
   // Form state
   const [formTitle, setFormTitle] = useState("");
@@ -882,7 +895,7 @@ export default function CalendarTab() {
               {/* Feed Actions */}
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <a
-                  href={`${calendarUrl ? calendarUrl.replace(/^https?:/, "webcal:") : ""}?noHolidays=${!includeHolidays}`}
+                  href={getFullFeedUrl("webcal")}
                   className="flex items-center justify-center gap-2 w-full py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-bold text-xs transition-colors text-center cursor-pointer"
                 >
                   <svg className="w-4 h-4 mr-1" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -894,7 +907,7 @@ export default function CalendarTab() {
                 </a>
 
                 <a
-                  href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(`${calendarUrl ? calendarUrl.replace(/^https?:/, "webcal:") : ""}?noHolidays=${!includeHolidays}`)}`}
+                  href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(getFullFeedUrl("webcal"))}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-bold text-xs transition-colors text-center cursor-pointer"
@@ -915,12 +928,12 @@ export default function CalendarTab() {
                   <input 
                     type="text" 
                     readOnly
-                    value={`${calendarUrl}?noHolidays=${!includeHolidays}`}
+                    value={getFullFeedUrl("https")}
                     className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none select-all" 
                   />
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`${calendarUrl}?noHolidays=${!includeHolidays}`);
+                      navigator.clipboard.writeText(getFullFeedUrl("https"));
                       alert("Calendar Feed URL copied to clipboard!");
                     }}
                     className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl text-xs font-semibold cursor-pointer transition-all"

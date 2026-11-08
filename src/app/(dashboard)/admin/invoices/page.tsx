@@ -19,9 +19,24 @@ const formatLKR = (amount: number) => {
 };
 
 export default function InvoicesPage() {
-  const [activeFilter, setActiveFilter] = useState("All");
-  const [searchTerm, setSearchTerm] = useState("");
+  const searchParams = useSearchParams();
+  const urlStatus = searchParams.get('status');
+  const urlSearch = searchParams.get('client') || searchParams.get('search');
+  const [activeFilter, setActiveFilter] = useState(urlStatus || "All");
+  const [searchTerm, setSearchTerm] = useState(urlSearch || "");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const s = searchParams.get('status');
+    const q = searchParams.get('client') || searchParams.get('search');
+    if (s && filters.map(f => f.toLowerCase()).includes(s.toLowerCase())) {
+      const match = filters.find(f => f.toLowerCase() === s.toLowerCase());
+      if (match) setActiveFilter(match);
+    }
+    if (q !== null && q !== undefined) {
+      setSearchTerm(q);
+    }
+  }, [searchParams]);
 
   const handleDownloadPDF = async (row: any) => {
     setDownloadingId(row.id);
@@ -312,7 +327,6 @@ export default function InvoicesPage() {
 
   const [extraItems, setExtraItems] = useState<any[]>([]);
   
-  const searchParams = useSearchParams();
   const isOptimisticNew = searchParams.get('optimistic') === 'new';
   const isOptimisticUpdate = searchParams.get('optimistic') === 'update';
   const updateId = searchParams.get('id');

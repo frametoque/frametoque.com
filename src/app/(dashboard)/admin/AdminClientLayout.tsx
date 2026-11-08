@@ -381,42 +381,24 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
       <div className="w-full flex items-center justify-between px-4 sm:px-6 lg:px-8">
         
         {/* Left Side: Title & Date Selector */}
-        <div className="flex items-center gap-6">
+        <div className={`flex items-center ${isWorkspaceProject ? "gap-2 sm:gap-3" : "gap-6"} min-w-0 flex-nowrap flex-1 overflow-x-auto no-scrollbar py-1`}>
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="lg:hidden p-2 hover:bg-white/10 rounded-3xl"
+            className="lg:hidden p-2 hover:bg-white/10 rounded-3xl shrink-0"
           >
             <Menu className="w-6 h-6" />
           </button>
           {/* Page Title / Project Header */}
           {isWorkspaceProject ? (
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap min-w-0">
-              <Link
-                href="/admin/workspace"
-                className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-gray-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                <span>Projects</span>
-              </Link>
-              <span className="text-gray-600">/</span>
+            <div className="flex items-center gap-2 sm:gap-2.5 flex-nowrap shrink-0">
               <span
-                className="text-sm sm:text-base font-bold text-white tracking-tight truncate max-w-[110px] xs:max-w-[150px] sm:max-w-xs md:max-w-md"
+                className="text-sm sm:text-base font-bold text-white tracking-tight truncate max-w-[120px] xs:max-w-[150px] sm:max-w-xs shrink-0"
                 title={workspaceProjectInfo?.name || "Project"}
               >
-                <span className="sm:hidden">
-                  {workspaceProjectInfo?.name && workspaceProjectInfo.name.length > 11
-                    ? `${workspaceProjectInfo.name.slice(0, 10)}…`
-                    : workspaceProjectInfo?.name || "Project"}
-                </span>
-                <span className="hidden sm:inline">
-                  {workspaceProjectInfo?.name || "Project"}
-                </span>
+                {workspaceProjectInfo?.name || "Project"}
               </span>
-              {workspaceProjectInfo?.client && (
-                <span className="text-[11px] font-medium text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 rounded-full shrink-0 hidden md:inline-flex">
-                  Client: {workspaceProjectInfo.client}
-                </span>
-              )}
+              {/* Topbar portal target for Content Planner controls */}
+              <div id="admin-planner-topbar-portal" className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-nowrap" />
             </div>
           ) : (
             <h1 className="text-2xl font-bold text-white tracking-tight">
@@ -428,7 +410,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
           {hideSelector && (
             <>
               {hasCustomAction && (
-                <span className="hidden sm:block w-[1px] h-5 bg-white/15" />
+                <span className="hidden sm:block w-[1px] h-5 bg-white/15 shrink-0" />
               )}
 
               {pathname === "/admin/social-media/new" && (
@@ -471,34 +453,22 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   </div>
               ) : isWorkspaceProject ? (
                 workspaceProjectInfo?.hasPlanner ? (
-                  <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 shrink-0">
+                  workspaceProjectTab === "tasks" ? (
                     <button
+                      type="button"
                       onClick={() => {
                         window.dispatchEvent(new CustomEvent("workspace-project:set-tab", { detail: "planner" }));
                         setWorkspaceProjectTab("planner");
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                        workspaceProjectTab === "planner" ? "bg-white text-black shadow font-bold" : "text-gray-400 hover:text-white"
-                      }`}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/15 hover:bg-brand-600/25 text-brand-300 border border-brand-500/30 rounded-xl font-semibold transition-colors cursor-pointer text-xs whitespace-nowrap"
+                      title="Switch back to Monthly Content Planner"
                     >
                       <Calendar className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Monthly Content Planner</span>
-                      <span className="sm:hidden">Planner</span>
+                      <span>Monthly Content Planner</span>
                     </button>
-                    <button
-                      onClick={() => {
-                        window.dispatchEvent(new CustomEvent("workspace-project:set-tab", { detail: "tasks" }));
-                        setWorkspaceProjectTab("tasks");
-                      }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                        workspaceProjectTab === "tasks" ? "bg-white text-black shadow font-bold" : "text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      <LayoutList className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Tasks & Moodboard</span>
-                      <span className="sm:hidden">Moodboard</span>
-                    </button>
-                  </div>
+                  ) : (
+                    <div id="admin-planner-stats-portal" className="flex items-center gap-2 shrink-0" />
+                  )
                 ) : null
               ) : isWorkspace ? (
                 <div className="flex items-center gap-2">
@@ -634,9 +604,9 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
         </div>
 
         {/* Right Side: System Stats */}
-        <div className="hidden xl:flex items-center gap-5 text-sm text-gray-400">
-          {/* Live Visitors Status - Show only if > 0 */}
-          {activeVisitors > 0 && (
+        <div className="hidden xl:flex items-center gap-4 text-sm text-gray-400 shrink-0 whitespace-nowrap pl-2">
+          {/* Live Visitors Status - Show only if > 0 and not in workspace project */}
+          {!isWorkspaceProject && activeVisitors > 0 && (
             <>
               <div className="flex items-center gap-2 text-gray-300">
                 <span className="relative flex h-2 w-2">
@@ -652,89 +622,96 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
             </>
           )}
 
-          {/* Current Time */}
-          <div className="flex items-center gap-1.5 text-gray-300">
-            <Clock className="w-4 h-4 text-gray-400" />
-            <span className="font-medium tabular-nums text-sm">{currentTime || "Loading..."}</span>
-          </div>
-
-          <span className="w-1 h-1 rounded-full bg-white/20" />
-
-          {/* Current Date & Upcoming Events Dropdown */}
-          <div className="relative group flex items-center gap-1.5 cursor-pointer text-gray-300 hover:text-white transition-colors">
-            <div className="relative flex items-center gap-1.5">
-              <div className="relative">
-                <Calendar className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
-                {upcomingEvents.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand-500 rounded-full border border-black"></span>
-                )}
+          {/* Current Time - Only when not in workspace project to keep project topbar clean and uncrowded */}
+          {!isWorkspaceProject && (
+            <>
+              <div className="flex items-center gap-1.5 text-gray-300">
+                <Clock className="w-4 h-4 text-gray-400" />
+                <span className="font-medium tabular-nums text-sm">{currentTime || "Loading..."}</span>
               </div>
-              <span className="font-medium text-sm">{currentDate || "Loading..."}</span>
-            </div>
+              <span className="w-1 h-1 rounded-full bg-white/20" />
+            </>
+          )}
 
-            <div className="absolute right-0 top-full mt-2 w-80 bg-[#0c0c0e] border border-white/10 rounded-3xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 invisible scale-95 group-hover:opacity-100 group-hover:visible group-hover:scale-100 transition-all duration-300 z-50 pointer-events-none group-hover:pointer-events-auto before:absolute before:-top-3 before:left-0 before:right-0 before:h-3">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
-                <h4 className="text-sm font-bold text-white">Upcoming Events</h4>
-                <span className="px-2 py-0.5 text-[10px] font-semibold bg-brand-500/10 border border-brand-500/20 text-brand-400 rounded-full">
-                  {upcomingEvents.length} Pending
-                </span>
-              </div>
-              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-                {upcomingEvents.length === 0 ? (
-                  <p className="text-xs text-gray-500 text-center py-4">No upcoming events</p>
-                ) : (
-                  upcomingEvents.map((ev: any) => {
-                    let pillStyle = "bg-brand-500/10 text-brand-400 border-brand-500/20";
-                    let label = "Upcoming";
-                    const today = new Date(); today.setHours(0,0,0,0);
-                    const eventDate = new Date(ev.date); eventDate.setHours(0,0,0,0);
-                    const diffDays = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                    
-                    if (diffDays === 0) { pillStyle = "bg-green-500/10 text-green-400 border-green-500/20"; label = "Today"; }
-                    else if (diffDays === 1) { pillStyle = "bg-amber-500/10 text-amber-400 border-amber-500/20"; label = "Tomorrow"; }
-                    else if (diffDays > 1) { label = diffDays + " days left"; }
-                    else { pillStyle = "bg-gray-500/10 text-gray-400 border-gray-500/20"; label = "Past"; }
+          {/* Current Date & Upcoming Events Dropdown - Only when not in workspace project */}
+          {!isWorkspaceProject && (
+            <>
+              <div className="relative group flex items-center gap-1.5 cursor-pointer text-gray-300 hover:text-white transition-colors">
+                <div className="relative flex items-center gap-1.5">
+                  <div className="relative">
+                    <Calendar className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
+                    {upcomingEvents.length > 0 && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand-500 rounded-full border border-black"></span>
+                    )}
+                  </div>
+                  <span className="font-medium text-sm">{currentDate || "Loading..."}</span>
+                </div>
 
-                    return (
-                      <div key={ev.id} className="bg-white/5 border border-white/5 rounded-2xl p-3 hover:bg-white/10 transition-colors">
-                        <div className="flex justify-between items-start gap-2 mb-1">
-                          <span className="font-semibold text-white text-xs truncate">{ev.title}</span>
-                          <span className={"text-[9px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 " + pillStyle}>{label}</span>
-                        </div>
-                        <div className="flex justify-between items-end">
-                          <div className="text-[10px] text-gray-400 flex flex-col gap-0.5">
-                            <span>{ev.date} {ev.time}</span>
-                            {ev.location && <span className="text-brand-400 truncate max-w-[150px]">{ev.location}</span>}
-                          </div>
-                          {(() => {
-                            const forecast = bookingForecasts.find(bf => bf.title === ev.title && bf.rawDate === ev.date);
-                            if (forecast && forecast.weather) {
-                              return (
-                                <div className="flex flex-col items-end shrink-0 pl-2 border-l border-white/10">
-                                  <div className="flex items-center gap-1 mt-0.5" title={forecast.weather.condition}>
-                                    <img src={forecast.weather.iconUrl} alt={forecast.weather.condition} className="w-6 h-6 object-contain" />
-                                    <span className="text-[10px] text-gray-400">{forecast.weather.tempMax}</span>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="flex items-center gap-1 justify-end text-blue-400">
-                                      <Droplets className="w-3.5 h-3.5" />
-                                      <span className="text-xs font-bold">{forecast.weather.precipitation}</span>
+                <div className="absolute right-0 top-full mt-2 w-80 bg-[#0c0c0e] border border-white/10 rounded-3xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 invisible scale-95 group-hover:opacity-100 group-hover:visible group-hover:scale-100 transition-all duration-300 z-50 pointer-events-none group-hover:pointer-events-auto before:absolute before:-top-3 before:left-0 before:right-0 before:h-3">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
+                    <h4 className="text-sm font-bold text-white">Upcoming Events</h4>
+                    <span className="px-2 py-0.5 text-[10px] font-semibold bg-brand-500/10 border border-brand-500/20 text-brand-400 rounded-full">
+                      {upcomingEvents.length} Pending
+                    </span>
+                  </div>
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                    {upcomingEvents.length === 0 ? (
+                      <p className="text-xs text-gray-500 text-center py-4">No upcoming events</p>
+                    ) : (
+                      upcomingEvents.map((ev: any) => {
+                        let pillStyle = "bg-brand-500/10 text-brand-400 border-brand-500/20";
+                        let label = "Upcoming";
+                        const today = new Date(); today.setHours(0,0,0,0);
+                        const eventDate = new Date(ev.date); eventDate.setHours(0,0,0,0);
+                        const diffDays = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                        
+                        if (diffDays === 0) { pillStyle = "bg-green-500/10 text-green-400 border-green-500/20"; label = "Today"; }
+                        else if (diffDays === 1) { pillStyle = "bg-amber-500/10 text-amber-400 border-amber-500/20"; label = "Tomorrow"; }
+                        else if (diffDays > 1) { label = diffDays + " days left"; }
+                        else { pillStyle = "bg-gray-500/10 text-gray-400 border-gray-500/20"; label = "Past"; }
+
+                        return (
+                          <div key={ev.id} className="bg-white/5 border border-white/5 rounded-2xl p-3 hover:bg-white/10 transition-colors">
+                            <div className="flex justify-between items-start gap-2 mb-1">
+                              <span className="font-semibold text-white text-xs truncate">{ev.title}</span>
+                              <span className={"text-[9px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 " + pillStyle}>{label}</span>
+                            </div>
+                            <div className="flex justify-between items-end">
+                              <div className="text-[10px] text-gray-400 flex flex-col gap-0.5">
+                                <span>{ev.date} {ev.time}</span>
+                                {ev.location && <span className="text-brand-400 truncate max-w-[150px]">{ev.location}</span>}
+                              </div>
+                              {(() => {
+                                const forecast = bookingForecasts.find(bf => bf.title === ev.title && bf.rawDate === ev.date);
+                                if (forecast && forecast.weather) {
+                                  return (
+                                    <div className="flex flex-col items-end shrink-0 pl-2 border-l border-white/10">
+                                      <div className="flex items-center gap-1 mt-0.5" title={forecast.weather.condition}>
+                                        <img src={forecast.weather.iconUrl} alt={forecast.weather.condition} className="w-6 h-6 object-contain" />
+                                        <span className="text-[10px] text-gray-400">{forecast.weather.tempMax}</span>
+                                      </div>
+                                      <div className="text-right">
+                                        <div className="flex items-center gap-1 justify-end text-blue-400">
+                                          <Droplets className="w-3.5 h-3.5" />
+                                          <span className="text-xs font-bold">{forecast.weather.precipitation}</span>
+                                        </div>
+                                      </div>
                                     </div>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            return null;
-                          })()}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-          <span className="w-1 h-1 rounded-full bg-white/20" />
+              <span className="w-1 h-1 rounded-full bg-white/20" />
+            </>
+          )}
           <div className="flex items-center gap-1.5">
             <Link href="/admin/system-logs" className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-white" title="System Logs">
               <Terminal className="w-4 h-4" />

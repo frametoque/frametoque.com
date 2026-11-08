@@ -356,34 +356,22 @@ export default function ProjectsTab() {
               <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                 <span>{proj.name}</span>
               </h2>
-              {proj.client_name && (
-                <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20">
-                  Client: {proj.client_name} {proj.client_company ? `(${proj.client_company})` : ""}
-                </span>
-              )}
+              <div id="inpage-planner-topbar-portal" className="flex items-center gap-1.5 sm:gap-2 shrink-0" />
             </div>
           </div>
 
-          <div className="flex items-center gap-1 bg-black/40 border border-white/10 p-0.5 rounded-xl">
+          {projectActiveTab === "tasks" ? (
             <button
               onClick={() => setProjectActiveTab("planner")}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                projectActiveTab === "planner" ? "bg-white text-black shadow font-bold" : "text-gray-400 hover:text-white"
-              }`}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/15 hover:bg-brand-600/25 text-brand-300 border border-brand-500/30 rounded-xl font-semibold transition-colors cursor-pointer text-xs whitespace-nowrap"
+              title="Switch back to Monthly Content Planner"
             >
               <CalendarIcon className="w-3.5 h-3.5" />
               <span>Monthly Content Planner</span>
             </button>
-            <button
-              onClick={() => setProjectActiveTab("tasks")}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                projectActiveTab === "tasks" ? "bg-white text-black shadow font-bold" : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <LayoutList className="w-3.5 h-3.5" />
-              <span>Tasks & Moodboard</span>
-            </button>
-          </div>
+          ) : (
+            <div id="inpage-planner-stats-portal" className="flex items-center gap-2 shrink-0" />
+          )}
         </div>
 
         {projectActiveTab === "planner" ? (
@@ -474,12 +462,6 @@ export default function ProjectsTab() {
                         </div>
 
                         <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                          {proj.has_planner && (
-                            <div className="flex items-center gap-1 text-[10px] font-semibold text-brand-300 bg-brand-500/15 border border-brand-500/30 px-2 py-0.5 rounded-md w-fit">
-                              <CalendarIcon className="w-3 h-3 text-brand-400" />
-                              <span>Planner</span>
-                            </div>
-                          )}
                           {proj.client_name && (
                             <div className="flex items-center gap-1 text-[10px] text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-md w-fit">
                               <span className="truncate">{proj.client_name}</span>
@@ -504,23 +486,12 @@ export default function ProjectsTab() {
                         )}
 
                         <div className="flex items-center gap-2 pt-2 border-t border-white/5" onClick={e => e.stopPropagation()}>
-                          {proj.has_planner ? (
+                          {proj.has_planner && (
                             <button
                               onClick={() => router.push(`/admin/workspace/project/${proj.id}?tab=planner`)}
                               className="text-[11px] font-semibold text-brand-400 hover:text-brand-300 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-brand-500/10 hover:bg-brand-500/20 transition-colors cursor-pointer"
                             >
                               <CalendarIcon className="w-3 h-3" /> Planner
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                openEditModal(proj);
-                                setIsPlannerProject(true);
-                              }}
-                              className="text-[11px] text-gray-400 hover:text-brand-300 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-brand-500/10 transition-colors cursor-pointer"
-                              title="Add Content Planner"
-                            >
-                              <Plus className="w-3 h-3 text-brand-400" /> Planner
                             </button>
                           )}
                           <button
@@ -611,12 +582,7 @@ export default function ProjectsTab() {
                           <div className="flex items-center gap-2 flex-wrap">
                             {proj.client_name && (
                               <span className="text-[11px] text-purple-300">
-                                {proj.client_name} {proj.client_company ? `(${proj.client_company})` : ""}
-                              </span>
-                            )}
-                            {proj.has_planner && (
-                              <span className="text-[10px] font-medium text-brand-300 bg-brand-500/15 border border-brand-500/30 px-1.5 py-0.5 rounded inline-flex items-center gap-1">
-                                <CalendarIcon className="w-2.5 h-2.5 text-brand-400" /> Planner
+                                {proj.client_name}
                               </span>
                             )}
                           </div>
@@ -706,28 +672,14 @@ export default function ProjectsTab() {
                               <span className="hidden md:inline">Planner</span>
                             </button>
                           ) : (
-                            <div className="flex items-center gap-1 mr-1">
-                              <button 
-                                onClick={() => router.push(`/admin/workspace/project/${proj.id}?tab=tasks`)} 
-                                className="text-sky-300 hover:text-white px-2.5 py-1 hover:bg-sky-500/20 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all border border-sky-500/20 cursor-pointer"
-                                title="Open Project Tasks Board"
-                              >
-                                <Eye className="w-3.5 h-3.5 text-sky-400" />
-                                <span className="hidden md:inline">View</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  openEditModal(proj);
-                                  setIsPlannerProject(true);
-                                }}
-                                className="text-gray-400 hover:text-brand-300 px-2 py-1 hover:bg-brand-500/10 rounded-lg text-xs font-medium flex items-center gap-1 transition-all border border-white/5 hover:border-brand-500/30 cursor-pointer"
-                                title="Add Content Planner to this project"
-                              >
-                                <Plus className="w-3 h-3 text-brand-400" />
-                                <span className="hidden xl:inline">Add Planner</span>
-                              </button>
-                            </div>
+                            <button 
+                              onClick={() => router.push(`/admin/workspace/project/${proj.id}?tab=tasks`)} 
+                              className="text-sky-300 hover:text-white px-2.5 py-1 hover:bg-sky-500/20 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all border border-sky-500/20 mr-1 cursor-pointer"
+                              title="Open Project Tasks Board"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-sky-400" />
+                              <span className="hidden md:inline">View</span>
+                            </button>
                           )}
                           <button
                             type="button"

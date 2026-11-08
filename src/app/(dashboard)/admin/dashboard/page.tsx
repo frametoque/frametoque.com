@@ -1,5 +1,6 @@
 "use client";
 import useSWR from "swr";
+import Link from "next/link";
 
 import { useEffect, useState } from "react";
 import { Landmark, Wallet, Receipt, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, ArrowDownLeft, FileText, Users, Eye, Calendar, Folder, MapPin, CheckSquare, Droplets, ChevronLeft, ChevronRight } from "lucide-react";
@@ -134,9 +135,9 @@ export default function DashboardPage() {
   }
 
   const stats = [
-    { label: "Available Funds", value: formatLKR(data.totalAssets || 0), subtext: (data.totalAfterDebts !== undefined && data.totalAfterDebts > data.totalAssets) ? `After Debts: ${formatLKR(data.totalAfterDebts)}` : (data.totalCapital > 0 ? `Total Capital: ${formatLKR(data.totalCapital)}` : undefined), icon: Landmark, color: "text-blue-400", bg: "bg-blue-400/10" },
-    { label: "Total Income", value: formatLKR(data.totalIncome), icon: Wallet, color: "text-green-400", bg: "bg-green-400/10" },
-    { label: "Total Expenses", value: formatLKR(data.totalExpenses), icon: Receipt, color: "text-red-400", bg: "bg-red-400/10" },
+    { label: "Available Funds", value: formatLKR(data.totalAssets || 0), subtext: (data.totalAfterDebts !== undefined && data.totalAfterDebts > data.totalAssets) ? `After Debts: ${formatLKR(data.totalAfterDebts)}` : (data.totalCapital > 0 ? `Total Capital: ${formatLKR(data.totalCapital)}` : undefined), icon: Landmark, color: "text-blue-400", bg: "bg-blue-400/10", href: "/admin/accounts" },
+    { label: "Total Income", value: formatLKR(data.totalIncome), icon: Wallet, color: "text-green-400", bg: "bg-green-400/10", href: "/admin/income" },
+    { label: "Total Expenses", value: formatLKR(data.totalExpenses), icon: Receipt, color: "text-red-400", bg: "bg-red-400/10", href: "/admin/expenses" },
     { label: "Net Profit", value: formatLKR(data.netProfit), icon: TrendingUp, color: "text-brand-400", bg: "bg-brand-400/10" },
   ];
 
@@ -187,42 +188,79 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        {stats.map((stat, i) => (
-          <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors">
-            <div className={`p-4 rounded-2xl ${stat.bg}`}>
-              <stat.icon className={`w-6 h-6 ${stat.color}`} />
+        {stats.map((stat, i) => {
+          const cardInner = (
+            <>
+              <div className={`p-4 rounded-2xl ${stat.bg} group-hover:scale-105 transition-transform shrink-0`}>
+                <stat.icon className={`w-6 h-6 ${stat.color}`} />
+              </div>
+              <div>
+                <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">{stat.label}</p>
+                <p className="text-2xl font-semibold">
+                  <AnimatedNumber value={stat.value} />
+                </p>
+                {stat.subtext && <p className="text-xs text-gray-500 mt-1">{stat.subtext}</p>}
+              </div>
+            </>
+          );
+
+          if (stat.href) {
+            return (
+              <Link
+                key={i}
+                href={stat.href}
+                className="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer"
+              >
+                {cardInner}
+              </Link>
+            );
+          }
+
+          return (
+            <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors">
+              {cardInner}
+            </div>
+          );
+        })}
+        {/* Unpaid Invoices */}
+        <div className="group relative bg-white/5 backdrop-blur-xl border border-white/10 hover:border-white/20 rounded-3xl p-6 transition-all hover:z-50 flex items-center justify-between">
+          <Link
+            href="/admin/invoices"
+            className="flex items-center gap-4 flex-1 cursor-pointer"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-amber-400/10 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+              <span className="text-xl font-bold text-amber-400">
+                <AnimatedNumber value={data.unpaidCount || 0} />
+              </span>
             </div>
             <div>
-              <p className="text-gray-400 text-sm">{stat.label}</p>
-              <p className="text-2xl font-semibold">
-                <AnimatedNumber value={stat.value} />
+              <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">Unpaid Invoices</p>
+              <p className="text-2xl font-semibold text-amber-400">
+                <AnimatedNumber value={formatLKR(data.unpaidAmount || 0)} />
               </p>
-              {stat.subtext && <p className="text-xs text-gray-500 mt-1">{stat.subtext}</p>}
             </div>
-          </div>
-        ))}
-        {/* Unpaid Invoices */}
-        <div className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors cursor-default hover:z-50">
-          <div className="w-14 h-14 rounded-2xl bg-amber-400/10 flex items-center justify-center flex-shrink-0">
-            <span className="text-xl font-bold text-amber-400">
-              <AnimatedNumber value={data.unpaidCount || 0} />
-            </span>
-          </div>
-          <div>
-            <p className="text-gray-400 text-sm">Unpaid Invoices</p>
-            <p className="text-2xl font-semibold text-amber-400">
-              <AnimatedNumber value={formatLKR(data.unpaidAmount || 0)} />
-            </p>
-          </div>
+          </Link>
           {data.clientDueAmounts && data.clientDueAmounts.length > 0 && (
-            <div className="absolute top-full left-0 mt-2 w-72 bg-[#0c0c0e] border border-white/10 rounded-2xl p-4 shadow-2xl opacity-0 invisible scale-95 group-hover:opacity-100 group-hover:visible group-hover:scale-100 transition-all duration-200 z-50 pointer-events-none before:absolute before:-top-2 before:left-0 before:right-0 before:h-2">
-              <p className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Due by Client</p>
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+            <div className="absolute top-full left-0 mt-2 w-72 bg-[#0c0c0e] border border-white/10 rounded-2xl p-4 shadow-2xl opacity-0 invisible scale-95 group-hover:opacity-100 group-hover:visible group-hover:scale-100 transition-all duration-200 z-50 pointer-events-auto before:absolute before:-top-2 before:left-0 before:right-0 before:h-2">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Due by Client</p>
+                <Link
+                  href="/admin/invoices?status=Unpaid"
+                  className="text-[11px] text-amber-400 hover:text-amber-300 cursor-pointer transition-colors"
+                >
+                  View All &rarr;
+                </Link>
+              </div>
+              <div className="space-y-1 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
                 {data.clientDueAmounts.map((c: any, idx: number) => (
-                  <div key={idx} className="flex justify-between items-center text-sm border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                    <span className="text-gray-300 truncate pr-3">{c.client}</span>
+                  <Link
+                    key={idx}
+                    href={`/admin/invoices?client=${encodeURIComponent(c.client)}`}
+                    className="flex justify-between items-center text-sm py-1.5 px-2 rounded-xl hover:bg-white/5 border-b border-white/5 last:border-0 transition-colors group/item cursor-pointer"
+                  >
+                    <span className="text-gray-300 group-hover/item:text-white truncate pr-3">{c.client}</span>
                     <span className="text-amber-400 font-semibold shrink-0">{formatLKR(c.due_amount)}</span>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>

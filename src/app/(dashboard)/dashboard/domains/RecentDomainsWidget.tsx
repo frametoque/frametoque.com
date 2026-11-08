@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Globe, ArrowRight, Settings, Plus, CreditCard } from "lucide-react";
+import { ArrowRight, Settings, Plus, CreditCard } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 
 export interface ClientDomainSummary {
@@ -25,6 +25,7 @@ export interface ClientDomainSummary {
 
 interface RecentDomainsWidgetProps {
   onOpenPayModal?: (invoice: any) => void;
+  hideIfEmpty?: boolean;
 }
 
 const statusBadgeStyles: Record<string, string> = {
@@ -43,7 +44,7 @@ const statusLabels: Record<string, string> = {
   expired: "Expired",
 };
 
-export default function RecentDomainsWidget({ onOpenPayModal }: RecentDomainsWidgetProps) {
+export default function RecentDomainsWidget({ onOpenPayModal, hideIfEmpty = true }: RecentDomainsWidgetProps) {
   const [domains, setDomains] = useState<ClientDomainSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +99,11 @@ export default function RecentDomainsWidget({ onOpenPayModal }: RecentDomainsWid
     }
   }, [isUserLoaded, user]);
 
+  // If client has no domains, hide the widget completely from the dashboard
+  if (hideIfEmpty && domains.length === 0) {
+    return null;
+  }
+
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-5">
       {/* Header */}
@@ -142,26 +148,6 @@ export default function RecentDomainsWidget({ onOpenPayModal }: RecentDomainsWid
       {!loading && error && (
         <div className="text-center py-6">
           <p className="text-red-400 text-xs">{error}</p>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!loading && !error && domains.length === 0 && (
-        <div className="text-center py-10 px-4 border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
-          <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 mx-auto mb-3">
-            <Globe className="w-6 h-6 text-gray-500" />
-          </div>
-          <h3 className="text-sm font-semibold text-white mb-1">No domains registered yet</h3>
-          <p className="text-xs text-gray-400 max-w-md mx-auto mb-4 leading-relaxed">
-            Register .lk, .com, .net and more with automated Cloudflare DNS integration and complimentary DDoS protection.
-          </p>
-          <Link
-            href="/dashboard/domains"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs shadow-lg shadow-brand-500/20 transition-all cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Search &amp; Register Domain</span>
-          </Link>
         </div>
       )}
 

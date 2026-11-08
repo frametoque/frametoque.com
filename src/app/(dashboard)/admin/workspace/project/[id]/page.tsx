@@ -69,6 +69,7 @@ export default function WorkspaceProjectDetailPage({ params }: { params: Promise
       const url = new URL(window.location.href);
       url.searchParams.set("tab", newTab);
       window.history.replaceState(null, "", url.toString());
+      window.dispatchEvent(new CustomEvent("workspace-project:tab-changed", { detail: newTab }));
     };
     window.addEventListener("workspace-project:set-tab", handleSetTab);
     return () => window.removeEventListener("workspace-project:set-tab", handleSetTab);
