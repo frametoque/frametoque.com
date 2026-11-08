@@ -438,12 +438,40 @@ export default function InventoryPage() {
     });
   }, [data, searchTerm]);
 
-  const itemsList = (data as any[]) || [];
-  const totalItems = itemsList.filter((d: any) => !d.is_to_buy).length;
-  const availableItems = itemsList.filter((d: any) => !d.is_to_buy && d.status === 'Available').length;
-  const totalValue = itemsList.filter((d: any) => !d.is_to_buy).reduce((acc: number, curr: any) => acc + (parseFloat(curr.purchase_price) || 0), 0);
-  const categories = new Set(itemsList.filter((d: any) => !d.is_to_buy).map((d: any) => d.category)).size;
-  const toBuyCount = itemsList.filter((d: any) => d.is_to_buy).length;
+  const totalItems = (data as any[]).filter((d: any) => !d.is_to_buy).length;
+  const availableItems = (data as any[]).filter((d: any) => !d.is_to_buy && d.status === 'Available').length;
+  const totalValue = (data as any[]).filter((d: any) => !d.is_to_buy).reduce((acc: number, curr: any) => acc + (parseFloat(curr.purchase_price) || 0), 0);
+  const categories = new Set((data as any[]).filter((d: any) => !d.is_to_buy).map((d: any) => d.category)).size;
+  const toBuyCount = (data as any[]).filter((d: any) => d.is_to_buy).length;
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4">
+              <div className="p-4 rounded-2xl bg-white/5 w-14 h-14" />
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/5 rounded-full w-24" />
+                <div className="h-6 bg-white/10 rounded-full w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-4">
+          <div className="h-6 bg-white/10 rounded-full w-48 mb-6" />
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex justify-between items-center py-4 border-b border-white/5 last:border-0">
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/10 rounded-full w-1/3" />
+                <div className="h-3 bg-white/5 rounded-full w-1/4" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in relative">
@@ -530,12 +558,7 @@ export default function InventoryPage() {
 
       {/* List */}
       <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-xl">
-        {loading ? (
-          <div className="flex justify-center items-center py-16 text-gray-400 gap-2">
-            <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
-            <span>Loading inventory...</span>
-          </div>
-        ) : filteredData.length === 0 ? (
+        {filteredData.length === 0 ? (
           <div className="p-12 text-center text-gray-400">
             <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>No inventory items found.</p>

@@ -338,6 +338,17 @@ export default function ClientDomainsPage() {
   // ---------------------------------------------------------------------------
   // Loading / Error states
   // ---------------------------------------------------------------------------
+  if (!isUserLoaded || loading) {
+    return (
+      <div className="space-y-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-white/10 rounded-full w-48 mb-6" />
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 h-64" />
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="bg-red-500/10 border border-red-500/30 rounded-3xl p-6 text-center">
@@ -430,12 +441,7 @@ export default function ClientDomainsPage() {
         </div>
       )}
 
-      {(!isUserLoaded || loading) ? (
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-16 flex justify-center items-center text-gray-400 gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
-          <span>Loading domains...</span>
-        </div>
-      ) : domains.length > 0 ? (
+      {domains.length > 0 ? (
         <>
           <Table>
             <TableHeader>

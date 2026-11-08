@@ -494,9 +494,17 @@ export default function ServicesAdminPage() {
       </div>
 
       {loading ? (
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-16 flex justify-center items-center text-gray-400 gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
-          <span>Loading services...</span>
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-4">
+          <div className="h-6 bg-white/10 rounded-full w-48 mb-6" />
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex justify-between items-center py-4 border-b border-white/5 last:border-0">
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/10 rounded-full w-1/3" />
+                <div className="h-3 bg-white/5 rounded-full w-1/4" />
+              </div>
+              <div className="h-6 bg-white/10 rounded-full w-20" />
+            </div>
+          ))}
         </div>
       ) : (
         <>

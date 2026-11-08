@@ -214,45 +214,7 @@ export default function DashboardHome() {
     }
   }, [paymentParam, invoiceIdParam, user]);
 
-  if (!isLoaded) {
-    return (
-      <div className="space-y-8">
-        {/* Skeleton Welcome Card */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-8 animate-pulse">
-          <div className="h-4 w-28 bg-white/10 rounded-full mb-3" />
-          <div className="h-8 w-64 bg-white/10 rounded-full" />
-        </div>
-
-        {/* Skeleton Domains Widget */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-5">
-          <div className="h-6 w-32 bg-white/10 rounded-full" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-28 rounded-2xl bg-white/5 border border-white/5" />
-            ))}
-          </div>
-        </div>
-
-        {/* Skeleton Projects & Quotations */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-4">
-            <div className="h-6 w-36 bg-white/10 rounded-full mb-2" />
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-16 rounded-xl bg-white/5 border border-white/5" />
-            ))}
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse space-y-4">
-            <div className="h-6 w-36 bg-white/10 rounded-full mb-2" />
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-16 rounded-xl bg-white/5 border border-white/5" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isSignedIn) {
+  if (!isLoaded || !isSignedIn) {
     return null;
   }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Package, ArrowRight, Eye, Loader2 } from "lucide-react";
+import { Package, ArrowRight, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 
@@ -104,17 +104,21 @@ export default function RecentProjectsWidget() {
       </div>
 
       {/* Loading */}
-      {loading ? (
+      {loading && (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse" />
           ))}
         </div>
-      ) : error ? (
+      )}
+
+      {!loading && error && (
         <div className="text-center py-6">
           <p className="text-red-400 text-sm">{error}</p>
         </div>
-      ) : requests.length === 0 ? (
+      )}
+
+      {!loading && !error && requests.length === 0 && (
         <div className="text-center py-8">
           <Package className="w-10 h-10 text-gray-600 mx-auto mb-3" />
           <p className="text-gray-400 text-sm">No invoices yet.</p>
@@ -125,7 +129,10 @@ export default function RecentProjectsWidget() {
             Browse Services →
           </Link>
         </div>
-      ) : (
+      )}
+
+      {/* Request List */}
+      {!loading && !error && requests.length > 0 && (
         <div className="space-y-3">
           {requests.map((request) => (
             <div

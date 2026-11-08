@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import useSWR from "swr";
-import { Plus, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Wallet, Landmark, RefreshCw, Star, Undo2, Loader2 } from "lucide-react";
+import { Plus, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Wallet, Landmark, RefreshCw, Star, Undo2 } from "lucide-react";
 import { getAccounts, createAccount, updateAccount, deleteAccount, transferCash, setDefaultAccount, getTransfers, updateTransfer, deleteTransfer } from "../actions/accounts";
 import AnimatedNumber from "../components/AnimatedNumber";
 
@@ -120,6 +120,49 @@ export default function AccountsPage() {
   const totalBank = accounts.filter(a => a.type === "Bank Account").reduce((sum, a) => sum + a.currentBalance, 0);
   const totalCash = accounts.filter(a => a.type === "Cash Account" && a.isCompanyAccount).reduce((sum, a) => sum + a.currentBalance, 0);
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-3xl flex items-center gap-4 animate-pulse">
+              <div className="w-14 h-14 rounded-2xl bg-white/5 flex-shrink-0" />
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-white/5 rounded-full w-24" />
+                <div className="h-6 bg-white/10 rounded-full w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex flex-col h-48 animate-pulse">
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-white/5" />
+                  <div className="space-y-2">
+                    <div className="h-5 bg-white/10 rounded-full w-32" />
+                    <div className="h-3 bg-white/5 rounded-full w-20" />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-auto flex justify-between items-end">
+                <div className="space-y-2">
+                  <div className="h-3 bg-white/5 rounded-full w-16" />
+                  <div className="h-3 bg-white/5 rounded-full w-16" />
+                </div>
+                <div className="space-y-2 text-right flex flex-col items-end">
+                  <div className="h-3 bg-white/5 rounded-full w-20" />
+                  <div className="h-6 bg-white/10 rounded-full w-24" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -137,13 +180,7 @@ export default function AccountsPage() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-16 flex justify-center items-center text-gray-400 gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
-          <span>Loading accounts...</span>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {accounts.map(acc => (
           <div key={acc.id} className="bg-white/5 border border-white/10 p-6 rounded-3xl flex flex-col justify-between hover:bg-white/10 transition-colors">
             <div className="flex justify-between items-start mb-6">
@@ -204,8 +241,7 @@ export default function AccountsPage() {
             </div>
           </div>
         ))}
-        </div>
-      )}
+      </div>
 
       <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
         <h2 className="text-lg font-semibold mb-6">Cash Transfer History</h2>
