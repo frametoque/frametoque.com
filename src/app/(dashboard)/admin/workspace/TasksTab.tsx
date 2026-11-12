@@ -93,7 +93,7 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
 
   const openNewModal = () => {
     setSelectedTask(null);
-    setName(""); setStatus(isPlannerProject ? "Planned" : "Not Started"); setAssigneeId(""); setDueDate(new Date().toISOString().split("T")[0]); setPriority("Medium"); setTags(""); setCategory(""); setCustomCategory("");
+    setName(""); setStatus(isPlannerProject ? "Planned" : "Not Started"); setAssigneeId(""); setDueDate(""); setPriority("Medium"); setTags(""); setCategory(""); setCustomCategory("");
     setIsModalOpen(true);
   };
 
