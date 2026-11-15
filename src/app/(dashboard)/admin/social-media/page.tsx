@@ -75,11 +75,13 @@ export default function SocialMediaPage() {
     <div className="space-y-10 pb-10 mt-2">
       {deleteState.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-           <div className="bg-[#0c0c0e] border border-white/10 rounded-3xl w-full max-w-md shadow-2xl p-6">
-             <h3 className="text-xl font-bold text-white mb-6">
-               {deleteState.done ? "Deletion Complete" : "Deleting from Platforms..."}
-             </h3>
-             <div className="space-y-4">
+           <div className="bg-[#0c0c0e] border border-white/10 rounded-3xl w-full max-w-xl max-h-[85vh] shadow-2xl flex flex-col overflow-hidden">
+             <div className="p-6 pb-4 border-b border-white/10 shrink-0">
+               <h3 className="text-xl font-bold text-white">
+                 {deleteState.done ? "Deletion Complete" : "Deleting from Platforms..."}
+               </h3>
+             </div>
+             <div className="p-6 space-y-4 flex-1 overflow-y-auto">
                {[...deleteState.platforms].sort((a, b) => ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(a) - ["facebook","instagram","threads","linkedin","youtube","telegram","gmb"].indexOf(b)).map((p: string) => {
                  const st = deleteState.results[p];
                  const isCurrent = deleteState.currentPlatform === p;
@@ -109,8 +111,8 @@ export default function SocialMediaPage() {
              </div>
              
              {deleteState.done && (
-               <div className="mt-8 flex justify-end">
-                 <button onClick={() => { setDeleteState(prev => ({ ...prev, isOpen: false })); loadData(); }} className="px-6 py-2.5 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors">
+               <div className="p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e] flex justify-end">
+                 <button onClick={() => { setDeleteState(prev => ({ ...prev, isOpen: false })); loadData(); }} className="px-6 py-2.5 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors cursor-pointer">
                    Close
                  </button>
                </div>

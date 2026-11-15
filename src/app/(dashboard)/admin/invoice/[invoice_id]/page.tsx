@@ -960,145 +960,151 @@ export default function AdminInvoicePage() {
       {/* Income Modal */}
       {incomeModalOpen && invoice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
               <h2 className="text-xl font-semibold text-white">Create Income from Invoice</h2>
-              <button onClick={() => setIncomeModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
+              <button onClick={() => setIncomeModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <form onSubmit={handleCreateIncomeSubmit} className="p-6 space-y-4">
-              <div className="text-sm text-gray-400 space-y-1 bg-white/5 p-4 rounded-2xl border border-white/5">
-                <p><span className="font-semibold text-gray-300">Invoice ID:</span> {invoice.invoice_id}</p>
-                <p><span className="font-semibold text-gray-300">Project:</span> {invoice.project_name || 'Untitled'}</p>
-                <p><span className="font-semibold text-gray-300">Client:</span> {invoice.user_email}</p>
-                <p><span className="font-semibold text-gray-300">Due Amount:</span> {formatMoney(totalDue, invoice.currency)}</p>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm text-gray-400 block font-medium">Income Amount ({invoice.currency || 'LKR'})</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  placeholder="0.00"
-                  value={paidAmount}
-                  onChange={(e) => setPaidAmount(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm text-gray-400 block font-medium">Date Received</label>
-                <input
-                  type="date"
-                  required
-                  value={paymentDate}
-                  onChange={(e) => setPaymentDate(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm text-gray-400 block font-medium">Payment Method</label>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white appearance-none"
-                >
-                  <option value="Bank Transfer" className="bg-black text-white">Bank Transfer</option>
-                  <option value="Stripe" className="bg-black text-white">Stripe</option>
-                  <option value="PayPal" className="bg-black text-white">PayPal</option>
-                  <option value="Cash" className="bg-black text-white">Cash</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm text-gray-400 block font-medium">Description (Optional)</label>
-                <input
-                  type="text"
-                  placeholder="Custom description..."
-                  value={paymentDescription}
-                  onChange={(e) => setPaymentDescription(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white"
-                />
-              </div>
-
-
-              <div className="flex items-center gap-2 pt-2 pb-2">
-                <input
-                  type="checkbox"
-                  id="isAdvance"
-                  checked={isAdvance}
-                  onChange={(e) => setIsAdvance(e.target.checked)}
-                  className="w-4 h-4 rounded border-white/10 bg-white/5 text-brand-600 focus:ring-brand-500 focus:ring-offset-black"
-                />
-                <label htmlFor="isAdvance" className="text-sm text-gray-300 font-medium select-none cursor-pointer">
-                  Payment is advance
-                </label>
-              </div>
-
-              {/* Payment Slip Upload Section */}
-              <div className="pt-2 border-t border-white/10">
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-sm text-gray-300 font-medium flex items-center gap-2">
-                    <Upload className="w-4 h-4" />
-                    Upload Payment Slip (Optional)
-                  </label>
-                  {includeSlip && (
-                    <button
-                      type="button"
-                      onClick={removeSlipFile}
-                      className="text-xs text-red-400 hover:text-red-300 transition-colors"
-                    >
-                      Remove
-                    </button>
-                  )}
+            <form onSubmit={handleCreateIncomeSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 space-y-4 overflow-y-auto flex-1">
+                <div className="text-sm text-gray-400 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <p><span className="font-semibold text-gray-300 block text-xs">Invoice ID:</span> {invoice.invoice_id}</p>
+                  <p><span className="font-semibold text-gray-300 block text-xs">Project:</span> {invoice.project_name || 'Untitled'}</p>
+                  <p><span className="font-semibold text-gray-300 block text-xs">Client:</span> {invoice.user_email}</p>
+                  <p><span className="font-semibold text-gray-300 block text-xs">Due Amount:</span> {formatMoney(totalDue, invoice.currency)}</p>
                 </div>
 
-                {convertingPdf ? (
-                  <div className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-brand-500/30 rounded-xl bg-brand-500/5">
-                    <Loader2 className="w-4 h-4 text-brand-400 animate-spin" />
-                    <span className="text-sm text-brand-400">Converting PDF to image...</span>
-                  </div>
-                ) : !includeSlip ? (
-                  <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:border-brand-500/50 hover:bg-brand-500/5 transition-all">
-                    <Upload className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-400">Click to upload slip image or PDF</span>
-                    <input
-                      type="file"
-                      accept="image/*,application/pdf"
-                      onChange={handleSlipFileChange}
-                      className="hidden"
-                    />
-                  </label>
-                ) : slipPreview ? (
-                  <div className="relative rounded-xl overflow-hidden border border-white/10">
-                    <img src={slipPreview} alt="Slip preview" className="w-full h-40 object-cover" />
-                    <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 rounded-lg text-xs text-white flex items-center gap-1">
-                      <ImageIcon className="w-3 h-3" />
-                      {slipFile?.name}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                  {/* Left Column */}
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-400 block font-medium">Income Amount ({invoice.currency || 'LKR'})</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        placeholder="0.00"
+                        value={paidAmount}
+                        onChange={(e) => setPaidAmount(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-400 block font-medium">Date Received</label>
+                      <input
+                        type="date"
+                        required
+                        value={paymentDate}
+                        onChange={(e) => setPaymentDate(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-400 block font-medium">Payment Method</label>
+                      <select
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white appearance-none"
+                      >
+                        <option value="Bank Transfer" className="bg-black text-white">Bank Transfer</option>
+                        <option value="Stripe" className="bg-black text-white">Stripe</option>
+                        <option value="PayPal" className="bg-black text-white">PayPal</option>
+                        <option value="Cash" className="bg-black text-white">Cash</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-400 block font-medium">Description (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="Custom description..."
+                        value={paymentDescription}
+                        onChange={(e) => setPaymentDescription(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="checkbox"
+                        id="isAdvance"
+                        checked={isAdvance}
+                        onChange={(e) => setIsAdvance(e.target.checked)}
+                        className="w-4 h-4 rounded border-white/10 bg-white/5 text-brand-600 focus:ring-brand-500 focus:ring-offset-black cursor-pointer"
+                      />
+                      <label htmlFor="isAdvance" className="text-sm text-gray-300 font-medium select-none cursor-pointer">
+                        Payment is advance
+                      </label>
                     </div>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl">
-                    <FileIcon className="w-5 h-5 text-brand-400" />
-                    <span className="text-sm text-gray-300 flex-1 truncate">{slipFile?.name}</span>
-                    <span className="text-xs text-gray-500">
-                      {slipFile ? (slipFile.size / 1024 / 1024).toFixed(2) + ' MB' : ''}
-                    </span>
+
+                  {/* Right Column: Payment Slip Upload Section */}
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm text-gray-300 font-medium flex items-center gap-2">
+                          <Upload className="w-4 h-4 text-brand-400" />
+                          Payment Slip (Optional)
+                        </label>
+                        {includeSlip && (
+                          <button
+                            type="button"
+                            onClick={removeSlipFile}
+                            className="text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      {convertingPdf ? (
+                        <div className="flex items-center justify-center gap-2 px-4 py-4 border-2 border-dashed border-brand-500/30 rounded-xl bg-brand-500/5">
+                          <Loader2 className="w-4 h-4 text-brand-400 animate-spin" />
+                          <span className="text-sm text-brand-400">Converting PDF to image...</span>
+                        </div>
+                      ) : !includeSlip ? (
+                        <label className="flex flex-col items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:border-brand-500/50 hover:bg-brand-500/5 transition-all">
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <span className="text-sm text-gray-400">Click to upload slip image or PDF</span>
+                          <span className="text-xs text-gray-600">Max 10MB • Images or PDF</span>
+                          <input
+                            type="file"
+                            accept="image/*,application/pdf"
+                            onChange={handleSlipFileChange}
+                            className="hidden"
+                          />
+                        </label>
+                      ) : slipPreview ? (
+                        <div className="relative rounded-xl overflow-hidden border border-white/10">
+                          <img src={slipPreview} alt="Slip preview" className="w-full h-36 object-cover" />
+                          <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 rounded-lg text-xs text-white flex items-center gap-1">
+                            <ImageIcon className="w-3 h-3" />
+                            {slipFile?.name}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl">
+                          <FileIcon className="w-5 h-5 text-brand-400" />
+                          <span className="text-sm text-gray-300 flex-1 truncate">{slipFile?.name}</span>
+                          <span className="text-xs text-gray-500">
+                            {slipFile ? (slipFile.size / 1024 / 1024).toFixed(2) + ' MB' : ''}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-                <p className="text-xs text-gray-500 mt-2">
-                  Max file size: 10MB. Supported: Images, PDF
-                </p>
+                </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-white/10 justify-end">
+              <div className="p-4 sm:px-6 border-t border-white/10 bg-[#141414] flex gap-3 justify-end shrink-0">
                 <button
                   type="button"
                   onClick={() => setIncomeModalOpen(false)}
-                  className="px-5 py-2.5 border border-white/10 hover:bg-white/5 text-gray-300 rounded-3xl text-sm font-semibold transition-colors"
+                  className="px-5 py-2.5 border border-white/10 hover:bg-white/5 text-gray-300 rounded-3xl text-sm font-semibold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>

@@ -132,11 +132,8 @@ export default function SocialViews({ posts, loading, onRefresh, onDelete }: any
       {/* View Modal */}
       {viewingPost && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0c0c0e] border border-white/10 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative">
-            <button onClick={() => setViewingPost(null)} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
-              <X className="w-5 h-5" />
-            </button>
-            <div className="p-6 space-y-6">
+          <div className="bg-[#0c0c0e] border border-white/10 rounded-3xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl relative">
+            <div className="p-6 pb-4 border-b border-white/10 flex items-center justify-between shrink-0">
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
                 Post Details
                 <div className="flex gap-1 ml-2">
@@ -147,6 +144,11 @@ export default function SocialViews({ posts, loading, onRefresh, onDelete }: any
                   ))}
                 </div>
               </h3>
+              <button onClick={() => setViewingPost(null)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-6 flex-1 overflow-y-auto">
 
               {viewingPost.media_urls?.length > 0 && (
                 <div className="grid grid-cols-2 gap-4">

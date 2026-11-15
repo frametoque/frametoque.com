@@ -1722,68 +1722,72 @@ export default function AdminOrdersPage() {
       {/* Expire Domain Modal */}
       {expireModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-md p-6 relative shadow-2xl">
-            <button
-              onClick={() => setExpireModalOpen(false)}
-              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h3 className="text-xl font-bold text-white mb-2">Mark Domain as Expired</h3>
-            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-              Expire <span className="text-white font-semibold">{expiringDomainName}</span>. You can optionally create a renewal invoice so the client can pay again.
-            </p>
-
-            <div className="space-y-4 mb-6">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={createRenewalInvoiceOnExpire}
-                  onChange={(e) => setCreateRenewalInvoiceOnExpire(e.target.checked)}
-                  className="mt-1 rounded border-white/20 bg-white/5"
-                />
-                <span className="text-sm text-gray-300">
-                  Create renewal invoice for client payment
-                </span>
-              </label>
-
-              {createRenewalInvoiceOnExpire ? (
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-gray-400 block">Billing Currency</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setExpireCurrency("USD")}
-                      className={`py-3 px-4 rounded-2xl border text-sm font-semibold transition-all cursor-pointer text-center ${
-                        expireCurrency === "USD"
-                          ? "border-brand-500 bg-brand-500/10 text-white"
-                          : "border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      USD ($)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setExpireCurrency("LKR")}
-                      className={`py-3 px-4 rounded-2xl border text-sm font-semibold transition-all cursor-pointer text-center ${
-                        expireCurrency === "LKR"
-                          ? "border-brand-500 bg-brand-500/10 text-white"
-                          : "border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      LKR (Rs.)
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-amber-300/90 bg-amber-400/10 border border-amber-400/20 rounded-2xl px-4 py-3">
-                  No invoice will be created. Use this when the client has confirmed they will not renew.
-                </p>
-              )}
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-2xl max-h-[85vh] relative shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
+              <h3 className="text-xl font-bold text-white">Mark Domain as Expired</h3>
+              <button
+                onClick={() => setExpireModalOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Expire <span className="text-white font-semibold">{expiringDomainName}</span>. You can optionally create a renewal invoice so the client can pay again.
+              </p>
+
+              <div className="space-y-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={createRenewalInvoiceOnExpire}
+                    onChange={(e) => setCreateRenewalInvoiceOnExpire(e.target.checked)}
+                    className="mt-1 rounded border-white/20 bg-white/5"
+                  />
+                  <span className="text-sm text-gray-300">
+                    Create renewal invoice for client payment
+                  </span>
+                </label>
+
+                {createRenewalInvoiceOnExpire ? (
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-gray-400 block">Billing Currency</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setExpireCurrency("USD")}
+                        className={`py-3 px-4 rounded-2xl border text-sm font-semibold transition-all cursor-pointer text-center ${
+                          expireCurrency === "USD"
+                            ? "border-brand-500 bg-brand-500/10 text-white"
+                            : "border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        USD ($)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setExpireCurrency("LKR")}
+                        className={`py-3 px-4 rounded-2xl border text-sm font-semibold transition-all cursor-pointer text-center ${
+                          expireCurrency === "LKR"
+                            ? "border-brand-500 bg-brand-500/10 text-white"
+                            : "border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        LKR (Rs.)
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-amber-300/90 bg-amber-400/10 border border-amber-400/20 rounded-2xl px-4 py-3">
+                    No invoice will be created. Use this when the client has confirmed they will not renew.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
               <button
                 type="button"
                 onClick={() => setExpireModalOpen(false)}
@@ -1807,51 +1811,55 @@ export default function AdminOrdersPage() {
       {/* Activation & Currency Selection Modal */}
       {activationModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-md p-6 relative shadow-2xl">
-            <button
-              onClick={() => setActivationModalOpen(false)}
-              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-2xl max-h-[85vh] relative shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
+              <h3 className="text-xl font-bold text-white">Activate Domain & Generate Invoice</h3>
+              <button
+                onClick={() => setActivationModalOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <h3 className="text-xl font-bold text-white mb-2">Activate Domain & Generate Invoice</h3>
-            <p className="text-gray-400 text-sm mb-2 leading-relaxed">
-              Select the billing currency for the registration invoice. 
-            </p>
-            <p className="text-xs text-brand-300/70 bg-brand-500/5 border border-brand-500/10 rounded-xl px-3 py-2 mb-6">
-              Current rate: <span className="font-bold text-brand-300">1 USD = {lkrRate.toFixed(2)} LKR</span>
-            </p>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Select the billing currency for the registration invoice. 
+              </p>
+              <p className="text-xs text-brand-300/70 bg-brand-500/5 border border-brand-500/10 rounded-xl px-3 py-2">
+                Current rate: <span className="font-bold text-brand-300">1 USD = {lkrRate.toFixed(2)} LKR</span>
+              </p>
 
-            <div className="space-y-4 mb-6">
-              <label className="text-xs font-semibold text-gray-400 block">Billing Currency</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSelectedCurrency('USD')}
-                  className={`py-3 px-4 rounded-2xl border text-sm font-semibold transition-all cursor-pointer text-center ${
-                    selectedCurrency === 'USD'
-                      ? 'border-brand-500 bg-brand-500/10 text-white'
-                      : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  USD ($)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCurrency('LKR')}
-                  className={`py-3 px-4 rounded-2xl border text-sm font-semibold transition-all cursor-pointer text-center ${
-                    selectedCurrency === 'LKR'
-                      ? 'border-brand-500 bg-brand-500/10 text-white'
-                      : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  LKR (Rs.)
-                </button>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-400 block">Billing Currency</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCurrency('USD')}
+                    className={`py-3 px-4 rounded-2xl border text-sm font-semibold transition-all cursor-pointer text-center ${
+                      selectedCurrency === 'USD'
+                        ? 'border-brand-500 bg-brand-500/10 text-white'
+                        : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    USD ($)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCurrency('LKR')}
+                    className={`py-3 px-4 rounded-2xl border text-sm font-semibold transition-all cursor-pointer text-center ${
+                      selectedCurrency === 'LKR'
+                        ? 'border-brand-500 bg-brand-500/10 text-white'
+                        : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    LKR (Rs.)
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+            <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
               <button
                 type="button"
                 onClick={() => setActivationModalOpen(false)}
@@ -1874,35 +1882,39 @@ export default function AdminOrdersPage() {
       {/* Delete Domain Modal */}
       {deleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-md p-6 relative shadow-2xl text-white">
-            <button
-              onClick={() => setDeleteModalOpen(false)}
-              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h3 className="text-xl font-bold text-white mb-2">Delete Domain Order</h3>
-            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-              Are you sure you want to delete the domain <span className="text-white font-semibold">{deletingDomainName}</span>?
-            </p>
-
-            <div className="space-y-4 mb-6">
-              <label className="flex items-start gap-3 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={deletingWithInvoices}
-                  onChange={(e) => setDeletingWithInvoices(e.target.checked)}
-                  className="mt-1 rounded border-white/20 bg-white/5"
-                />
-                <div className="space-y-0.5">
-                  <span className="text-sm text-gray-300 font-semibold block">Delete associated invoices</span>
-                  <span className="text-xs text-gray-500 block">Deletes the registration invoice & all renewal invoices linked to this domain.</span>
-                </div>
-              </label>
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-2xl max-h-[85vh] relative shadow-2xl text-white flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
+              <h3 className="text-xl font-bold text-white">Delete Domain Order</h3>
+              <button
+                onClick={() => setDeleteModalOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Are you sure you want to delete the domain <span className="text-white font-semibold">{deletingDomainName}</span>?
+              </p>
+
+              <div className="space-y-4">
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={deletingWithInvoices}
+                    onChange={(e) => setDeletingWithInvoices(e.target.checked)}
+                    className="mt-1 rounded border-white/20 bg-white/5"
+                  />
+                  <div className="space-y-0.5">
+                    <span className="text-sm text-gray-300 font-semibold block">Delete associated invoices</span>
+                    <span className="text-xs text-gray-500 block">Deletes the registration invoice & all renewal invoices linked to this domain.</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
               <button
                 type="button"
                 onClick={() => setDeleteModalOpen(false)}
@@ -1927,43 +1939,45 @@ export default function AdminOrdersPage() {
       {/* Quick Invoice Linking Modal */}
       {linkingDomainOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg p-6 relative shadow-2xl text-white">
-            <button
-              onClick={() => setLinkingDomainOrder(null)}
-              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                <Link2 className="w-5 h-5" />
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-3xl max-h-[85vh] relative shadow-2xl text-white flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <Link2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Link Invoice to Domain</h3>
+                  <p className="text-xs text-gray-400">{linkingDomainOrder.domain_name} ({linkingDomainOrder.client_email})</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">Link Invoice to Domain</h3>
-                <p className="text-xs text-gray-400">{linkingDomainOrder.domain_name} ({linkingDomainOrder.client_email})</p>
-              </div>
+              <button
+                onClick={() => setLinkingDomainOrder(null)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {linkingDomainOrder.invoice_id && (
-              <div className="my-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-between text-xs">
-                <div>
-                  <span className="text-gray-400">Currently Linked:</span>
-                  <span className="ml-1.5 font-mono font-bold text-blue-400">{linkingDomainOrder.invoice_id}</span>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {linkingDomainOrder.invoice_id && (
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-gray-400">Currently Linked:</span>
+                    <span className="ml-1.5 font-mono font-bold text-blue-400">{linkingDomainOrder.invoice_id}</span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={savingLink}
+                    onClick={() => handleSaveInvoiceLink("")}
+                    className="px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1"
+                  >
+                    <Unlink className="w-3 h-3" />
+                    Unlink
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  disabled={savingLink}
-                  onClick={() => handleSaveInvoiceLink("")}
-                  className="px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1"
-                >
-                  <Unlink className="w-3 h-3" />
-                  Unlink
-                </button>
-              </div>
-            )}
+              )}
 
-            <div className="space-y-4 my-4">
+              <div className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-gray-300 block">Select Invoice</label>
                 {loadingLinkInvoices ? (
@@ -2049,8 +2063,9 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+          <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
               <button
                 type="button"
                 onClick={() => setLinkingDomainOrder(null)}

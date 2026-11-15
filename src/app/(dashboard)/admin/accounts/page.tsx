@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import useSWR from "swr";
-import { Plus, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Wallet, Landmark, RefreshCw, Star, Undo2 } from "lucide-react";
+import { Plus, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Wallet, Landmark, RefreshCw, Star, Undo2, X } from "lucide-react";
 import { getAccounts, createAccount, updateAccount, deleteAccount, transferCash, setDefaultAccount, getTransfers, updateTransfer, deleteTransfer } from "../actions/accounts";
 import AnimatedNumber from "../components/AnimatedNumber";
 
@@ -288,52 +288,69 @@ export default function AccountsPage() {
 
       {showCreate && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-3xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-6">{editingId ? "Edit Account" : "Create Account"}</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Account Name</label>
-                <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5" />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Account Type</label>
-                <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
-                  <option>Cash Account</option>
-                  <option>Bank Account</option>
-                </select>
-              </div>
-                            {formData.type === 'Cash Account' && (
-                <div className="flex items-center gap-3">
-                  <input type="checkbox" checked={formData.isCompanyAccount} onChange={e => setFormData({...formData, isCompanyAccount: e.target.checked})} className="w-5 h-5 rounded border-white/10 bg-white/5 accent-brand-500 cursor-pointer" />
-                  <label className="text-sm text-gray-400">Is this a Company Cash Account?</label>
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-3xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
+              <h2 className="text-xl font-semibold text-white">{editingId ? "Edit Account" : "Create Account"}</h2>
+              <button
+                onClick={() => {
+                  setShowCreate(false);
+                  setEditingId(null);
+                  setFormData({ name: "", type: "Cash Account", bankName: "", accountNumber: "", branch: "", initialBalance: 0, isCompanyAccount: true });
+                }}
+                className="p-2 text-gray-400 hover:text-white rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Account Name</label>
+                  <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
                 </div>
-              )}
-              {formData.type === 'Bank Account' && (
-                <>
-                  <div>
-                    <label className="text-sm text-gray-400 mb-1 block">Bank Name</label>
-                    <input type="text" value={formData.bankName} onChange={e => setFormData({...formData, bankName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5" />
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Account Type</label>
+                  <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500">
+                    <option className="bg-[#1a1a1a]">Cash Account</option>
+                    <option className="bg-[#1a1a1a]">Bank Account</option>
+                  </select>
+                </div>
+
+                {formData.type === 'Cash Account' && (
+                  <div className="md:col-span-2 flex items-center gap-3 p-3 bg-white/[0.02] border border-white/10 rounded-xl">
+                    <input type="checkbox" id="isCompanyAccount" checked={formData.isCompanyAccount} onChange={e => setFormData({...formData, isCompanyAccount: e.target.checked})} className="w-5 h-5 rounded border-white/10 bg-white/5 accent-brand-500 cursor-pointer" />
+                    <label htmlFor="isCompanyAccount" className="text-sm text-gray-300 cursor-pointer select-none">Is this a Company Cash Account?</label>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                )}
+
+                {formData.type === 'Bank Account' && (
+                  <>
+                    <div className="md:col-span-2">
+                      <label className="text-sm text-gray-400 mb-1 block">Bank Name</label>
+                      <input type="text" value={formData.bankName} onChange={e => setFormData({...formData, bankName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
+                    </div>
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Account Number</label>
-                      <input type="text" value={formData.accountNumber} onChange={e => setFormData({...formData, accountNumber: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5" />
+                      <input type="text" value={formData.accountNumber} onChange={e => setFormData({...formData, accountNumber: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
                     </div>
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Branch</label>
-                      <input type="text" value={formData.branch} onChange={e => setFormData({...formData, branch: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5" />
+                      <input type="text" value={formData.branch} onChange={e => setFormData({...formData, branch: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
                     </div>
-                  </div>
-                </>
-              )}
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Initial Balance (LKR)</label>
-                <input type="number" value={Number.isNaN(Number(formData.initialBalance)) ? formData.initialBalance : formData.initialBalance} onChange={e => setFormData({...formData, initialBalance: e.target.value === "" ? "" : e.target.value as any})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5" />
+                  </>
+                )}
+
+                <div className="md:col-span-2">
+                  <label className="text-sm text-gray-400 mb-1 block">Initial Balance (LKR)</label>
+                  <input type="number" value={Number.isNaN(Number(formData.initialBalance)) ? formData.initialBalance : formData.initialBalance} onChange={e => setFormData({...formData, initialBalance: e.target.value === "" ? "" : e.target.value as any})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
+                </div>
               </div>
             </div>
-            <div className="flex gap-4 mt-8">
-              <button onClick={() => { setShowCreate(false); setEditingId(null); setFormData({ name: "", type: "Cash Account", bankName: "", accountNumber: "", branch: "", initialBalance: 0, isCompanyAccount: true }); }} className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 transition-colors">Cancel</button>
-              <button onClick={handleSave} className="flex-1 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white transition-colors">Save Account</button>
+
+            <div className="p-6 border-t border-white/10 bg-white/5 flex gap-4 shrink-0 justify-end">
+              <button onClick={() => { setShowCreate(false); setEditingId(null); setFormData({ name: "", type: "Cash Account", bankName: "", accountNumber: "", branch: "", initialBalance: 0, isCompanyAccount: true }); }} className="px-5 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-gray-300 transition-colors cursor-pointer">Cancel</button>
+              <button onClick={handleSave} className="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold transition-colors cursor-pointer">Save Account</button>
             </div>
           </div>
         </div>
@@ -341,39 +358,55 @@ export default function AccountsPage() {
 
       {showTransfer && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-3xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-6">Transfer Cash</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Date</label>
-                <input type="date" value={transferData.date} onChange={e => setTransferData({...transferData, date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5" />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Source Account (From)</label>
-                <select value={transferData.sourceAccountId} onChange={e => setTransferData({...transferData, sourceAccountId: parseInt(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
-                  <option value={0}>Select Source Account</option>
-                  {accounts.map(a => <option key={a.id} value={a.id}>{a.name} ({formatLKR(a.currentBalance)})</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Destination Account (To)</label>
-                <select value={transferData.destinationAccountId} onChange={e => setTransferData({...transferData, destinationAccountId: parseInt(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
-                  <option value={0}>Select Destination Account</option>
-                  {accounts.map(a => <option key={a.id} value={a.id}>{a.name} ({formatLKR(a.currentBalance)})</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Amount (LKR)</label>
-                <input type="number" value={Number.isNaN(Number(transferData.amount)) ? transferData.amount : transferData.amount} onChange={e => setTransferData({...transferData, amount: e.target.value === "" ? "" : e.target.value as any})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5" />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Description</label>
-                <input type="text" value={transferData.description} onChange={e => setTransferData({...transferData, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5" />
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-3xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
+              <h2 className="text-xl font-semibold text-white">{editingTransferId ? "Edit Transfer" : "Transfer Cash"}</h2>
+              <button
+                onClick={() => {
+                  setShowTransfer(false);
+                  setEditingTransferId(null);
+                  setTransferData({ date: new Date().toISOString().split("T")[0], sourceAccountId: 0, destinationAccountId: 0, amount: 0, description: "" });
+                }}
+                className="p-2 text-gray-400 hover:text-white rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Date</label>
+                  <input type="date" value={transferData.date} onChange={e => setTransferData({...transferData, date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Amount (LKR)</label>
+                  <input type="number" value={Number.isNaN(Number(transferData.amount)) ? transferData.amount : transferData.amount} onChange={e => setTransferData({...transferData, amount: e.target.value === "" ? "" : e.target.value as any})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Source Account (From)</label>
+                  <select value={transferData.sourceAccountId} onChange={e => setTransferData({...transferData, sourceAccountId: parseInt(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500">
+                    <option value={0} className="bg-[#1a1a1a]">Select Source Account</option>
+                    {accounts.map(a => <option key={a.id} value={a.id} className="bg-[#1a1a1a]">{a.name} ({formatLKR(a.currentBalance)})</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Destination Account (To)</label>
+                  <select value={transferData.destinationAccountId} onChange={e => setTransferData({...transferData, destinationAccountId: parseInt(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500">
+                    <option value={0} className="bg-[#1a1a1a]">Select Destination Account</option>
+                    {accounts.map(a => <option key={a.id} value={a.id} className="bg-[#1a1a1a]">{a.name} ({formatLKR(a.currentBalance)})</option>)}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-sm text-gray-400 mb-1 block">Description</label>
+                  <input type="text" value={transferData.description} onChange={e => setTransferData({...transferData, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-brand-500" />
+                </div>
               </div>
             </div>
-            <div className="flex gap-4 mt-8">
-              <button onClick={() => { setShowTransfer(false); setEditingTransferId(null); setTransferData({ date: new Date().toISOString().split("T")[0], sourceAccountId: 0, destinationAccountId: 0, amount: 0, description: "" }); }} className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 transition-colors">Cancel</button>
-              <button onClick={handleTransfer} className="flex-1 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white transition-colors">{editingTransferId ? "Save Changes" : "Transfer Funds"}</button>
+
+            <div className="p-6 border-t border-white/10 bg-white/5 flex gap-4 shrink-0 justify-end">
+              <button onClick={() => { setShowTransfer(false); setEditingTransferId(null); setTransferData({ date: new Date().toISOString().split("T")[0], sourceAccountId: 0, destinationAccountId: 0, amount: 0, description: "" }); }} className="px-5 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-gray-300 transition-colors cursor-pointer">Cancel</button>
+              <button onClick={handleTransfer} className="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold transition-colors cursor-pointer">{editingTransferId ? "Save Changes" : "Transfer Funds"}</button>
             </div>
           </div>
         </div>

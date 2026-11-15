@@ -2,7 +2,7 @@
 import React, { useState, useEffect, Fragment } from "react";
 import useSWR from "swr";
 import { getTasks, createTask, updateTask, deleteTask, getTeamMembers, getMoodboards, saveMoodboard, getProjects } from "../actions/workspace";
-import { Plus, Trash2, Edit2, Image as ImageIcon, ChevronLeft, Layout, FolderOpen, Palette, Film, Code, Camera, Video } from "lucide-react";
+import { Plus, Trash2, Edit2, Image as ImageIcon, ChevronLeft, Layout, FolderOpen, Palette, Film, Code, Camera, Video, X } from "lucide-react";
 
 
 const CategoryIcon = ({ category, className }: { category?: string, className?: string }) => {
@@ -66,10 +66,12 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
     ? currentProject.owner_ids 
     : (typeof currentProject?.owner_ids === 'string' && (currentProject.owner_ids as string).startsWith('[') 
       ? JSON.parse(currentProject.owner_ids) 
-      : []);
-  const isAllProjectMembers = team.length > 0 && team.every((t: any) => currentProjectOwnerIds.includes(t.id));
-  const projectMembers = currentProjectOwnerIds.map((id: string) => team.find((t: any) => t.id === id) || { id, name: id.includes('@') ? id.split('@')[0] : id, image: null });
-  const availableMembers = projectMembers.length > 0 ? projectMembers : team;
+      : (currentProject?.owner_ids ? [currentProject.owner_ids] : []));
+  const isAllProjectMembers = currentProjectOwnerIds.includes("all") || (currentProject?.owner_ids as any) === "all";
+  const projectMembers = isAllProjectMembers 
+    ? team 
+    : currentProjectOwnerIds.map((id: string) => team.find((t: any) => t.id === id) || { id, name: id.includes('@') ? id.split('@')[0] : id, image: null });
+  const availableMembers = (isAllProjectMembers || projectMembers.length > 0) ? (isAllProjectMembers ? team : projectMembers) : team;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMoodboardModalOpen, setIsMoodboardModalOpen] = useState(false);
@@ -269,7 +271,48 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
     return false;
   };
 
-  if (isLoading) return <div className="text-white">Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-6 flex flex-col min-w-0 animate-pulse">
+        <div className="flex justify-between items-center bg-black border border-white/10 rounded-2xl p-4">
+          <div className="flex items-center gap-4">
+            <div className="w-9 h-9 bg-white/5 rounded-xl" />
+            <div className="space-y-1.5">
+              <div className="h-5 bg-white/10 rounded-full w-40" />
+              <div className="h-3 bg-white/5 rounded-full w-24" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-9 w-28 bg-white/5 rounded-xl" />
+            <div className="h-9 w-28 bg-white/10 rounded-xl" />
+          </div>
+        </div>
+
+        {/* Board Columns Skeleton */}
+        <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+          {[...Array(4)].map((_, col) => (
+            <div key={col} className="bg-[#111] border border-white/5 rounded-3xl p-4 flex flex-col gap-4 flex-1 min-w-[280px]">
+              <div className="flex justify-between items-center">
+                <div className="h-5 w-24 bg-white/10 rounded-full" />
+                <div className="h-4 w-6 bg-white/5 rounded-full" />
+              </div>
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-3">
+                    <div className="h-4 bg-white/10 rounded-full w-3/4" />
+                    <div className="flex justify-between items-center pt-2">
+                      <div className="h-4 bg-white/5 rounded-md w-16" />
+                      <div className="w-5 h-5 rounded-full bg-white/10" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 flex flex-col min-w-0">
@@ -304,7 +347,7 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
                 </div>
               )}
 
-              {projectMembers.length > 0 && (
+              {(isAllProjectMembers || projectMembers.length > 0) && (
                 <div className="flex items-center gap-2 border-l border-white/10 pl-4">
                   <span className="opacity-70">Team:</span>
                   {isAllProjectMembers ? (
@@ -411,62 +454,72 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" data-lenis-prevent>
-          <div data-lenis-prevent className="bg-black border border-white/10 rounded-3xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto overscroll-contain custom-scrollbar">
-            <h3 className="text-lg font-bold text-white">{selectedTask ? "Edit Task" : "Create Task"}</h3>
-            <form onSubmit={handleSave} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs text-gray-400 font-semibold uppercase">Name *</label>
-                <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white" />
-              </div>
-              
-              
-              <div className="grid grid-cols-2 gap-4">
+          <div data-lenis-prevent className="bg-black border border-white/10 rounded-3xl w-full max-w-2xl max-h-[85vh] relative shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
+              <h3 className="text-lg font-bold text-white">{selectedTask ? "Edit Task" : "Create Task"}</h3>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs text-gray-400 font-semibold uppercase">Status</label>
-                  <select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white">
-                    {isPlannerProject ? (
-                      <>
-                        <option value="Planned">Planned</option>
-                        <option value="In Progress">In Progress (Shooting)</option>
-                        <option value="In Editing">In Editing</option>
-                        <option value="Ready for Review">Ready for Review</option>
-                        <option value="Client Approved">Client Approved</option>
-                        <option value="Completed">Completed</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="Not Started">Not Started</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Done">Done</option>
-                      </>
-                    )}
+                  <label className="text-xs text-gray-400 font-semibold uppercase">Name *</label>
+                  <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white" />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-400 font-semibold uppercase">Status</label>
+                    <select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white">
+                      {isPlannerProject ? (
+                        <>
+                          <option value="Planned">Planned</option>
+                          <option value="In Progress">In Progress (Shooting)</option>
+                          <option value="In Editing">In Editing</option>
+                          <option value="Ready for Review">Ready for Review</option>
+                          <option value="Client Approved">Client Approved</option>
+                          <option value="Completed">Completed</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="Not Started">Not Started</option>
+                          <option value="In Progress">In Progress</option>
+                          <option value="Done">Done</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-400 font-semibold uppercase">Due Date</label>
+                    <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white" />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-400 font-semibold uppercase">Category</label>
+                  <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white">
+                    <option value="">Default (Project Category)</option>
+                    <option value="Graphics Design">Graphics Design</option>
+                    <option value="Video Editing">Video Editing</option>
+                    <option value="Web dev">Web dev</option>
+                    <option value="Photography">Photography</option>
+                    <option value="Videography">Videography</option>
+                    {existingCustomCategories.map(c => <option key={c as string} value={c as string}>{c as string}</option>)}
+                    <option value="Custom">Custom...</option>
                   </select>
+                  {category === "Custom" && (
+                    <input type="text" placeholder="Enter custom category" value={customCategory} onChange={e => setCustomCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white mt-2" />
+                  )}
                 </div>
                 
                 <div className="space-y-1">
-                  <label className="text-xs text-gray-400 font-semibold uppercase">Due Date</label>
-                  <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white" />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs text-gray-400 font-semibold uppercase">Category</label>
-                <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white">
-                  <option value="">Default (Project Category)</option>
-                  <option value="Graphics Design">Graphics Design</option>
-                  <option value="Video Editing">Video Editing</option>
-                  <option value="Web dev">Web dev</option>
-                  <option value="Photography">Photography</option>
-                  <option value="Videography">Videography</option>
-                  {existingCustomCategories.map(c => <option key={c as string} value={c as string}>{c as string}</option>)}
-                  <option value="Custom">Custom...</option>
-                </select>
-                {category === "Custom" && (
-                  <input type="text" placeholder="Enter custom category" value={customCategory} onChange={e => setCustomCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white mt-2" />
-                )}
-              </div>
-              
-              <div className="space-y-1">
                   <label className="text-xs text-gray-400 font-semibold uppercase">Assigned To</label>
                   <div data-lenis-prevent className="bg-white/5 border border-white/10 rounded-xl p-3 max-h-52 overflow-y-auto overscroll-contain custom-scrollbar space-y-2 touch-pan-y">
                     <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/5 rounded-lg transition-colors overflow-hidden">
@@ -488,16 +541,12 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
                       );
                     })}
                   </div>
-                
-  
-
+                </div>
               </div>
 
-              
-
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-semibold">Save</button>
+              <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-semibold transition-colors text-sm cursor-pointer">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl font-semibold transition-colors text-sm cursor-pointer">Save</button>
               </div>
             </form>
           </div>
@@ -506,24 +555,36 @@ export default function TasksTab({ projectId, projectName, onBack }: { projectId
 
       {isMoodboardModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2"><ImageIcon className="w-5 h-5 text-indigo-400" /> Moodboard</h3>
-            <form onSubmit={handleSaveMoodboard} className="space-y-4">
-              
-              <div className="space-y-1">
-                <label className="text-xs text-gray-400 font-semibold uppercase">Image URLs (comma separated)</label>
-                <textarea rows={3} value={moodboardImages} onChange={e => setMoodboardImages(e.target.value)} placeholder="https://..., https://..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white" />
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-3xl max-h-[85vh] relative shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2"><ImageIcon className="w-5 h-5 text-indigo-400" /> Moodboard</h3>
+              <button
+                type="button"
+                onClick={() => setIsMoodboardModalOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveMoodboard} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-400 font-semibold uppercase">Image URLs (comma separated)</label>
+                  <textarea rows={3} value={moodboardImages} onChange={e => setMoodboardImages(e.target.value)} placeholder="https://..., https://..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white" />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
+                  {moodboardImages.split(",").map((url, i) => url.trim() && (
+                    <div key={i} className="aspect-square bg-white/5 rounded-xl border border-white/10 overflow-hidden relative group">
+                      <img src={url.trim()} alt="Moodboard item" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
-                {moodboardImages.split(",").map((url, i) => url.trim() && (
-                  <div key={i} className="aspect-square bg-white/5 rounded-xl border border-white/10 overflow-hidden relative group">
-                    <img src={url.trim()} alt="Moodboard item" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setIsMoodboardModalOpen(false)} className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl">Close</button>
-                <button type="submit" className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold">Save Changes</button>
+
+              <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
+                <button type="button" onClick={() => setIsMoodboardModalOpen(false)} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-semibold transition-colors text-sm cursor-pointer">Close</button>
+                <button type="submit" className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-semibold transition-colors text-sm cursor-pointer">Save Changes</button>
               </div>
             </form>
           </div>

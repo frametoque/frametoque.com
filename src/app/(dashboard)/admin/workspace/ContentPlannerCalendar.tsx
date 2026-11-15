@@ -1640,7 +1640,7 @@ export default function ContentPlannerCalendar({
         >
           <div
             data-lenis-prevent
-            className="bg-[#121217] border-t sm:border border-white/15 rounded-t-3xl sm:rounded-3xl w-full max-w-xl max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200 sm:zoom-in-95"
+            className="bg-[#121217] border-t sm:border border-white/15 rounded-t-3xl sm:rounded-3xl w-full max-w-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200 sm:zoom-in-95"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Mobile Drag Indicator */}
@@ -2137,9 +2137,9 @@ export default function ContentPlannerCalendar({
       {/* Link Invoice & Quotation Modal (Admin Only) */}
       {isBillingModalOpen && (
         <div data-lenis-prevent className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div data-lenis-prevent className="bg-[#121217] border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+          <div data-lenis-prevent className="bg-[#121217] border border-white/10 rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02] shrink-0">
               <div>
                 <h3 className="text-base font-bold text-white">
                   Link Billing to Month
@@ -2159,13 +2159,14 @@ export default function ContentPlannerCalendar({
 
             {/* Modal Body */}
             {billingLoading ? (
-              <div className="p-8 flex flex-col items-center justify-center gap-2 text-center">
+              <div className="p-8 flex flex-col items-center justify-center gap-2 text-center flex-1">
                 <Loader2 className="w-6 h-6 text-brand-400 animate-spin" />
                 <p className="text-xs text-gray-400 font-medium">Loading quotations and invoices...</p>
               </div>
             ) : (
-              <form onSubmit={handleSaveBillingLinks} className="p-6 space-y-4 overflow-y-auto">
-                {/* Quotation Selector */}
+              <form onSubmit={handleSaveBillingLinks} className="flex flex-col flex-1 overflow-hidden min-h-0">
+                <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
+                  {/* Quotation Selector */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-300 mb-1.5">
                     Linked Quotation
@@ -2208,40 +2209,41 @@ export default function ContentPlannerCalendar({
                     <p className="text-[11px] text-gray-500 mt-1">No invoices found for this client.</p>
                   ) : null}
                 </div>
+              </div>
 
-                {/* Modal Footer */}
-                <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-2">
+              {/* Modal Footer */}
+              <div className="p-4 sm:p-5 border-t border-white/10 shrink-0 bg-[#0c0c0e] flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBillingInvoiceId("");
+                    setBillingQuotationId("");
+                  }}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  Clear Links
+                </button>
+
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      setBillingInvoiceId("");
-                      setBillingQuotationId("");
-                    }}
-                    className="px-3 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                    onClick={() => setIsBillingModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
                   >
-                    Clear Links
+                    Cancel
                   </button>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsBillingModalOpen(false)}
-                      className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={billingSaving}
-                      className="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-500 text-white transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                    >
-                      {billingSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                      <span>Save Links</span>
-                    </button>
-                  </div>
+                  <button
+                    type="submit"
+                    disabled={billingSaving}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-500 text-white transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {billingSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                    <span>Save Links</span>
+                  </button>
                 </div>
-              </form>
-            )}
+              </div>
+            </form>
+          )}
           </div>
         </div>
       )}

@@ -20,7 +20,9 @@ async function ensureInventorySchema(): Promise<void> {
           ADD COLUMN IF NOT EXISTS is_to_buy BOOLEAN DEFAULT false,
           ADD COLUMN IF NOT EXISTS product_link TEXT,
           ADD COLUMN IF NOT EXISTS estimated_price NUMERIC(12, 2),
-          ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0;
+          ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0,
+          ADD COLUMN IF NOT EXISTS available_for_rent BOOLEAN DEFAULT false,
+          ADD COLUMN IF NOT EXISTS rental_price_per_day NUMERIC(12, 2) DEFAULT 0;
       `;
     } catch (e) {
       console.warn("Could not ensure admin_inventory schema:", e);
@@ -133,7 +135,7 @@ export async function createInventoryItem(data: any) {
 
   const result = await sql`
     INSERT INTO admin_inventory (
-      item_name, category, serial_number, quantity, status, purchase_date, purchase_price, notes, warranty_letter_url, expense_id, is_to_buy, product_link, estimated_price, purchase_invoice_url
+      item_name, category, serial_number, quantity, status, purchase_date, purchase_price, notes, warranty_letter_url, expense_id, is_to_buy, product_link, estimated_price, purchase_invoice_url, available_for_rent, rental_price_per_day
     ) VALUES (
       ${data.item_name}, ${data.category}, ${data.serial_number || null}, ${data.quantity || 1}, 
       ${data.status || 'Available'}, ${data.purchase_date || null}, ${data.purchase_price || null}, ${data.notes || null},
@@ -141,11 +143,15 @@ export async function createInventoryItem(data: any) {
       ${data.is_to_buy !== undefined ? Boolean(data.is_to_buy) : false},
       ${data.product_link || null},
       ${data.estimated_price || null},
-      ${data.purchase_invoice_url || null}
+      ${data.purchase_invoice_url || null},
+      ${data.available_for_rent !== undefined ? Boolean(data.available_for_rent) : false},
+      ${data.rental_price_per_day !== undefined && data.rental_price_per_day !== null && data.rental_price_per_day !== '' ? parseFloat(data.rental_price_per_day) : 0}
     )
     RETURNING id
   `;
   await logSystemAction(`Created inventory item: "${data.item_name}"`);
+  revalidatePath("/admin/inventory");
+  revalidatePath("/admin/rentals");
   return result[0];
 }
 
@@ -169,9 +175,13 @@ export async function updateInventoryItem(id: string, data: any) {
       product_link = ${data.product_link || null},
       estimated_price = ${data.estimated_price !== undefined ? data.estimated_price : null},
       purchase_invoice_url = ${data.purchase_invoice_url || null},
+      available_for_rent = ${data.available_for_rent !== undefined ? Boolean(data.available_for_rent) : false},
+      rental_price_per_day = ${data.rental_price_per_day !== undefined && data.rental_price_per_day !== null && data.rental_price_per_day !== '' ? parseFloat(data.rental_price_per_day) : 0},
       updated_at = NOW()
     WHERE id = ${id}
   `;
+  revalidatePath("/admin/inventory");
+  revalidatePath("/admin/rentals");
   await logSystemAction(`Updated inventory item: "${data.item_name}" (ID: ${id})`);
 }
 
@@ -179,7 +189,26 @@ export async function deleteInventoryItem(id: string, itemName: string) {
   await requireAdminSession();
 
   await sql`DELETE FROM admin_inventory WHERE id = ${id}`;
+  revalidatePath("/admin/inventory");
+  revalidatePath("/admin/rentals");
   await logSystemAction(`Deleted inventory item: "${itemName}" (ID: ${id})`);
+}
+
+export async function toggleRentalAvailability(id: string, availableForRent: boolean, rentalPricePerDay?: number) {
+  await requireAdminSession();
+  await ensureInventorySchema();
+
+  await sql`
+    UPDATE admin_inventory SET
+      available_for_rent = ${availableForRent},
+      rental_price_per_day = COALESCE(${rentalPricePerDay !== undefined ? rentalPricePerDay : null}, rental_price_per_day),
+      updated_at = NOW()
+    WHERE id = ${id}
+  `;
+  revalidatePath("/admin/inventory");
+  revalidatePath("/admin/rentals");
+  await logSystemAction(`Toggled rental availability for item ID ${id}: ${availableForRent ? 'Enabled' : 'Disabled'}`);
+  return { success: true };
 }
 
 export async function uploadInventoryDocument(formData: FormData): Promise<string> {

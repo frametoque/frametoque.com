@@ -509,14 +509,14 @@ export default function ExpensesPage() {
       {/* Record Expense Modal Form */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
               <h2 className="text-xl font-semibold">{editingId ? 'Edit Expense' : 'Record Expense'}</h2>
               <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
-             <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Recurring / Scheduled Switch Toggle - ONLY show on creating new expense */}
               {!editingId && (
                 <div className="space-y-4">
@@ -560,97 +560,106 @@ export default function ExpensesPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Date</label>
-                  <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Amount (LKR)</label>
-                  <input type="number" placeholder="0.00" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm text-gray-400">Description</label>
-                <input type="text" placeholder="What was this expense for?" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Category</label>
-                  <CategoryPicker 
-                    categories={dynamicCategories} 
-                    value={selectedCategories} 
-                    onChange={setSelectedCategories} 
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Payment Method</label>
-                  <select value={formData.paymentMethod} onChange={e => setFormData({...formData, paymentMethod: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
-                    <option className="bg-black">Corporate Card</option>
-                    <option className="bg-black">Bank Transfer</option>
-                    <option className="bg-black">Personal Card</option>
-                    <option className="bg-black">Cash</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Source Account</label>
-                  <select value={formData.accountId} onChange={e => setFormData({ ...formData, accountId: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
-                    <option value="" className="bg-black">No Account (Unlinked)</option>
-                    {accounts.map(a => <option key={a.id} value={a.id} className="bg-black">{a.name} ({formatLKR(a.currentBalance || 0)})</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm text-gray-400">
-                  {convertingPdf ? "Processing PDF..." : "Receipt Image / PDF"}
-                </label>
-                <input 
-                  type="file" 
-                  accept="image/*,application/pdf" 
-                  disabled={convertingPdf}
-                  onChange={async (e) => {
-                    const selected = e.target.files?.[0];
-                    if (!selected) {
-                      setReceiptFile(null);
-                      return;
-                    }
-                    if (selected.type === "application/pdf") {
-                      setConvertingPdf(true);
-                      try {
-                        const imgFile = await convertPdfToImage(selected);
-                        setReceiptFile(imgFile);
-                      } catch (err) {
-                        console.error(err);
-                        alert("Failed to convert PDF to image. Please upload a normal image.");
-                      } finally {
-                        setConvertingPdf(false);
-                      }
-                    } else {
-                      setReceiptFile(selected);
-                    }
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm disabled:opacity-50" 
-                />
-                {convertingPdf && (
-                  <p className="text-xs text-brand-400 animate-pulse px-2">Converting PDF to Image...</p>
-                )}
-                {formData.receiptUrl && !receiptFile && (
-                  <div className="flex items-center gap-3 mt-1 px-2">
-                    <a href={formData.receiptUrl} target="_blank" className="text-xs text-blue-400 underline">View current receipt</a>
-                    <button 
-                      type="button"
-                      onClick={() => setFormData({ ...formData, receiptUrl: '' })}
-                      className="text-xs text-red-400 hover:text-red-300 font-semibold cursor-pointer"
-                    >
-                      Delete current image
-                    </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Left Column */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-400">Date</label>
+                      <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-400">Amount (LKR)</label>
+                      <input type="number" placeholder="0.00" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
+                    </div>
                   </div>
-                )}
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-400">Description</label>
+                    <input type="text" placeholder="What was this expense for?" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-400">Category</label>
+                    <CategoryPicker 
+                      categories={dynamicCategories} 
+                      value={selectedCategories} 
+                      onChange={setSelectedCategories} 
+                    />
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-400">Payment Method</label>
+                      <select value={formData.paymentMethod} onChange={e => setFormData({...formData, paymentMethod: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
+                        <option className="bg-black">Corporate Card</option>
+                        <option className="bg-black">Bank Transfer</option>
+                        <option className="bg-black">Personal Card</option>
+                        <option className="bg-black">Cash</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-400">Source Account</label>
+                      <select value={formData.accountId} onChange={e => setFormData({ ...formData, accountId: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
+                        <option value="" className="bg-black">No Account (Unlinked)</option>
+                        {accounts.map(a => <option key={a.id} value={a.id} className="bg-black">{a.name} ({formatLKR(a.currentBalance || 0)})</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-400">
+                      {convertingPdf ? "Processing PDF..." : "Receipt Image / PDF"}
+                    </label>
+                    <input 
+                      type="file" 
+                      accept="image/*,application/pdf" 
+                      disabled={convertingPdf}
+                      onChange={async (e) => {
+                        const selected = e.target.files?.[0];
+                        if (!selected) {
+                          setReceiptFile(null);
+                          return;
+                        }
+                        if (selected.type === "application/pdf") {
+                          setConvertingPdf(true);
+                          try {
+                            const imgFile = await convertPdfToImage(selected);
+                            setReceiptFile(imgFile);
+                          } catch (err) {
+                            console.error(err);
+                            alert("Failed to convert PDF to image. Please upload a normal image.");
+                          } finally {
+                            setConvertingPdf(false);
+                          }
+                        } else {
+                          setReceiptFile(selected);
+                        }
+                      }}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm disabled:opacity-50" 
+                    />
+                    {convertingPdf && (
+                      <p className="text-xs text-brand-400 animate-pulse px-2">Converting PDF to Image...</p>
+                    )}
+                    {formData.receiptUrl && !receiptFile && (
+                      <div className="flex items-center gap-3 mt-1 px-2">
+                        <a href={formData.receiptUrl} target="_blank" className="text-xs text-blue-400 underline">View current receipt</a>
+                        <button 
+                          type="button"
+                          onClick={() => setFormData({ ...formData, receiptUrl: '' })}
+                          className="text-xs text-red-400 hover:text-red-300 font-semibold cursor-pointer"
+                        >
+                          Delete current image
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-white/5">
+            <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-white/5 shrink-0">
               <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-full font-medium hover:bg-white/10 transition-colors cursor-pointer" disabled={saving || convertingPdf}>
                 Cancel
               </button>

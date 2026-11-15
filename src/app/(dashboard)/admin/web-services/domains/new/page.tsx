@@ -863,9 +863,9 @@ export default function NewDomainOrderPage() {
       {/* REGISTER DOMAIN FOR CLIENT MODAL */}
       {isOrderModalOpen && modalDomainData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="bg-[#0b0c10] border border-white/15 rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col">
+          <div className="bg-[#0b0c10] border border-white/15 rounded-3xl w-full max-w-4xl max-h-[85vh] shadow-2xl flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="p-6 border-b border-white/10 flex items-start justify-between gap-4">
+            <div className="p-6 border-b border-white/10 flex items-start justify-between gap-4 shrink-0">
               <div>
                 <div className="flex items-center gap-2 flex-wrap mb-1.5">
                   <span className="text-xs font-semibold uppercase tracking-wider text-brand-400 bg-brand-500/10 px-2.5 py-0.5 rounded-full border border-brand-500/20">
@@ -894,7 +894,7 @@ export default function NewDomainOrderPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-6 flex-1">
+            <div className="p-6 space-y-6 flex-1 overflow-y-auto">
               {/* Standard Reserved Sibling Names Notice */}
               {modalDomainData.packageType === "standard" &&
                 modalDomainData.reservedNames &&
@@ -1098,7 +1098,7 @@ export default function NewDomainOrderPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 bg-black/40">
+            <div className="p-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 bg-black/40 shrink-0">
               <button
                 type="button"
                 onClick={handleSwitchToManualForm}

@@ -407,9 +407,9 @@ export default function ClientsPage() {
       {/* Add / Edit Client Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
+            <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-brand-400/10 rounded-xl">
                   <Users className="w-5 h-5 text-brand-400" />
@@ -418,15 +418,15 @@ export default function ClientsPage() {
                   {editingId ? 'Edit Client' : 'Add New Client'}
                 </h2>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1 col-span-2 sm:col-span-1">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
                   <label className="text-sm text-gray-400">Full Name <span className="text-red-400">*</span></label>
                   <input
                     type="text"
@@ -435,7 +435,7 @@ export default function ClientsPage() {
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
                   />
                 </div>
-                <div className="space-y-1 col-span-2 sm:col-span-1">
+                <div className="space-y-1">
                   <label className="text-sm text-gray-400">
                     Email <span className="text-gray-500 text-xs">(Required if no phone)</span>
                   </label>
@@ -446,9 +446,6 @@ export default function ClientsPage() {
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-sm text-gray-400">Phone <span className="text-gray-500 text-xs">(Required if no email)</span></label>
                   <input
@@ -469,25 +466,24 @@ export default function ClientsPage() {
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm text-gray-400">Billing Address</label>
-                <input
-                  type="text"
-                  placeholder="(optional)"
-                  value={formData.address}
-                  onChange={e => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
-                />
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-sm text-gray-400">Billing Address</label>
+                  <input
+                    type="text"
+                    placeholder="(optional)"
+                    value={formData.address}
+                    onChange={e => setFormData({ ...formData, address: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-sm"
+                  />
+                </div>
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-white/5">
+            <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-white/5 shrink-0">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-6 py-2.5 rounded-full font-medium hover:bg-white/10 transition-colors text-sm"
+                className="px-6 py-2.5 rounded-full font-medium hover:bg-white/10 transition-colors text-sm cursor-pointer"
                 disabled={saving}
               >
                 Cancel
@@ -495,7 +491,7 @@ export default function ClientsPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-full font-medium transition-colors disabled:opacity-50 text-sm"
+                className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-full font-medium transition-colors disabled:opacity-50 text-sm cursor-pointer"
               >
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {saving ? 'Saving...' : (editingId ? 'Update Client' : 'Add Client')}

@@ -5,8 +5,10 @@ import useSWR from 'swr';
 import { 
   Search, Plus, Edit2, Trash2, X, Loader2, Package, CheckCircle2, 
   Box, Info, Download, FileText, Eye, Upload, Link2, 
-  Check, ExternalLink, Clock, ShoppingCart, AlertCircle, GripVertical
+  Check, ExternalLink, Clock, ShoppingCart, AlertCircle, GripVertical,
+  Repeat, KeyRound
 } from "lucide-react";
+import Link from "next/link";
 import { 
   getInventoryItems, createInventoryItem, updateInventoryItem, 
   deleteInventoryItem, uploadInventoryDocument, getExpensesForLinking,
@@ -138,7 +140,7 @@ function DocumentPreview({ url, title }: { url: string; title: string }) {
   );
 }
 
-const emptyForm = { item_name: '', category: '', serial_number: '', quantity: 1, status: 'Available', purchase_date: '', purchase_price: '', notes: '', warranty_letter_url: '', expense_id: '', purchase_invoice_url: '' };
+const emptyForm = { item_name: '', category: '', serial_number: '', quantity: 1, status: 'Available', purchase_date: '', purchase_price: '', notes: '', warranty_letter_url: '', expense_id: '', purchase_invoice_url: '', available_for_rent: false, rental_price_per_day: '' };
 const emptyToBuyForm = { item_name: '', product_link: '', estimated_price: '' };
 
 export default function InventoryPage() {
@@ -238,7 +240,9 @@ export default function InventoryPage() {
       notes: item.product_link ? `Product Link: ${item.product_link}${item.notes ? `\n${item.notes}` : ''}` : (item.notes || ''),
       warranty_letter_url: item.warranty_letter_url || '',
       expense_id: item.expense_id ? String(item.expense_id) : '',
-      purchase_invoice_url: item.purchase_invoice_url || ''
+      purchase_invoice_url: item.purchase_invoice_url || '',
+      available_for_rent: false,
+      rental_price_per_day: ''
     });
     setIsModalOpen(true);
   };
@@ -332,7 +336,9 @@ export default function InventoryPage() {
       notes: item.notes || '',
       warranty_letter_url: item.warranty_letter_url || '',
       expense_id: item.expense_id ? String(item.expense_id) : '',
-      purchase_invoice_url: item.purchase_invoice_url || ''
+      purchase_invoice_url: item.purchase_invoice_url || '',
+      available_for_rent: Boolean(item.available_for_rent),
+      rental_price_per_day: item.rental_price_per_day ? String(item.rental_price_per_day) : ''
     });
     setIsModalOpen(true);
   };
@@ -382,6 +388,8 @@ export default function InventoryPage() {
         ...formData, 
         quantity: parseInt(formData.quantity.toString()) || 1, 
         purchase_price: parseFloat(formData.purchase_price) || null,
+        available_for_rent: Boolean(formData.available_for_rent),
+        rental_price_per_day: formData.rental_price_per_day ? parseFloat(formData.rental_price_per_day) : 0,
         is_to_buy: false // converts to regular active purchased inventory item!
       };
       if (editingId) {
@@ -443,6 +451,7 @@ export default function InventoryPage() {
   const totalValue = (data as any[]).filter((d: any) => !d.is_to_buy).reduce((acc: number, curr: any) => acc + (parseFloat(curr.purchase_price) || 0), 0);
   const categories = new Set((data as any[]).filter((d: any) => !d.is_to_buy).map((d: any) => d.category)).size;
   const toBuyCount = (data as any[]).filter((d: any) => d.is_to_buy).length;
+  const forRentCount = (data as any[]).filter((d: any) => !d.is_to_buy && d.available_for_rent).length;
 
   if (loading) {
     return (
@@ -535,6 +544,14 @@ export default function InventoryPage() {
               {toBuyCount} to buy
             </span>
           )}
+          {forRentCount > 0 && (
+            <Link
+              href="/admin/rentals"
+              className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-300 border border-blue-500/30 flex items-center gap-1.5 hover:bg-blue-500/25 transition-colors"
+            >
+              {forRentCount} for rent &rarr;
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center gap-2 self-end sm:self-auto">
@@ -571,8 +588,8 @@ export default function InventoryPage() {
                   <th className="text-left py-4 px-6 font-medium text-gray-400 text-sm">Item</th>
                   <th className="text-left py-4 px-6 font-medium text-gray-400 text-sm">Category</th>
                   <th className="text-left py-4 px-6 font-medium text-gray-400 text-sm">Status</th>
-                  <th className="text-left py-4 px-6 font-medium text-gray-400 text-sm hidden sm:table-cell">Purchase Info</th>
-                  <th className="text-left py-4 px-6 font-medium text-gray-400 text-sm hidden lg:table-cell">Expense</th>
+                  <th className="text-left py-4 px-6 font-medium text-gray-400 text-sm hidden sm:table-cell">Purchase Date</th>
+                  <th className="text-left py-4 px-6 font-medium text-gray-400 text-sm hidden sm:table-cell">Price</th>
                   <th className="text-right py-4 px-6 font-medium text-gray-400 text-sm">Actions</th>
                 </tr>
               </thead>
@@ -685,11 +702,33 @@ export default function InventoryPage() {
                             To Buy
                           </span>
                         ) : (
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColor}`}>
-                            {item.status}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColor}`}>
+                              {item.status}
+                            </span>
+                            {item.available_for_rent && (
+                              <span 
+                                className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/15 text-blue-300 border border-blue-500/30 shrink-0"
+                                title="Available for Rent"
+                              >
+                                Rentable
+                              </span>
+                            )}
+                          </div>
                         )}
                       </td>
+                      {/* Purchase Date */}
+                      <td className="py-4 px-6 text-sm text-gray-400 hidden sm:table-cell">
+                        {isToBuy ? (
+                          <span className="text-xs text-gray-500 italic">Not purchased</span>
+                        ) : item.purchase_date ? (
+                          <span>{new Date(item.purchase_date).toLocaleDateString()}</span>
+                        ) : (
+                          <span className="text-gray-600">—</span>
+                        )}
+                      </td>
+
+                      {/* Price */}
                       <td className="py-4 px-6 text-sm hidden sm:table-cell">
                         {isToBuy ? (
                           <div>
@@ -698,27 +737,10 @@ export default function InventoryPage() {
                               {item.estimated_price || item.purchase_price ? formatLKR(item.estimated_price || item.purchase_price) : "—"}
                             </span>
                           </div>
+                        ) : item.purchase_price ? (
+                          <span className="text-gray-300 font-medium">{formatLKR(item.purchase_price)}</span>
                         ) : (
-                          <div className="text-gray-400">
-                            {item.purchase_date && <div>{new Date(item.purchase_date).toLocaleDateString()}</div>}
-                            {item.purchase_price && <div className="text-gray-300">{formatLKR(item.purchase_price)}</div>}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-4 px-6 hidden lg:table-cell">
-                        {isToBuy ? (
-                          <span className="text-xs text-gray-500 italic">Not purchased</span>
-                        ) : item.expense_id ? (
-                          <div className="flex flex-col gap-1">
-                            {item.expense_desc && (
-                              <span className="text-xs text-gray-400 max-w-[160px] truncate">{item.expense_desc}</span>
-                            )}
-                            <span className="inline-flex w-fit items-center px-2 py-0.5 rounded-md text-[10px] font-semibold font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                              EXP-{item.expense_id}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-600">—</span>
+                          <span className="text-gray-600">—</span>
                         )}
                       </td>
                       <td className="py-4 px-6 text-right">
@@ -769,11 +791,11 @@ export default function InventoryPage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#111111] border border-white/10 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#111111] border border-white/10 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-white/10 shrink-0">
               <div>
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-xl font-semibold text-white">
                   {isConvertingItem ? 'Convert to Inventory' : (editingId ? 'Edit Item' : 'Add Item')}
                 </h2>
                 {isConvertingItem && (
@@ -785,209 +807,253 @@ export default function InventoryPage() {
                   setIsModalOpen(false);
                   setIsConvertingItem(null);
                 }}
-                className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             
-            <form onSubmit={handleSave} className="overflow-y-auto p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Item Name *</label>
-                <input
-                  required
-                  type="text"
-                  value={formData.item_name}
-                  onChange={e => setFormData({ ...formData, item_name: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500"
-                  placeholder="e.g. Sony A7IV"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Category *</label>
-                  <input
-                    required
-                    type="text"
-                    value={formData.category}
-                    onChange={e => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500"
-                    placeholder="e.g. Camera"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Serial Number</label>
-                  <input
-                    type="text"
-                    value={formData.serial_number}
-                    onChange={e => setFormData({ ...formData, serial_number: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500"
-                    placeholder="Optional"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Quantity</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={formData.quantity}
-                    onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={e => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 text-white"
-                  >
-                    <option value="Available">Available</option>
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="Lost">Lost</option>
-                    <option value="Broken">Broken</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Purchase Date</label>
-                  <input
-                    type="date"
-                    value={formData.purchase_date}
-                    onChange={e => setFormData({ ...formData, purchase_date: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500"
-                    style={{ colorScheme: 'dark' }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Purchase Price</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.purchase_price}
-                    onChange={e => setFormData({ ...formData, purchase_price: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500"
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
-                <textarea
-                  value={formData.notes}
-                  onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 min-h-[100px]"
-                  placeholder="Additional details..."
-                />
-              </div>
-
-              <div className="border-t border-white/10 pt-4 mt-2 space-y-3">
-                {/* Linked Expense */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Link to Expense</label>
-                  <select
-                    value={formData.expense_id}
-                    onChange={e => setFormData(prev => ({ ...prev, expense_id: e.target.value }))}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500"
-                  >
-                    <option value="">— None —</option>
-                    {expenses.map(exp => (
-                      <option key={exp.id} value={String(exp.id)}>
-                        {exp.date} · {exp.description} · {formatLKR(exp.amount)}
-                      </option>
-                    ))}
-                  </select>
-                  {formData.expense_id && (() => {
-                    const linked = expenses.find(e => String(e.id) === formData.expense_id);
-                    return linked?.receipt_url ? (
-                      <div className="mt-2 flex items-center gap-2">
-                        <button type="button" onClick={() => setViewingDoc({ url: linked.receipt_url, title: 'Purchase Invoice' })} className="flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 transition-colors">
-                          <Eye className="w-3.5 h-3.5" /> View Invoice
-                        </button>
-                        <a href={linked.receipt_url} download target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white transition-colors" title="Download Invoice">
-                          <Download className="w-3.5 h-3.5" />
-                        </a>
-                      </div>
-                    ) : linked ? (
-                      <p className="mt-1 text-xs text-gray-500">No invoice uploaded on this expense.</p>
-                    ) : null;
-                  })()}
-                </div>
-
-                {/* Warranty Upload */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Warranty Letter</label>
-                  {formData.warranty_letter_url ? (
-                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
-                      <FileText className="w-4 h-4 text-green-400 shrink-0" />
-                      <span className="text-xs text-gray-300 truncate flex-1">Uploaded</span>
-                      <button type="button" onClick={() => setViewingDoc({ url: formData.warranty_letter_url, title: 'Warranty Letter' })} className="p-1 text-gray-400 hover:text-white transition-colors" title="View">
-                        <Eye className="w-3.5 h-3.5" />
-                      </button>
-                      <a href={formData.warranty_letter_url} download target="_blank" rel="noopener noreferrer" className="p-1 text-gray-400 hover:text-white transition-colors" title="Download">
-                        <Download className="w-3.5 h-3.5" />
-                      </a>
-                      <button type="button" onClick={() => setFormData(prev => ({ ...prev, warranty_letter_url: '' }))} className="p-1 text-gray-400 hover:text-red-400 transition-colors" title="Remove">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
+            <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden">
+              <div className="overflow-y-auto p-6 flex-1">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left Column: Core Item Details */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Item Name *</label>
+                      <input
+                        required
+                        type="text"
+                        value={formData.item_name}
+                        onChange={e => setFormData({ ...formData, item_name: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 text-white placeholder-gray-500"
+                        placeholder="e.g. Sony A7IV"
+                      />
                     </div>
-                  ) : (
-                    <label className="cursor-pointer flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors text-gray-400">
-                      {uploadingWarranty ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                      {uploadingWarranty ? 'Uploading...' : 'Upload Warranty Letter'}
-                      <input type="file" className="hidden" accept="image/*,application/pdf" onChange={handleUploadWarranty} disabled={uploadingWarranty} />
-                    </label>
-                  )}
-                </div>
-
-                {/* Purchase Invoice Upload (when no linked expense) */}
-                {!formData.expense_id && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Purchase Invoice (Optional)</label>
-                    {formData.purchase_invoice_url ? (
-                      <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
-                        <FileText className="w-4 h-4 text-brand-400 shrink-0" />
-                        <span className="text-xs text-gray-300 truncate flex-1">Invoice Uploaded</span>
-                        <button type="button" onClick={() => setViewingDoc({ url: formData.purchase_invoice_url, title: 'Purchase Invoice' })} className="p-1 text-gray-400 hover:text-white transition-colors" title="View">
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        <a href={formData.purchase_invoice_url} download target="_blank" rel="noopener noreferrer" className="p-1 text-gray-400 hover:text-white transition-colors" title="Download">
-                          <Download className="w-3.5 h-3.5" />
-                        </a>
-                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, purchase_invoice_url: '' }))} className="p-1 text-gray-400 hover:text-red-400 transition-colors" title="Remove">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Category *</label>
+                        <input
+                          required
+                          type="text"
+                          value={formData.category}
+                          onChange={e => setFormData({ ...formData, category: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 text-white placeholder-gray-500"
+                          placeholder="e.g. Camera"
+                        />
                       </div>
-                    ) : (
-                      <label className="cursor-pointer flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors text-gray-400">
-                        {uploadingInvoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                        {uploadingInvoice ? 'Uploading...' : 'Upload Purchase Invoice'}
-                        <input type="file" className="hidden" accept="image/*,application/pdf" onChange={handleUploadInvoice} disabled={uploadingInvoice} />
-                      </label>
-                    )}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Serial Number</label>
+                        <input
+                          type="text"
+                          value={formData.serial_number}
+                          onChange={e => setFormData({ ...formData, serial_number: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 text-white placeholder-gray-500"
+                          placeholder="Optional"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Quantity</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={formData.quantity}
+                          onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
+                        <select
+                          value={formData.status}
+                          onChange={e => setFormData({ ...formData, status: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 text-white"
+                        >
+                          <option value="Available" className="bg-[#1a1a1a]">Available</option>
+                          <option value="Maintenance" className="bg-[#1a1a1a]">Maintenance</option>
+                          <option value="Lost" className="bg-[#1a1a1a]">Lost</option>
+                          <option value="Broken" className="bg-[#1a1a1a]">Broken</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Purchase Date</label>
+                        <input
+                          type="date"
+                          value={formData.purchase_date}
+                          onChange={e => setFormData({ ...formData, purchase_date: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 text-white"
+                          style={{ colorScheme: 'dark' }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Purchase Price</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.purchase_price}
+                          onChange={e => setFormData({ ...formData, purchase_price: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 text-white placeholder-gray-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
+                      <textarea
+                        value={formData.notes}
+                        onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 min-h-[95px] text-white placeholder-gray-500"
+                        placeholder="Additional details..."
+                      />
+                    </div>
                   </div>
-                )}
+
+                  {/* Right Column: Rental & Finances & Documents */}
+                  <div className="space-y-4">
+                    {/* Rental Availability */}
+                    <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-semibold text-white block">Available for Rent</label>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(formData.available_for_rent)}
+                            onChange={e => setFormData({ ...formData, available_for_rent: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
+                        </label>
+                      </div>
+
+                      {formData.available_for_rent && (
+                        <div className="pt-2 border-t border-white/5">
+                          <label className="block text-xs font-medium text-gray-300 mb-1">Daily Rental Price (LKR)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={formData.rental_price_per_day}
+                            onChange={e => setFormData({ ...formData, rental_price_per_day: e.target.value })}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500"
+                            placeholder="e.g. 5000.00"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Linked Expense */}
+                    <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-2">
+                      <label className="block text-sm font-medium text-gray-300">Link to Expense</label>
+                      <select
+                        value={formData.expense_id}
+                        onChange={e => setFormData(prev => ({ ...prev, expense_id: e.target.value }))}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500"
+                      >
+                        <option value="" className="bg-[#1a1a1a]">— None —</option>
+                        {expenses.map(exp => (
+                          <option key={exp.id} value={String(exp.id)} className="bg-[#1a1a1a]">
+                            {exp.date} · {exp.description} · {formatLKR(exp.amount)}
+                          </option>
+                        ))}
+                      </select>
+                      {formData.expense_id && (() => {
+                        const linked = expenses.find(e => String(e.id) === formData.expense_id);
+                        return linked?.receipt_url ? (
+                          <div className="mt-2 flex items-center gap-2">
+                            <button type="button" onClick={() => setViewingDoc({ url: linked.receipt_url, title: 'Purchase Invoice' })} className="flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 transition-colors cursor-pointer">
+                              <Eye className="w-3.5 h-3.5" /> View Invoice
+                            </button>
+                            <a href={linked.receipt_url} download target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white transition-colors" title="Download Invoice">
+                              <Download className="w-3.5 h-3.5" />
+                            </a>
+                          </div>
+                        ) : linked ? (
+                          <p className="mt-1 text-xs text-gray-500">No invoice uploaded on this expense.</p>
+                        ) : null;
+                      })()}
+                    </div>
+
+                    {/* Documents */}
+                    <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1.5">Warranty Letter</label>
+                        {formData.warranty_letter_url ? (
+                          <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+                            <FileText className="w-4 h-4 text-green-400 shrink-0" />
+                            <span className="text-xs text-gray-300 truncate flex-1">Uploaded</span>
+                            <button type="button" onClick={() => setViewingDoc({ url: formData.warranty_letter_url, title: 'Warranty Letter' })} className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer" title="View">
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                            <a href={formData.warranty_letter_url} download target="_blank" rel="noopener noreferrer" className="p-1 text-gray-400 hover:text-white transition-colors" title="Download">
+                              <Download className="w-3.5 h-3.5" />
+                            </a>
+                            <button type="button" onClick={() => setFormData(prev => ({ ...prev, warranty_letter_url: '' }))} className="p-1 text-gray-400 hover:text-red-400 transition-colors cursor-pointer" title="Remove">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="cursor-pointer flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors text-gray-400">
+                            {uploadingWarranty ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                            {uploadingWarranty ? 'Uploading...' : 'Upload Warranty Letter'}
+                            <input type="file" className="hidden" accept="image/*,application/pdf" onChange={handleUploadWarranty} disabled={uploadingWarranty} />
+                          </label>
+                        )}
+                      </div>
+
+                      {/* Purchase Invoice Upload (when no linked expense) */}
+                      {!formData.expense_id && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-1.5">Purchase Invoice (Optional)</label>
+                          {formData.purchase_invoice_url ? (
+                            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+                              <FileText className="w-4 h-4 text-brand-400 shrink-0" />
+                              <span className="text-xs text-gray-300 truncate flex-1">Invoice Uploaded</span>
+                              <button type="button" onClick={() => setViewingDoc({ url: formData.purchase_invoice_url, title: 'Purchase Invoice' })} className="p-1 text-gray-400 hover:text-white transition-colors cursor-pointer" title="View">
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+                              <a href={formData.purchase_invoice_url} download target="_blank" rel="noopener noreferrer" className="p-1 text-gray-400 hover:text-white transition-colors" title="Download">
+                                <Download className="w-3.5 h-3.5" />
+                              </a>
+                              <button type="button" onClick={() => setFormData(prev => ({ ...prev, purchase_invoice_url: '' }))} className="p-1 text-gray-400 hover:text-red-400 transition-colors cursor-pointer" title="Remove">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="cursor-pointer flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors text-gray-400">
+                              {uploadingInvoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                              {uploadingInvoice ? 'Uploading...' : 'Upload Purchase Invoice'}
+                              <input type="file" className="hidden" accept="image/*,application/pdf" onChange={handleUploadInvoice} disabled={uploadingInvoice} />
+                            </label>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 shrink-0">
+              {/* Action Buttons Footer */}
+              <div className="px-6 py-4 border-t border-white/10 bg-[#141414] flex justify-end gap-3 shrink-0">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/10 transition-colors"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setIsConvertingItem(null);
+                  }}
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-brand-500 hover:bg-brand-600 text-white transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-brand-600 hover:bg-brand-500 text-white transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingId ? 'Save Changes' : 'Add Item'}
@@ -1032,6 +1098,21 @@ export default function InventoryPage() {
                   <div>
                     <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-0.5">Status</p>
                     <p className="text-sm text-white">{viewingItem.status}</p>
+                  </div>
+                )}
+                {viewingItem.available_for_rent && (
+                  <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/10">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-blue-400" /> Available for Rent
+                      </span>
+                      <Link href="/admin/rentals" className="text-xs text-brand-400 hover:text-brand-300 font-semibold underline">
+                        Rentals &rarr;
+                      </Link>
+                    </div>
+                    <p className="text-xl font-bold text-white mt-1.5">
+                      {viewingItem.rental_price_per_day ? `${formatLKR(viewingItem.rental_price_per_day)} / day` : 'Rate not set'}
+                    </p>
                   </div>
                 )}
                 {viewingItem.purchase_price && (
@@ -1127,7 +1208,7 @@ export default function InventoryPage() {
       {/* To-Buy Modal */}
       {isToBuyModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#121217] border border-white/10 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
+          <div className="bg-[#121217] border border-white/10 rounded-3xl w-full max-w-2xl max-h-[85vh] shadow-2xl overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
               <h3 className="text-lg font-bold text-white">
                 {editingToBuyId ? "Edit To-Buy Item" : "Add Item to Buy"}
@@ -1143,52 +1224,56 @@ export default function InventoryPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveToBuy} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                  Item Name <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Sony FX3 Cage, Rode Wireless Mic..."
-                  value={toBuyFormData.item_name}
-                  onChange={(e) => setToBuyFormData({ ...toBuyFormData, item_name: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                  Product Link (URL)
-                </label>
-                <div className="relative">
-                  <ExternalLink className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <form onSubmit={handleSaveToBuy} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 space-y-4 overflow-y-auto flex-1">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                    Item Name <span className="text-red-400">*</span>
+                  </label>
                   <input
-                    type="url"
-                    placeholder="https://..."
-                    value={toBuyFormData.product_link}
-                    onChange={(e) => setToBuyFormData({ ...toBuyFormData, product_link: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
+                    type="text"
+                    required
+                    placeholder="e.g. Sony FX3 Cage, Rode Wireless Mic..."
+                    value={toBuyFormData.item_name}
+                    onChange={(e) => setToBuyFormData({ ...toBuyFormData, item_name: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
                   />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                      Product Link (URL)
+                    </label>
+                    <div className="relative">
+                      <ExternalLink className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <input
+                        type="url"
+                        placeholder="https://..."
+                        value={toBuyFormData.product_link}
+                        onChange={(e) => setToBuyFormData({ ...toBuyFormData, product_link: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                      Estimated Price (LKR)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="e.g. 75000"
+                      value={toBuyFormData.estimated_price}
+                      onChange={(e) => setToBuyFormData({ ...toBuyFormData, estimated_price: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                  Estimated Price (LKR)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="e.g. 75000"
-                  value={toBuyFormData.estimated_price}
-                  onChange={(e) => setToBuyFormData({ ...toBuyFormData, estimated_price: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+              <div className="p-4 sm:px-6 border-t border-white/10 bg-[#15151c] flex items-center justify-end gap-3 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -1204,7 +1289,7 @@ export default function InventoryPage() {
                   disabled={toBuySaving}
                   className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl text-xs flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/20 disabled:opacity-50"
                 >
-                  {toBuySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
+                  {toBuySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   <span>{editingToBuyId ? "Save Changes" : "Add to Buy List"}</span>
                 </button>
               </div>

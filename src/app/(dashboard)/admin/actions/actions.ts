@@ -371,6 +371,52 @@ export async function getIncomes(startDate?: string, endDate?: string, limit: nu
   };
 }
 
+async function syncRentalForInvoice(invoiceId: string) {
+  if (!invoiceId) return;
+  try {
+    const rentalRows = await sql`SELECT id, total_amount FROM admin_rentals WHERE invoice_id = ${invoiceId}`;
+    if (rentalRows.length === 0) return;
+
+    const invRows = await sql`SELECT payment_status, total, total_due FROM invoices WHERE invoice_id = ${invoiceId}`;
+    if (invRows.length === 0) return;
+
+    const inv = invRows[0];
+    const invStatus = (inv.payment_status || '').toLowerCase().trim();
+    const invTotal = parseFloat(inv.total || '0');
+    const invTotalDue = parseFloat(inv.total_due != null ? inv.total_due : inv.total);
+    const invPaid = Math.max(0, invTotal - invTotalDue);
+
+    let newRentalPaymentStatus = 'Unpaid';
+    if (invStatus === 'fully paid' || invStatus === 'paid' || invTotalDue < 0.01) {
+      newRentalPaymentStatus = 'Paid';
+    } else if (invStatus === 'partially paid' || invStatus === 'advance-paid' || invPaid > 0) {
+      newRentalPaymentStatus = 'Partially Paid';
+    }
+
+    for (const r of rentalRows) {
+      const rentalTotal = parseFloat(r.total_amount || '0');
+      let itemPaid = 0;
+      if (newRentalPaymentStatus === 'Paid') {
+        itemPaid = rentalTotal;
+      } else if (newRentalPaymentStatus === 'Partially Paid') {
+        itemPaid = invTotal > 0 ? Math.round((invPaid / invTotal) * rentalTotal * 100) / 100 : 0;
+      }
+
+      await sql`
+        UPDATE admin_rentals SET
+          payment_status = ${newRentalPaymentStatus},
+          paid_amount = ${itemPaid},
+          updated_at = NOW()
+        WHERE id = ${r.id}
+      `;
+    }
+
+    revalidatePath("/admin/rentals");
+  } catch (err) {
+    console.warn("Could not sync rental for invoice:", invoiceId, err);
+  }
+}
+
 export async function createIncome(data: any) {
   await requireAdminSession();
 
@@ -416,6 +462,7 @@ export async function createIncome(data: any) {
               total_due = ${newDue}
           WHERE invoice_id = ${data.invoiceId}
         `;
+        await syncRentalForInvoice(data.invoiceId);
       }
     } catch (err) {
       console.warn("Failed to update invoice status on income creation:", err);
@@ -662,6 +709,7 @@ export async function deleteIncome(id: number) {
               total_due = ${newTotalDue}
           WHERE invoice_id = ${invoiceId}
         `;
+        await syncRentalForInvoice(invoiceId);
       }
     }
   } catch (e) {
@@ -1186,6 +1234,14 @@ export async function deleteInvoice(id: string) {
     await sql`
       UPDATE online_payments
       SET status = 'deleted', updated_at = CURRENT_TIMESTAMP
+      WHERE invoice_id = ${id}
+    `;
+  } catch (e) {}
+
+  try {
+    await sql`
+      UPDATE admin_rentals
+      SET invoice_id = NULL, updated_at = NOW()
       WHERE invoice_id = ${id}
     `;
   } catch (e) {}
@@ -1742,8 +1798,9 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
   }
 
   await logSystemAction(`Updated invoice: "${invoiceData.projectName}" (${invoiceId})`);
+  await syncRentalForInvoice(invoiceId);
   revalidatePath("/admin", "layout");
-    return { success: true };
+  return { success: true };
 }
 
 // -- REPORTS --
@@ -2349,6 +2406,8 @@ export async function recordInvoicePayment(
       await reactivateDomainAfterRenewalPayment(invoiceId);
     }
 
+    await syncRentalForInvoice(invoiceId);
+
     revalidatePath("/admin", "layout");
     return { success: true };
   } catch (e) {
@@ -2509,6 +2568,8 @@ export async function approveBankSlip(invoiceId: string, slipId?: string | numbe
     if (newStatus === "fully paid") {
       await reactivateDomainAfterRenewalPayment(invoiceId);
     }
+
+    await syncRentalForInvoice(invoiceId);
 
     revalidatePath("/admin", "layout");
     return { success: true };
@@ -2764,6 +2825,7 @@ export async function reviewPaymentSlip(id: number, approved: boolean, reviewerI
               total_due = ${newTotalDue}
           WHERE invoice_id = ${invoiceId}
         `;
+        await syncRentalForInvoice(invoiceId);
       }
 
       await logSystemAction(`Approved payment slip for invoice ${invoiceId}: LKR ${amount}`);

@@ -428,92 +428,94 @@ const handleDelete = async (id: number) => {
           onClick={() => setShowProjectModal(false)}
         >
           <div
-            className="relative bg-black border border-white/10 rounded-3xl p-8 w-full max-w-md shadow-2xl"
+            className="relative bg-black border border-white/10 rounded-3xl w-full max-w-2xl max-h-[85vh] shadow-2xl flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close */}
-            <button
-              onClick={() => setShowProjectModal(false)}
-              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            {/* Icon + heading */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 rounded-2xl bg-brand-500/10">
-                <FolderOpen className="w-6 h-6 text-brand-400" />
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-brand-500/10">
+                  <FolderOpen className="w-5 h-5 text-brand-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Confirm Quotation</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Enter a project name to proceed</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">Confirm Quotation</h2>
-                <p className="text-sm text-gray-400 mt-0.5">Enter a project name to proceed</p>
-              </div>
-            </div>
-
-            {/* Quotation summary */}
-            <div className="mb-6 p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Client</span>
-                <span className="text-white font-medium">{pendingConfirmRow.client || '—'}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Quotation</span>
-                <span className="text-white font-medium">{pendingConfirmRow.desc || '—'}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Amount</span>
-                <span className="text-blue-400 font-semibold">{formatLKR(pendingConfirmRow.amount)}</span>
-              </div>
-            </div>
-
-            {/* Project name input */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Project Name <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={projectNameInput}
-                onChange={(e) => setProjectNameInput(e.target.value)}
-                placeholder="e.g. Company Website Redesign"
-                autoFocus
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none focus:border-brand-500 focus:bg-white/8 transition-colors text-sm"
-              />
-            </div>
-
-
-
-            {/* Bank account select */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Bank Account
-              </label>
-              <select
-                value={selectedBankAccountId}
-                onChange={(e) => setSelectedBankAccountId(e.target.value)}
-                className="w-full bg-[#0d0d0d] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-brand-500 transition-colors text-sm"
+              <button
+                onClick={() => setShowProjectModal(false)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
               >
-                <option value="" className="bg-[#0d0d0d] text-gray-400">Select Bank Account</option>
-                {bankAccounts.map((acc) => (
-                  <option key={acc.id} value={acc.id} className="bg-[#0d0d0d] text-white">
-                    {acc.name} - {acc.number} ({acc.bank})
-                  </option>
-                ))}
-              </select>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
+              {/* Quotation summary */}
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Client</span>
+                  <span className="text-white font-medium">{pendingConfirmRow.client || '—'}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Quotation</span>
+                  <span className="text-white font-medium">{pendingConfirmRow.desc || '—'}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Amount</span>
+                  <span className="text-blue-400 font-semibold">{formatLKR(pendingConfirmRow.amount)}</span>
+                </div>
+              </div>
+
+              {/* Project name input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Project Name <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={projectNameInput}
+                  onChange={(e) => setProjectNameInput(e.target.value)}
+                  placeholder="e.g. Company Website Redesign"
+                  autoFocus
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none focus:border-brand-500 focus:bg-white/8 transition-colors text-sm"
+                />
+              </div>
+
+              {/* Bank account select */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Bank Account
+                </label>
+                <select
+                  value={selectedBankAccountId}
+                  onChange={(e) => setSelectedBankAccountId(e.target.value)}
+                  className="w-full bg-[#0d0d0d] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-brand-500 transition-colors text-sm"
+                >
+                  <option value="" className="bg-[#0d0d0d] text-gray-400">Select Bank Account</option>
+                  {bankAccounts.map((acc) => (
+                    <option key={acc.id} value={acc.id} className="bg-[#0d0d0d] text-white">
+                      {acc.name} - {acc.number} ({acc.bank})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3">
+            <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
               <button
+                type="button"
                 onClick={() => setShowProjectModal(false)}
-                className="flex-1 py-3 rounded-xl border border-white/10 text-gray-300 hover:bg-white/5 transition-colors text-sm font-medium"
+                className="px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 transition-colors text-sm font-medium cursor-pointer"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleConfirmSubmit}
                 disabled={!projectNameInput.trim()}
-                className="flex-1 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors text-sm font-semibold flex items-center justify-center gap-2"
+                className="px-5 py-2.5 rounded-2xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Confirm & Create

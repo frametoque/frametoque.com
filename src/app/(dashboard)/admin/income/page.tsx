@@ -678,216 +678,225 @@ export default function IncomePage() {
       {/* Record Income Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
               <h2 className="text-xl font-semibold">{editingId ? 'Edit Income' : 'Record Income'}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
             </div>
-            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Date</label>
-                  <input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Amount (LKR)</label>
-                  <input type="number" placeholder="0.00" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
-                </div>
-              </div>
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Left Column */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-400">Date</label>
+                      <input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-400">Amount (LKR)</label>
+                      <input type="number" placeholder="0.00" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
+                    </div>
+                  </div>
 
-              <div className="space-y-1">
-                <label className="text-sm text-gray-400">Client</label>
-                <ClientCombobox name="clientId" value={String(formData.clientId || "")} onChange={e => setFormData({ ...formData, clientId: e.target.value })} clients={clients} />
-              </div>
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-400">Client</label>
+                    <ClientCombobox name="clientId" value={String(formData.clientId || "")} onChange={e => setFormData({ ...formData, clientId: e.target.value })} clients={clients} />
+                  </div>
 
-              {formData.clientId === 'new' && (
-                <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-3">
-                  <input type="text" placeholder="Client Name" value={newClientName} onChange={e => setNewClientName(e.target.value)} className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm" />
-                  <input type="email" placeholder="Client Email" value={newClientEmail} onChange={e => setNewClientEmail(e.target.value)} className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm" />
-                  <div className="grid grid-cols-2 gap-2">
-                    <input type="text" placeholder="Company (Optional)" value={newClientCompany} onChange={e => setNewClientCompany(e.target.value)} className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm" />
-                    <input type="text" placeholder="Phone (Optional)" value={newClientPhone} onChange={e => setNewClientPhone(e.target.value)} className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm" />
+                  {formData.clientId === 'new' && (
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-3">
+                      <input type="text" placeholder="Client Name" value={newClientName} onChange={e => setNewClientName(e.target.value)} className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm" />
+                      <input type="email" placeholder="Client Email" value={newClientEmail} onChange={e => setNewClientEmail(e.target.value)} className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm" />
+                      <div className="grid grid-cols-2 gap-2">
+                        <input type="text" placeholder="Company (Optional)" value={newClientCompany} onChange={e => setNewClientCompany(e.target.value)} className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm" />
+                        <input type="text" placeholder="Phone (Optional)" value={newClientPhone} onChange={e => setNewClientPhone(e.target.value)} className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-400">Description</label>
+                    <input type="text" placeholder="What was this for?" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-400">Categories</label>
+                    <CategoryPicker categories={dynamicCategories} value={selectedCategories} onChange={setSelectedCategories} placeholder="Select categories..." />
                   </div>
                 </div>
-              )}
 
-              <div className="space-y-1">
-                <label className="text-sm text-gray-400">Description</label>
-                <input type="text" placeholder="What was this for?" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors" />
-              </div>
+                {/* Right Column */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-400">Payment Method</label>
+                      <select value={formData.paymentMethod} onChange={e => setFormData({ ...formData, paymentMethod: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
+                        <option className="bg-black">Bank Transfer</option>
+                        <option className="bg-black">Stripe</option>
+                        <option className="bg-black">PayPal</option>
+                        <option className="bg-black">Cash</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-400">Account</label>
+                      <select value={formData.accountId} onChange={e => setFormData({ ...formData, accountId: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
+                        <option value="" className="bg-black">No Account (Unlinked)</option>
+                        {bankAccounts.map(a => <option key={a.id} value={a.id} className="bg-black">{a.name} ({formatLKR(a.currentBalance || 0)})</option>)}
+                      </select>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Categories</label>
-                  <CategoryPicker categories={dynamicCategories} value={selectedCategories} onChange={setSelectedCategories} placeholder="Select categories..." />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Payment Method</label>
-                  <select value={formData.paymentMethod} onChange={e => setFormData({ ...formData, paymentMethod: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
-                    <option className="bg-black">Bank Transfer</option>
-                    <option className="bg-black">Stripe</option>
-                    <option className="bg-black">PayPal</option>
-                    <option className="bg-black">Cash</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Account</label>
-                  <select value={formData.accountId} onChange={e => setFormData({ ...formData, accountId: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none">
-                    <option value="" className="bg-black">No Account (Unlinked)</option>
-                    {bankAccounts.map(a => <option key={a.id} value={a.id} className="bg-black">{a.name} ({formatLKR(a.currentBalance || 0)})</option>)}
-                  </select>
-                </div>
-              </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm text-gray-400">Linked Invoice (Optional)</label>
+                      <button
+                        type="button"
+                        onClick={() => setIsManualInvoice(!isManualInvoice)}
+                        className="text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium cursor-pointer"
+                      >
+                        {isManualInvoice ? "← Choose from list" : "Enter manually"}
+                      </button>
+                    </div>
 
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm text-gray-400">Linked Invoice (Optional)</label>
-                  <button
-                    type="button"
-                    onClick={() => setIsManualInvoice(!isManualInvoice)}
-                    className="text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium cursor-pointer"
-                  >
-                    {isManualInvoice ? "← Choose from list" : "Enter manually"}
-                  </button>
-                </div>
-
-                {isManualInvoice ? (
-                  <div className="space-y-1">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Enter Invoice ID (e.g. INV-00029 or 29)"
+                    {isManualInvoice ? (
+                      <div className="space-y-1">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Enter Invoice ID (e.g. INV-00029 or 29)"
+                            value={formData.invoiceId}
+                            onChange={e => {
+                              const val = e.target.value;
+                              const cleanVal = val.trim();
+                              const invMatch = invoicesList.find((i: any) => 
+                                i.id?.toLowerCase() === cleanVal.toLowerCase() ||
+                                (cleanVal.length > 0 && i.id?.replace(/\D/g, '') === cleanVal.replace(/\D/g, ''))
+                              );
+                              if (invMatch) {
+                                const dueAmount = invMatch.total_due != null ? invMatch.total_due : invMatch.amount;
+                                const clientMatch = clients.find((c: any) => c.email?.toLowerCase() === invMatch.client_email?.toLowerCase());
+                                setFormData(prev => ({
+                                  ...prev,
+                                  invoiceId: val,
+                                  amount: prev.amount || (dueAmount > 0 ? dueAmount.toString() : invMatch.amount.toString()),
+                                  description: prev.description || `Invoice #${invMatch.id} - ${invMatch.service || 'Payment'}`,
+                                  clientId: clientMatch ? clientMatch.id : prev.clientId
+                                }));
+                              } else {
+                                setFormData(prev => ({ ...prev, invoiceId: val }));
+                              }
+                            }}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white text-sm pr-16"
+                          />
+                          {formData.invoiceId && (
+                            <button
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, invoiceId: '' }))}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs px-1.5 py-0.5 rounded hover:bg-white/10 transition-colors cursor-pointer"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-gray-400">
+                          Type any invoice number directly (e.g. <span className="text-gray-300">INV-00029</span> or <span className="text-gray-300">29</span>).
+                        </p>
+                      </div>
+                    ) : (
+                      <select
                         value={formData.invoiceId}
                         onChange={e => {
-                          const val = e.target.value;
-                          const cleanVal = val.trim();
-                          const invMatch = invoicesList.find((i: any) => 
-                            i.id?.toLowerCase() === cleanVal.toLowerCase() ||
-                            (cleanVal.length > 0 && i.id?.replace(/\D/g, '') === cleanVal.replace(/\D/g, ''))
-                          );
-                          if (invMatch) {
-                            const dueAmount = invMatch.total_due != null ? invMatch.total_due : invMatch.amount;
-                            const clientMatch = clients.find((c: any) => c.email?.toLowerCase() === invMatch.client_email?.toLowerCase());
+                          const invId = e.target.value;
+                          if (invId === "__manual__") {
+                            setIsManualInvoice(true);
+                            return;
+                          }
+                          const inv = invoicesList.find((i: any) => i.id === invId);
+                          if (inv) {
+                            const dueAmount = inv.total_due != null ? inv.total_due : inv.amount;
+                            const clientMatch = clients.find((c: any) => c.email?.toLowerCase() === inv.client_email?.toLowerCase());
                             setFormData(prev => ({
                               ...prev,
-                              invoiceId: val,
-                              amount: prev.amount || (dueAmount > 0 ? dueAmount.toString() : invMatch.amount.toString()),
-                              description: prev.description || `Invoice #${invMatch.id} - ${invMatch.service || 'Payment'}`,
+                              invoiceId: inv.id,
+                              amount: dueAmount > 0 ? dueAmount.toString() : inv.amount.toString(),
+                              description: `Invoice #${inv.id} - ${inv.service || 'Payment'}`,
                               clientId: clientMatch ? clientMatch.id : prev.clientId
                             }));
                           } else {
-                            setFormData(prev => ({ ...prev, invoiceId: val }));
+                            setFormData(prev => ({ ...prev, invoiceId: invId }));
                           }
                         }}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors text-white text-sm pr-16"
-                      />
-                      {formData.invoiceId && (
-                        <button
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, invoiceId: '' }))}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs px-1.5 py-0.5 rounded hover:bg-white/10 transition-colors"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-gray-400">
-                      Type any invoice number directly (e.g. <span className="text-gray-300">INV-00029</span> or <span className="text-gray-300">29</span>).
-                    </p>
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none text-white cursor-pointer"
+                      >
+                        <option value="" className="bg-black text-white">None / Select Invoice</option>
+                        <option value="__manual__" className="bg-black text-brand-400 font-semibold">
+                          Enter Invoice Number Manually...
+                        </option>
+                        {filteredInvoicesList.map((inv: any) => (
+                          <option key={inv.id} value={inv.id} className="bg-black text-white">
+                            {inv.id} - {inv.service || 'Invoice'}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
-                ) : (
-                  <select
-                    value={formData.invoiceId}
-                    onChange={e => {
-                      const invId = e.target.value;
-                      if (invId === "__manual__") {
-                        setIsManualInvoice(true);
-                        return;
-                      }
-                      const inv = invoicesList.find((i: any) => i.id === invId);
-                      if (inv) {
-                        const dueAmount = inv.total_due != null ? inv.total_due : inv.amount;
-                        const clientMatch = clients.find((c: any) => c.email?.toLowerCase() === inv.client_email?.toLowerCase());
-                        setFormData(prev => ({
-                          ...prev,
-                          invoiceId: inv.id,
-                          amount: dueAmount > 0 ? dueAmount.toString() : inv.amount.toString(),
-                          description: `Invoice #${inv.id} - ${inv.service || 'Payment'}`,
-                          clientId: clientMatch ? clientMatch.id : prev.clientId
-                        }));
-                      } else {
-                        setFormData(prev => ({ ...prev, invoiceId: invId }));
-                      }
-                    }}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-brand-500 transition-colors appearance-none text-white cursor-pointer"
-                  >
-                    <option value="" className="bg-black text-white">None / Select Invoice</option>
-                    <option value="__manual__" className="bg-black text-brand-400 font-semibold">
-                      Enter Invoice Number Manually...
-                    </option>
-                    {filteredInvoicesList.map((inv: any) => (
-                      <option key={inv.id} value={inv.id} className="bg-black text-white">
-                        {inv.id} - {inv.service || 'Invoice'}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
 
-              <div className="space-y-1">
-                <label className="text-sm text-gray-400">
-                  {convertingPdf ? "Processing PDF..." : "Receipt Image / PDF"}
-                </label>
-                <input 
-                  type="file" 
-                  accept="image/*,application/pdf" 
-                  disabled={convertingPdf}
-                  onChange={async (e) => {
-                    const selected = e.target.files?.[0];
-                    if (!selected) {
-                      setReceiptFile(null);
-                      return;
-                    }
-                    if (selected.type === "application/pdf") {
-                      setConvertingPdf(true);
-                      try {
-                        const imgFile = await convertPdfToImage(selected);
-                        setReceiptFile(imgFile);
-                      } catch (err) {
-                        console.error(err);
-                        alert("Failed to convert PDF to image. Please upload a normal image.");
-                      } finally {
-                        setConvertingPdf(false);
-                      }
-                    } else {
-                      setReceiptFile(selected);
-                    }
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm disabled:opacity-50" 
-                />
-                {convertingPdf && (
-                  <p className="text-xs text-brand-400 animate-pulse px-2">Converting PDF to Image...</p>
-                )}
-                {formData.receiptUrl && !receiptFile && (
-                  <div className="flex items-center gap-3 mt-1 px-2">
-                    <a href={formData.receiptUrl} target="_blank" className="text-xs text-blue-400 underline">View current receipt</a>
-                    <button 
-                      type="button"
-                      onClick={() => setFormData({ ...formData, receiptUrl: '' })}
-                      className="text-xs text-red-400 hover:text-red-300 font-semibold cursor-pointer"
-                    >
-                      Delete current image
-                    </button>
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-400">
+                      {convertingPdf ? "Processing PDF..." : "Receipt Image / PDF"}
+                    </label>
+                    <input 
+                      type="file" 
+                      accept="image/*,application/pdf" 
+                      disabled={convertingPdf}
+                      onChange={async (e) => {
+                        const selected = e.target.files?.[0];
+                        if (!selected) {
+                          setReceiptFile(null);
+                          return;
+                        }
+                        if (selected.type === "application/pdf") {
+                          setConvertingPdf(true);
+                          try {
+                            const imgFile = await convertPdfToImage(selected);
+                            setReceiptFile(imgFile);
+                          } catch (err) {
+                            console.error(err);
+                            alert("Failed to convert PDF to image. Please upload a normal image.");
+                          } finally {
+                            setConvertingPdf(false);
+                          }
+                        } else {
+                          setReceiptFile(selected);
+                        }
+                      }}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm disabled:opacity-50" 
+                    />
+                    {convertingPdf && (
+                      <p className="text-xs text-brand-400 animate-pulse px-2">Converting PDF to Image...</p>
+                    )}
+                    {formData.receiptUrl && !receiptFile && (
+                      <div className="flex items-center gap-3 mt-1 px-2">
+                        <a href={formData.receiptUrl} target="_blank" className="text-xs text-blue-400 underline">View current receipt</a>
+                        <button 
+                          type="button"
+                          onClick={() => setFormData({ ...formData, receiptUrl: '' })}
+                          className="text-xs text-red-400 hover:text-red-300 font-semibold cursor-pointer"
+                        >
+                          Delete current image
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
-            <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-white/5">
+            <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-white/5 shrink-0">
               <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-full font-medium hover:bg-white/10 transition-colors" disabled={saving || convertingPdf}>Cancel</button>
               <button onClick={handleSave} disabled={saving || convertingPdf} className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-full font-medium transition-colors disabled:opacity-50">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -901,9 +910,9 @@ export default function IncomePage() {
       {/* Create Invoice Modal */}
       {invoiceModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
+            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-brand-600/20">
                   <FilePlus className="w-5 h-5 text-brand-400" />
@@ -912,12 +921,12 @@ export default function IncomePage() {
                   <h2 className="text-xl font-semibold">Create Invoice</h2>
                 </div>
               </div>
-              <button onClick={() => setInvoiceModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+              <button onClick={() => setInvoiceModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
               {/* Client Details */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
@@ -1108,7 +1117,7 @@ export default function IncomePage() {
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-white/5">
+            <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-white/5 shrink-0">
               <button
                 onClick={() => setInvoiceModalOpen(false)}
                 className="px-6 py-2.5 rounded-full font-medium hover:bg-white/10 transition-colors"

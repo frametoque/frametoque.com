@@ -401,8 +401,11 @@ export default function NewInvoicePage() {
             </div>
 
             {lineItems.length < 5 ? (
-              <button onClick={addLineItem}
-                className="flex items-center gap-2 text-sm text-brand-400 font-medium hover:text-brand-300 transition-colors mt-4">
+              <button
+                type="button"
+                onClick={addLineItem}
+                className="w-full py-3 px-4 border border-dashed border-white/20 hover:border-brand-500/50 hover:bg-brand-500/5 text-gray-300 hover:text-brand-300 rounded-2xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer mt-4"
+              >
                 <Plus className="w-4 h-4" /> Add line item
               </button>
             ) : (

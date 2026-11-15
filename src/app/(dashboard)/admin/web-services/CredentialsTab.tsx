@@ -665,21 +665,21 @@ export default function CredentialsTab() {
       {/* Add Credential Modal */}
       {isAddOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md px-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-xl p-6 relative shadow-2xl overflow-y-auto max-h-[92vh] text-white">
-            <button
-              onClick={() => setIsAddOpen(false)}
-              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="mb-5">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-4xl max-h-[85vh] relative shadow-2xl text-white flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
               <h3 className="text-lg font-bold text-white">Add Website &amp; Server Login</h3>
+              <button
+                onClick={() => setIsAddOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <form onSubmit={handleAddSubmit} autoComplete="off" data-form-type="other" className="space-y-4">
-              {/* Site Name & Domain */}
-              <div className="grid sm:grid-cols-2 gap-3">
+            <form onSubmit={handleAddSubmit} autoComplete="off" data-form-type="other" className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {/* Site Name & Domain */}
+                <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-400 block">Website / Project Name *</label>
                   <input
@@ -952,7 +952,9 @@ export default function CredentialsTab() {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-white/10">
+              </div>
+
+              <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
                 <button
                   type="button"
                   onClick={() => setIsAddOpen(false)}
@@ -976,22 +978,24 @@ export default function CredentialsTab() {
       {/* Edit Credential Modal */}
       {editingCred && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md px-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-xl p-6 relative shadow-2xl overflow-y-auto max-h-[92vh] text-white">
-            <button
-              onClick={() => setEditingCred(null)}
-              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="mb-5">
-              <h3 className="text-lg font-bold text-white">Edit Website Credentials</h3>
-              <p className="text-xs text-gray-400">{editingCred.site_name}</p>
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-4xl max-h-[85vh] relative shadow-2xl text-white flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
+              <div>
+                <h3 className="text-lg font-bold text-white">Edit Website Credentials</h3>
+                <p className="text-xs text-gray-400">{editingCred.site_name}</p>
+              </div>
+              <button
+                onClick={() => setEditingCred(null)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <form onSubmit={handleEditSubmit} autoComplete="off" data-form-type="other" className="space-y-4">
-              {/* Site Name & Domain */}
-              <div className="grid sm:grid-cols-2 gap-3">
+            <form onSubmit={handleEditSubmit} autoComplete="off" data-form-type="other" className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {/* Site Name & Domain */}
+                <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-400 block">Website / Project Name *</label>
                   <input
@@ -1252,7 +1256,9 @@ export default function CredentialsTab() {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-white/10">
+              </div>
+
+              <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
                 <button
                   type="button"
                   onClick={() => setEditingCred(null)}

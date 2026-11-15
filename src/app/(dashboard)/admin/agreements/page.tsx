@@ -253,11 +253,11 @@ export default function AgreementsPage() {
           onClick={() => setViewingId(null)}
         >
           <div
-            className="bg-black border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl"
+            className="bg-black border border-white/10 rounded-3xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-start justify-between p-6 border-b border-white/10">
+            <div className="flex items-start justify-between p-6 border-b border-white/10 shrink-0">
               <div>
                 <h2 className="text-xl font-bold text-white">{viewing.title}</h2>
                 <span className={`inline-flex items-center gap-1.5 mt-2 px-3 py-1 text-xs font-bold rounded-full border ${statusConfig[viewing.status]?.color}`}>
@@ -265,13 +265,13 @@ export default function AgreementsPage() {
                   {statusConfig[viewing.status]?.label}
                 </span>
               </div>
-              <button onClick={() => setViewingId(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+              <button onClick={() => setViewingId(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Details */}
-            <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto">
+            <div className="p-6 space-y-5 flex-1 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                   <div className="flex items-center gap-2 mb-1">
@@ -328,7 +328,7 @@ export default function AgreementsPage() {
             </div>
 
             {/* Footer Actions */}
-            <div className="p-6 border-t border-white/10 bg-white/5 flex justify-between items-center">
+            <div className="p-6 border-t border-white/10 shrink-0 bg-[#0c0c0e] flex justify-between items-center">
               <button
                 onClick={() => handleDelete(viewing.id!)}
                 disabled={isDeleting === viewing.id}

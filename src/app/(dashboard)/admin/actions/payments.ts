@@ -598,6 +598,19 @@ export async function processPaymentSucceeded(params: {
       }
     }
 
+    // 6b. Sync linked rental booking if any
+    try {
+      await tx`
+        UPDATE admin_rentals SET
+          payment_status = 'Paid',
+          paid_amount = total_amount,
+          updated_at = NOW()
+        WHERE invoice_id = ${invoiceId}
+      `;
+    } catch (e) {
+      console.warn("[Payments] Rental sync error:", e);
+    }
+
     // 7. Update online_payments table
     try {
       await ensureOnlinePaymentsTable();

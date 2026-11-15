@@ -474,6 +474,8 @@ export default function HostingPage() {
         filters={["All", "Active", "Suspended"]}
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
+        primaryActionLabel="Add Hosting"
+        onPrimaryAction={handleOpenAddModal}
       />
 
       {/* Table */}
@@ -669,16 +671,19 @@ export default function HostingPage() {
       {/* Add Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-xl p-6 relative shadow-2xl overflow-y-auto max-h-[90vh]">
-            <button
-              onClick={() => setIsAddModalOpen(false)}
-              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <h3 className="text-xl font-bold mb-4 text-white">Add Hosting Order</h3>
-            <form onSubmit={handleAddSubmit} className="space-y-4">
-              <div className="grid sm:grid-cols-2 gap-4">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-4xl max-h-[85vh] relative shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
+              <h3 className="text-xl font-bold text-white">Add Hosting Order</h3>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleAddSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-400 block">Client Email</label>
                   <input
@@ -984,7 +989,9 @@ export default function HostingPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              </div>
+
+              <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
@@ -1008,16 +1015,19 @@ export default function HostingPage() {
       {/* Edit Modal */}
       {isEditModalOpen && selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-xl p-6 relative shadow-2xl overflow-y-auto max-h-[90vh]">
-            <button
-              onClick={() => setIsEditModalOpen(false)}
-              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <h3 className="text-xl font-bold mb-4 text-white">Edit Hosting Order</h3>
-            <form onSubmit={handleEditSubmit} className="space-y-4">
-              <div className="grid sm:grid-cols-2 gap-4">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-4xl max-h-[85vh] relative shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
+              <h3 className="text-xl font-bold text-white">Edit Hosting Order</h3>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleEditSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-400 block">Client Email</label>
                   <input
@@ -1363,7 +1373,9 @@ export default function HostingPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              </div>
+
+              <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
@@ -1387,43 +1399,45 @@ export default function HostingPage() {
       {/* Quick Invoice Linking Modal */}
       {linkingHostingOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg p-6 relative shadow-2xl text-white">
-            <button
-              onClick={() => setLinkingHostingOrder(null)}
-              className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                <Link2 className="w-5 h-5" />
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-3xl max-h-[85vh] relative shadow-2xl text-white flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <Link2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Link Invoice to Server / Hosting</h3>
+                  <p className="text-xs text-gray-400">{linkingHostingOrder.domain_name} ({linkingHostingOrder.client_email})</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">Link Invoice to Server / Hosting</h3>
-                <p className="text-xs text-gray-400">{linkingHostingOrder.domain_name} ({linkingHostingOrder.client_email})</p>
-              </div>
+              <button
+                onClick={() => setLinkingHostingOrder(null)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {linkingHostingOrder.invoice_id && (
-              <div className="my-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-between text-xs">
-                <div>
-                  <span className="text-gray-400">Currently Linked:</span>
-                  <span className="ml-1.5 font-mono font-bold text-blue-400">{linkingHostingOrder.invoice_id}</span>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {linkingHostingOrder.invoice_id && (
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-gray-400">Currently Linked:</span>
+                    <span className="ml-1.5 font-mono font-bold text-blue-400">{linkingHostingOrder.invoice_id}</span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={savingLink}
+                    onClick={() => handleSaveInvoiceLink("")}
+                    className="px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1"
+                  >
+                    <Unlink className="w-3 h-3" />
+                    Unlink
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  disabled={savingLink}
-                  onClick={() => handleSaveInvoiceLink("")}
-                  className="px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1"
-                >
-                  <Unlink className="w-3 h-3" />
-                  Unlink
-                </button>
-              </div>
-            )}
+              )}
 
-            <div className="space-y-4 my-4">
+              <div className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-gray-300 block">Select Invoice</label>
                 {loadingLinkInvoices ? (
@@ -1509,8 +1523,9 @@ export default function HostingPage() {
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+          <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
               <button
                 type="button"
                 onClick={() => setLinkingHostingOrder(null)}

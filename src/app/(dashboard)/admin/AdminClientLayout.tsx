@@ -54,6 +54,8 @@ import {
   BookOpen,
   Landmark,
   Terminal,
+  KeyRound,
+  ArrowLeft,
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -168,6 +170,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isWorkspace = pathname === "/admin/workspace";
   const isClients = pathname === "/admin/clients";
   const isInventory = pathname === "/admin/inventory";
+  const isRentals = pathname === "/admin/rentals" || pathname.startsWith("/admin/rentals");
   const isInvoiceDetail = pathname.startsWith("/admin/invoice/");
   const isServices = pathname === "/admin/services";
   const isPortfolio = pathname === "/admin/portfolio";
@@ -177,11 +180,15 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isDashboard = pathname === "/admin/dashboard";
   const isAccounts = pathname.startsWith("/admin/accounts");
   const isCreateOrEdit = pathname.endsWith("/new") || pathname.endsWith("/edit");
+  const isRentalEdit = pathname.startsWith("/admin/rentals/") && pathname.endsWith("/edit");
+  const isRentalDetail = pathname.startsWith("/admin/rentals/") && !pathname.endsWith("/edit") && pathname !== "/admin/rentals/new";
+  const isRentalNew = pathname === "/admin/rentals/new";
   const isSystemLogs = pathname === "/admin/system-logs";
   const isWorkspaceProject = pathname.startsWith("/admin/workspace/project/");
   const [workspaceProjectInfo, setWorkspaceProjectInfo] = useState<{ name: string; client: string; hasPlanner?: boolean } | null>(null);
   const [workspaceProjectTab, setWorkspaceProjectTab] = useState<string>("planner");
-  const hideSelector = isServices || isPortfolio || isWorkspace || isWorkspaceProject || isWebServices || isInvoiceDetail || isSocialMedia || isDashboard || isAccounts || isCreateOrEdit || isSystemLogs;
+  const [rentalEditInfo, setRentalEditInfo] = useState<{ rental_code: string; item_name: string } | null>(null);
+  const hideSelector = isServices || isPortfolio || isWorkspace || isWorkspaceProject || isWebServices || isInvoiceDetail || isSocialMedia || isDashboard || isAccounts || isCreateOrEdit || isSystemLogs || isRentalDetail;
   const hasCustomAction = isInvoiceDetail || isSocialMedia || isWorkspace || (isWorkspaceProject && Boolean(workspaceProjectInfo?.hasPlanner)) || isAccounts || isSystemLogs;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
@@ -244,6 +251,24 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   }, []);
 
   useEffect(() => {
+    const handleRentalInfo = (e: any) => {
+      if (e.detail) {
+        setRentalEditInfo(e.detail);
+      }
+    };
+    window.addEventListener("rental:info", handleRentalInfo);
+    return () => {
+      window.removeEventListener("rental:info", handleRentalInfo);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pathname.startsWith("/admin/rentals/")) {
+      setRentalEditInfo(null);
+    }
+  }, [pathname]);
+
+  useEffect(() => {
     setDynamicTitle("");
   }, [pathname]);
 
@@ -270,6 +295,14 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path.startsWith("/admin/workspace")) return "Workspace";
     if (path === "/admin/clients") return "Clients";
     if (path === "/admin/inventory") return "Inventory";
+    if (path === "/admin/rentals/new") return "New Rental";
+    if (path.startsWith("/admin/rentals/") && path.endsWith("/edit")) return "Edit Rental";
+    if (path.startsWith("/admin/rentals/") && !path.endsWith("/edit") && path !== "/admin/rentals/new") {
+      const parts = path.split("/");
+      const id = parts[parts.length - 1];
+      return id ? `Rental #${id}` : "Rental Details";
+    }
+    if (path === "/admin/rentals" || path.startsWith("/admin/rentals")) return "Rentals";
     if (path.startsWith("/admin/clients/")) return "Client Details";
     if (path.startsWith("/admin/invoice/")) {
       const parts = path.split("/");
@@ -399,6 +432,32 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
               </span>
               {/* Topbar portal target for Content Planner controls */}
               <div id="admin-planner-topbar-portal" className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-nowrap" />
+            </div>
+          ) : isRentalEdit || isRentalDetail ? (
+            <div className="flex items-center gap-3 min-w-0">
+              <Link
+                href="/admin/rentals"
+                className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white cursor-pointer shrink-0"
+                title="Back to Rentals"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+              <h1 className="text-2xl font-bold text-white tracking-tight truncate max-w-xs sm:max-w-md">
+                {rentalEditInfo?.rental_code || (isRentalEdit ? "Edit Rental" : "Rental Details")}
+              </h1>
+            </div>
+          ) : isRentalNew ? (
+            <div className="flex items-center gap-3 min-w-0">
+              <Link
+                href="/admin/rentals"
+                className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white cursor-pointer shrink-0"
+                title="Back to Rentals"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+              <h1 className="text-2xl font-bold text-white tracking-tight">
+                New Rental<span className="text-[#3fc7ed]">.</span>
+              </h1>
             </div>
           ) : (
             <h1 className="text-2xl font-bold text-white tracking-tight">
@@ -544,7 +603,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                     <button onClick={() => window.dispatchEvent(new CustomEvent("workspace:set-tab", { detail: "projects" }))} className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${workspaceTab === 'projects' ? 'bg-white text-black shadow-lg' : 'bg-[#111] border border-white/10 text-gray-400 hover:text-white hover:bg-white/5'}`}>Projects</button>
                     <button onClick={() => window.dispatchEvent(new CustomEvent("workspace:set-tab", { detail: "events" }))} className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${workspaceTab === 'events' ? 'bg-white text-black shadow-lg' : 'bg-[#111] border border-white/10 text-gray-400 hover:text-white hover:bg-white/5'}`}>Calendar & Events</button>
                   </div>
-                ) : isInventory ? (
+                ) : isInventory || isClients || isRentals ? (
                   <div className="flex items-center gap-3">
                     <div className="relative w-32 sm:w-64">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -555,7 +614,10 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                         onChange={(e) => {
                           const val = e.target.value;
                           setHeaderSearchTerm(val);
-                          window.dispatchEvent(new CustomEvent(isInventory ? "inventory:search" : "clients:search", { detail: val }));
+                          window.dispatchEvent(new CustomEvent(
+                            isRentals ? "rentals:search" : isInventory ? "inventory:search" : "clients:search",
+                            { detail: val }
+                          ));
                         }}
                         className="w-full bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-2 outline-none focus:border-brand-500 transition-colors text-sm text-white"
                       />
@@ -571,11 +633,13 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                       </button>
                     )}
                     <button
-                      onClick={() => window.dispatchEvent(new CustomEvent(isInventory ? "inventory:open-new" : "clients:open-new"))}
+                      onClick={() => window.dispatchEvent(new CustomEvent(
+                        isRentals ? "rentals:open-new" : isInventory ? "inventory:open-new" : "clients:open-new"
+                      ))}
                       className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-3xl font-semibold transition-colors active:scale-95 duration-200 cursor-pointer text-xs whitespace-nowrap"
                     >
                       <Plus className="w-4 h-4" />
-                      {isInventory ? "Add Item" : "Add Client"}
+                      {isRentals ? "New Rental" : isInventory ? "Add Item" : "Add Client"}
                     </button>
                   </div>
                 ) : isReports && reportsActiveTab === "trial_balance" ? (
@@ -713,11 +777,30 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
             </>
           )}
           <div className="flex items-center gap-1.5">
-            <Link href="/admin/system-logs" className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-white" title="System Logs">
+            <Link
+              href="/admin/analytics"
+              className={`p-2 rounded-full transition-colors ${
+                pathname.startsWith("/admin/analytics")
+                  ? "bg-white text-black"
+                  : "hover:bg-white/10 text-gray-300 hover:text-white"
+              }`}
+              title="Analytics"
+            >
+              <ChartLine className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/admin/system-logs"
+              className={`p-2 rounded-full transition-colors ${
+                pathname === "/admin/system-logs"
+                  ? "bg-white text-black"
+                  : "hover:bg-white/10 text-gray-300 hover:text-white"
+              }`}
+              title="System Logs"
+            >
               <Terminal className="w-4 h-4" />
             </Link>
             <SignOutButton redirectUrl="/login">
-              <button className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-red-400" title="Logout">
+              <button className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-red-400 cursor-pointer" title="Logout">
                 <LogOut className="w-4 h-4" />
               </button>
             </SignOutButton>
@@ -755,20 +838,29 @@ const Sidebar = ({
   const { user, isLoaded } = useUser();
 
   const links: { name: string; href: string; icon: any; divider?: boolean; newtab?: boolean }[] = [
+    // Hub
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    { name: "Income", href: "/admin/income", icon: Wallet },
+    { name: "Workspace", href: "/admin/workspace", icon: FolderOpenDot },
+
+    // Finance & Reports
+    { name: "Income", href: "/admin/income", icon: Wallet, divider: true },
     { name: "Expenses", href: "/admin/expenses", icon: Receipt },
-    { name: "Accounts", href: "/admin/accounts", icon: Landmark, divider: false },
+    { name: "Accounts", href: "/admin/accounts", icon: Landmark },
+    { name: "Reports", href: "/admin/reports", icon: BarChart3 },
+
+    // Sales & Documents
     { name: "Invoices", href: "/admin/invoices", icon: FileText, divider: true },
     { name: "Quotations", href: "/admin/quotations", icon: NotepadTextDashed },
     { name: "Agreements", href: "/admin/agreements", icon: FilePenLine },
-    { name: "Web Services", href: "/admin/web-services/domains", icon: Globe, divider: false },
     { name: "Clients", href: "/admin/clients", icon: Users },
-    { name: "Inventory", href: "/admin/inventory", icon: Package },
-    { name: "Reports", href: "/admin/reports", icon: BarChart3, divider: true },
-    { name: "Analytics", href: "/admin/analytics", icon: ChartLine },
-    { name: "Workspace", href: "/admin/workspace", icon: FolderOpenDot, divider: true },
-    { name: "Services", href: "/admin/services", icon: Briefcase },
+
+    // Assets & Services
+    { name: "Inventory", href: "/admin/inventory", icon: Package, divider: true },
+    { name: "Rentals", href: "/admin/rentals", icon: KeyRound },
+    { name: "Web Services", href: "/admin/web-services/domains", icon: Globe },
+
+    // Showcase & Content (Kept as last 3 items)
+    { name: "Services", href: "/admin/services", icon: Briefcase, divider: true },
     { name: "Portfolio", href: "/admin/portfolio", icon: Layers },
     { name: "Social Media", href: "/admin/social-media", icon: Megaphone },
   ];

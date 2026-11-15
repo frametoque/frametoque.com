@@ -14,7 +14,7 @@ import ContentPlannerCalendar from "./ContentPlannerCalendar";
 import { 
   Plus, Trash2, Edit2, Image as ImageIcon, LayoutList, Layout, FolderOpen, 
   ChevronRight, ChevronDown, Palette, Film, Code, Camera, Video,
-  Calendar as CalendarIcon, ChevronLeft, Sparkles, Eye, CheckCircle2, Pin
+  Calendar as CalendarIcon, ChevronLeft, Sparkles, Eye, CheckCircle2, Pin, X
 } from "lucide-react";
 import TasksTab from "./TasksTab";
 
@@ -303,16 +303,21 @@ export default function ProjectsTab() {
   };
 
   const toggleOwner = (id: string) => {
-    setOwnerIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    setOwnerIds(prev => {
+      let base = prev;
+      if (prev.includes("all")) {
+        base = team.map((t: any) => t.id);
+      }
+      return base.includes(id) ? base.filter(x => x !== id) : [...base, id];
+    });
   };
 
   const toggleAllOwners = () => {
-    const allIds = team.map((t: any) => t.id);
-    const isAllSelected = allIds.length > 0 && allIds.every((id: string) => ownerIds.includes(id));
+    const isAllSelected = ownerIds.includes("all");
     if (isAllSelected) {
       setOwnerIds([]);
     } else {
-      setOwnerIds(allIds);
+      setOwnerIds(["all"]);
     }
   };
 
@@ -392,7 +397,66 @@ export default function ProjectsTab() {
     );
   }
 
-  if (isLoading) return <div className="text-white">Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-6 flex flex-col h-full animate-pulse">
+        {/* Controls Skeleton */}
+        <div className="flex justify-between items-center flex-wrap gap-3">
+          <div className="flex gap-2">
+            <div className="h-9 w-20 bg-white/5 rounded-xl" />
+            <div className="h-9 w-20 bg-white/5 rounded-xl" />
+            <div className="h-9 w-20 bg-white/5 rounded-xl" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-9 w-48 bg-white/5 rounded-xl" />
+            <div className="h-9 w-32 bg-white/10 rounded-xl" />
+          </div>
+        </div>
+
+        {/* Projects Table Skeleton */}
+        <div className="bg-black border border-white/10 rounded-3xl overflow-hidden">
+          <div className="bg-white/5 px-6 py-4 flex justify-between items-center border-b border-white/10">
+            <div className="h-4 bg-white/10 rounded-full w-28" />
+            <div className="h-4 bg-white/5 rounded-full w-16 hidden sm:block" />
+            <div className="h-4 bg-white/5 rounded-full w-24 hidden md:block" />
+            <div className="h-4 bg-white/5 rounded-full w-20 hidden lg:block" />
+            <div className="h-4 bg-white/5 rounded-full w-16 hidden lg:block" />
+            <div className="h-4 bg-white/5 rounded-full w-20 hidden xl:block" />
+            <div className="h-4 bg-white/5 rounded-full w-24 hidden sm:block" />
+            <div className="h-4 bg-white/5 rounded-full w-16" />
+          </div>
+          <div className="divide-y divide-white/5">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="px-6 py-4 flex items-center justify-between gap-4">
+                <div className="w-[300px] space-y-2">
+                  <div className="h-4 bg-white/10 rounded-full w-44" />
+                  <div className="h-3 bg-white/5 rounded-full w-24" />
+                </div>
+                <div className="h-6 w-20 bg-white/5 rounded-full shrink-0" />
+                <div className="flex -space-x-1 shrink-0 hidden md:flex">
+                  <div className="w-6 h-6 rounded-full bg-white/10 border border-black" />
+                  <div className="w-6 h-6 rounded-full bg-white/5 border border-black" />
+                </div>
+                <div className="h-3.5 bg-white/5 rounded-full w-28 shrink-0 hidden lg:block" />
+                <div className="h-5 w-16 bg-white/5 rounded-full shrink-0 hidden lg:block" />
+                <div className="flex gap-1 shrink-0 hidden xl:flex">
+                  <div className="h-5 w-16 bg-white/5 rounded-md" />
+                </div>
+                <div className="w-24 space-y-1.5 shrink-0 hidden sm:block">
+                  <div className="h-2 bg-white/5 rounded-full w-full" />
+                  <div className="h-2.5 bg-white/5 rounded-full w-8" />
+                </div>
+                <div className="flex items-center gap-2 justify-end shrink-0">
+                  <div className="w-7 h-7 bg-white/5 rounded-lg" />
+                  <div className="w-7 h-7 bg-white/5 rounded-lg" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 flex flex-col h-full">
@@ -538,9 +602,9 @@ export default function ProjectsTab() {
                 ) : sortedProjects.map((proj: any) => {
                   const isPinned = Boolean(proj.is_pinned);
                   const isDone = proj.status === "Done";
-                  const parsedOwnerIds = (Array.isArray(proj.owner_ids) ? proj.owner_ids : (typeof proj.owner_ids === 'string' ? (proj.owner_ids.startsWith('[') ? JSON.parse(proj.owner_ids) : []) : []));
-                  const isAllAssigned = team.length > 0 && team.every((t: any) => parsedOwnerIds.includes(t.id));
-                  const owners = parsedOwnerIds.map((id: string) => {
+                  const parsedOwnerIds = (Array.isArray(proj.owner_ids) ? proj.owner_ids : (typeof proj.owner_ids === 'string' ? (proj.owner_ids.startsWith('[') ? JSON.parse(proj.owner_ids) : [proj.owner_ids]) : []));
+                  const isAllAssigned = parsedOwnerIds.includes("all") || proj.owner_ids === "all";
+                  const owners = isAllAssigned ? [] : parsedOwnerIds.map((id: string) => {
                     const m = team.find((t: any) => t.id === id);
                     if (m) {
                       const fn = (m.first_name || m.name || "").split(" ")[0];
@@ -711,8 +775,9 @@ export default function ProjectsTab() {
               const projTasks = tasks.filter((t: any) => t.project_id === proj.id);
               const doneTasks = projTasks.filter((t: any) => t.status === "Done").length;
               const isExpanded = expandedProjects[proj.id] !== false; // default expanded
-              const parsedOwnerIds = (Array.isArray(proj.owner_ids) ? proj.owner_ids : (typeof proj.owner_ids === 'string' ? (proj.owner_ids.startsWith('[') ? JSON.parse(proj.owner_ids) : []) : []));
-              const owners = parsedOwnerIds.map((id: string) => {
+              const parsedOwnerIds = (Array.isArray(proj.owner_ids) ? proj.owner_ids : (typeof proj.owner_ids === 'string' ? (proj.owner_ids.startsWith('[') ? JSON.parse(proj.owner_ids) : [proj.owner_ids]) : []));
+              const isAllAssigned = parsedOwnerIds.includes("all") || proj.owner_ids === "all";
+              const owners = isAllAssigned ? [] : parsedOwnerIds.map((id: string) => {
                 const m = team.find((t: any) => t.id === id);
                 if (m) {
                   const fn = (m.first_name || m.name || "").split(" ")[0];
@@ -801,6 +866,8 @@ export default function ProjectsTab() {
                                       {assignee.image ? <img src={assignee.image} alt={assignee.name.split(' ')[0]} className="w-4 h-4 rounded-full object-cover shrink-0" /> : <span className="w-4 h-4 rounded-full bg-brand-500 text-white flex items-center justify-center text-[8px] font-bold uppercase shrink-0">{assignee.name.substring(0,2)}</span>}
                                       {assignee.name.split(' ')[0]}
                                     </span>
+                                  ) : isAllAssigned ? (
+                                    <span className="text-xs text-white font-medium">All</span>
                                   ) : owners.length > 0 ? (
                                     <div className="flex items-center gap-1.5 whitespace-nowrap" title="All Project Members">
                                       <div className="flex items-center -space-x-1 shrink-0">
@@ -846,54 +913,64 @@ export default function ProjectsTab() {
       
       {taskToEdit && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" data-lenis-prevent>
-          <div data-lenis-prevent className="bg-black border border-white/10 rounded-3xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto overscroll-contain custom-scrollbar">
-            <h3 className="text-lg font-bold text-white">Edit Task</h3>
-            <form onSubmit={saveTaskEdit} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs text-gray-400 font-semibold uppercase">Name *</label>
-                <input type="text" required value={taskName} onChange={e => setTaskName(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white" />
-              </div>
-              
-              
-              <div className="grid grid-cols-2 gap-4">
+          <div data-lenis-prevent className="bg-black border border-white/10 rounded-3xl w-full max-w-2xl max-h-[85vh] relative shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
+              <h3 className="text-lg font-bold text-white">Edit Task</h3>
+              <button
+                type="button"
+                onClick={() => setTaskToEdit(null)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={saveTaskEdit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs text-gray-400 font-semibold uppercase">Status</label>
-                  <select value={taskStatus} onChange={e => setTaskStatus(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white">
-                    <option value="Planned">Planned</option>
-                    <option value="In Progress">In Progress (Shooting)</option>
-                    <option value="In Editing">In Editing</option>
-                    <option value="Ready for Review">Ready for Review</option>
-                    <option value="Client Approved">Client Approved</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Not Started">Not Started</option>
-                    <option value="Done">Done</option>
+                  <label className="text-xs text-gray-400 font-semibold uppercase">Name *</label>
+                  <input type="text" required value={taskName} onChange={e => setTaskName(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white" />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-400 font-semibold uppercase">Status</label>
+                    <select value={taskStatus} onChange={e => setTaskStatus(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white">
+                      <option value="Planned">Planned</option>
+                      <option value="In Progress">In Progress (Shooting)</option>
+                      <option value="In Editing">In Editing</option>
+                      <option value="Ready for Review">Ready for Review</option>
+                      <option value="Client Approved">Client Approved</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Not Started">Not Started</option>
+                      <option value="Done">Done</option>
+                    </select>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-400 font-semibold uppercase">Due Date</label>
+                    <input type="date" value={taskDue} onChange={e => setTaskDue(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white" />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-400 font-semibold uppercase">Category</label>
+                  <select value={taskCategory} onChange={e => setTaskCategory(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white">
+                    <option value="">Default (Project Category)</option>
+                    <option value="Graphics Design">Graphics Design</option>
+                    <option value="Video Editing">Video Editing</option>
+                    <option value="Web dev">Web dev</option>
+                    <option value="Photography">Photography</option>
+                    <option value="Videography">Videography</option>
+                    {existingTaskCategories.map(c => <option key={c as string} value={c as string}>{c as string}</option>)}
+                    <option value="Custom">Custom...</option>
                   </select>
+                  {taskCategory === "Custom" && (
+                    <input type="text" placeholder="Enter custom category" value={taskCustomCategory} onChange={e => setTaskCustomCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white mt-2" />
+                  )}
                 </div>
                 
                 <div className="space-y-1">
-                  <label className="text-xs text-gray-400 font-semibold uppercase">Due Date</label>
-                  <input type="date" value={taskDue} onChange={e => setTaskDue(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white" />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs text-gray-400 font-semibold uppercase">Category</label>
-                <select value={taskCategory} onChange={e => setTaskCategory(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white">
-                  <option value="">Default (Project Category)</option>
-                  <option value="Graphics Design">Graphics Design</option>
-                  <option value="Video Editing">Video Editing</option>
-                  <option value="Web dev">Web dev</option>
-                  <option value="Photography">Photography</option>
-                  <option value="Videography">Videography</option>
-                  {existingTaskCategories.map(c => <option key={c as string} value={c as string}>{c as string}</option>)}
-                  <option value="Custom">Custom...</option>
-                </select>
-                {taskCategory === "Custom" && (
-                  <input type="text" placeholder="Enter custom category" value={taskCustomCategory} onChange={e => setTaskCustomCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white mt-2" />
-                )}
-              </div>
-              
-              <div className="space-y-1">
                   <label className="text-xs text-gray-400 font-semibold uppercase">Assigned To</label>
                   <select value={taskAssignee} onChange={e => setTaskAssignee(e.target.value)} className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white">
                     <option value="">All / Unassigned</option>
@@ -902,15 +979,11 @@ export default function ProjectsTab() {
                     ))}
                   </select>
                 </div>
-                
-              
-  
+              </div>
 
-              
-
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setTaskToEdit(null)} className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-semibold">Save Changes</button>
+              <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
+                <button type="button" onClick={() => setTaskToEdit(null)} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-semibold transition-colors text-sm cursor-pointer">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl font-semibold transition-colors text-sm cursor-pointer">Save Changes</button>
               </div>
             </form>
           </div>
@@ -919,11 +992,21 @@ export default function ProjectsTab() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" data-lenis-prevent>
-          <div data-lenis-prevent className="bg-black border border-white/10 rounded-3xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto overscroll-contain custom-scrollbar">
-            <h3 className="text-lg font-bold text-white">{editingProject ? (isPlannerProject ? "Edit Project (with Planner)" : "Edit Project") : (isPlannerProject ? "Create Project (with Planner)" : "Create Project")}</h3>
+          <div data-lenis-prevent className="bg-black border border-white/10 rounded-3xl w-full max-w-4xl max-h-[85vh] relative shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0">
+              <h3 className="text-lg font-bold text-white">{editingProject ? (isPlannerProject ? "Edit Project (with Planner)" : "Edit Project") : (isPlannerProject ? "Create Project (with Planner)" : "Create Project")}</h3>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <form onSubmit={handleSave} className="space-y-4">
-              <div className="space-y-1">
+            <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <div className="space-y-1">
                 <label className="text-xs text-gray-400 font-semibold uppercase">Name *</label>
                 <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white" />
               </div>
@@ -1062,7 +1145,7 @@ export default function ProjectsTab() {
                       onClick={toggleAllOwners}
                       className="text-xs text-brand-400 hover:text-brand-300 font-semibold transition-colors cursor-pointer"
                     >
-                      {team.every((t: any) => ownerIds.includes(t.id)) ? "Deselect All" : "Assign to ALL"}
+                      {ownerIds.includes("all") ? "Deselect All" : "Assign to ALL"}
                     </button>
                   )}
                 </div>
@@ -1077,7 +1160,7 @@ export default function ProjectsTab() {
                       <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/5 rounded-lg transition-colors border-b border-white/10 pb-2 mb-1">
                         <input 
                           type="checkbox" 
-                          checked={team.length > 0 && team.every((t: any) => ownerIds.includes(t.id))} 
+                          checked={ownerIds.includes("all")} 
                           onChange={toggleAllOwners} 
                           className="rounded border-gray-600 bg-black shrink-0 text-brand-600 focus:ring-brand-500" 
                         />
@@ -1091,9 +1174,10 @@ export default function ProjectsTab() {
                       </label>
                       {team.map((t: any) => {
                         const firstName = (t.first_name || t.name || "").split(" ")[0];
+                        const isChecked = ownerIds.includes("all") || ownerIds.includes(t.id);
                         return (
                           <label key={t.id} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/5 rounded-lg transition-colors">
-                            <input type="checkbox" checked={ownerIds.includes(t.id)} onChange={() => toggleOwner(t.id)} className="rounded border-gray-600 bg-black shrink-0" />
+                            <input type="checkbox" checked={isChecked} onChange={() => toggleOwner(t.id)} className="rounded border-gray-600 bg-black shrink-0" />
                             {t.image ? <img src={t.image} alt={firstName} className="w-8 h-8 rounded-full shrink-0 object-cover" /> : <div className="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-xs text-white font-bold shrink-0">{firstName.substring(0,2).toUpperCase()}</div>}
                             <div className="flex flex-col min-w-0">
                               <span className="text-sm font-medium text-white truncate">{firstName}</span>
@@ -1131,9 +1215,11 @@ export default function ProjectsTab() {
                 </div>
               </label>
 
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-semibold">Save</button>
+              </div>
+
+              <div className="flex justify-end gap-3 p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-semibold transition-colors text-sm cursor-pointer">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl font-semibold transition-colors text-sm cursor-pointer">Save</button>
               </div>
             </form>
           </div>

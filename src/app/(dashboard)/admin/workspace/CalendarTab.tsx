@@ -538,18 +538,19 @@ export default function CalendarTab() {
       {/* Modal - New / Edit Booking */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden backdrop-blur-xl flex flex-col h-[850px] max-h-[95vh]">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-4xl overflow-hidden backdrop-blur-xl flex flex-col max-h-[85vh]">
             <div className="border-b border-white/10 p-6 flex justify-between items-center flex-shrink-0">
               <h3 className="text-lg font-bold text-white">
                 {editingBooking ? "Edit Event Details" : "Create New Event"}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white text-sm">
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white text-sm cursor-pointer">
                 Cancel
               </button>
             </div>
 
-            <form data-lenis-prevent onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
-              {/* Event Type Selector */}
+            <form data-lenis-prevent onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0">
+              <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
+                {/* Event Type Selector */}
               <div className="space-y-2">
                 <label className="text-xs text-gray-400 font-semibold uppercase">Event Type</label>
                 <div className="grid grid-cols-2 gap-2 bg-white/5 p-1 rounded-2xl border border-white/10">
@@ -705,7 +706,9 @@ export default function CalendarTab() {
                   )}
                 </select>
               </div>
+            </div>
 
+            <div className="p-6 pt-4 border-t border-white/10 shrink-0 bg-[#0c0c0e]">
               {editingBooking ? (
                 <div className="flex gap-3">
                   <button
@@ -716,13 +719,13 @@ export default function CalendarTab() {
                         setIsModalOpen(false);
                       }
                     }}
-                    className="flex-1 bg-red-950/40 border border-red-500/30 hover:bg-red-900/40 text-red-400 font-semibold py-3.5 rounded-full active:scale-[0.98] transition-all duration-150 cursor-pointer"
+                    className="flex-1 bg-red-950/40 border border-red-500/30 hover:bg-red-900/40 text-red-400 font-semibold py-3 rounded-full active:scale-[0.98] transition-all duration-150 cursor-pointer text-sm"
                   >
                     Delete Booking
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-semibold py-3.5 rounded-full active:scale-[0.98] transition-transform duration-150 cursor-pointer"
+                    className="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-semibold py-3 rounded-full active:scale-[0.98] transition-transform duration-150 cursor-pointer text-sm"
                   >
                     Update Booking
                   </button>
@@ -730,14 +733,16 @@ export default function CalendarTab() {
               ) : (
                 <button
                   type="submit"
-                  className="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-3.5 rounded-full active:scale-[0.98] transition-transform duration-150 cursor-pointer"
+                  className="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-3 rounded-full active:scale-[0.98] transition-transform duration-150 cursor-pointer text-sm"
                 >
                   Create Booking
                 </button>
-              )}</form>
-          </div>
+              )}
+            </div>
+          </form>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Day Summary Modal */}
       {isSummaryModalOpen && selectedDate && (() => {
@@ -754,21 +759,21 @@ export default function CalendarTab() {
 
         return (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-black border border-white/10 rounded-3xl w-full max-w-md overflow-hidden backdrop-blur-xl flex flex-col">
-              <div className="border-b border-white/10 p-6 flex justify-between items-center">
+            <div className="bg-black border border-white/10 rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-hidden backdrop-blur-xl flex flex-col">
+              <div className="border-b border-white/10 p-6 flex justify-between items-center shrink-0">
                 <div>
                   <h3 className="text-lg font-bold text-white">Day Summary</h3>
                   <p className="text-xs text-gray-400 mt-0.5">{dateHeading}</p>
                 </div>
                 <button 
                   onClick={() => setIsSummaryModalOpen(false)} 
-                  className="text-gray-400 hover:text-white text-sm"
+                  className="text-gray-400 hover:text-white text-sm cursor-pointer"
                 >
                   Close
                 </button>
               </div>
 
-              <div data-lenis-prevent className="p-6 overflow-y-auto space-y-4 max-h-[50vh]">
+              <div data-lenis-prevent className="p-6 overflow-y-auto space-y-4 flex-1 min-h-0">
                 {/* Sri Lanka Holiday banner */}
                 {holidayName && (
                   <div className="bg-rose-950/20 border border-rose-500/30 rounded-2xl p-3 text-sm text-rose-400 flex items-center gap-2">
@@ -847,10 +852,9 @@ export default function CalendarTab() {
         );
       })()}
       {/* Sync / Subscribe Calendar Modal */}
-      {/* Sync / Subscribe Calendar Modal */}
       {isSubscribeModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden backdrop-blur-xl flex flex-col max-h-[90vh]">
+          <div className="bg-black border border-white/10 rounded-3xl w-full max-w-2xl overflow-hidden backdrop-blur-xl flex flex-col max-h-[85vh]">
             <div className="border-b border-white/10 p-6 flex justify-between items-center flex-shrink-0">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <CalendarPlus className="w-5 h-5 text-brand-500" />
