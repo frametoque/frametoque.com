@@ -54,7 +54,6 @@ import {
   BookOpen,
   Landmark,
   Terminal,
-  KeyRound,
   ArrowLeft,
 } from "lucide-react";
 
@@ -856,7 +855,7 @@ const Sidebar = ({
 
     // Assets & Services
     { name: "Inventory", href: "/admin/inventory", icon: Package, divider: true },
-    { name: "Rentals", href: "/admin/rentals", icon: KeyRound },
+    { name: "Rentals", href: "/admin/rentals", icon: ShoppingCart },
     { name: "Web Services", href: "/admin/web-services/domains", icon: Globe },
 
     // Showcase & Content (Kept as last 3 items)

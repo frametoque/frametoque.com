@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Loader2, KeyRound, Calendar, DollarSign, AlertTriangle, Plus, Trash2 } from "lucide-react";
+import { Save, Loader2, Calendar, DollarSign, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import ClientCombobox from "../../../components/ClientCombobox";

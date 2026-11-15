@@ -6,7 +6,7 @@ import {
   Search, Plus, Edit2, Trash2, X, Loader2, Package, CheckCircle2, 
   Box, Info, Download, FileText, Eye, Upload, Link2, 
   Check, ExternalLink, Clock, ShoppingCart, AlertCircle, GripVertical,
-  Repeat, KeyRound
+  Repeat
 } from "lucide-react";
 import Link from "next/link";
 import { 
@@ -1104,7 +1104,7 @@ export default function InventoryPage() {
                   <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/10">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
-                        <KeyRound className="w-3.5 h-3.5 text-blue-400" /> Available for Rent
+                        <ShoppingCart className="w-3.5 h-3.5 text-blue-400" /> Available for Rent
                       </span>
                       <Link href="/admin/rentals" className="text-xs text-brand-400 hover:text-brand-300 font-semibold underline">
                         Rentals &rarr;

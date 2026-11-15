@@ -5,7 +5,7 @@ import useSWR from "swr";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  KeyRound,
+  ShoppingCart,
   Plus,
   Search,
   Calendar,
@@ -222,7 +222,7 @@ export default function RentalsPage() {
     {
       label: "Active Rentals",
       value: stats.activeRentals.toString(),
-      icon: KeyRound,
+      icon: ShoppingCart,
       color: "text-blue-400",
       bg: "bg-blue-400/10"
     },
@@ -473,7 +473,7 @@ export default function RentalsPage() {
           <div>
             {filteredRentals.length === 0 ? (
               <div className="p-16 text-center text-gray-400">
-                <KeyRound className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                <ShoppingCart className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                 <p className="text-base font-semibold text-white mb-1">No rentals found</p>
                 <p className="text-xs text-gray-400 max-w-sm mx-auto mb-5">
                   {searchTerm ? "No bookings match your search query." : "You haven't recorded any equipment rentals yet."}
