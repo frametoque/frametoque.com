@@ -22,7 +22,14 @@ async function ensureInventorySchema(): Promise<void> {
           ADD COLUMN IF NOT EXISTS estimated_price NUMERIC(12, 2),
           ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0,
           ADD COLUMN IF NOT EXISTS available_for_rent BOOLEAN DEFAULT false,
-          ADD COLUMN IF NOT EXISTS rental_price_per_day NUMERIC(12, 2) DEFAULT 0;
+          ADD COLUMN IF NOT EXISTS rental_price_per_day NUMERIC(12, 2) DEFAULT 0,
+          ADD COLUMN IF NOT EXISTS item_condition TEXT DEFAULT 'Brand New';
+      `;
+      // Update all current inventory items to Brand New if not set
+      await sql`
+        UPDATE admin_inventory 
+        SET item_condition = 'Brand New' 
+        WHERE item_condition IS NULL OR item_condition = '';
       `;
     } catch (e) {
       console.warn("Could not ensure admin_inventory schema:", e);
@@ -135,7 +142,7 @@ export async function createInventoryItem(data: any) {
 
   const result = await sql`
     INSERT INTO admin_inventory (
-      item_name, category, serial_number, quantity, status, purchase_date, purchase_price, notes, warranty_letter_url, expense_id, is_to_buy, product_link, estimated_price, purchase_invoice_url, available_for_rent, rental_price_per_day
+      item_name, category, serial_number, quantity, status, purchase_date, purchase_price, notes, warranty_letter_url, expense_id, is_to_buy, product_link, estimated_price, purchase_invoice_url, available_for_rent, rental_price_per_day, item_condition
     ) VALUES (
       ${data.item_name}, ${data.category}, ${data.serial_number || null}, ${data.quantity || 1}, 
       ${data.status || 'Available'}, ${data.purchase_date || null}, ${data.purchase_price || null}, ${data.notes || null},
@@ -145,7 +152,8 @@ export async function createInventoryItem(data: any) {
       ${data.estimated_price || null},
       ${data.purchase_invoice_url || null},
       ${data.available_for_rent !== undefined ? Boolean(data.available_for_rent) : false},
-      ${data.rental_price_per_day !== undefined && data.rental_price_per_day !== null && data.rental_price_per_day !== '' ? parseFloat(data.rental_price_per_day) : 0}
+      ${data.rental_price_per_day !== undefined && data.rental_price_per_day !== null && data.rental_price_per_day !== '' ? parseFloat(data.rental_price_per_day) : 0},
+      ${data.item_condition || 'Brand New'}
     )
     RETURNING id
   `;
@@ -166,6 +174,7 @@ export async function updateInventoryItem(id: string, data: any) {
       serial_number = ${data.serial_number || null},
       quantity = ${data.quantity || 1},
       status = ${data.status || 'Available'},
+      item_condition = ${data.item_condition || 'Brand New'},
       purchase_date = ${data.purchase_date || null},
       purchase_price = ${data.purchase_price || null},
       notes = ${data.notes || null},

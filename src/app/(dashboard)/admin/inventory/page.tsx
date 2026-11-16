@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import useSWR from 'swr';
 import { 
   Search, Plus, Edit2, Trash2, X, Loader2, Package, CheckCircle2, 
-  Box, Info, Download, FileText, Eye, Upload, Link2, 
+  Info, Download, FileText, Eye, Upload, Link2, 
   Check, ExternalLink, Clock, ShoppingCart, AlertCircle, GripVertical,
   Repeat
 } from "lucide-react";
@@ -15,6 +15,16 @@ import {
   createToBuyItem, reorderToBuyItems
 } from "../actions/inventory";
 import AnimatedNumber from "../components/AnimatedNumber";
+import CategoryPicker from "../components/CategoryPicker";
+
+const parseCategories = (catStr: string | null | undefined): string[] => {
+  if (!catStr) return [];
+  return catStr.split(',').map(s => s.trim()).filter(Boolean);
+};
+
+const DEFAULT_INVENTORY_CATEGORIES = [
+  "Camera", "Lens", "Lighting", "Audio", "Drone", "Gimbal", "Accessories", "Equipment"
+];
 
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount || 0);
@@ -140,11 +150,13 @@ function DocumentPreview({ url, title }: { url: string; title: string }) {
   );
 }
 
-const emptyForm = { item_name: '', category: '', serial_number: '', quantity: 1, status: 'Available', purchase_date: '', purchase_price: '', notes: '', warranty_letter_url: '', expense_id: '', purchase_invoice_url: '', available_for_rent: false, rental_price_per_day: '' };
+const emptyForm = { item_name: '', category: '', serial_number: '', quantity: 1, status: 'Available', item_condition: 'Brand New', purchase_date: '', purchase_price: '', notes: '', warranty_letter_url: '', expense_id: '', purchase_invoice_url: '', available_for_rent: false, rental_price_per_day: '' };
 const emptyToBuyForm = { item_name: '', product_link: '', estimated_price: '' };
 
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
@@ -206,6 +218,7 @@ export default function InventoryPage() {
     setEditingId(null);
     setIsConvertingItem(null);
     setFormData(emptyForm);
+    setSelectedCategories(["Equipment"]);
     setIsModalOpen(true);
   };
 
@@ -229,12 +242,14 @@ export default function InventoryPage() {
     setEditingId(item.id);
     setIsConvertingItem(item);
     const todayStr = new Date().toISOString().split('T')[0];
+    const initialCategory = item.category && item.category !== 'To Buy' ? item.category : 'Equipment';
     setFormData({
       item_name: item.item_name || '',
-      category: item.category && item.category !== 'To Buy' ? item.category : 'Equipment',
+      category: initialCategory,
       serial_number: item.serial_number || '',
       quantity: item.quantity || 1,
       status: 'Available',
+      item_condition: item.item_condition || 'Brand New',
       purchase_date: todayStr, // date automatically filled!
       purchase_price: item.estimated_price ? String(item.estimated_price) : (item.purchase_price ? String(item.purchase_price) : ''), // price automatically filled!
       notes: item.product_link ? `Product Link: ${item.product_link}${item.notes ? `\n${item.notes}` : ''}` : (item.notes || ''),
@@ -244,6 +259,7 @@ export default function InventoryPage() {
       available_for_rent: false,
       rental_price_per_day: ''
     });
+    setSelectedCategories(parseCategories(initialCategory).length ? parseCategories(initialCategory) : [initialCategory]);
     setIsModalOpen(true);
   };
 
@@ -331,6 +347,7 @@ export default function InventoryPage() {
       serial_number: item.serial_number || '',
       quantity: item.quantity || 1,
       status: item.status || 'Available',
+      item_condition: item.item_condition || 'Brand New',
       purchase_date: item.purchase_date ? new Date(item.purchase_date).toISOString().split('T')[0] : '',
       purchase_price: item.purchase_price || '',
       notes: item.notes || '',
@@ -340,6 +357,7 @@ export default function InventoryPage() {
       available_for_rent: Boolean(item.available_for_rent),
       rental_price_per_day: item.rental_price_per_day ? String(item.rental_price_per_day) : ''
     });
+    setSelectedCategories(parseCategories(item.category).length ? parseCategories(item.category) : (item.category ? [item.category] : []));
     setIsModalOpen(true);
   };
 
@@ -382,10 +400,17 @@ export default function InventoryPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedCategories.length === 0 && !formData.category.trim()) {
+      alert("Please select or enter a category.");
+      return;
+    }
     setSaving(true);
     try {
+      const finalCategory = selectedCategories.length > 0 ? selectedCategories.join(', ') : (formData.category.trim() || 'Equipment');
       const payload = { 
         ...formData, 
+        category: finalCategory,
+        item_condition: formData.item_condition || 'Brand New',
         quantity: parseInt(formData.quantity.toString()) || 1, 
         purchase_price: parseFloat(formData.purchase_price) || null,
         available_for_rent: Boolean(formData.available_for_rent),
@@ -422,8 +447,36 @@ export default function InventoryPage() {
     }
   };
 
+  const existingCategories = useMemo(() => {
+    const set = new Set<string>();
+    (data as any[] || []).forEach((item: any) => {
+      if (item.category && item.category !== 'To Buy') {
+        parseCategories(item.category).forEach((c: string) => set.add(c));
+      }
+    });
+    return Array.from(set).sort();
+  }, [data]);
+
+  const pickerCategories = useMemo(() => {
+    const set = new Set<string>([...DEFAULT_INVENTORY_CATEGORIES, ...existingCategories]);
+    return Array.from(set).sort();
+  }, [existingCategories]);
+
+  const dynamicFilters = useMemo(() => {
+    return ["All", ...existingCategories];
+  }, [existingCategories]);
+
   const filteredData = useMemo(() => {
-    let list = data;
+    let list = (data as any[]) || [];
+
+    if (activeCategory !== "All") {
+      if (activeCategory === "To Buy") {
+        list = list.filter((d: any) => Boolean(d.is_to_buy));
+      } else {
+        list = list.filter((d: any) => !d.is_to_buy && parseCategories(d.category).includes(activeCategory));
+      }
+    }
+
     if (searchTerm) {
       const lower = searchTerm.toLowerCase();
       list = list.filter((d: any) => 
@@ -444,12 +497,12 @@ export default function InventoryPage() {
       }
       return 0;
     });
-  }, [data, searchTerm]);
+  }, [data, searchTerm, activeCategory]);
 
   const totalItems = (data as any[]).filter((d: any) => !d.is_to_buy).length;
   const availableItems = (data as any[]).filter((d: any) => !d.is_to_buy && d.status === 'Available').length;
   const totalValue = (data as any[]).filter((d: any) => !d.is_to_buy).reduce((acc: number, curr: any) => acc + (parseFloat(curr.purchase_price) || 0), 0);
-  const categories = new Set((data as any[]).filter((d: any) => !d.is_to_buy).map((d: any) => d.category)).size;
+  const toBuyEstValue = (data as any[]).filter((d: any) => Boolean(d.is_to_buy)).reduce((acc: number, curr: any) => acc + (parseFloat(curr.estimated_price || curr.purchase_price) || 0), 0);
   const toBuyCount = (data as any[]).filter((d: any) => d.is_to_buy).length;
   const forRentCount = (data as any[]).filter((d: any) => !d.is_to_buy && d.available_for_rent).length;
 
@@ -510,12 +563,12 @@ export default function InventoryPage() {
         </div>
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4">
           <div className="p-4 rounded-2xl bg-purple-500/10 text-purple-400">
-            <Box className="w-6 h-6" />
+            <ShoppingCart className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-gray-400 text-sm font-medium">Categories</p>
+            <p className="text-gray-400 text-sm font-medium">To Buy Est. Value</p>
             <p className="text-2xl font-bold mt-1">
-              <AnimatedNumber value={categories} />
+              {formatLKR(toBuyEstValue)}
             </p>
           </div>
         </div>
@@ -524,7 +577,7 @@ export default function InventoryPage() {
             <Info className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-gray-400 text-sm font-medium">Est. Value</p>
+            <p className="text-gray-400 text-sm font-medium">Owned Est. Value</p>
             <p className="text-2xl font-bold mt-1">
               {formatLKR(totalValue)}
             </p>
@@ -535,14 +588,28 @@ export default function InventoryPage() {
       {/* Top action bar above table */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-semibold text-gray-400">
+          <button
+            type="button"
+            onClick={() => setActiveCategory("All")}
+            className={`text-xs font-semibold transition-colors cursor-pointer ${
+              activeCategory === "All" ? "text-white" : "text-gray-400 hover:text-white"
+            }`}
+          >
             {totalItems} Inventory Items
-          </span>
+          </button>
           {toBuyCount > 0 && (
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <button
+              type="button"
+              onClick={() => setActiveCategory(activeCategory === "To Buy" ? "All" : "To Buy")}
+              className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeCategory === "To Buy"
+                  ? "bg-amber-400 text-black border-amber-300 font-bold shadow-sm"
+                  : "bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25"
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${activeCategory === "To Buy" ? "bg-black" : "bg-amber-400 animate-pulse"}`} />
               {toBuyCount} to buy
-            </span>
+            </button>
           )}
           {forRentCount > 0 && (
             <Link
@@ -572,6 +639,26 @@ export default function InventoryPage() {
           </button>
         </div>
       </div>
+
+      {/* Category Selector Pills */}
+      {dynamicFilters.length > 1 && (
+        <div className="flex flex-wrap items-center gap-2">
+          {dynamicFilters.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setActiveCategory(cat)}
+              className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+                activeCategory === cat
+                  ? "bg-white text-black"
+                  : "bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* List */}
       <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-xl">
@@ -702,9 +789,16 @@ export default function InventoryPage() {
                             To Buy
                           </span>
                         ) : (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColor}`}>
+                          <div className="flex items-center gap-2 flex-nowrap">
+                            <span className={`inline-flex items-center justify-center w-[104px] px-2.5 py-0.5 rounded-full text-xs font-medium border shrink-0 text-center ${statusColor}`}>
                               {item.status}
+                            </span>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border shrink-0 whitespace-nowrap ${
+                              item.item_condition === 'Used'
+                                ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                                : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                            }`}>
+                              Purchased: {item.item_condition || 'Brand New'}
                             </span>
                             {item.available_for_rent && (
                               <span 
@@ -833,13 +927,11 @@ export default function InventoryPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-1">Category *</label>
-                        <input
-                          required
-                          type="text"
-                          value={formData.category}
-                          onChange={e => setFormData({ ...formData, category: e.target.value })}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 text-white placeholder-gray-500"
-                          placeholder="e.g. Camera"
+                        <CategoryPicker
+                          categories={pickerCategories}
+                          value={selectedCategories}
+                          onChange={setSelectedCategories}
+                          placeholder="Select category..."
                         />
                       </div>
                       <div>
@@ -901,6 +993,34 @@ export default function InventoryPage() {
                           className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-500 text-white placeholder-gray-500"
                           placeholder="0.00"
                         />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Purchased Condition *</label>
+                      <div className="grid grid-cols-2 gap-2 bg-white/5 p-1 rounded-xl border border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, item_condition: 'Brand New' })}
+                          className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                            (formData.item_condition || 'Brand New') === 'Brand New'
+                              ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                              : 'text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          Brand New
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, item_condition: 'Used' })}
+                          className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                            formData.item_condition === 'Used'
+                              ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-sm'
+                              : 'text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          Used
+                        </button>
                       </div>
                     </div>
 
@@ -1100,6 +1220,16 @@ export default function InventoryPage() {
                     <p className="text-sm text-white">{viewingItem.status}</p>
                   </div>
                 )}
+                <div>
+                  <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-0.5">Condition</p>
+                  <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-md border ${
+                    viewingItem.item_condition === 'Used'
+                      ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                      : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                  }`}>
+                    {viewingItem.item_condition || 'Brand New'}
+                  </span>
+                </div>
                 {viewingItem.available_for_rent && (
                   <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/10">
                     <div className="flex items-center justify-between">

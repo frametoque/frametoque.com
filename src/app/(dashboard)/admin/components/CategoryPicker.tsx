@@ -29,23 +29,15 @@ export default function CategoryPicker({
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom;
-    const dropdownHeight = Math.min(categories.length * 44 + 60, 600);
+    const maxHeight = Math.max(180, Math.min(spaceBelow - 16, 400));
 
-    if (spaceBelow >= dropdownHeight) {
-      // Open downward
-      setDropdownStyle({
-        top: rect.bottom + window.scrollY + 4,
-        left: rect.left + window.scrollX,
-        width: rect.width,
-      });
-    } else {
-      // Open upward
-      setDropdownStyle({
-        top: rect.top + window.scrollY - dropdownHeight - 4,
-        left: rect.left + window.scrollX,
-        width: rect.width,
-      });
-    }
+    // Always open downward
+    setDropdownStyle({
+      top: rect.bottom + window.scrollY + 4,
+      left: rect.left + window.scrollX,
+      width: rect.width,
+      maxHeight: `${maxHeight}px`,
+    });
   };
 
   const handleOpen = () => {
@@ -71,6 +63,7 @@ export default function CategoryPicker({
   // Reposition on scroll / resize
   useEffect(() => {
     if (!open) return;
+    updatePosition();
     const handler = () => updatePosition();
     window.addEventListener("scroll", handler, true);
     window.addEventListener("resize", handler);
@@ -93,7 +86,7 @@ export default function CategoryPicker({
     <div
       ref={dropdownRef}
       style={{ ...dropdownStyle, position: "absolute", zIndex: 9999 }}
-      className="bg-[#0d0d12] border border-white/15 rounded-xl shadow-2xl overflow-y-auto max-h-[600px]"
+      className="bg-[#0d0d12] border border-white/15 rounded-xl shadow-2xl overflow-y-auto"
     >
       <div className="p-2 border-b border-white/10 flex gap-2">
         <input
