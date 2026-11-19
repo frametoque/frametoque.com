@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import RentalContactClient from "./RentalContactClient";
 
 export const metadata: Metadata = {
-  title: "Contact Us | Frametoque Camera & Equipment Rentals Sri Lanka",
+  title: {
+    absolute: "Contact Us | Frametoque Rentals",
+  },
   description: "Get in touch with the Frametoque camera and equipment rental desk in Colombo, Sri Lanka. WhatsApp hotline +94 70 277 1361, gear pickup location, and registration info.",
   alternates: {
     canonical: "https://frametoque.com/rentals/contact",
   },
   openGraph: {
-    title: "Contact Frametoque Equipment Rental Desk | Sri Lanka",
+    title: "Contact Us | Frametoque Rentals",
     description: "WhatsApp hotline +94 70 277 1361, phone numbers, operating hours, and equipment pickup in Piliyandala, Colombo.",
     url: "https://frametoque.com/rentals/contact",
     siteName: "Frametoque Rentals",
@@ -16,7 +18,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Contact Frametoque Equipment Rentals Sri Lanka",
+    title: "Contact Us | Frametoque Rentals",
     description: "WhatsApp hotline +94 70 277 1361. Daily camera and cinema gear hire.",
   },
   keywords: [
@@ -35,13 +37,13 @@ const contactJsonLd = {
       "@type": "ContactPage",
       "@id": "https://frametoque.com/rentals/contact#webpage",
       url: "https://frametoque.com/rentals/contact",
-      name: "Contact Frametoque Equipment Rentals",
+      name: "Contact Frametoque Rentals Sri Lanka",
       description: "Contact details for camera, lens, lighting, and video production gear rental in Sri Lanka.",
     },
     {
       "@type": "LocalBusiness",
       "@id": "https://frametoque.com/rentals#store",
-      name: "Frametoque Equipment Rentals",
+      name: "Frametoque Rentals Sri Lanka",
       url: "https://frametoque.com/rentals",
       telephone: "+94702771361",
       email: "info@frametoque.com",

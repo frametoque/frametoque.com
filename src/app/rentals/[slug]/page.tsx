@@ -15,7 +15,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!product) {
     return {
-      title: "Equipment Not Found | Frametoque Rentals",
+      title: {
+        absolute: "Equipment Not Found | Frametoque Rentals",
+      },
     };
   }
 
@@ -32,7 +34,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     `Rent the ${product.item_name} in Colombo, Sri Lanka at ${formatLKR(product.daily_rate)}/day. Check live shoot date availability and reserve directly via WhatsApp.`;
 
   return {
-    title: `${product.item_name} Rental Sri Lanka (${formatLKR(product.daily_rate)}/day) | Frametoque`,
+    title: {
+      absolute: `${product.item_name} Rental Sri Lanka (${formatLKR(product.daily_rate)}/day) | Frametoque Rentals`,
+    },
     description: metaDescription,
     alternates: {
       canonical: pageUrl,
@@ -46,7 +50,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       "frametoque rentals",
     ],
     openGraph: {
-      title: `${product.item_name} Rental Sri Lanka | Frametoque`,
+      title: `${product.item_name} Rental Sri Lanka | Frametoque Rentals`,
       description: `Daily rate: ${formatLKR(product.daily_rate)}. Shoot-ready ${product.category.toLowerCase()} available for rent in Colombo, Sri Lanka.`,
       url: pageUrl,
       siteName: "Frametoque Rentals",
@@ -64,7 +68,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     twitter: {
       card: "summary_large_image",
-      title: `${product.item_name} Rental Sri Lanka | Frametoque`,
+      title: `${product.item_name} Rental Sri Lanka | Frametoque Rentals`,
       description: `Rent ${product.item_name} in Colombo for ${formatLKR(product.daily_rate)}/day.`,
       images: product.image_url ? [product.image_url] : [],
     },
@@ -112,7 +116,7 @@ export default async function RentalProductPage({ params }: PageProps) {
           businessFunction: "https://schema.org/Rental",
           seller: {
             "@type": "LocalBusiness",
-            name: "Frametoque Equipment Rentals",
+            name: "Frametoque Rentals Sri Lanka",
             telephone: "+94702771361",
           },
         },

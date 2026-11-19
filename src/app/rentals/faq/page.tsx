@@ -2,22 +2,24 @@ import type { Metadata } from "next";
 import RentalFAQClient from "./RentalFAQClient";
 
 export const metadata: Metadata = {
-  title: "Equipment Rental FAQ | Frametoque Camera Hire Sri Lanka",
-  description: "Frequently asked questions about hiring cinema cameras, lenses, lighting, and audio equipment from Frametoque in Sri Lanka. Booking, verification, and deposit info.",
+  title: {
+    absolute: "Equipment Rental FAQ | Frametoque Rentals",
+  },
+  description: "Frequently asked questions about hiring cinema cameras, lenses, lighting, and audio equipment from Frametoque Rentals Sri Lanka. Booking, verification, and deposit info.",
   alternates: {
     canonical: "https://frametoque.com/rentals/faq",
   },
   openGraph: {
-    title: "Equipment Rental FAQ | Frametoque Sri Lanka",
-    description: "Answers about equipment hire, verification requirements, security deposits, and gear pickups in Colombo.",
+    title: "Equipment Rental FAQ | Frametoque Rentals",
+    description: "Answers about equipment hire, verification requirements, security deposits, and gear pickups in Colombo from Frametoque Rentals Sri Lanka.",
     url: "https://frametoque.com/rentals/faq",
     siteName: "Frametoque Rentals",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Equipment Rental FAQ | Frametoque Sri Lanka",
-    description: "Clear answers on camera gear hire, shoot dates, verification, and rates in Sri Lanka.",
+    title: "Equipment Rental FAQ | Frametoque Rentals",
+    description: "Clear answers on camera gear hire, shoot dates, verification, and rates from Frametoque Rentals Sri Lanka.",
   },
   keywords: [
     "camera rental faq sri lanka",

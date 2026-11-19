@@ -13,7 +13,7 @@ import ShootKitDrawer from "@/components/rentals/ShootKitDrawer";
 export const metadata: Metadata = {
   metadataBase: new URL("https://frametoque.com"),
   title: {
-    default: "Camera & Equipment Rental Sri Lanka | Frametoque",
+    default: "Camera & Equipment Rental Sri Lanka | Frametoque Rentals",
     template: "%s | Frametoque Rentals",
   },
   description: "Rent professional cinema cameras, lenses, lighting, audio gear, and stabilization support in Colombo, Sri Lanka. Check real-time shoot availability and book directly via WhatsApp.",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     canonical: "https://frametoque.com/rentals",
   },
   openGraph: {
-    title: "Camera & Equipment Rental Sri Lanka | Frametoque",
+    title: "Camera & Equipment Rental Sri Lanka | Frametoque Rentals",
     description: "Rent professional cinema cameras, lenses, lighting, audio gear, and accessories in Colombo, Sri Lanka. Live date availability.",
     url: "https://frametoque.com/rentals",
     siteName: "Frametoque Rentals",
@@ -50,13 +50,13 @@ export const metadata: Metadata = {
         url: "https://frametoque.com/logos/ft/name-logo.png",
         width: 1200,
         height: 630,
-        alt: "Frametoque Equipment Rentals Sri Lanka",
+        alt: "Frametoque Rentals Sri Lanka",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Camera & Equipment Rental Sri Lanka | Frametoque",
+    title: "Camera & Equipment Rental Sri Lanka | Frametoque Rentals",
     description: "Rent professional cinema cameras, lenses, lighting, and audio equipment in Colombo, Sri Lanka.",
     images: ["https://frametoque.com/logos/ft/name-logo.png"],
   },
