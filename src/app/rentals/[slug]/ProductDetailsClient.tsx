@@ -133,14 +133,11 @@ export default function ProductDetailsClient({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-      {/* Main Grid: Gallery & Specs (Left) + Availability Card (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+      {/* Main Grid: Gallery (Row 1 Col 1-7), Pricing Card (Row 1-2 Col 8-12; 2nd on Mobile), Overview (Row 2 Col 1-7; 3rd on Mobile) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-x-12 lg:gap-y-8 items-start">
         
-        {/* LEFT COLUMN: Gallery, Description, Inclusions, Terms */}
-        <div className="lg:col-span-7 space-y-8">
-          
-          {/* Gallery Showcase */}
-          <div className="space-y-3">
+        {/* 1. GALLERY SHOWCASE (Row 1 Col 1-7 on Desktop; 1st on Mobile) */}
+        <div className="lg:col-span-7 lg:col-start-1 lg:row-start-1 space-y-3">
             <div className="aspect-square rounded-3xl bg-white border border-slate-200/90 overflow-hidden relative shadow-sm group">
               <AnimatePresence mode="wait">
                 {selectedImage ? (
@@ -221,74 +218,8 @@ export default function ProductDetailsClient({
             )}
           </div>
 
-          {/* Product Overview & Description */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 mb-3">Product Overview</h2>
-              {product.description ? (
-                <div className="text-sm text-slate-600 leading-relaxed space-y-3 whitespace-pre-line">
-                  {product.description}
-                </div>
-              ) : (
-                <p className="text-sm text-slate-500 italic">
-                  Professional cinema and photography gear tested and maintained prior to each shoot. Contact our rental desk for exact sensor, mount, and bundle specifications.
-                </p>
-              )}
-            </div>
-
-
-
-            {/* Rental Policy & Registration Requirements */}
-            <div className="pt-6 border-t border-slate-100 space-y-4">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  Registration Requirements
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Please provide below details for Registration:
-                </p>
-              </div>
-
-              {/* Numbered Requirements Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {[
-                  "Both sides of NIC",
-                  "Personal Facebook Profile",
-                  "Home contact number",
-                  "Home address and location",
-                  "Utility bill (Electricity or Telephone) to confirm address",
-                  "Facebook page (Need to see your works)",
-                ].map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-150 text-xs text-slate-700 font-medium"
-                  >
-                    <span className="w-5 h-5 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center text-[11px] font-bold shrink-0">
-                      {idx + 1}
-                    </span>
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Note Box */}
-              <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-amber-950 space-y-1.5 text-xs">
-                <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span>Important Note:</span>
-                </div>
-                <ul className="space-y-1 text-[11.5px] text-amber-900/90 pl-5 list-disc">
-                  <li>You must pay half amount of advance payment to confirm the booking</li>
-                  <li>Advance payment is non-refundable and that advance payment is not valid for another booking</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* RIGHT COLUMN: Sticky Date Availability & WhatsApp Booking Box */}
-        <div className="lg:col-span-5 sticky top-24 space-y-6">
+        {/* 2. PRICING & DATE CHECK CARD (Col 8-12 Row 1-2 on Desktop; 2nd on Mobile) */}
+        <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-24 space-y-6">
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-lg space-y-6">
             
             {/* Header: Title, Category & Daily Rate */}
@@ -519,6 +450,68 @@ export default function ProductDetailsClient({
               </a>
             </div>
 
+          </div>
+        </div>
+
+        {/* 3. PRODUCT OVERVIEW & REQUIREMENTS (Row 2 Col 1-7 on Desktop; 3rd on Mobile) */}
+        <div className="lg:col-span-7 lg:col-start-1 lg:row-start-2 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 mb-3">Product Overview</h2>
+            {product.description ? (
+              <div className="text-sm text-slate-600 leading-relaxed space-y-3 whitespace-pre-line">
+                {product.description}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500 italic">
+                Professional cinema and photography gear tested and maintained prior to each shoot. Contact our rental desk for exact sensor, mount, and bundle specifications.
+              </p>
+            )}
+          </div>
+
+          {/* Rental Policy & Registration Requirements */}
+          <div className="pt-6 border-t border-slate-100 space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Registration Requirements
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Please provide below details for Registration:
+              </p>
+            </div>
+
+            {/* Numbered Requirements Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {[
+                "Both sides of NIC",
+                "Personal Facebook Profile",
+                "Home contact number",
+                "Home address and location",
+                "Utility bill (Electricity or Telephone) to confirm address",
+                "Facebook page (Need to see your works)",
+              ].map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-150 text-xs text-slate-700 font-medium"
+                >
+                  <span className="w-5 h-5 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center text-[11px] font-bold shrink-0">
+                    {idx + 1}
+                  </span>
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Note Box */}
+            <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-amber-950 space-y-1.5 text-xs">
+              <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span>Important Note:</span>
+              </div>
+              <ul className="space-y-1 text-[11.5px] text-amber-900/90 pl-5 list-disc">
+                <li>You must pay half amount of advance payment to confirm the booking</li>
+                <li>Advance payment is non-refundable and that advance payment is not valid for another booking</li>
+              </ul>
+            </div>
           </div>
         </div>
 
