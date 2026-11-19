@@ -8,7 +8,6 @@ import {
   Trash2, 
   Plus, 
   Minus, 
-  Calendar, 
   FileText, 
   Download, 
   MessageCircle, 
@@ -304,15 +303,7 @@ Could you please confirm equipment availability for these dates and send over th
             {/* Shoot Dates Selector */}
             <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center">
-                    <Calendar className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">Shoot Schedule &amp; Duration</h3>
-                    <p className="text-xs text-slate-500">Select pickup and return dates for your shoot</p>
-                  </div>
-                </div>
+                <h3 className="text-sm font-bold text-slate-900">Shoot Schedule &amp; Duration</h3>
                 <span className="px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-bold">
                   {totalDays} Shoot {totalDays === 1 ? "Day" : "Days"}
                 </span>
