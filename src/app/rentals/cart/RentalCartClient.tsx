@@ -366,7 +366,7 @@ Could you please confirm equipment availability for these dates and send over th
             {/* Equipment Items List */}
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 px-1">
-                Equipment Manifest ({itemCount} {itemCount === 1 ? "item" : "items"})
+                Items in Bag ({itemCount} {itemCount === 1 ? "item" : "items"})
               </h3>
 
               <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">

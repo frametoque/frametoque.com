@@ -232,7 +232,7 @@ Could you please confirm equipment availability for these dates and send over th
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Bag Manifest
+                          Items in Bag
                         </span>
                         <button
                           type="button"
