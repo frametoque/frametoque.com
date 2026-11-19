@@ -137,7 +137,12 @@ export default function ProductDetailsClient({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-x-12 lg:gap-y-8 items-start">
         
         {/* 1. GALLERY SHOWCASE (Row 1 Col 1-7 on Desktop; 1st on Mobile) */}
-        <div className="lg:col-span-7 lg:col-start-1 lg:row-start-1 space-y-3">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="lg:col-span-7 lg:col-start-1 lg:row-start-1 space-y-3"
+        >
             <div className="aspect-square rounded-3xl bg-white border border-slate-200/90 overflow-hidden relative shadow-sm group">
               <AnimatePresence mode="wait">
                 {selectedImage ? (
@@ -216,10 +221,15 @@ export default function ProductDetailsClient({
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
 
         {/* 2. PRICING & DATE CHECK CARD (Col 8-12 Row 1-2 on Desktop; 2nd on Mobile) */}
-        <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-24 space-y-5 sm:space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-24 space-y-5 sm:space-y-6"
+        >
           <div className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-200/90 shadow-lg space-y-5 sm:space-y-6">
             
             {/* Header: Title, Category & Daily Rate */}
@@ -451,10 +461,15 @@ export default function ProductDetailsClient({
             </div>
 
           </div>
-        </div>
+        </motion.div>
 
         {/* 3. PRODUCT OVERVIEW & REQUIREMENTS (Row 2 Col 1-7 on Desktop; 3rd on Mobile) */}
-        <div className="lg:col-span-7 lg:col-start-1 lg:row-start-2 bg-white rounded-3xl p-5 sm:p-8 border border-slate-200 shadow-xs space-y-5 sm:space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.18 }}
+          className="lg:col-span-7 lg:col-start-1 lg:row-start-2 bg-white rounded-3xl p-5 sm:p-8 border border-slate-200 shadow-xs space-y-5 sm:space-y-6"
+        >
           <div>
             <h2 className="text-xl font-bold text-slate-900 mb-3">Product Overview</h2>
             {product.description ? (
@@ -513,13 +528,19 @@ export default function ProductDetailsClient({
               </ul>
             </div>
           </div>
-        </div>
+        </motion.div>
 
       </div>
 
       {/* SIMILAR EQUIPMENT CROSS-SELL SECTION */}
       {similarProducts.length > 0 && (
-        <section className="pt-12 border-t border-slate-200 space-y-6">
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="pt-12 border-t border-slate-200 space-y-6"
+        >
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-bold text-slate-900">Other Equipment for Rent</h3>
@@ -534,46 +555,53 @@ export default function ProductDetailsClient({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {similarProducts.map((item) => (
-              <Link
+            {similarProducts.map((item, idx) => (
+              <motion.div
                 key={item.id}
-                href={`/rentals/${item.slug || item.id}`}
-                className="group bg-white rounded-2xl border border-slate-200 hover:border-brand-300 p-4 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.35, delay: idx * 0.05 }}
               >
-                <div className="space-y-3">
-                  <div className="aspect-square rounded-xl bg-slate-100 overflow-hidden relative">
-                    {item.image_url ? (
-                      <img
-                        src={item.image_url}
-                        alt={item.item_name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-400">
-                        <Camera className="w-8 h-8" />
-                      </div>
-                    )}
+                <Link
+                  href={`/rentals/${item.slug || item.id}`}
+                  className="group bg-white rounded-2xl border border-slate-200 hover:border-brand-300 p-4 shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-full"
+                >
+                  <div className="space-y-3">
+                    <div className="aspect-square rounded-xl bg-slate-100 overflow-hidden relative">
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt={item.item_name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                          <Camera className="w-8 h-8" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-semibold text-brand-600 uppercase">
+                        {item.category}
+                      </span>
+                      <h4 className="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-1">
+                        {item.item_name}
+                      </h4>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[10px] font-semibold text-brand-600 uppercase">
-                      {item.category}
-                    </span>
-                    <h4 className="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-1">
-                      {item.item_name}
-                    </h4>
-                  </div>
-                </div>
 
-                <div className="pt-3 border-t border-slate-100 mt-3 flex items-baseline justify-between">
-                  <span className="font-extrabold text-sm text-slate-900">
-                    {formatLKR(item.daily_rate)}
-                  </span>
-                  <span className="text-[11px] text-slate-500">/ day</span>
-                </div>
-              </Link>
+                  <div className="pt-3 border-t border-slate-100 mt-3 flex items-baseline justify-between">
+                    <span className="font-extrabold text-sm text-slate-900">
+                      {formatLKR(item.daily_rate)}
+                    </span>
+                    <span className="text-[11px] text-slate-500">/ day</span>
+                  </div>
+                </Link>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
       )}
 
     </div>

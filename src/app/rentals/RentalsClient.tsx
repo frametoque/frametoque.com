@@ -274,7 +274,12 @@ export default function RentalsClient({ initialProducts, categories, initialCate
 
         {/* Product Cards Grid */}
         {filteredProducts.length === 0 ? (
-          <div className="p-16 text-center bg-white rounded-3xl border border-slate-200 space-y-3">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="p-12 sm:p-16 text-center bg-white rounded-3xl border border-slate-200 space-y-3"
+          >
             <Camera className="w-10 h-10 text-slate-300 mx-auto" />
             <h3 className="text-base font-bold text-slate-800">No equipment found</h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
@@ -300,94 +305,101 @@ export default function RentalsClient({ initialProducts, categories, initialCate
                 <span>Ask on WhatsApp</span>
               </a>
             </div>
-          </div>
+          </motion.div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {filteredProducts.map((product) => {
+            {filteredProducts.map((product, idx) => {
               const displayImage = product.image_url || product.images[0];
 
               return (
-                <Link
+                <motion.div
                   key={product.id}
-                  href={`/rentals/${product.slug || product.id}`}
-                  className="group bg-white rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between overflow-hidden cursor-pointer"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: Math.min(idx * 0.03, 0.3) }}
+                  className="h-full"
                 >
-                  <div>
-                    {/* Image Area */}
-                    <div className="relative aspect-square bg-slate-100 overflow-hidden">
-                      {displayImage ? (
-                        <img
-                          src={displayImage}
-                          alt={product.item_name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
-                          <Camera className="w-8 h-8" />
-                        </div>
-                      )}
+                  <Link
+                    href={`/rentals/${product.slug || product.id}`}
+                    className="group bg-white rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between overflow-hidden cursor-pointer h-full"
+                  >
+                    <div>
+                      {/* Image Area */}
+                      <div className="relative aspect-square bg-slate-100 overflow-hidden">
+                        {displayImage ? (
+                          <img
+                            src={displayImage}
+                            alt={product.item_name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
+                            <Camera className="w-8 h-8" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-4 space-y-1.5">
+                        <span className="text-[11px] font-medium text-slate-400 block uppercase tracking-wider">
+                          {product.category}
+                        </span>
+                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-1">
+                          {product.item_name}
+                        </h3>
+                        {product.description && (
+                          <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed pt-0.5">
+                            {product.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Content */}
-                    <div className="p-4 space-y-1.5">
-                      <span className="text-[11px] font-medium text-slate-400 block uppercase tracking-wider">
-                        {product.category}
-                      </span>
-                      <h3 className="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-1">
-                        {product.item_name}
-                      </h3>
-                      {product.description && (
-                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed pt-0.5">
-                          {product.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                    {/* Card Bottom: Price & Add to Kit Action */}
+                    <div className="px-4 pb-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-base font-extrabold text-slate-900">
+                          {formatLKR(product.daily_rate)}
+                        </span>
+                        <span className="text-xs text-slate-500 font-normal">/ day</span>
+                      </div>
 
-                  {/* Card Bottom: Price & Add to Kit Action */}
-                  <div className="px-4 pb-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-base font-extrabold text-slate-900">
-                        {formatLKR(product.daily_rate)}
-                      </span>
-                      <span className="text-xs text-slate-500 font-normal">/ day</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          addToKit({
+                            id: product.id,
+                            slug: product.slug || product.id,
+                            item_name: product.item_name,
+                            category: product.category,
+                            daily_rate: product.daily_rate,
+                            image_url: displayImage || null,
+                          });
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                          isInKit(product.id)
+                            ? "bg-brand-50 text-brand-700 border border-brand-200"
+                            : "bg-slate-900 hover:bg-brand-600 text-white shadow-xs active:scale-95"
+                        }`}
+                      >
+                        {isInKit(product.id) ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-brand-600" />
+                            <span>In Kit</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Add to Kit</span>
+                          </>
+                        )}
+                      </button>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        addToKit({
-                          id: product.id,
-                          slug: product.slug || product.id,
-                          item_name: product.item_name,
-                          category: product.category,
-                          daily_rate: product.daily_rate,
-                          image_url: displayImage || null,
-                        });
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                        isInKit(product.id)
-                          ? "bg-brand-50 text-brand-700 border border-brand-200"
-                          : "bg-slate-900 hover:bg-brand-600 text-white shadow-xs active:scale-95"
-                      }`}
-                    >
-                      {isInKit(product.id) ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-brand-600" />
-                          <span>In Kit</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Add to Kit</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </Link>
+                  </Link>
+                </motion.div>
               );
             })}
           </div>

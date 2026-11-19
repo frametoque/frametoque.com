@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Film, 
   Trash2, 
@@ -210,7 +211,12 @@ Could you please confirm equipment availability for these dates and send over th
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
       {/* Top Client Portal Notification Bar */}
-      <div className="mb-6 sm:mb-8 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-700">
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="mb-6 sm:mb-8 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-700"
+      >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0">
             <LogIn className="w-4 h-4" />
@@ -233,10 +239,15 @@ Could you please confirm equipment availability for these dates and send over th
           <span>Client Login</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </a>
-      </div>
+      </motion.div>
 
       {/* Page Title */}
-      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 sm:gap-4 border-b border-slate-200 pb-5 sm:pb-6 mb-6 sm:mb-8">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.08 }}
+        className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 sm:gap-4 border-b border-slate-200 pb-5 sm:pb-6 mb-6 sm:mb-8"
+      >
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Film className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600" />
@@ -266,11 +277,16 @@ Could you please confirm equipment availability for these dates and send over th
             </button>
           </div>
         )}
-      </div>
+      </motion.div>
 
       {items.length === 0 ? (
         /* Empty State */
-        <div className="py-20 text-center max-w-md mx-auto space-y-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="py-16 sm:py-20 text-center max-w-md mx-auto space-y-4"
+        >
           <div className="w-20 h-20 rounded-3xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
             <Camera className="w-10 h-10" />
           </div>
@@ -282,17 +298,22 @@ Could you please confirm equipment availability for these dates and send over th
           </div>
           <Link
             href="/rentals"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-900 hover:bg-brand-600 text-white font-semibold text-sm transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-900 hover:bg-brand-600 text-white font-semibold text-sm transition-colors shadow-sm cursor-pointer"
           >
             <span>Browse Equipment Catalog</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
-        </div>
+        </motion.div>
       ) : (
         /* Main Layout: 2 Columns (Manifest on Left, Quotation & Booking on Right) */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Schedule + Equipment Manifest */}
-          <div className="lg:col-span-7 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.12 }}
+            className="lg:col-span-7 space-y-6"
+          >
             {/* Shoot Dates Selector */}
             <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
@@ -349,86 +370,95 @@ Could you please confirm equipment availability for these dates and send over th
               </h3>
 
               <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
-                {items.map((item) => (
-                  <div key={item.id} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-                    {/* Item Thumbnail */}
-                    <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100 relative shrink-0 overflow-hidden flex items-center justify-center">
-                      {item.image_url ? (
-                        <Image
-                          src={item.image_url}
-                          alt={item.item_name}
-                          fill
-                          sizes="64px"
-                          className="object-contain p-1"
-                        />
-                      ) : (
-                        <Camera className="w-6 h-6 text-slate-300" />
-                      )}
-                    </div>
-
-                    {/* Details */}
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[10px] font-bold text-brand-600 uppercase tracking-wider block">
-                        {item.category}
-                      </span>
-                      <Link
-                        href={`/rentals/${item.slug}`}
-                        className="text-sm font-bold text-slate-900 hover:text-brand-600 transition-colors line-clamp-1"
-                      >
-                        {item.item_name}
-                      </Link>
-                      <p className="text-xs font-semibold text-slate-700 mt-0.5">
-                        {formatLKR(item.daily_rate)} <span className="text-slate-400 font-normal">/ day</span>
-                      </p>
-                    </div>
-
-                    {/* Quantity & Actions */}
-                    <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                      {/* Quantity Stepper */}
-                      <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="p-1.5 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
-                          aria-label="Decrease quantity"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="px-3 text-xs font-bold text-slate-800 min-w-[28px] text-center">
-                          {item.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="p-1.5 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
-                          aria-label="Increase quantity"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
+                <AnimatePresence initial={false}>
+                  {items.map((item) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 overflow-hidden"
+                    >
+                      {/* Item Thumbnail */}
+                      <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100 relative shrink-0 overflow-hidden flex items-center justify-center">
+                        {item.image_url ? (
+                          <Image
+                            src={item.image_url}
+                            alt={item.item_name}
+                            fill
+                            sizes="64px"
+                            className="object-contain p-1"
+                          />
+                        ) : (
+                          <Camera className="w-6 h-6 text-slate-300" />
+                        )}
                       </div>
 
-                      {/* Line Total */}
-                      <div className="text-right min-w-[90px]">
-                        <span className="text-xs font-extrabold text-slate-900 block">
-                          {formatLKR(item.daily_rate * item.quantity * totalDays)}
+                      {/* Details */}
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10px] font-bold text-brand-600 uppercase tracking-wider block">
+                          {item.category}
                         </span>
-                        <span className="text-[10px] text-slate-400">
-                          for {totalDays} {totalDays === 1 ? "day" : "days"}
-                        </span>
+                        <Link
+                          href={`/rentals/${item.slug}`}
+                          className="text-sm font-bold text-slate-900 hover:text-brand-600 transition-colors line-clamp-1"
+                        >
+                          {item.item_name}
+                        </Link>
+                        <p className="text-xs font-semibold text-slate-700 mt-0.5">
+                          {formatLKR(item.daily_rate)} <span className="text-slate-400 font-normal">/ day</span>
+                        </p>
                       </div>
 
-                      {/* Remove Button */}
-                      <button
-                        type="button"
-                        onClick={() => removeFromKit(item.id)}
-                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                        aria-label="Remove item"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                      {/* Quantity & Actions */}
+                      <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                        {/* Quantity Stepper */}
+                        <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="p-1.5 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="px-3 text-xs font-bold text-slate-800 min-w-[28px] text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="p-1.5 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {/* Line Total */}
+                        <div className="text-right min-w-[90px]">
+                          <span className="text-xs font-extrabold text-slate-900 block">
+                            {formatLKR(item.daily_rate * item.quantity * totalDays)}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            for {totalDays} {totalDays === 1 ? "day" : "days"}
+                          </span>
+                        </div>
+
+                        {/* Remove Button */}
+                        <button
+                          type="button"
+                          onClick={() => removeFromKit(item.id)}
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          aria-label="Remove item"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
             </div>
 
@@ -442,10 +472,15 @@ Could you please confirm equipment availability for these dates and send over th
                 All equipment is thoroughly inspected, cleaned, and supplied with protective flight cases and essential cables. Standard refundable security deposit applies at pickup.
               </p>
             </div>
-          </div>
+          </motion.div>
 
           {/* Right Column: Pricing Summary & Quotation / Booking Forms */}
-          <div className="lg:col-span-5 space-y-5 sm:space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.18 }}
+            className="lg:col-span-5 space-y-5 sm:space-y-6"
+          >
             {/* Cost Summary Box */}
             <div className="p-4 sm:p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
               <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider">
@@ -625,7 +660,7 @@ Could you please confirm equipment availability for these dates and send over th
                 <span>Reserve Shoot Kit via WhatsApp</span>
               </a>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>
