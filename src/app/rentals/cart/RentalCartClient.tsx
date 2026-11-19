@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ShoppingBag, 
   Trash2, 
   Plus, 
   Minus, 
@@ -248,12 +247,6 @@ Could you please confirm equipment availability for these dates and send over th
         className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 sm:gap-4 border-b border-slate-200 pb-5 sm:pb-6 mb-6 sm:mb-8"
       >
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600" />
-            <span className="text-[11px] sm:text-xs font-bold text-brand-600 uppercase tracking-wider">
-              Rental Equipment Manifest
-            </span>
-          </div>
           <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
             Your Shoot Bag
           </h1>
