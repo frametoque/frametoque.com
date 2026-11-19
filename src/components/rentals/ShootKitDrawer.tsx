@@ -143,14 +143,11 @@ Could you please confirm equipment availability for these dates and send over th
             >
               {/* Drawer Header */}
               <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm sm:text-base font-bold text-slate-900">Your Shoot Kit</h2>
-                    <span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-[11px] sm:text-xs font-bold">
-                      {itemCount} {itemCount === 1 ? "item" : "items"}
-                    </span>
-                  </div>
-                  <p className="text-[11px] sm:text-xs text-slate-500">Equipment Manifest &amp; Dates</p>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900">Your Shoot Kit</h2>
+                  <span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-[11px] sm:text-xs font-bold">
+                    {itemCount} {itemCount === 1 ? "item" : "items"}
+                  </span>
                 </div>
 
                 <button
