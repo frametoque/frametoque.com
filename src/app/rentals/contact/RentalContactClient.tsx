@@ -19,23 +19,11 @@ export default function RentalContactClient() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-center max-w-2xl mx-auto space-y-4"
+        className="text-center max-w-2xl mx-auto"
       >
         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
           Contact Us
         </h1>
-        
-        {/* Important Note */}
-        <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-amber-950 space-y-1.5 text-left max-w-xl mx-auto">
-          <div className="font-bold text-amber-900 flex items-center gap-1.5">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-            <span className="text-xs">Important Note:</span>
-          </div>
-          <ul className="list-disc list-inside space-y-1 text-xs text-amber-900/90 pl-1">
-            <li>You must pay half amount of advance payment to confirm the booking</li>
-            <li>Advance payment is non-refundable and that advance payment is not valid for another booking</li>
-          </ul>
-        </div>
       </motion.div>
 
       {/* Grid: Direct Contacts & Registration Details */}
@@ -162,6 +150,23 @@ export default function RentalContactClient() {
         </motion.div>
 
       </div>
+
+      {/* Important Note (After Cards) */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.25 }}
+        className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-amber-50/80 border border-amber-200 text-amber-950 space-y-1.5 text-left max-w-2xl mx-auto shadow-2xs"
+      >
+        <div className="font-bold text-amber-900 flex items-center gap-1.5">
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+          <span className="text-xs sm:text-sm font-bold">Important Note:</span>
+        </div>
+        <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm text-amber-900/90 pl-1">
+          <li>You must pay half amount of advance payment to confirm the booking</li>
+          <li>Advance payment is non-refundable and that advance payment is not valid for another booking</li>
+        </ul>
+      </motion.div>
 
     </div>
   );
