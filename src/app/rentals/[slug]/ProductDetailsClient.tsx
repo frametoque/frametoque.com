@@ -232,31 +232,7 @@ export default function ProductDetailsClient({
               )}
             </div>
 
-            {/* Standard Inclusions */}
-            <div className="pt-6 border-t border-slate-100 space-y-3">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>Standard Rental Inclusions</span>
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">
-                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50">
-                  <Check className="w-3.5 h-3.5 text-brand-600" />
-                  <span>Fully inspected &amp; shoot-ready</span>
-                </div>
-                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50">
-                  <Check className="w-3.5 h-3.5 text-brand-600" />
-                  <span>Protective hard carry case</span>
-                </div>
-                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50">
-                  <Check className="w-3.5 h-3.5 text-brand-600" />
-                  <span>Essential chargers &amp; power cords</span>
-                </div>
-                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50">
-                  <Check className="w-3.5 h-3.5 text-brand-600" />
-                  <span>Technical on-call support</span>
-                </div>
-              </div>
-            </div>
+
 
             {/* Rental Policy & Registration Requirements */}
             <div className="pt-6 border-t border-slate-100 space-y-4">
