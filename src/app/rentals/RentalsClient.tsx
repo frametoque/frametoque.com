@@ -388,12 +388,12 @@ export default function RentalsClient({ initialProducts, categories, initialCate
                         {isInKit(product.id) ? (
                           <>
                             <Check className="w-3.5 h-3.5 text-brand-600" />
-                            <span>In Kit</span>
+                            <span>In Bag</span>
                           </>
                         ) : (
                           <>
                             <Plus className="w-3.5 h-3.5" />
-                            <span>Add to Kit</span>
+                            <span>Add to Bag</span>
                           </>
                         )}
                       </button>

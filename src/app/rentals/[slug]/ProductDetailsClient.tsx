@@ -22,7 +22,7 @@ import {
   ChevronRight,
   FileText,
   AlertTriangle,
-  Film
+  ShoppingBag
 } from "lucide-react";
 import type { PublicRentalProduct, BookedDateRange } from "../../actions/rentals-public";
 import { checkPublicAvailability } from "../../actions/rentals-public";
@@ -411,7 +411,7 @@ export default function ProductDetailsClient({
                 </span>
               </a>
 
-              {/* Add to Multi-Item Shoot Kit Button */}
+              {/* Add to Multi-Item Shoot Bag Button */}
               <button
                 type="button"
                 onClick={() => {
@@ -430,9 +430,9 @@ export default function ProductDetailsClient({
                     : "bg-slate-900 hover:bg-slate-800 text-white border-transparent shadow-sm"
                 }`}
               >
-                <Film className="w-4 h-4" />
+                <ShoppingBag className="w-4 h-4" />
                 <span>
-                  {isInKit(product.id) ? "In Shoot Kit (Click to View Kit)" : "+ Add to Shoot Kit (Bundle Multiple Items)"}
+                  {isInKit(product.id) ? "In Shoot Bag (Click to View Bag)" : "+ Add to Shoot Bag (Bundle Multiple Items)"}
                 </span>
               </button>
 

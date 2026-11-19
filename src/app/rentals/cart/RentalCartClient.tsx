@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Film, 
+  ShoppingBag, 
   Trash2, 
   Plus, 
   Minus, 
@@ -72,7 +72,7 @@ export default function RentalCartClient() {
     const text = 
 `Hi Frametoque Team,
 
-I'd like to check availability and reserve the following *Shoot Kit*:
+I'd like to check availability and reserve the following *Shoot Bag*:
 
 📅 *Shoot Date(s):* ${dateStr} (${totalDays} day${totalDays > 1 ? "s" : ""})
 
@@ -98,14 +98,14 @@ Could you please confirm equipment availability for these dates and send over th
     }
 
     if (items.length === 0) {
-      setQuotationError("Your Shoot Kit is empty. Please add items to request a quotation.");
+      setQuotationError("Your Shoot Bag is empty. Please add items to request a quotation.");
       return;
     }
 
     setQuotationSubmitting(true);
 
     try {
-      // Map Shoot Kit items to the cart items format expected by /api/quotation
+      // Map Shoot Bag items to the cart items format expected by /api/quotation
       const dateLabel = startDate === endDate || !endDate ? startDate : `${startDate} to ${endDate}`;
       const mappedCartItems = items.map((item) => ({
         id: item.id,
@@ -250,13 +250,13 @@ Could you please confirm equipment availability for these dates and send over th
       >
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Film className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600" />
+            <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600" />
             <span className="text-[11px] sm:text-xs font-bold text-brand-600 uppercase tracking-wider">
               Rental Equipment Manifest
             </span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            Your Shoot Kit
+            Your Shoot Bag
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Review selected gear, schedule shoot dates, download official PDF quotations, or book directly via WhatsApp.
@@ -266,14 +266,14 @@ Could you please confirm equipment availability for these dates and send over th
         {itemCount > 0 && (
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
-              {itemCount} {itemCount === 1 ? "Item" : "Items"} in Kit
+              {itemCount} {itemCount === 1 ? "Item" : "Items"} in Shoot Bag
             </span>
             <button
               type="button"
               onClick={clearKit}
               className="text-xs font-medium text-slate-500 hover:text-rose-600 transition-colors cursor-pointer"
             >
-              Clear Kit
+              Clear Shoot Bag
             </button>
           </div>
         )}
@@ -291,9 +291,9 @@ Could you please confirm equipment availability for these dates and send over th
             <Camera className="w-10 h-10" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-xl font-bold text-slate-900">Your Shoot Kit is empty</h2>
+            <h2 className="text-xl font-bold text-slate-900">Your Shoot Bag is empty</h2>
             <p className="text-sm text-slate-500">
-              You haven&apos;t added any cinema cameras, lenses, or equipment to your kit yet.
+              You haven&apos;t added any cinema cameras, lenses, or equipment to your shoot bag yet.
             </p>
           </div>
           <Link
@@ -657,7 +657,7 @@ Could you please confirm equipment availability for these dates and send over th
                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs transition-all active:scale-[0.98] cursor-pointer"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>Reserve Shoot Kit via WhatsApp</span>
+                <span>Reserve Shoot Bag via WhatsApp</span>
               </a>
             </div>
           </motion.div>
