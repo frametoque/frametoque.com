@@ -18,7 +18,6 @@ import {
   CheckCircle2, 
   LogIn, 
   ExternalLink,
-  ShieldCheck,
   AlertCircle,
   Loader2
 } from "lucide-react";
@@ -460,17 +459,6 @@ Could you please confirm equipment availability for these dates and send over th
                   ))}
                 </AnimatePresence>
               </div>
-            </div>
-
-            {/* Inclusions & Terms note */}
-            <div className="p-4 rounded-xl bg-slate-100/70 border border-slate-200/80 text-xs text-slate-600 space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-slate-800">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Standard Rental Inspection &amp; Support Included</span>
-              </div>
-              <p className="text-slate-500 leading-relaxed">
-                All equipment is thoroughly inspected, cleaned, and supplied with protective flight cases and essential cables. Standard refundable security deposit applies at pickup.
-              </p>
             </div>
           </motion.div>
 
