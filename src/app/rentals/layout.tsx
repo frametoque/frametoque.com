@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { getPublicRentalCategories } from "../actions/rentals-public";
 import RentalHeader from "./RentalHeader";
+import { RentalKitProvider } from "@/context/RentalKitContext";
+import ShootKitDrawer from "@/components/rentals/ShootKitDrawer";
 
 export const metadata: Metadata = {
   title: "Equipment Rentals | Frametoque Digital Media",
@@ -45,19 +47,23 @@ export default async function RentalsLayout({
   const topCategories = categories.slice(0, 5);
 
   return (
-    <div 
-      className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-brand-500 selection:text-white"
-      style={{ colorScheme: "light" }}
-    >
-      {/* Light Theme Public Header with Hamburger Side Menu */}
-      <RentalHeader />
+    <RentalKitProvider>
+      <div 
+        className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-brand-500 selection:text-white"
+        style={{ colorScheme: "light" }}
+      >
+        {/* Light Theme Public Header with Hamburger Side Menu */}
+        <RentalHeader />
 
-      {/* Main Content Area */}
-      <main className="min-h-[calc(100vh-140px)]">
-        {children}
-      </main>
+        {/* Main Content Area */}
+        <main className="min-h-[calc(100vh-140px)]">
+          {children}
+        </main>
 
-      {/* Light Theme Public Footer */}
+        {/* Shoot Kit Slide-Over Drawer */}
+        <ShootKitDrawer />
+
+        {/* Light Theme Public Footer */}
       <footer className="bg-white border-t border-slate-200/80 mt-20 pt-16 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
@@ -160,5 +166,6 @@ export default async function RentalsLayout({
         </div>
       </footer>
     </div>
+  </RentalKitProvider>
   );
 }

@@ -11,10 +11,14 @@ import {
   ChevronDown, 
   Grid3X3, 
   Images as ImagesIcon,
-  ArrowRight
+  ArrowRight,
+  Plus,
+  Check,
+  Film
 } from "lucide-react";
 import type { PublicRentalProduct } from "../actions/rentals-public";
 import { normalizeRentalCategory } from "@/lib/categories";
+import { useRentalKit } from "@/context/RentalKitContext";
 
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat("en-LK", {
@@ -30,6 +34,7 @@ interface RentalsClientProps {
 }
 
 export default function RentalsClient({ initialProducts, categories, initialCategory }: RentalsClientProps) {
+  const { addToKit, isInKit, openKit } = useRentalKit();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || "All");
   const [sortBy, setSortBy] = useState<"price-asc" | "price-desc">("price-asc");
@@ -367,14 +372,47 @@ export default function RentalsClient({ initialProducts, categories, initialCate
                     </div>
                   </div>
 
-                  {/* Card Bottom: Price */}
-                  <div className="px-4 pb-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  {/* Card Bottom: Price & Add to Kit Action */}
+                  <div className="px-4 pb-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                     <div className="flex items-baseline gap-1">
                       <span className="text-base font-extrabold text-slate-900">
                         {formatLKR(product.daily_rate)}
                       </span>
                       <span className="text-xs text-slate-500 font-normal">/ day</span>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addToKit({
+                          id: product.id,
+                          slug: product.slug || product.id,
+                          item_name: product.item_name,
+                          category: product.category,
+                          daily_rate: product.daily_rate,
+                          image_url: displayImage || null,
+                        });
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                        isInKit(product.id)
+                          ? "bg-brand-50 text-brand-700 border border-brand-200"
+                          : "bg-slate-900 hover:bg-brand-600 text-white shadow-xs active:scale-95"
+                      }`}
+                    >
+                      {isInKit(product.id) ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-brand-600" />
+                          <span>In Kit</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add to Kit</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </Link>
               );

@@ -5,11 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, MessageCircle, Phone, MapPin, ChevronRight } from "lucide-react";
+import { Menu, X, MessageCircle, Phone, MapPin, ChevronRight, Film } from "lucide-react";
+import { useRentalKit } from "@/context/RentalKitContext";
 
 export default function RentalHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const { itemCount, openKit } = useRentalKit();
 
   // Close drawer on route change
   useEffect(() => {
@@ -57,12 +59,31 @@ export default function RentalHeader() {
             </Link>
           </div>
 
-          {/* Right Corner: Hamburger Menu Button */}
-          <div className="flex items-center">
+          {/* Right Corner: Shoot Kit Trigger & Hamburger Menu Button */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={openKit}
+              className={`inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-xs active:scale-95 ${
+                itemCount > 0
+                  ? "bg-brand-600 text-white border-brand-600 hover:bg-brand-500 shadow-sm"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+              }`}
+              aria-label="Open Shoot Kit"
+            >
+              <Film className="w-4 h-4 shrink-0" />
+              <span>Shoot Kit</span>
+              {itemCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[11px] font-extrabold bg-white text-brand-600">
+                  {itemCount}
+                </span>
+              )}
+            </button>
+
             <button
               type="button"
               onClick={() => setIsOpen(true)}
-              className="p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-800 hover:bg-slate-50 transition-all cursor-pointer flex items-center justify-center shadow-xs"
+              className="p-2 sm:p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-800 hover:bg-slate-50 transition-all cursor-pointer flex items-center justify-center shadow-xs"
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5 text-slate-800" />

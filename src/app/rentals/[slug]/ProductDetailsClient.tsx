@@ -21,10 +21,12 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  Film
 } from "lucide-react";
 import type { PublicRentalProduct, BookedDateRange } from "../../actions/rentals-public";
 import { checkPublicAvailability } from "../../actions/rentals-public";
+import { useRentalKit } from "@/context/RentalKitContext";
 
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat("en-LK", {
@@ -44,6 +46,8 @@ export default function ProductDetailsClient({
   bookedRanges,
   similarProducts,
 }: ProductDetailsClientProps) {
+  const { addToKit, isInKit, openKit } = useRentalKit();
+
   // Gallery active image
   const [selectedImage, setSelectedImage] = useState<string>(
     product.image_url || product.images[0] || ""
@@ -446,7 +450,7 @@ export default function ProductDetailsClient({
             )}
           </AnimatePresence>
 
-            {/* Direct Booking via WhatsApp Button */}
+            {/* Direct Booking via WhatsApp & Add to Kit Action Buttons */}
             <div className="space-y-2.5 pt-2">
               <a
                 href={buildWhatsAppUrl(availabilityResult?.available !== false)}
@@ -462,9 +466,34 @@ export default function ProductDetailsClient({
                 <span>
                   {availabilityResult?.available === false
                     ? "Ask for Alternative Dates on WhatsApp"
-                    : "Book via WhatsApp"}
+                    : "Book Single Item on WhatsApp"}
                 </span>
               </a>
+
+              {/* Add to Multi-Item Shoot Kit Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  addToKit({
+                    id: product.id,
+                    slug: product.slug || product.id,
+                    item_name: product.item_name,
+                    category: product.category,
+                    daily_rate: product.daily_rate,
+                    image_url: selectedImage || product.image_url,
+                  });
+                }}
+                className={`w-full py-3 rounded-2xl font-bold text-xs sm:text-sm border transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 ${
+                  isInKit(product.id)
+                    ? "bg-brand-50 text-brand-700 border-brand-300 hover:bg-brand-100"
+                    : "bg-slate-900 hover:bg-slate-800 text-white border-transparent shadow-sm"
+                }`}
+              >
+                <Film className="w-4 h-4" />
+                <span>
+                  {isInKit(product.id) ? "In Shoot Kit (Click to View Kit)" : "+ Add to Shoot Kit (Bundle Multiple Items)"}
+                </span>
+              </button>
 
               {/* Advance Payment Note */}
               <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-950 space-y-1">
