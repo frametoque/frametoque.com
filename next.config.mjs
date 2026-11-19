@@ -68,6 +68,15 @@ const nextConfig = {
     ];
   },
 
+  async rewrites() {
+    return [
+      {
+        source: '/sitemap.xml',
+        destination: '/sitemap',
+      },
+    ];
+  },
+
   images: {
     qualities: [100, 75],
     formats: ['image/avif', 'image/webp'],
