@@ -101,7 +101,6 @@ async function runBackfill() {
            OR (address IS NOT NULL AND address_encrypted IS NULL)
       `;
       for (const cl of clients) {
-        const updates = {};
         if (cl.phone && !cl.phone_encrypted) {
           const encPhone = encryptField(cl.phone, `client:phone:${cl.id}`);
           const bidxPhone = generateBlindIndex(cl.phone, "phone");
@@ -154,6 +153,44 @@ async function runBackfill() {
       }
     } catch (e) {
       console.warn("Notice: admin_agreements backfill skipped or partial:", e.message);
+    }
+
+    // 4. Backfill admin_rentals
+    try {
+      const rentals = await sql`
+        SELECT id, customer_phone, customer_phone_encrypted, customer_address, customer_address_encrypted 
+        FROM admin_rentals 
+        WHERE (customer_phone IS NOT NULL AND customer_phone_encrypted IS NULL)
+           OR (customer_address IS NOT NULL AND customer_address_encrypted IS NULL)
+      `;
+      for (const r of rentals) {
+        if (r.customer_phone && !r.customer_phone_encrypted) {
+          const encPhone = encryptField(r.customer_phone, `rental:phone:${r.id}`);
+          const bidxPhone = generateBlindIndex(r.customer_phone, "phone");
+          if (decryptField(encPhone, `rental:phone:${r.id}`) !== r.customer_phone) {
+            throw new Error(`Decryption mismatch for rental phone ${r.id}`);
+          }
+          await sql`
+            UPDATE admin_rentals 
+            SET customer_phone_encrypted = ${encPhone}, customer_phone_bidx = ${bidxPhone} 
+            WHERE id = ${r.id}
+          `;
+          updatedRentals++;
+        }
+        if (r.customer_address && !r.customer_address_encrypted) {
+          const encAddr = encryptField(r.customer_address, `rental:address:${r.id}`);
+          if (decryptField(encAddr, `rental:address:${r.id}`) !== r.customer_address) {
+            throw new Error(`Decryption mismatch for rental address ${r.id}`);
+          }
+          await sql`
+            UPDATE admin_rentals 
+            SET customer_address_encrypted = ${encAddr} 
+            WHERE id = ${r.id}
+          `;
+        }
+      }
+    } catch (e) {
+      console.warn("Notice: admin_rentals backfill skipped or partial:", e.message);
     }
 
     console.log(`Backfill complete. Verified accounts: ${updatedAccounts}, clients: ${updatedClients}, agreements: ${updatedAgreements}, rentals: ${updatedRentals}`);
