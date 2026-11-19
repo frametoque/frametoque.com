@@ -115,6 +115,17 @@ Could you please confirm equipment availability for these dates and send over th
         categorySlug: "rentals",
       }));
 
+      // Build descriptive rental project name
+      const rentalTitles = items.map((i) => i.item_name).filter(Boolean);
+      const projectTitle =
+        rentalTitles.length === 1
+          ? `Equipment Rental - ${rentalTitles[0]}`
+          : rentalTitles.length === 2
+          ? `Equipment Rental - ${rentalTitles[0]} & ${rentalTitles[1]}`
+          : rentalTitles.length > 2
+          ? `Equipment Rental - ${rentalTitles[0]} (+${rentalTitles.length - 1} more items)`
+          : "Equipment Rental - Shoot Bag";
+
       const res = await fetch("/api/quotation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -122,6 +133,7 @@ Could you please confirm equipment availability for these dates and send over th
           quoteName: quoteName.trim(),
           quoteEmail: quoteEmail.trim(),
           quotePhone: quotePhone.trim(),
+          projectName: projectTitle,
           cartItems: mappedCartItems,
           subtotalLKR: estimatedTotal,
           forceInsert: force,
@@ -151,6 +163,7 @@ Could you please confirm equipment availability for these dates and send over th
             if (!q.client_name) q.client_name = quoteName.trim();
             if (!q.email) q.email = quoteEmail.trim();
             if (!q.phone) q.phone = quotePhone.trim();
+            if (!q.description) q.description = projectTitle;
 
             const { generateQuotationPDF } = await import("@/app/(dashboard)/dashboard/quotation/QuotationDocument");
             const pdfBytes = await generateQuotationPDF(q);
@@ -187,6 +200,7 @@ Could you please confirm equipment availability for these dates and send over th
         if (!q.client_name) q.client_name = quoteName.trim();
         if (!q.email) q.email = quoteEmail.trim();
         if (!q.phone) q.phone = quotePhone.trim();
+        if (!q.description) q.description = "Equipment Rental - Shoot Bag";
 
         const { generateQuotationPDF } = await import("@/app/(dashboard)/dashboard/quotation/QuotationDocument");
         const pdfBytes = await generateQuotationPDF(q);

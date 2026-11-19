@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
     quoteName: string;
     quoteEmail: string;
     quotePhone: string;
+    projectName?: string;
     cartItems: {
       id?: string;
       serviceId?: string;
@@ -245,6 +246,9 @@ export async function POST(req: NextRequest) {
         return "Video editing";
       case "photo-video":
         return "Photography, Videography";
+      case "rentals":
+      case "rental":
+        return "Rentals";
       default:
         return "Other";
     }
@@ -269,6 +273,28 @@ export async function POST(req: NextRequest) {
       else if (num > nextId) break;
     }
 
+    const isRentalOrder = cartItems.some(
+      (item) => item.categorySlug === "rentals" || item.categorySlug === "rental"
+    );
+
+    let projectDescription: string;
+    if (body.projectName?.trim()) {
+      projectDescription = body.projectName.trim();
+    } else if (isRentalOrder) {
+      const rentalTitles = cartItems.map((i) => i.serviceTitle.trim()).filter(Boolean);
+      if (rentalTitles.length === 1) {
+        projectDescription = `Equipment Rental - ${rentalTitles[0]}`;
+      } else if (rentalTitles.length === 2) {
+        projectDescription = `Equipment Rental - ${rentalTitles[0]} & ${rentalTitles[1]}`;
+      } else if (rentalTitles.length > 2) {
+        projectDescription = `Equipment Rental - ${rentalTitles[0]} (+${rentalTitles.length - 1} more items)`;
+      } else {
+        projectDescription = "Equipment Rental - Shoot Bag";
+      }
+    } else {
+      projectDescription = `Quotation #${String(nextId).padStart(4, "0")}`;
+    }
+
     const rows = await sql`
       INSERT INTO admin_quotations (
         id,
@@ -290,7 +316,7 @@ export async function POST(req: NextRequest) {
         CURRENT_DATE,
         ${subtotalLKR},
         ${clientId},
-        ${`Quotation #${String(nextId).padStart(4, '0')}`},
+        ${projectDescription},
         ${quotationCategory},
         'Bank Transfer',
         'client-draft',
