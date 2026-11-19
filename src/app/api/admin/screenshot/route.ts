@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
     console.warn("External screenshot capture fallback triggered:", extErr);
   }
 
-  // 2. Optional local puppeteer fallback if specifically enabled and available
+  // 2. Optional local puppeteer-core fallback if specifically enabled and available
   let browser: any = null;
   try {
     const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL;
@@ -138,22 +138,21 @@ export async function GET(req: NextRequest) {
         headless: true,
       });
     } else if (!isProduction) {
-      const { default: puppeteer } = await import("puppeteer");
+      const { default: puppeteerCore } = await import("puppeteer-core");
       const executablePath = getLocalChromePath();
-      const launchOptions: any = {
-        headless: true,
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-blink-features=AutomationControlled",
-          `--window-size=${width},${height}`,
-        ],
-        defaultViewport: { width, height },
-      };
       if (executablePath) {
-        launchOptions.executablePath = executablePath;
+        browser = await puppeteerCore.launch({
+          headless: true,
+          executablePath,
+          args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-blink-features=AutomationControlled",
+            `--window-size=${width},${height}`,
+          ],
+          defaultViewport: { width, height },
+        });
       }
-      browser = await puppeteer.launch(launchOptions);
     }
 
     if (browser) {

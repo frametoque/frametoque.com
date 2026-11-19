@@ -11,10 +11,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node scripts/security-tests.mjs",
+    "test": "node scripts/security-tests.mjs && node --test scripts/domain-tests.mjs",
     "test:security": "node scripts/security-tests.mjs",
-    "test:domains": "node --test scripts/domain-tests.mjs",
-    "test:all": "node scripts/security-tests.mjs && node --test scripts/domain-tests.mjs"
+    "test:domains": "node --test scripts/domain-tests.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1156.0",
@@ -35,7 +34,6 @@
     "passkit-generator": "^3.5.7",
     "pdf-lib": "^1.17.1",
     "postgres": "^3.4.9",
-    "puppeteer": "^25.3.0",
     "puppeteer-core": "^24.43.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
