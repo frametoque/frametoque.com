@@ -20,8 +20,20 @@ import { useRentalKit } from "@/context/RentalKitContext";
 
 export default function RentalHeader() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
   const { itemCount, openKit } = useRentalKit();
+
+  // Scroll detection to blend header into hero when at top
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Close drawer on route change
   useEffect(() => {
@@ -49,7 +61,13 @@ export default function RentalHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/80 transition-all shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)]">
+      <header
+        className={`sticky top-0 z-50 transition-all duration-200 ${
+          isScrolled
+            ? "bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)]"
+            : "bg-transparent border-b border-transparent shadow-none"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
           
           {/* Logo & Brand */}
