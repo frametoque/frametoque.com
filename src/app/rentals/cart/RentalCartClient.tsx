@@ -244,16 +244,11 @@ Could you please confirm equipment availability for these dates and send over th
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.08 }}
-        className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 sm:gap-4 border-b border-slate-200 pb-5 sm:pb-6 mb-6 sm:mb-8"
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8"
       >
-        <div>
-          <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            Your Shoot Bag
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Review selected gear, schedule shoot dates, download official PDF quotations, or book directly via WhatsApp.
-          </p>
-        </div>
+        <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          Your Shoot Bag
+        </h1>
 
         {itemCount > 0 && (
           <div className="flex items-center gap-3">
