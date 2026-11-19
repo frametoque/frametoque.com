@@ -134,7 +134,7 @@ Could you please confirm equipment availability for these dates and send over th
           />
 
           {/* Drawer Container */}
-          <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+          <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -143,19 +143,19 @@ Could you please confirm equipment availability for these dates and send over th
               className="w-screen max-w-md bg-white shadow-2xl flex flex-col"
             >
               {/* Drawer Header */}
-              <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+              <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-sm">
-                    <Film className="w-5 h-5" />
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-sm">
+                    <Film className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-base font-bold text-slate-900">Your Shoot Kit</h2>
-                      <span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs font-bold">
+                      <h2 className="text-sm sm:text-base font-bold text-slate-900">Your Shoot Kit</h2>
+                      <span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-[11px] sm:text-xs font-bold">
                         {itemCount} {itemCount === 1 ? "item" : "items"}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500">Equipment Manifest &amp; Dates</p>
+                    <p className="text-[11px] sm:text-xs text-slate-500">Equipment Manifest &amp; Dates</p>
                   </div>
                 </div>
 
@@ -170,7 +170,7 @@ Could you please confirm equipment availability for these dates and send over th
               </div>
 
               {/* Drawer Body */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {items.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center py-12 space-y-4">
                     <div className="w-16 h-16 rounded-3xl bg-slate-100 text-slate-400 flex items-center justify-center">
@@ -330,7 +330,7 @@ Could you please confirm equipment availability for these dates and send over th
 
               {/* Drawer Footer / Cost Summary & WhatsApp Action */}
               {items.length > 0 && (
-                <div className="p-6 border-t border-slate-200 bg-slate-50/80 space-y-4">
+                <div className="p-4 sm:p-6 border-t border-slate-200 bg-slate-50/80 space-y-3.5 sm:space-y-4">
                   {/* Summary Rows */}
                   <div className="space-y-2 text-xs">
                     <div className="flex items-center justify-between text-slate-600">

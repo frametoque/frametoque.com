@@ -208,11 +208,11 @@ Could you please confirm equipment availability for these dates and send over th
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
       {/* Top Client Portal Notification Bar */}
-      <div className="mb-8 p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-700">
+      <div className="mb-6 sm:mb-8 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-700">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0">
             <LogIn className="w-4 h-4" />
           </div>
           <div>
@@ -228,7 +228,7 @@ Could you please confirm equipment availability for these dates and send over th
           href="/dashboard"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-all shadow-xs shrink-0 self-start sm:self-auto cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-all shadow-xs shrink-0 self-start sm:self-auto cursor-pointer"
         >
           <span>Client Login</span>
           <ExternalLink className="w-3.5 h-3.5" />
@@ -236,18 +236,18 @@ Could you please confirm equipment availability for these dates and send over th
       </div>
 
       {/* Page Title */}
-      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 border-b border-slate-200 pb-6 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 sm:gap-4 border-b border-slate-200 pb-5 sm:pb-6 mb-6 sm:mb-8">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Film className="w-5 h-5 text-brand-600" />
-            <span className="text-xs font-bold text-brand-600 uppercase tracking-wider">
+            <Film className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600" />
+            <span className="text-[11px] sm:text-xs font-bold text-brand-600 uppercase tracking-wider">
               Rental Equipment Manifest
             </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
             Your Shoot Kit
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Review selected gear, schedule shoot dates, download official PDF quotations, or book directly via WhatsApp.
           </p>
         </div>
@@ -445,10 +445,10 @@ Could you please confirm equipment availability for these dates and send over th
           </div>
 
           {/* Right Column: Pricing Summary & Quotation / Booking Forms */}
-          <div className="lg:col-span-5 space-y-6">
+          <div className="lg:col-span-5 space-y-5 sm:space-y-6">
             {/* Cost Summary Box */}
-            <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+            <div className="p-4 sm:p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider">
                 Cost Summary
               </h3>
 
@@ -487,7 +487,7 @@ Could you please confirm equipment availability for these dates and send over th
             </div>
 
             {/* Quotation Generation Section */}
-            <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+            <div className="p-4 sm:p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center">
                   <FileText className="w-4 h-4" />
@@ -607,7 +607,7 @@ Could you please confirm equipment availability for these dates and send over th
             </div>
 
             {/* Direct WhatsApp Booking Option */}
-            <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+            <div className="p-4 sm:p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-emerald-600" />
                 <h3 className="text-sm font-bold text-slate-900">Direct WhatsApp Reservation</h3>

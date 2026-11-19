@@ -132,7 +132,7 @@ export default function ProductDetailsClient({
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8 sm:space-y-12">
       {/* Main Grid: Gallery (Row 1 Col 1-7), Pricing Card (Row 1-2 Col 8-12; 2nd on Mobile), Overview (Row 2 Col 1-7; 3rd on Mobile) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-x-12 lg:gap-y-8 items-start">
         
@@ -219,8 +219,8 @@ export default function ProductDetailsClient({
           </div>
 
         {/* 2. PRICING & DATE CHECK CARD (Col 8-12 Row 1-2 on Desktop; 2nd on Mobile) */}
-        <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-24 space-y-6">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-lg space-y-6">
+        <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-24 space-y-5 sm:space-y-6">
+          <div className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-200/90 shadow-lg space-y-5 sm:space-y-6">
             
             {/* Header: Title, Category & Daily Rate */}
             <div className="space-y-2 border-b border-slate-100 pb-5">
@@ -454,7 +454,7 @@ export default function ProductDetailsClient({
         </div>
 
         {/* 3. PRODUCT OVERVIEW & REQUIREMENTS (Row 2 Col 1-7 on Desktop; 3rd on Mobile) */}
-        <div className="lg:col-span-7 lg:col-start-1 lg:row-start-2 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+        <div className="lg:col-span-7 lg:col-start-1 lg:row-start-2 bg-white rounded-3xl p-5 sm:p-8 border border-slate-200 shadow-xs space-y-5 sm:space-y-6">
           <div>
             <h2 className="text-xl font-bold text-slate-900 mb-3">Product Overview</h2>
             {product.description ? (

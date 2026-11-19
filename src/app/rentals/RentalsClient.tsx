@@ -8,8 +8,6 @@ import {
   Camera, 
   MessageCircle, 
   X, 
-  ChevronDown, 
-  Grid3X3, 
   Images as ImagesIcon,
   ArrowRight,
   Plus,
@@ -139,7 +137,7 @@ export default function RentalsClient({ initialProducts, categories, initialCate
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.08, ease: "easeOut" }}
-          className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]"
+          className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]"
         >
           Camera &amp; equipment rentals in one place<span className="text-brand-600">.</span>
         </motion.h1>
@@ -149,7 +147,7 @@ export default function RentalsClient({ initialProducts, categories, initialCate
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.14, ease: "easeOut" }}
-          className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed"
+          className="text-xs sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed"
         >
           Cinema cameras, prime lenses, lighting, audio gear, and mounts — all tested, verified, and ready for your next shoot.
         </motion.p>
@@ -159,80 +157,64 @@ export default function RentalsClient({ initialProducts, categories, initialCate
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-          className="flex flex-wrap items-center justify-center gap-3 pt-1"
+          className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 pt-1"
         >
           <button
             type="button"
             onClick={() => catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-brand-600 hover:bg-brand-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-brand-600/20 transition-all active:scale-95 cursor-pointer"
           >
             <span>Browse Equipment</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
           <Link
             href="/rentals/terms"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-slate-50 text-slate-800 hover:text-brand-700 text-sm font-semibold border border-slate-200 hover:border-brand-300 shadow-xs transition-all active:scale-95"
+            className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-white hover:bg-slate-50 text-slate-800 hover:text-brand-700 text-xs sm:text-sm font-semibold border border-slate-200 hover:border-brand-300 shadow-xs transition-all active:scale-95"
           >
             <span>Terms &amp; Conditions</span>
           </Link>
         </motion.div>
 
-        {/* Search Bar */}
+        {/* Search Bar (Sleek single-line responsive bar without category dropdown) */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.25, ease: "easeOut" }}
-          className="w-full pt-4 max-w-4xl mx-auto"
+          className="w-full pt-2 sm:pt-4 max-w-2xl mx-auto"
         >
-          <div className="flex flex-col sm:flex-row items-stretch bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/90 overflow-hidden">
+          <div className="flex items-center bg-white rounded-2xl shadow-lg shadow-slate-200/60 border border-slate-200/90 p-1 sm:p-1.5 transition-all focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20">
             {/* Search Input */}
             <div className="relative flex-1 min-w-0">
-              <Search className="w-4.5 h-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 shrink-0 pointer-events-none" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleHeroSearch(); }}
                 placeholder="Search cameras, lenses, lighting, audio..."
-                className="w-full pl-11 pr-10 py-3.5 sm:py-4 bg-transparent text-sm sm:text-base text-slate-900 placeholder:text-slate-400 focus:outline-none border-b sm:border-b-0 sm:border-r border-slate-200"
+                className="w-full pl-9 sm:pl-11 pr-8 py-2 sm:py-2.5 bg-transparent text-xs sm:text-sm md:text-base text-slate-900 placeholder:text-slate-400 focus:outline-none"
               />
               {searchTerm && (
                 <button
                   type="button"
                   onClick={() => setSearchTerm("")}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                  aria-label="Clear search"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
               )}
-            </div>
-
-            {/* Category Dropdown */}
-            <div className="relative min-w-[190px]">
-              <Grid3X3 className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full h-full pl-11 pr-10 py-3.5 sm:py-4 bg-transparent text-sm text-slate-700 font-medium appearance-none focus:outline-none border-b sm:border-b-0 sm:border-r border-slate-200 cursor-pointer"
-              >
-                <option value="All">All Categories</option>
-                {categories.map((cat) => (
-                  <option key={cat.category} value={cat.category}>
-                    {cat.category}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
 
             {/* Search Button */}
             <button
               type="button"
               onClick={handleHeroSearch}
-              className="px-8 py-3.5 sm:py-4 bg-brand-600 hover:bg-brand-500 text-white text-sm sm:text-base font-semibold transition-colors cursor-pointer flex items-center justify-center gap-2 shrink-0 active:scale-[0.98]"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-xs sm:text-sm font-semibold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shrink-0 active:scale-95 shadow-sm"
+              aria-label="Search equipment"
             >
-              <Search className="w-4 h-4" />
-              <span>Search</span>
+              <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline sm:inline">Search</span>
             </button>
           </div>
         </motion.div>
@@ -241,18 +223,18 @@ export default function RentalsClient({ initialProducts, categories, initialCate
       {/* Main Catalog Section */}
       <section ref={catalogRef} className="space-y-6 pt-2">
 
-        {/* Category Filter Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        {/* Category Filter Tabs: Horizontal scroll on mobile, wrapped & centered on desktop */}
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2 scrollbar-none sm:flex-wrap sm:justify-center -mx-4 px-4 sm:mx-0 sm:px-0">
           {categoryTabs.map((tab) => {
             const isSelected = selectedCategory === tab.value;
             return (
               <button
                 key={tab.value}
                 onClick={() => setSelectedCategory(tab.value)}
-                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0 active:scale-95 ${
                   isSelected
                     ? "bg-slate-900 text-white shadow-sm"
-                    : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50"
+                    : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 hover:bg-slate-50"
                 }`}
               >
                 {tab.label}
@@ -321,7 +303,7 @@ export default function RentalsClient({ initialProducts, categories, initialCate
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {filteredProducts.map((product) => {
               const displayImage = product.image_url || product.images[0];
 
