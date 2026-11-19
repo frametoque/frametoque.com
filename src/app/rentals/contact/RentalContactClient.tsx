@@ -39,7 +39,7 @@ export default function RentalContactClient() {
           {/* Quick Contact Card */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-5">
             <h2 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">
-              Rental Hotlines &amp; Desk
+              Rental Hotlines
             </h2>
 
             <div className="space-y-4 text-xs sm:text-sm">
