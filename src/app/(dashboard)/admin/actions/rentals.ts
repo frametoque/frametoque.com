@@ -6,6 +6,7 @@ import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 import { createInvoice, createIncome } from "./actions";
 import { putBlob } from "@/lib/storage";
+import { encryptField, decryptField, generateBlindIndex } from "@/lib/crypto-vault";
 
 let _rentalsSchemaPromise: Promise<void> | null = null;
 async function ensureRentalsSchema(): Promise<void> {
@@ -58,7 +59,9 @@ async function ensureRentalsSchema(): Promise<void> {
           ADD COLUMN IF NOT EXISTS invoice_id TEXT,
           ADD COLUMN IF NOT EXISTS income_id TEXT,
           ADD COLUMN IF NOT EXISTS notes TEXT,
-          ADD COLUMN IF NOT EXISTS return_date DATE;
+          ADD COLUMN IF NOT EXISTS return_date DATE,
+          ADD COLUMN IF NOT EXISTS client_phone_encrypted TEXT,
+          ADD COLUMN IF NOT EXISTS client_phone_bidx TEXT;
       `;
 
       try {
@@ -197,7 +200,7 @@ export async function getRentals() {
         client_id: r.client_id,
         client_name: r.client_name,
         client_email: r.client_email,
-        client_phone: r.client_phone || r.client_profile_phone || null,
+        client_phone: (r.client_phone_encrypted ? decryptField(r.client_phone_encrypted, `rentals:phone:${r.rental_code || r.id}`) : null) || r.client_phone || r.client_profile_phone || null,
         client_company: r.client_company || null,
         start_date: r.start_date ? new Date(r.start_date).toISOString().split('T')[0] : '',
         end_date: endDateStr,
@@ -308,7 +311,7 @@ export async function getRentalById(id: number | string) {
       client_id: r.client_id,
       client_name: r.client_name,
       client_email: r.client_email,
-      client_phone: r.client_phone || r.client_profile_phone || null,
+      client_phone: (r.client_phone_encrypted ? decryptField(r.client_phone_encrypted, `rentals:phone:${r.rental_code || r.id}`) : null) || r.client_phone || r.client_profile_phone || null,
       client_company: r.client_company || null,
       start_date: startDateStr,
       end_date: endDateStr,
@@ -812,36 +815,75 @@ export async function createRental(data: {
     const itemPaid = grandTotal > 0 ? Math.round((paidAmount / grandTotal) * it.total_amount * 100) / 100 : 0;
     const itemPaymentStatus = itemPaid >= it.total_amount && it.total_amount > 0 ? 'Paid' : (itemPaid > 0 ? 'Partially Paid' : paymentStatus);
 
-    const result = await sql`
-      INSERT INTO admin_rentals (
-        rental_code, inventory_id, item_name, client_id, client_name, client_email, client_phone,
-        start_date, end_date, daily_rate, rental_days, quantity, total_amount, deposit_amount,
-        status, payment_status, paid_amount, invoice_id, income_id, notes, terms
-      ) VALUES (
-        ${rentalCode},
-        ${it.inventory_id},
-        ${it.item_name},
-        ${data.client_id || null},
-        ${data.client_name},
-        ${data.client_email || null},
-        ${data.client_phone || null},
-        ${data.start_date},
-        ${data.end_date},
-        ${it.daily_rate},
-        ${rentalDays},
-        ${it.quantity},
-        ${it.total_amount},
-        ${idx === 0 ? (data.deposit_amount || 0) : 0},
-        ${status},
-        ${itemPaymentStatus},
-        ${itemPaid},
-        ${linkedInvoiceId},
-        ${linkedIncomeId},
-        ${data.notes || null},
-        ${data.terms || null}
-      )
-      RETURNING id
-    `;
+    const encPhone = data.client_phone ? encryptField(data.client_phone, `rentals:phone:${rentalCode}`) : null;
+    const bidxPhone = data.client_phone ? generateBlindIndex(data.client_phone, "phone") : null;
+
+    let result;
+    try {
+      result = await sql`
+        INSERT INTO admin_rentals (
+          rental_code, inventory_id, item_name, client_id, client_name, client_email, client_phone, client_phone_encrypted, client_phone_bidx,
+          start_date, end_date, daily_rate, rental_days, quantity, total_amount, deposit_amount,
+          status, payment_status, paid_amount, invoice_id, income_id, notes, terms
+        ) VALUES (
+          ${rentalCode},
+          ${it.inventory_id},
+          ${it.item_name},
+          ${data.client_id || null},
+          ${data.client_name},
+          ${data.client_email || null},
+          ${data.client_phone || null},
+          ${encPhone},
+          ${bidxPhone},
+          ${data.start_date},
+          ${data.end_date},
+          ${it.daily_rate},
+          ${rentalDays},
+          ${it.quantity},
+          ${it.total_amount},
+          ${idx === 0 ? (data.deposit_amount || 0) : 0},
+          ${status},
+          ${itemPaymentStatus},
+          ${itemPaid},
+          ${linkedInvoiceId},
+          ${linkedIncomeId},
+          ${data.notes || null},
+          ${data.terms || null}
+        )
+        RETURNING id
+      `;
+    } catch {
+      result = await sql`
+        INSERT INTO admin_rentals (
+          rental_code, inventory_id, item_name, client_id, client_name, client_email, client_phone,
+          start_date, end_date, daily_rate, rental_days, quantity, total_amount, deposit_amount,
+          status, payment_status, paid_amount, invoice_id, income_id, notes, terms
+        ) VALUES (
+          ${rentalCode},
+          ${it.inventory_id},
+          ${it.item_name},
+          ${data.client_id || null},
+          ${data.client_name},
+          ${data.client_email || null},
+          ${data.client_phone || null},
+          ${data.start_date},
+          ${data.end_date},
+          ${it.daily_rate},
+          ${rentalDays},
+          ${it.quantity},
+          ${it.total_amount},
+          ${idx === 0 ? (data.deposit_amount || 0) : 0},
+          ${status},
+          ${itemPaymentStatus},
+          ${itemPaid},
+          ${linkedInvoiceId},
+          ${linkedIncomeId},
+          ${data.notes || null},
+          ${data.terms || null}
+        )
+        RETURNING id
+      `;
+    }
     createdIds.push(result[0].id);
     await logSystemAction(`Created rental booking: ${rentalCode} for "${it.item_name}" to ${data.client_name}`);
   }
@@ -899,31 +941,68 @@ export async function updateRental(id: number, data: {
     ? (data.inventory_id && String(data.inventory_id).trim() ? String(data.inventory_id).trim() : null)
     : undefined;
 
-  await sql`
-    UPDATE admin_rentals SET
-      inventory_id = ${invId !== undefined ? invId : sql`inventory_id`},
-      item_name = COALESCE(${data.item_name || null}, item_name),
-      client_id = COALESCE(${data.client_id !== undefined ? data.client_id : null}, client_id),
-      client_name = COALESCE(${data.client_name || null}, client_name),
-      client_email = ${data.client_email !== undefined ? data.client_email : null},
-      client_phone = ${data.client_phone !== undefined ? data.client_phone : null},
-      start_date = COALESCE(${data.start_date || null}, start_date),
-      end_date = COALESCE(${data.end_date || null}, end_date),
-      return_date = ${returnDate},
-      daily_rate = COALESCE(${data.daily_rate !== undefined ? data.daily_rate : null}, daily_rate),
-      rental_days = COALESCE(${data.rental_days !== undefined ? data.rental_days : null}, rental_days),
-      quantity = COALESCE(${data.quantity !== undefined ? data.quantity : null}, quantity),
-      total_amount = COALESCE(${data.total_amount !== undefined ? data.total_amount : null}, total_amount),
-      deposit_amount = COALESCE(${data.deposit_amount !== undefined ? data.deposit_amount : null}, deposit_amount),
-      status = COALESCE(${data.status || null}, status),
-      payment_status = COALESCE(${data.payment_status || null}, payment_status),
-      paid_amount = COALESCE(${data.paid_amount !== undefined ? data.paid_amount : null}, paid_amount),
-      invoice_id = ${data.invoice_id !== undefined ? data.invoice_id : null},
-      notes = ${data.notes !== undefined ? data.notes : null},
-      terms = ${data.terms !== undefined ? data.terms : null},
-      updated_at = NOW()
-    WHERE id = ${id}
-  `;
+  const encPhone = data.client_phone !== undefined
+    ? (data.client_phone ? encryptField(data.client_phone, `rentals:phone:${id}`) : null)
+    : undefined;
+  const bidxPhone = data.client_phone !== undefined
+    ? (data.client_phone ? generateBlindIndex(data.client_phone, "phone") : null)
+    : undefined;
+
+  try {
+    await sql`
+      UPDATE admin_rentals SET
+        inventory_id = ${invId !== undefined ? invId : sql`inventory_id`},
+        item_name = COALESCE(${data.item_name || null}, item_name),
+        client_id = COALESCE(${data.client_id !== undefined ? data.client_id : null}, client_id),
+        client_name = COALESCE(${data.client_name || null}, client_name),
+        client_email = ${data.client_email !== undefined ? data.client_email : null},
+        client_phone = ${data.client_phone !== undefined ? data.client_phone : null},
+        client_phone_encrypted = ${encPhone !== undefined ? encPhone : sql`client_phone_encrypted`},
+        client_phone_bidx = ${bidxPhone !== undefined ? bidxPhone : sql`client_phone_bidx`},
+        start_date = COALESCE(${data.start_date || null}, start_date),
+        end_date = COALESCE(${data.end_date || null}, end_date),
+        return_date = ${returnDate},
+        daily_rate = COALESCE(${data.daily_rate !== undefined ? data.daily_rate : null}, daily_rate),
+        rental_days = COALESCE(${data.rental_days !== undefined ? data.rental_days : null}, rental_days),
+        quantity = COALESCE(${data.quantity !== undefined ? data.quantity : null}, quantity),
+        total_amount = COALESCE(${data.total_amount !== undefined ? data.total_amount : null}, total_amount),
+        deposit_amount = COALESCE(${data.deposit_amount !== undefined ? data.deposit_amount : null}, deposit_amount),
+        status = COALESCE(${data.status || null}, status),
+        payment_status = COALESCE(${data.payment_status || null}, payment_status),
+        paid_amount = COALESCE(${data.paid_amount !== undefined ? data.paid_amount : null}, paid_amount),
+        invoice_id = ${data.invoice_id !== undefined ? data.invoice_id : null},
+        notes = ${data.notes !== undefined ? data.notes : null},
+        terms = ${data.terms !== undefined ? data.terms : null},
+        updated_at = NOW()
+      WHERE id = ${id}
+    `;
+  } catch {
+    await sql`
+      UPDATE admin_rentals SET
+        inventory_id = ${invId !== undefined ? invId : sql`inventory_id`},
+        item_name = COALESCE(${data.item_name || null}, item_name),
+        client_id = COALESCE(${data.client_id !== undefined ? data.client_id : null}, client_id),
+        client_name = COALESCE(${data.client_name || null}, client_name),
+        client_email = ${data.client_email !== undefined ? data.client_email : null},
+        client_phone = ${data.client_phone !== undefined ? data.client_phone : null},
+        start_date = COALESCE(${data.start_date || null}, start_date),
+        end_date = COALESCE(${data.end_date || null}, end_date),
+        return_date = ${returnDate},
+        daily_rate = COALESCE(${data.daily_rate !== undefined ? data.daily_rate : null}, daily_rate),
+        rental_days = COALESCE(${data.rental_days !== undefined ? data.rental_days : null}, rental_days),
+        quantity = COALESCE(${data.quantity !== undefined ? data.quantity : null}, quantity),
+        total_amount = COALESCE(${data.total_amount !== undefined ? data.total_amount : null}, total_amount),
+        deposit_amount = COALESCE(${data.deposit_amount !== undefined ? data.deposit_amount : null}, deposit_amount),
+        status = COALESCE(${data.status || null}, status),
+        payment_status = COALESCE(${data.payment_status || null}, payment_status),
+        paid_amount = COALESCE(${data.paid_amount !== undefined ? data.paid_amount : null}, paid_amount),
+        invoice_id = ${data.invoice_id !== undefined ? data.invoice_id : null},
+        notes = ${data.notes !== undefined ? data.notes : null},
+        terms = ${data.terms !== undefined ? data.terms : null},
+        updated_at = NOW()
+      WHERE id = ${id}
+    `;
+  }
 
   await logSystemAction(`Updated rental ID ${id} (${data.item_name || 'equipment'})`);
 

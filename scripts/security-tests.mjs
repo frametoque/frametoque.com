@@ -145,6 +145,40 @@ runTest("SSRF: Internal and Cloud Metadata Addresses Blocked", () => {
   assert(!isBlockedHost("api.google.com"), "Public external domain must be allowed");
 });
 
+// 9. Crypto Vault: Multi-entity Context Isolation (Rentals vs Clients vs Agreements)
+runTest("CryptoVault: Multi-entity Context Isolation rejects cross-domain decryption", () => {
+  const secretPhone = "+94771234567";
+  const rentalContext = "rentals:phone:RNT-00042";
+  const clientContext = "client:phone:C-1002";
+
+  const encryptedForRental = encryptField(secretPhone, rentalContext);
+  assert(encryptedForRental.startsWith("v1:"));
+
+  // Attempt to decrypt rental ciphertext under client context
+  const crossDecrypted = decryptField(encryptedForRental, clientContext);
+  assert.strictEqual(crossDecrypted, "[Encrypted Field]", "Cross-domain decryption must fail safely");
+
+  // Decrypt with correct rental context
+  const validDecrypted = decryptField(encryptedForRental, rentalContext);
+  assert.strictEqual(validDecrypted, secretPhone, "Decryption under correct context must succeed");
+});
+
+// 10. Crypto Vault: Unmigrated Plaintext Transparent Fallback
+runTest("CryptoVault: Gracefully preserves unmigrated plaintext on read", () => {
+  const plaintextAddress = "123 Galle Road, Colombo 03";
+  const result = decryptField(plaintextAddress, "client:address:legacy");
+  assert.strictEqual(result, plaintextAddress, "Unmigrated plaintext must be passed through unchanged");
+});
+
+// 11. Blind Index Determinism and Separation
+runTest("CryptoVault: Blind index context separation prevents cross-field collisions", () => {
+  const value = "0771234567";
+  const phoneIdx = generateBlindIndex(value, "phone");
+  const bankIdx = generateBlindIndex(value, "bank_account");
+
+  assert.notStrictEqual(phoneIdx, bankIdx, "Identical digits in different contexts must yield distinct blind indexes");
+});
+
 console.log("\n-------------------------------------------------");
 console.log(`Results: ${passedTests} / ${totalTests} tests passed.`);
 console.log("-------------------------------------------------");

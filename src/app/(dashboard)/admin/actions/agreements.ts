@@ -4,7 +4,7 @@ import { requireAdminSession, requireUserSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { PREDEFINED_REPRESENTATIVES } from "@/lib/representatives";
-import { encryptField, decryptField } from "@/lib/crypto-vault";
+import { encryptField, decryptField, generateBlindIndex } from "@/lib/crypto-vault";
 
 export type AgreementData = {
   id?: number;
@@ -58,6 +58,8 @@ export async function getAgreements(): Promise<AgreementData[]> {
     `;
     return rows.map(r => ({
       ...r,
+      client_phone: (r.client_phone_encrypted ? decryptField(r.client_phone_encrypted, `agreement:phone:${r.id}`) : null) || r.client_phone,
+      client_address: (r.client_address_encrypted ? decryptField(r.client_address_encrypted, `agreement:address:${r.id}`) : null) || r.client_address,
       total_fee: parseFloat(r.total_fee || 0),
       deposit: parseFloat(r.deposit || 0),
       ui_payment: parseFloat(r.ui_payment || 0),
@@ -86,6 +88,8 @@ export async function getAgreementsByClient(email: string): Promise<AgreementDat
     `;
     return rows.map(r => ({
       ...r,
+      client_phone: (r.client_phone_encrypted ? decryptField(r.client_phone_encrypted, `agreement:phone:${r.id}`) : null) || r.client_phone,
+      client_address: (r.client_address_encrypted ? decryptField(r.client_address_encrypted, `agreement:address:${r.id}`) : null) || r.client_address,
       total_fee: parseFloat(r.total_fee || 0),
       deposit: parseFloat(r.deposit || 0),
       ui_payment: parseFloat(r.ui_payment || 0),
@@ -122,9 +126,13 @@ export async function getAgreementById(id: number): Promise<AgreementData | null
       }
     }
     const decryptedSig = (r.client_sig_image_encrypted ? decryptField(r.client_sig_image_encrypted, `agreement:sig:${r.id}`) : null) || r.client_sig_image;
+    const decryptedPhone = (r.client_phone_encrypted ? decryptField(r.client_phone_encrypted, `agreement:phone:${r.id}`) : null) || r.client_phone;
+    const decryptedAddress = (r.client_address_encrypted ? decryptField(r.client_address_encrypted, `agreement:address:${r.id}`) : null) || r.client_address;
     return {
       ...r,
       client_sig_image: decryptedSig,
+      client_phone: decryptedPhone,
+      client_address: decryptedAddress,
       total_fee: parseFloat(r.total_fee || 0),
       deposit: parseFloat(r.deposit || 0),
       ui_payment: parseFloat(r.ui_payment || 0),
@@ -168,36 +176,78 @@ export async function createAgreement(data: any) {
       `;
     }
 
-    const result = await sql`
-      INSERT INTO admin_agreements (
-        client_name, client_email, client_phone, client_company, client_address,
-        agreement_type, title, agreement_date, start_date, delivery_date, deadline,
-        total_fee, deposit, ui_payment, final_payment, payment_methods,
-        revision_rounds, hosting_preference, representative_name, representative_signature, status
-      ) VALUES (
-        ${data.client_name},
-        ${data.client_email || null},
-        ${data.client_phone || null},
-        ${data.client_company || null},
-        ${data.client_address || null},
-        ${data.agreement_type},
-        ${data.title},
-        ${data.agreement_date},
-        ${data.start_date},
-        ${data.delivery_date},
-        ${data.deadline},
-        ${parseFloat(data.total_fee) || 0},
-        ${parseFloat(data.deposit) || 0},
-        ${parseFloat(data.ui_payment) || 0},
-        ${parseFloat(data.final_payment) || 0},
-        ${data.payment_methods || 'Bank Transfer'},
-        ${parseInt(data.revision_rounds) || 3},
-        ${data.hosting_preference || 'Option A — Free Hosting'},
-        ${data.representative_name},
-        ${data.representative_signature || null},
-        'pending'
-      ) RETURNING id
-    `;
+    const encPhone = data.client_phone ? encryptField(data.client_phone, `agreement:phone:${data.title || 'agr'}`) : null;
+    const bidxPhone = data.client_phone ? generateBlindIndex(data.client_phone, "phone") : null;
+    const encAddress = data.client_address ? encryptField(data.client_address, `agreement:address:${data.title || 'agr'}`) : null;
+
+    let result;
+    try {
+      result = await sql`
+        INSERT INTO admin_agreements (
+          client_name, client_email, client_phone, client_phone_encrypted, client_phone_bidx,
+          client_company, client_address, client_address_encrypted,
+          agreement_type, title, agreement_date, start_date, delivery_date, deadline,
+          total_fee, deposit, ui_payment, final_payment, payment_methods,
+          revision_rounds, hosting_preference, representative_name, representative_signature, status
+        ) VALUES (
+          ${data.client_name},
+          ${data.client_email || null},
+          ${data.client_phone || null},
+          ${encPhone},
+          ${bidxPhone},
+          ${data.client_company || null},
+          ${data.client_address || null},
+          ${encAddress},
+          ${data.agreement_type},
+          ${data.title},
+          ${data.agreement_date},
+          ${data.start_date},
+          ${data.delivery_date},
+          ${data.deadline},
+          ${parseFloat(data.total_fee) || 0},
+          ${parseFloat(data.deposit) || 0},
+          ${parseFloat(data.ui_payment) || 0},
+          ${parseFloat(data.final_payment) || 0},
+          ${data.payment_methods || 'Bank Transfer'},
+          ${parseInt(data.revision_rounds) || 3},
+          ${data.hosting_preference || 'Option A — Free Hosting'},
+          ${data.representative_name},
+          ${data.representative_signature || null},
+          'pending'
+        ) RETURNING id
+      `;
+    } catch {
+      result = await sql`
+        INSERT INTO admin_agreements (
+          client_name, client_email, client_phone, client_company, client_address,
+          agreement_type, title, agreement_date, start_date, delivery_date, deadline,
+          total_fee, deposit, ui_payment, final_payment, payment_methods,
+          revision_rounds, hosting_preference, representative_name, representative_signature, status
+        ) VALUES (
+          ${data.client_name},
+          ${data.client_email || null},
+          ${data.client_phone || null},
+          ${data.client_company || null},
+          ${data.client_address || null},
+          ${data.agreement_type},
+          ${data.title},
+          ${data.agreement_date},
+          ${data.start_date},
+          ${data.delivery_date},
+          ${data.deadline},
+          ${parseFloat(data.total_fee) || 0},
+          ${parseFloat(data.deposit) || 0},
+          ${parseFloat(data.ui_payment) || 0},
+          ${parseFloat(data.final_payment) || 0},
+          ${data.payment_methods || 'Bank Transfer'},
+          ${parseInt(data.revision_rounds) || 3},
+          ${data.hosting_preference || 'Option A — Free Hosting'},
+          ${data.representative_name},
+          ${data.representative_signature || null},
+          'pending'
+        ) RETURNING id
+      `;
+    }
     revalidatePath("/admin", "layout");
     return result[0]?.id;
   } catch (error) {
@@ -209,32 +259,67 @@ export async function createAgreement(data: any) {
 export async function updateAgreement(id: number, data: any) {
   await requireAdminSession();
 
+  const encPhone = data.client_phone ? encryptField(data.client_phone, `agreement:phone:${id}`) : null;
+  const bidxPhone = data.client_phone ? generateBlindIndex(data.client_phone, "phone") : null;
+  const encAddress = data.client_address ? encryptField(data.client_address, `agreement:address:${id}`) : null;
+
   try {
-    await sql`
-      UPDATE admin_agreements SET
-        client_name = ${data.client_name},
-        client_email = ${data.client_email || null},
-        client_phone = ${data.client_phone || null},
-        client_company = ${data.client_company || null},
-        client_address = ${data.client_address || null},
-        agreement_type = ${data.agreement_type},
-        title = ${data.title},
-        agreement_date = ${data.agreement_date},
-        start_date = ${data.start_date},
-        delivery_date = ${data.delivery_date},
-        deadline = ${data.deadline},
-        total_fee = ${parseFloat(data.total_fee) || 0},
-        deposit = ${parseFloat(data.deposit) || 0},
-        ui_payment = ${parseFloat(data.ui_payment) || 0},
-        final_payment = ${parseFloat(data.final_payment) || 0},
-        payment_methods = ${data.payment_methods || 'Bank Transfer'},
-        revision_rounds = ${parseInt(data.revision_rounds) || 3},
-        hosting_preference = ${data.hosting_preference || 'Option A — Free Hosting'},
-        representative_name = ${data.representative_name},
-        representative_signature = ${data.representative_signature || null},
-        status = ${data.status || 'pending'}
-      WHERE id = ${id}
-    `;
+    try {
+      await sql`
+        UPDATE admin_agreements SET
+          client_name = ${data.client_name},
+          client_email = ${data.client_email || null},
+          client_phone = ${data.client_phone || null},
+          client_phone_encrypted = ${encPhone},
+          client_phone_bidx = ${bidxPhone},
+          client_company = ${data.client_company || null},
+          client_address = ${data.client_address || null},
+          client_address_encrypted = ${encAddress},
+          agreement_type = ${data.agreement_type},
+          title = ${data.title},
+          agreement_date = ${data.agreement_date},
+          start_date = ${data.start_date},
+          delivery_date = ${data.delivery_date},
+          deadline = ${data.deadline},
+          total_fee = ${parseFloat(data.total_fee) || 0},
+          deposit = ${parseFloat(data.deposit) || 0},
+          ui_payment = ${parseFloat(data.ui_payment) || 0},
+          final_payment = ${parseFloat(data.final_payment) || 0},
+          payment_methods = ${data.payment_methods || 'Bank Transfer'},
+          revision_rounds = ${parseInt(data.revision_rounds) || 3},
+          hosting_preference = ${data.hosting_preference || 'Option A — Free Hosting'},
+          representative_name = ${data.representative_name},
+          representative_signature = ${data.representative_signature || null},
+          status = ${data.status || 'pending'}
+        WHERE id = ${id}
+      `;
+    } catch {
+      await sql`
+        UPDATE admin_agreements SET
+          client_name = ${data.client_name},
+          client_email = ${data.client_email || null},
+          client_phone = ${data.client_phone || null},
+          client_company = ${data.client_company || null},
+          client_address = ${data.client_address || null},
+          agreement_type = ${data.agreement_type},
+          title = ${data.title},
+          agreement_date = ${data.agreement_date},
+          start_date = ${data.start_date},
+          delivery_date = ${data.delivery_date},
+          deadline = ${data.deadline},
+          total_fee = ${parseFloat(data.total_fee) || 0},
+          deposit = ${parseFloat(data.deposit) || 0},
+          ui_payment = ${parseFloat(data.ui_payment) || 0},
+          final_payment = ${parseFloat(data.final_payment) || 0},
+          payment_methods = ${data.payment_methods || 'Bank Transfer'},
+          revision_rounds = ${parseInt(data.revision_rounds) || 3},
+          hosting_preference = ${data.hosting_preference || 'Option A — Free Hosting'},
+          representative_name = ${data.representative_name},
+          representative_signature = ${data.representative_signature || null},
+          status = ${data.status || 'pending'}
+        WHERE id = ${id}
+      `;
+    }
     revalidatePath("/admin", "layout");
     return { success: true };
   } catch (error) {

@@ -10,8 +10,8 @@ const REQUIRED_PRODUCTION_VARS = [
 ] as const;
 
 export function validateEnvironment(): void {
-  // Only enforce strict validation in production runtime
-  if (process.env.NODE_ENV !== "production") {
+  // Skip during build-time page data collection so CI builds succeed without runtime secrets
+  if (process.env.NODE_ENV !== "production" || process.env.NEXT_PHASE === "phase-production-build") {
     return;
   }
 
