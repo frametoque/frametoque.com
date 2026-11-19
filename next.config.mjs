@@ -65,6 +65,21 @@ const nextConfig = {
         destination: "/services/photo-video",
         permanent: true,
       },
+      {
+        source: "/rent",
+        destination: "/rentals",
+        permanent: true,
+      },
+      {
+        source: "/rent/cart",
+        destination: "/rentals/cart",
+        permanent: true,
+      },
+      {
+        source: "/rentals/kit",
+        destination: "/rentals/cart",
+        permanent: true,
+      },
     ];
   },
 

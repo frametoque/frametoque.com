@@ -14,7 +14,8 @@ import {
   Camera, 
   Film,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  FileText
 } from "lucide-react";
 import { useRentalKit } from "@/context/RentalKitContext";
 
@@ -362,15 +363,35 @@ Could you please confirm equipment availability for these dates and send over th
                     href={buildWhatsAppKitUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer"
+                    className="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer"
                   >
-                    <MessageCircle className="w-5 h-5 shrink-0" />
+                    <MessageCircle className="w-4 h-4 shrink-0" />
                     <span>Reserve Shoot Kit via WhatsApp</span>
                   </a>
 
-                  <p className="text-[11px] text-center text-slate-500 leading-tight">
-                    Instant availability verification &amp; agreement preparation on WhatsApp.
-                  </p>
+                  {/* Quotation & Manifest Page Link */}
+                  <Link
+                    href="/rentals/cart"
+                    onClick={closeKit}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-800 font-bold text-xs shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-brand-600" />
+                    <span>Generate Official Quotation PDF</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                  </Link>
+
+                  {/* Client Portal Link */}
+                  <div className="pt-2 border-t border-slate-200/80 text-center">
+                    <a
+                      href="/dashboard"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+                    >
+                      <span>Already a client? View invoices &amp; quotations in Client Portal</span>
+                      <ArrowRight className="w-3 h-3 text-brand-600" />
+                    </a>
+                  </div>
                 </div>
               )}
             </motion.div>
