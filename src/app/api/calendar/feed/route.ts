@@ -1,9 +1,43 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
 import sql from "@/lib/db";
 import { getSriLankaHolidays, ensureWorkspaceSchema } from "@/app/(dashboard)/admin/actions/workspace";
+import { getSessionUser } from "@/lib/auth-guard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+function isTokenValid(providedToken: string | null | undefined): boolean {
+  if (!providedToken || typeof providedToken !== "string") return false;
+  const cleanProvided = providedToken.trim();
+  if (cleanProvided.length < 8) return false;
+
+  const validTokens: string[] = [];
+  if (process.env.CALENDAR_FEED_SECRET?.trim()) {
+    validTokens.push(process.env.CALENDAR_FEED_SECRET.trim());
+  }
+  if (process.env.CRON_SECRET?.trim()) {
+    validTokens.push(process.env.CRON_SECRET.trim());
+  }
+  const derivedToken = crypto
+    .createHmac("sha256", process.env.CLERK_SECRET_KEY || "ft-calendar-feed-secret")
+    .update("frametoque-calendar-feed-token")
+    .digest("hex");
+  validTokens.push(derivedToken);
+
+  for (const expected of validTokens) {
+    if (cleanProvided.length === expected.length) {
+      try {
+        if (crypto.timingSafeEqual(Buffer.from(cleanProvided), Buffer.from(expected))) {
+          return true;
+        }
+      } catch {
+        // Continue checking
+      }
+    }
+  }
+  return false;
+}
 
 function escapeICS(str: string): string {
   if (!str) return "";
@@ -69,6 +103,25 @@ function safeIsoDate(d: any, fallback: string): string {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const token = searchParams.get("token") || request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+
+    let authorized = isTokenValid(token);
+
+    if (!authorized) {
+      // Allow authenticated admin users viewing directly from their browser
+      const session = await getSessionUser().catch(() => null);
+      if (session?.isAdmin) {
+        authorized = true;
+      }
+    }
+
+    if (!authorized) {
+      return new NextResponse("Unauthorized: Calendar feed access requires a valid subscription token", {
+        status: 401,
+        headers: { "Content-Type": "text/plain" },
+      });
+    }
+
     const noHolidays = searchParams.get("noHolidays") === "true";
 
     // 1. Fetch Bookings & Task Reminders

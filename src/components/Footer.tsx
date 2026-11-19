@@ -10,7 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 const footerLinks = {
-  Company: ["About", "Work", "Contact"],
+  Company: ["About", "Work", "Rentals", "Contact"],
   Legal: ["Privacy", "Terms", "Cookies"],
 };
 const urls = [
@@ -76,7 +76,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="hover:text-brand-400 transition inline-block py-2"
               >
-                Piliyandala, Sri Lanka{" "}
+                35, Kopiwaththa Road, Piliyandala, Sri Lanka{" "}
               </Link>
               <br />
               <span className="whitespace-nowrap">

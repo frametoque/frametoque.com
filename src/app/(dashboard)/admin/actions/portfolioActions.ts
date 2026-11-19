@@ -240,7 +240,7 @@ export async function deletePortfolioItem(categorySlug: string, id: number) {
     throw new Error(`Invalid portfolio category: ${categorySlug}`);
   }
 
-  // Delete image from Vercel Blob CDN if item has image_path or src
+  // Delete image from Cloudflare R2 if item has image_path or src
   try {
     const rows = await sql.unsafe(`SELECT image_path, src FROM ${table} WHERE id = $1`, [id]);
     if (rows.length > 0) {
@@ -379,7 +379,7 @@ export async function uploadPortfolioMedia(formData: FormData, categorySlug?: st
 }
 
 /**
- * Download portfolio media files from an external URL or internal route and save them to Vercel Blob
+ * Download portfolio media files from an external URL or internal route and save them to Cloudflare R2
  */
 export async function uploadPortfolioMediaFromUrl(url: string): Promise<string> {
   await requireAdminSession();
@@ -590,7 +590,7 @@ export async function createBatchPortfolioPhotos(
 
 /**
  * Deduplicate existing photos under a photography event.
- * Keeps 1 photo per unique filename/hash and deletes all duplicate files from Vercel Blob CDN and database.
+ * Keeps 1 photo per unique filename/hash and deletes all duplicate files from Cloudflare R2 and database.
  */
 export async function cleanDuplicatesFromEvent(eventName: string): Promise<{ kept: number; deleted: number }> {
   if (!eventName) return { kept: 0, deleted: 0 };

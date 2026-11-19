@@ -150,7 +150,7 @@ function DocumentPreview({ url, title }: { url: string; title: string }) {
   );
 }
 
-const emptyForm = { item_name: '', category: '', serial_number: '', quantity: 1, status: 'Available', item_condition: 'Brand New', purchase_date: '', purchase_price: '', notes: '', warranty_letter_url: '', expense_id: '', purchase_invoice_url: '', available_for_rent: false, rental_price_per_day: '' };
+const emptyForm = { item_name: '', category: '', serial_number: '', quantity: 1, status: 'Available', item_condition: 'Brand New', purchase_date: '', purchase_price: '', notes: '', warranty_letter_url: '', expense_id: '', purchase_invoice_url: '', available_for_rent: false, rental_price_per_day: '', image_url: '', description: '', images: '' };
 const emptyToBuyForm = { item_name: '', product_link: '', estimated_price: '' };
 
 export default function InventoryPage() {
@@ -257,7 +257,10 @@ export default function InventoryPage() {
       expense_id: item.expense_id ? String(item.expense_id) : '',
       purchase_invoice_url: item.purchase_invoice_url || '',
       available_for_rent: false,
-      rental_price_per_day: ''
+      rental_price_per_day: '',
+      image_url: '',
+      description: '',
+      images: ''
     });
     setSelectedCategories(parseCategories(initialCategory).length ? parseCategories(initialCategory) : [initialCategory]);
     setIsModalOpen(true);
@@ -355,7 +358,10 @@ export default function InventoryPage() {
       expense_id: item.expense_id ? String(item.expense_id) : '',
       purchase_invoice_url: item.purchase_invoice_url || '',
       available_for_rent: Boolean(item.available_for_rent),
-      rental_price_per_day: item.rental_price_per_day ? String(item.rental_price_per_day) : ''
+      rental_price_per_day: item.rental_price_per_day ? String(item.rental_price_per_day) : '',
+      image_url: item.image_url || '',
+      description: item.description || '',
+      images: item.images || ''
     });
     setSelectedCategories(parseCategories(item.category).length ? parseCategories(item.category) : (item.category ? [item.category] : []));
     setIsModalOpen(true);
@@ -1053,16 +1059,51 @@ export default function InventoryPage() {
                       </div>
 
                       {formData.available_for_rent && (
-                        <div className="pt-2 border-t border-white/5">
-                          <label className="block text-xs font-medium text-gray-300 mb-1">Daily Rental Price (LKR)</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={formData.rental_price_per_day}
-                            onChange={e => setFormData({ ...formData, rental_price_per_day: e.target.value })}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500"
-                            placeholder="e.g. 5000.00"
-                          />
+                        <div className="pt-2 border-t border-white/5 space-y-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-300 mb-1">Daily Rental Price (LKR)</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={formData.rental_price_per_day}
+                              onChange={e => setFormData({ ...formData, rental_price_per_day: e.target.value })}
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500"
+                              placeholder="e.g. 5000.00"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-300 mb-1">Primary Photo URL (Public Catalog)</label>
+                            <input
+                              type="url"
+                              value={formData.image_url || ''}
+                              onChange={e => setFormData({ ...formData, image_url: e.target.value })}
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500"
+                              placeholder="https://... primary photo link"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-300 mb-1">Additional Gallery Photos (Comma-separated URLs)</label>
+                            <input
+                              type="text"
+                              value={formData.images || ''}
+                              onChange={e => setFormData({ ...formData, images: e.target.value })}
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500"
+                              placeholder="https://... photo 2, https://... photo 3"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-300 mb-1">Rental Description / Inclusions</label>
+                            <textarea
+                              rows={2}
+                              value={formData.description || ''}
+                              onChange={e => setFormData({ ...formData, description: e.target.value })}
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500"
+                              placeholder="Key specifications, battery, charger, mount, etc."
+                            />
+                          </div>
                         </div>
                       )}
                     </div>

@@ -15,8 +15,7 @@ function getMasterKey(): Buffer {
 
   const rawKey =
     process.env.APP_FIELD_ENCRYPTION_KEY ||
-    process.env.CREDENTIALS_ENCRYPTION_KEY ||
-    process.env.CLERK_SECRET_KEY;
+    process.env.CREDENTIALS_ENCRYPTION_KEY;
 
   if (!rawKey) {
     if (process.env.NODE_ENV === "production") {

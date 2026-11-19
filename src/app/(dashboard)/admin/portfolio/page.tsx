@@ -297,7 +297,7 @@ export default function PortfolioAdminPage() {
     setCleaningDuplicates(true);
     try {
       const res = await cleanDuplicatesFromEvent(photoSubManagerEvent);
-      alert(`Deduplication complete!\nKept: ${res.kept} photos\nDeleted: ${res.deleted} duplicate photos from database & Vercel Blob CDN.`);
+      alert(`Deduplication complete!\nKept: ${res.kept} photos\nDeleted: ${res.deleted} duplicate photos from database & Cloudflare R2.`);
       await loadItems();
     } catch (err) {
       console.error("Failed to clean duplicates:", err);
@@ -1563,7 +1563,7 @@ export default function PortfolioAdminPage() {
                         disabled={cleaningDuplicates}
                         onClick={handleCleanDuplicates}
                         className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 disabled:opacity-50 text-red-400 rounded-3xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
-                        title="Remove duplicate photos from DB and Vercel Blob CDN"
+                        title="Remove duplicate photos from DB and Cloudflare R2"
                       >
                         {cleaningDuplicates ? (
                           <Loader2 className="w-4 h-4 animate-spin" />

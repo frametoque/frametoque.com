@@ -5,6 +5,7 @@ import { logSystemAction } from "@/lib/logger";
 import { logDomainAudit } from "@/lib/domains/audit";
 import { validateDomainName, checkRateLimit } from "@/lib/domains/validation";
 import { ensureDomainTables } from "@/lib/domains/migration";
+import { getSessionUser } from "@/lib/auth-guard";
 
 export async function POST(req: Request) {
   try {
@@ -84,22 +85,26 @@ export async function POST(req: Request) {
     let finalLkrRenewCost = defaultLkrRenewCost;
     let itemDescription = `1 Year Domain Registration for ${cleanDomain}`;
 
+    const session = await getSessionUser().catch(() => null);
+    const isAdmin = session?.isAdmin === true || (user?.publicMetadata?.role as string)?.toLowerCase() === "admin";
+    const allowCustomPrice = isAdmin && typeof customPriceLkr === "number" && customPriceLkr > 0;
+
     if (isLk) {
       if (packageType === "economy") {
         finalLkrCost = 5000;
-        finalLkrPrice = customPriceLkr || 6500;
+        finalLkrPrice = allowCustomPrice ? customPriceLkr : 6500;
         finalLkrRenewPrice = finalLkrPrice;
         finalLkrRenewCost = finalLkrCost;
         itemDescription = `1 Year Domain Registration for ${cleanDomain} (Economy Package)`;
       } else if (packageType === "second_level" || cleanDomain.match(/\.(com|org|edu|hotel|web|sch|gov|net)\.lk$/)) {
         finalLkrCost = 1000;
-        finalLkrPrice = customPriceLkr || 2000;
+        finalLkrPrice = allowCustomPrice ? customPriceLkr : 2000;
         finalLkrRenewPrice = finalLkrPrice;
         finalLkrRenewCost = finalLkrCost;
         itemDescription = `1 Year Domain Registration for ${cleanDomain} (Second-Level Domain)`;
       } else {
         finalLkrCost = 8000;
-        finalLkrPrice = customPriceLkr || 10000;
+        finalLkrPrice = allowCustomPrice ? customPriceLkr : 10000;
         finalLkrRenewPrice = finalLkrPrice;
         finalLkrRenewCost = finalLkrCost;
         itemDescription = `1 Year Domain Registration for ${cleanDomain} (Standard Package - Multi-Extension Reserve)`;

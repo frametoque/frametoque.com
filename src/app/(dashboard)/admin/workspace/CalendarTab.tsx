@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { 
   getBookings, createBooking, updateBooking, deleteBooking, getCalendarEvents,
-  getSriLankaHolidays, BookingData, CalendarEvent 
+  getSriLankaHolidays, getCalendarFeedToken, BookingData, CalendarEvent 
 } from "../actions/workspace";
 
 const statusStyles: Record<string, string> = {
@@ -42,9 +42,23 @@ export default function CalendarTab() {
   const [editingBooking, setEditingBooking] = useState<BookingData | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     if (typeof window !== "undefined") {
-      setCalendarUrl(`${window.location.origin}/api/calendar/feed`);
+      getCalendarFeedToken()
+        .then((token) => {
+          if (isMounted) {
+            setCalendarUrl(`${window.location.origin}/api/calendar/feed?token=${token}`);
+          }
+        })
+        .catch(() => {
+          if (isMounted) {
+            setCalendarUrl(`${window.location.origin}/api/calendar/feed`);
+          }
+        });
     }
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const getFullFeedUrl = (protocol: "https" | "webcal" = "https") => {

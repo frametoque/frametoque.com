@@ -1,0 +1,175 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X, MessageCircle, Phone, MapPin, ChevronRight } from "lucide-react";
+
+export default function RentalHeader() {
+  const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Close drawer on route change
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  // Prevent background scrolling when drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  const navLinks = [
+    { label: "Equipment", href: "/rentals" },
+    { label: "FAQ", href: "/rentals/faq" },
+    { label: "Terms & Conditions", href: "/rentals/terms" },
+    { label: "Contact", href: "/rentals/contact" },
+  ];
+
+  return (
+    <>
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/80 transition-all shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
+          
+          {/* Logo & Brand */}
+          <div className="flex items-center gap-3">
+            <Link href="/rentals" className="flex items-center gap-2 group">
+              <Image
+                src="/logos/ft/name-logo.png"
+                alt="Frametoque"
+                width={180}
+                height={36}
+                priority
+                className="h-auto w-28 sm:w-36 brightness-0 transition-opacity hover:opacity-80"
+              />
+              <span className="text-xs sm:text-sm font-bold tracking-wider text-brand-600 select-none">
+                | RENTALS
+              </span>
+            </Link>
+          </div>
+
+          {/* Right Corner: Hamburger Menu Button */}
+          <div className="flex items-center">
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className="p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-800 hover:bg-slate-50 transition-all cursor-pointer flex items-center justify-center shadow-xs"
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5 text-slate-800" />
+            </button>
+          </div>
+
+        </div>
+      </header>
+
+      {/* Slide-Over Side Menu Drawer */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 z-[120] bg-black/40 backdrop-blur-xs"
+            />
+
+            {/* Side Drawer */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 250 }}
+              className="fixed top-0 right-0 bottom-0 z-[130] w-full max-w-xs sm:max-w-sm bg-white shadow-2xl border-l border-slate-200 flex flex-col justify-between overflow-y-auto"
+            >
+              {/* Top Drawer Header */}
+              <div>
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src="/logos/ft/name-logo.png"
+                      alt="Frametoque"
+                      width={130}
+                      height={26}
+                      className="h-auto w-24 brightness-0"
+                    />
+                    <span className="text-xs font-bold text-brand-600 tracking-wider">
+                      | RENTALS
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="p-2 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+                    aria-label="Close menu"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Navigation Links */}
+                <div className="p-6 space-y-1">
+                  {navLinks.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsOpen(false)}
+                        className={`flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                          isActive
+                            ? "bg-brand-50 text-brand-700 border border-brand-200/60 shadow-xs"
+                            : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                        }`}
+                      >
+                        <span>{item.label}</span>
+                        <ChevronRight className={`w-4 h-4 ${isActive ? "text-brand-600" : "text-slate-400"}`} />
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Bottom Drawer Footer */}
+              <div className="p-6 border-t border-slate-100 bg-slate-50/50 space-y-4">
+                <a
+                  href="https://wa.me/94702771361?text=Hi%20Frametoque%20Team%2C%20I'm%20inquiring%20about%20equipment%20rentals."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold shadow-sm transition-all"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Message on WhatsApp</span>
+                </a>
+
+                <div className="space-y-1.5 text-xs text-slate-500 pt-1">
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                    <span>+94 70 277 1361</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>35, Kopiwaththa Road, Piliyandala</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}

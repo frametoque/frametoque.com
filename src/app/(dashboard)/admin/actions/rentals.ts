@@ -5,6 +5,7 @@ import { requireAdminSession } from "@/lib/auth-guard";
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 import { createInvoice, createIncome } from "./actions";
+import { putBlob } from "@/lib/storage";
 
 let _rentalsSchemaPromise: Promise<void> | null = null;
 async function ensureRentalsSchema(): Promise<void> {
@@ -71,6 +72,18 @@ async function ensureRentalsSchema(): Promise<void> {
 
       try {
         await sql`ALTER TABLE admin_rentals ENABLE ROW LEVEL SECURITY`;
+      } catch {}
+
+      try {
+        await sql`
+          ALTER TABLE admin_inventory 
+            ADD COLUMN IF NOT EXISTS image_url TEXT,
+            ADD COLUMN IF NOT EXISTS images TEXT,
+            ADD COLUMN IF NOT EXISTS description TEXT,
+            ADD COLUMN IF NOT EXISTS item_condition TEXT DEFAULT 'Brand New',
+            ADD COLUMN IF NOT EXISTS available_for_rent BOOLEAN DEFAULT false,
+            ADD COLUMN IF NOT EXISTS rental_price_per_day NUMERIC(12, 2) DEFAULT 0;
+        `;
       } catch {}
     } catch (e) {
       console.warn("Could not ensure admin_rentals schema:", e);
@@ -386,12 +399,137 @@ export async function getRentableInventory() {
       active_renter: item.active_renter || null,
       active_rental_end_date: item.active_rental_end_date ? new Date(item.active_rental_end_date).toISOString().split('T')[0] : null,
       total_revenue: parseFloat(item.total_revenue || '0'),
-      rental_count: parseInt(item.rental_count || '0', 10)
+      rental_count: parseInt(item.rental_count || '0', 10),
+      image_url: item.image_url || null,
+      images: item.images || null,
+      description: item.description || null,
+      item_condition: item.item_condition || 'Brand New'
     }));
   } catch (err) {
     console.error("Failed to get rentable inventory:", err);
     return [];
   }
+}
+
+export async function uploadRentalEquipmentImage(formData: FormData): Promise<string> {
+  await requireAdminSession();
+
+  const file = formData.get("file") as File;
+  if (!file) throw new Error("No file uploaded");
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+  const filename = `admin/rentals/equipment/${Date.now()}-${safeName}`;
+  const blob = await putBlob(filename, file, { access: "public" });
+  return blob.url;
+}
+
+export async function uploadMultipleRentalEquipmentImages(formData: FormData): Promise<string[]> {
+  await requireAdminSession();
+
+  const files = formData.getAll("files") as File[];
+  if (!files || files.length === 0) return [];
+
+  const urls: string[] = [];
+  for (const file of files) {
+    if (file && typeof file === "object" && file.size > 0) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const filename = `admin/rentals/equipment/${Date.now()}-${Math.random().toString(36).substring(2, 7)}-${safeName}`;
+      const blob = await putBlob(filename, file, { access: "public" });
+      urls.push(blob.url);
+    }
+  }
+  return urls;
+}
+
+export async function createEquipmentCatalogItem(data: {
+  item_name: string;
+  category: string;
+  rental_price_per_day: number;
+  image_url?: string | null;
+  images?: string | null;
+  description?: string | null;
+  item_condition?: string | null;
+  quantity?: number;
+  available_for_rent?: boolean;
+}) {
+  await requireAdminSession();
+  await ensureRentalsSchema();
+
+  const result = await sql`
+    INSERT INTO admin_inventory (
+      item_name,
+      category,
+      status,
+      quantity,
+      item_condition,
+      available_for_rent,
+      rental_price_per_day,
+      image_url,
+      images,
+      description,
+      is_to_buy
+    ) VALUES (
+      ${data.item_name},
+      ${data.category || 'Equipment'},
+      'Available',
+      ${data.quantity || 1},
+      ${data.item_condition || 'Brand New'},
+      ${data.available_for_rent !== undefined ? Boolean(data.available_for_rent) : true},
+      ${parseFloat(String(data.rental_price_per_day || 0))},
+      ${data.image_url || null},
+      ${data.images || null},
+      ${data.description || null},
+      false
+    )
+    RETURNING id, item_name
+  `;
+
+  await logSystemAction(`Created rentable equipment catalog item: "${data.item_name}"`);
+  revalidatePath("/admin/rentals");
+  revalidatePath("/admin/inventory");
+  revalidatePath("/rentals");
+
+  return result[0];
+}
+
+export async function updateEquipmentCatalogItem(
+  id: string,
+  data: {
+    item_name: string;
+    category: string;
+    rental_price_per_day: number;
+    image_url?: string | null;
+    images?: string | null;
+    description?: string | null;
+    item_condition?: string | null;
+    quantity?: number;
+    available_for_rent?: boolean;
+  }
+) {
+  await requireAdminSession();
+  await ensureRentalsSchema();
+
+  await sql`
+    UPDATE admin_inventory SET
+      item_name = ${data.item_name},
+      category = ${data.category || 'Equipment'},
+      item_condition = ${data.item_condition || 'Brand New'},
+      rental_price_per_day = ${parseFloat(String(data.rental_price_per_day || 0))},
+      image_url = ${data.image_url !== undefined ? data.image_url : null},
+      images = ${data.images !== undefined ? data.images : null},
+      description = ${data.description !== undefined ? data.description : null},
+      quantity = ${data.quantity || 1},
+      available_for_rent = ${data.available_for_rent !== undefined ? Boolean(data.available_for_rent) : true},
+      updated_at = NOW()
+    WHERE id = ${id}::uuid
+  `;
+
+  await logSystemAction(`Updated rentable equipment catalog item: "${data.item_name}" (ID: ${id})`);
+  revalidatePath("/admin/rentals");
+  revalidatePath("/admin/inventory");
+  revalidatePath("/rentals");
+
+  return { success: true };
 }
 
 export interface DateClashDetail {

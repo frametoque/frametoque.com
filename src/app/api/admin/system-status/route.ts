@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import sql from "@/lib/db";
-import { list } from "@vercel/blob";
 import { isR2Configured, getR2Client } from "@/lib/storage";
 import { ListObjectsV2Command } from "@aws-sdk/client-s3";
 
@@ -30,19 +29,7 @@ export async function GET() {
       console.error("DB check failed:", e);
     }
 
-    // 2. Check Vercel Blob
-    let blobStatus = "Not Configured";
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
-      try {
-        await list({ limit: 1 });
-        blobStatus = "Connected";
-      } catch (e) {
-        console.error("Vercel Blob verification failed (possibly suspended):", e);
-        blobStatus = "Suspended / Error";
-      }
-    }
-
-    // 3. Check Cloudflare R2
+    // 2. Check Cloudflare R2
     let r2Status = "Not Configured";
     if (isR2Configured()) {
       try {
@@ -63,9 +50,9 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       dbStatus,
-      blobStatus,
+      blobStatus: "Migrated to R2",
       r2Status,
-      activeStorage: blobStatus === "Connected" ? "Vercel Blob (Primary)" : (r2Status === "Connected" ? "Cloudflare R2 (Active Backup)" : "None"),
+      activeStorage: r2Status === "Connected" ? "Cloudflare R2" : "None",
       env: process.env.NODE_ENV || "development",
     });
   } catch (error) {

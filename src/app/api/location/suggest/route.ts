@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/domains/validation";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q") || "";
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const rate = checkRateLimit(`loc:suggest:${ip}`, 45, 60000); // 45 per min
+  if (!rate.allowed) {
+    return NextResponse.json([]);
+  }
 
-  if (!query.trim()) {
+  const { searchParams } = new URL(request.url);
+  const rawQuery = searchParams.get("q") || "";
+  const query = rawQuery.trim().substring(0, 100);
+
+  if (!query) {
     return NextResponse.json([]);
   }
 

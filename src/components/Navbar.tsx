@@ -24,6 +24,7 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
   const links = [
     { href: "/projects", label: "Work" },
     { href: "/services", label: "Services" },
+    { href: "/rentals", label: "Rentals" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];

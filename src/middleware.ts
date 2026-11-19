@@ -2,12 +2,26 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+const isAdminApiRoute = createRouteMatcher(["/api/admin(.*)"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 const isProtectedRoute = createRouteMatcher(["/admin(.*)", "/dashboard(.*)"]);
 const isPublicRoute = createRouteMatcher(["/api/health", "/api/payments/webhook(.*)", "/api/webhooks(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isPublicRoute(req)) {
+    return;
+  }
+
+  // Enforce API-level admin protection
+  if (isAdminApiRoute(req)) {
+    const { userId, sessionClaims } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized: Authentication required" }, { status: 401 });
+    }
+    const role = (sessionClaims?.metadata as { role?: string } | undefined)?.role;
+    if (role?.toLowerCase() !== "admin") {
+      return NextResponse.json({ error: "Forbidden: Administrator access required" }, { status: 403 });
+    }
     return;
   }
 

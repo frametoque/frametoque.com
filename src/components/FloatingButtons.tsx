@@ -15,7 +15,10 @@ export default function FloatingButtons() {
   const hideAll = ['/login', '/register', '/404', ].includes(pathname) || pathname.startsWith('/projects/');
 
   const showCurrency = pathname === '/services' || pathname.startsWith('/services/') || pathname === '/cart' || pathname.startsWith('/cart/');
-  const showAIChatbot = !pathname.startsWith('/admin') && !pathname.startsWith('/dashboard/planner');
+  const showAIChatbot = 
+    !pathname.startsWith('/admin') && 
+    !pathname.startsWith('/dashboard/planner') && 
+    !pathname.startsWith('/rentals');
 
   if (hideAll || (!showCurrency && !showAIChatbot)) return null;
 

@@ -23,7 +23,10 @@ async function ensureInventorySchema(): Promise<void> {
           ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0,
           ADD COLUMN IF NOT EXISTS available_for_rent BOOLEAN DEFAULT false,
           ADD COLUMN IF NOT EXISTS rental_price_per_day NUMERIC(12, 2) DEFAULT 0,
-          ADD COLUMN IF NOT EXISTS item_condition TEXT DEFAULT 'Brand New';
+          ADD COLUMN IF NOT EXISTS item_condition TEXT DEFAULT 'Brand New',
+          ADD COLUMN IF NOT EXISTS image_url TEXT,
+          ADD COLUMN IF NOT EXISTS images TEXT,
+          ADD COLUMN IF NOT EXISTS description TEXT;
       `;
       // Update all current inventory items to Brand New if not set
       await sql`
@@ -142,7 +145,7 @@ export async function createInventoryItem(data: any) {
 
   const result = await sql`
     INSERT INTO admin_inventory (
-      item_name, category, serial_number, quantity, status, purchase_date, purchase_price, notes, warranty_letter_url, expense_id, is_to_buy, product_link, estimated_price, purchase_invoice_url, available_for_rent, rental_price_per_day, item_condition
+      item_name, category, serial_number, quantity, status, purchase_date, purchase_price, notes, warranty_letter_url, expense_id, is_to_buy, product_link, estimated_price, purchase_invoice_url, available_for_rent, rental_price_per_day, item_condition, image_url, images, description
     ) VALUES (
       ${data.item_name}, ${data.category}, ${data.serial_number || null}, ${data.quantity || 1}, 
       ${data.status || 'Available'}, ${data.purchase_date || null}, ${data.purchase_price || null}, ${data.notes || null},
@@ -153,13 +156,17 @@ export async function createInventoryItem(data: any) {
       ${data.purchase_invoice_url || null},
       ${data.available_for_rent !== undefined ? Boolean(data.available_for_rent) : false},
       ${data.rental_price_per_day !== undefined && data.rental_price_per_day !== null && data.rental_price_per_day !== '' ? parseFloat(data.rental_price_per_day) : 0},
-      ${data.item_condition || 'Brand New'}
+      ${data.item_condition || 'Brand New'},
+      ${data.image_url || null},
+      ${data.images || null},
+      ${data.description || null}
     )
     RETURNING id
   `;
   await logSystemAction(`Created inventory item: "${data.item_name}"`);
   revalidatePath("/admin/inventory");
   revalidatePath("/admin/rentals");
+  revalidatePath("/rentals");
   return result[0];
 }
 
@@ -186,11 +193,15 @@ export async function updateInventoryItem(id: string, data: any) {
       purchase_invoice_url = ${data.purchase_invoice_url || null},
       available_for_rent = ${data.available_for_rent !== undefined ? Boolean(data.available_for_rent) : false},
       rental_price_per_day = ${data.rental_price_per_day !== undefined && data.rental_price_per_day !== null && data.rental_price_per_day !== '' ? parseFloat(data.rental_price_per_day) : 0},
+      image_url = ${data.image_url !== undefined ? data.image_url : null},
+      images = ${data.images !== undefined ? data.images : null},
+      description = ${data.description !== undefined ? data.description : null},
       updated_at = NOW()
     WHERE id = ${id}
   `;
   revalidatePath("/admin/inventory");
   revalidatePath("/admin/rentals");
+  revalidatePath("/rentals");
   await logSystemAction(`Updated inventory item: "${data.item_name}" (ID: ${id})`);
 }
 
@@ -200,6 +211,7 @@ export async function deleteInventoryItem(id: string, itemName: string) {
   await sql`DELETE FROM admin_inventory WHERE id = ${id}`;
   revalidatePath("/admin/inventory");
   revalidatePath("/admin/rentals");
+  revalidatePath("/rentals");
   await logSystemAction(`Deleted inventory item: "${itemName}" (ID: ${id})`);
 }
 

@@ -19,7 +19,7 @@ export interface StorageResult {
   downloadUrl?: string;
   pathname: string;
   contentType?: string;
-  provider: "vercel-blob" | "r2";
+  provider: "r2";
 }
 
 const MIME_MAP: Record<string, string> = {
@@ -65,10 +65,10 @@ export function isR2Configured(): boolean {
 }
 
 /**
- * Checks if Vercel Blob is configured.
+ * Checks if Vercel Blob is configured (deprecated: project migrated entirely to Cloudflare R2).
  */
 export function isVercelBlobConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  return false;
 }
 
 let s3ClientInstance: S3Client | null = null;
@@ -196,7 +196,7 @@ export function sanitizeKey(key: string): string {
 }
 
 /**
- * Extracts storage key from a Vercel Blob URL, R2 URL, or raw pathname.
+ * Extracts storage key from a URL or raw pathname.
  */
 export function extractStorageKey(urlOrPath: string): string {
   if (!urlOrPath) return "";
@@ -235,9 +235,7 @@ async function toBuffer(body: File | Blob | Buffer | Uint8Array | string): Promi
 }
 
 /**
- * Unified put: Tries Vercel Blob first.
- * If Vercel Blob fails (suspended, 403, network, etc.), automatically falls back to Cloudflare R2!
- * Preserves the exact same folder structure.
+ * Uploads an object directly to Cloudflare R2 preserving exact file structure.
  */
 export async function putBlob(
   pathname: string,
@@ -245,135 +243,53 @@ export async function putBlob(
   options?: StorageUploadOptions
 ): Promise<StorageResult> {
   const cleanKey = sanitizeKey(pathname);
-  let vercelError: Error | null = null;
-  const preferR2 = process.env.NEXT_PUBLIC_PREFER_R2 === "true" || process.env.STORAGE_PROVIDER === "r2";
 
-  // 1. If Cloudflare R2 is preferred and configured, upload directly to R2
-  if (preferR2 && isR2Configured()) {
-    try {
-      const { buffer, contentType: inferredType } = await toBuffer(body);
-      const contentType = detectContentType(cleanKey, options?.contentType || inferredType);
-      const r2Client = getR2Client();
-      const bucket = process.env.R2_BUCKET_NAME!;
-
-      await r2Client.send(
-        new PutObjectCommand({
-          Bucket: bucket,
-          Key: cleanKey,
-          Body: buffer,
-          ContentType: contentType,
-        })
-      );
-
-      const baseUrl = getR2PublicBaseUrl();
-      const r2Url = baseUrl ? `${baseUrl}/${cleanKey}` : cleanKey;
-
-      console.info(`[Storage] Successfully uploaded "${cleanKey}" to Cloudflare R2`);
-
-      return {
-        url: r2Url,
-        downloadUrl: r2Url,
-        pathname: cleanKey,
-        contentType,
-        provider: "r2",
-      };
-    } catch (r2Err: any) {
-      console.warn(`[Storage Warning] Preferred R2 upload failed for "${cleanKey}": ${r2Err?.message || r2Err}. Falling back to Vercel Blob...`);
-    }
-  }
-
-  // 2. Try Vercel Blob first if configured
-  if (isVercelBlobConfigured()) {
-    try {
-      const { put } = await import("@vercel/blob");
-      const blob = await put(cleanKey, body as any, {
-        access: "public",
-        contentType: options?.contentType,
-        addRandomSuffix: options?.addRandomSuffix,
-        cacheControlMaxAge: options?.cacheControlMaxAge,
-      });
-
-      return {
-        url: blob.url,
-        downloadUrl: blob.downloadUrl,
-        pathname: blob.pathname || cleanKey,
-        contentType: blob.contentType,
-        provider: "vercel-blob",
-      };
-    } catch (err: any) {
-      vercelError = err;
-      console.warn(
-        `[Storage Warning] Vercel Blob upload failed for "${cleanKey}": ${err?.message || err}. Attempting Cloudflare R2 fallback...`
-      );
-    }
-  }
-
-  // 2. Fallback to Cloudflare R2
   if (!isR2Configured()) {
-    if (vercelError) {
-      throw new Error(
-        `Vercel Blob failed (${vercelError.message}) and Cloudflare R2 is not configured in .env.local. Please provide R2 credentials.`
-      );
-    }
-    throw new Error("Neither Vercel Blob nor Cloudflare R2 is configured.");
-  }
-
-  try {
-    const { buffer, contentType: inferredType } = await toBuffer(body);
-    const contentType = detectContentType(cleanKey, options?.contentType || inferredType);
-    const r2Client = getR2Client();
-    const bucket = process.env.R2_BUCKET_NAME!;
-
-    await r2Client.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: cleanKey,
-        Body: buffer,
-        ContentType: contentType,
-      })
+    throw new Error(
+      "Cloudflare R2 is not configured. Missing R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, or R2_BUCKET_NAME in environment."
     );
-
-    const baseUrl = getR2PublicBaseUrl();
-    const r2Url = baseUrl ? `${baseUrl}/${cleanKey}` : cleanKey;
-
-    console.info(`[Storage] Successfully uploaded "${cleanKey}" to Cloudflare R2 (Backup)`);
-
-    return {
-      url: r2Url,
-      downloadUrl: r2Url,
-      pathname: cleanKey,
-      contentType,
-      provider: "r2",
-    };
-  } catch (r2Err: any) {
-    console.error(`[Storage Error] Cloudflare R2 upload also failed for "${cleanKey}":`, r2Err);
-    if (vercelError) {
-      throw new Error(
-        `Storage failed on both providers. Vercel Blob error: ${vercelError.message}; Cloudflare R2 error: ${r2Err.message}`
-      );
-    }
-    throw r2Err;
   }
+
+  const { buffer, contentType: inferredType } = await toBuffer(body);
+  const contentType = detectContentType(cleanKey, options?.contentType || inferredType);
+  const r2Client = getR2Client();
+  const bucket = process.env.R2_BUCKET_NAME!;
+
+  await r2Client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: cleanKey,
+      Body: buffer,
+      ContentType: contentType,
+      ContentLength: buffer.length,
+      CacheControl: options?.cacheControlMaxAge
+        ? `public, max-age=${options.cacheControlMaxAge}`
+        : "public, max-age=31536000, immutable",
+    })
+  );
+
+  const baseUrl = getR2PublicBaseUrl();
+  const r2Url = baseUrl ? `${baseUrl}/${cleanKey}` : cleanKey;
+
+  console.info(`[Storage] Successfully uploaded "${cleanKey}" to Cloudflare R2`);
+
+  return {
+    url: r2Url,
+    downloadUrl: r2Url,
+    pathname: cleanKey,
+    contentType,
+    provider: "r2",
+  };
 }
 
 /**
- * Unified delete: Attempts to delete from Vercel Blob and Cloudflare R2.
+ * Deletes an object from Cloudflare R2.
  */
 export async function deleteBlob(urlOrPath: string): Promise<void> {
   const key = extractStorageKey(urlOrPath);
+  if (!key) return;
 
-  // 1. Try Vercel Blob
-  if (isVercelBlobConfigured() && (urlOrPath.includes("vercel-storage.com") || !urlOrPath.startsWith("http"))) {
-    try {
-      const { del } = await import("@vercel/blob");
-      await del(urlOrPath);
-    } catch (err) {
-      console.warn("[Storage Warning] Vercel Blob delete failed:", err);
-    }
-  }
-
-  // 2. Also try R2 if configured
-  if (isR2Configured() && key) {
+  if (isR2Configured()) {
     try {
       const r2 = getR2Client();
       await r2.send(
@@ -382,6 +298,7 @@ export async function deleteBlob(urlOrPath: string): Promise<void> {
           Key: key,
         })
       );
+      console.info(`[Storage] Deleted "${key}" from Cloudflare R2`);
     } catch (err) {
       console.warn("[Storage Warning] Cloudflare R2 delete failed:", err);
     }
@@ -389,43 +306,25 @@ export async function deleteBlob(urlOrPath: string): Promise<void> {
 }
 
 /**
- * Translates a Vercel Blob URL into the equivalent Cloudflare R2 URL.
+ * Translates any legacy storage / blob URL into the equivalent Cloudflare R2 URL.
  */
-export function getEquivalentR2Url(vercelUrl: string): string | null {
+export function getEquivalentR2Url(urlOrPath: string): string | null {
   const baseUrl = getR2PublicBaseUrl();
   if (!baseUrl) return null;
-  const key = extractStorageKey(vercelUrl);
+  const key = extractStorageKey(urlOrPath);
   if (!key) return null;
   return `${baseUrl}/${key}`;
 }
 
 /**
- * Downloads / fetches a file with automatic fallback to Cloudflare R2 if Vercel Blob fails (403, 404, or network error).
+ * Downloads / fetches a file directly from Cloudflare R2 (or public R2 CDN).
+ * Also automatically translates legacy Vercel Blob URLs to their R2 equivalents.
  */
 export async function fetchWithFallback(urlOrKey: string, init?: RequestInit): Promise<Response> {
-  let isVercelUrl = urlOrKey.includes("blob.vercel-storage.com");
-
-  // If it's a URL, validate origin and attempt fetching it first
-  if (urlOrKey.startsWith("http://") || urlOrKey.startsWith("https://")) {
-    if (!isAllowedStorageUrl(urlOrKey)) {
-      throw new Error(`Access to external, unapproved, or private media URL is prohibited.`);
-    }
-    try {
-      const res = await fetch(urlOrKey, init);
-      if (res.ok) {
-        return res;
-      }
-      console.warn(`[Storage] Fetching ${urlOrKey} returned status ${res.status}. Trying fallback...`);
-    } catch (err: any) {
-      console.warn(`[Storage] Fetch failed for ${urlOrKey}: ${err.message}. Trying fallback...`);
-    }
-  }
-
-  // Fallback to Cloudflare R2
   const key = extractStorageKey(urlOrKey);
   const r2Base = getR2PublicBaseUrl();
 
-  // Try public R2 URL first if available
+  // 1. Try public R2 URL first if available
   if (r2Base && key) {
     try {
       const r2Url = `${r2Base}/${key}`;
@@ -433,12 +332,24 @@ export async function fetchWithFallback(urlOrKey: string, init?: RequestInit): P
       if (res.ok) {
         return res;
       }
-    } catch (err) {
-      // Continue to S3 GetObject fallback
+    } catch {
+      // Continue to direct S3 GetObject
     }
   }
 
-  // Try direct R2 S3 GetObject if public fetch didn't succeed
+  // 2. If it's an allowed external URL, attempt fetch
+  if ((urlOrKey.startsWith("http://") || urlOrKey.startsWith("https://")) && isAllowedStorageUrl(urlOrKey)) {
+    try {
+      const res = await fetch(urlOrKey, init);
+      if (res.ok) {
+        return res;
+      }
+    } catch {
+      // Continue to direct S3 GetObject
+    }
+  }
+
+  // 3. Direct R2 S3 GetObject
   if (isR2Configured() && key) {
     try {
       const r2 = getR2Client();
@@ -461,25 +372,18 @@ export async function fetchWithFallback(urlOrKey: string, init?: RequestInit): P
         });
       }
     } catch (err: any) {
-      console.error(`[Storage Error] R2 GetObject failed for ${key}:`, err);
+      console.error(`[Storage Error] R2 GetObject failed for "${key}":`, err);
     }
   }
 
-  throw new Error(`Failed to retrieve file from either Vercel Blob or Cloudflare R2 for "${urlOrKey}"`);
+  throw new Error(`Failed to retrieve file from Cloudflare R2 for "${urlOrKey}"`);
 }
 
 /**
- * Resolves a media URL.
- * If NEXT_PUBLIC_PREFER_R2 is set to "true" or STORAGE_PROVIDER="r2",
- * rewrites Vercel Blob URL to Cloudflare R2 URL.
+ * Resolves a media URL to its Cloudflare R2 URL.
  */
 export function resolveMediaUrl(url: string | null | undefined): string {
   if (!url) return "";
-  const preferR2 = process.env.NEXT_PUBLIC_PREFER_R2 === "true" || process.env.STORAGE_PROVIDER === "r2";
-  if (preferR2) {
-    const r2Url = getEquivalentR2Url(url);
-    if (r2Url) return r2Url;
-  }
-  return url;
+  const r2Url = getEquivalentR2Url(url);
+  return r2Url || url;
 }
-

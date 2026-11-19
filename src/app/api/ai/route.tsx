@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import Groq from 'groq-sdk';
 import * as cheerio from 'cheerio';
+import { getSessionUser } from "@/lib/auth-guard";
 
 let _groq: Groq | null = null;
 function getGroqClient(): Groq {
@@ -545,6 +546,13 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
 
   if (url.searchParams.get('crawl') === 'true') {
+    const session = await getSessionUser().catch(() => null);
+    if (!session?.isAdmin) {
+      return Response.json(
+        { error: "Unauthorized: Administrator access required to trigger website crawl." },
+        { status: 403 }
+      );
+    }
     const crawlResult = await crawlWebsite();
     return Response.json({
       service: 'Frametoque AI Assistant',

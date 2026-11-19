@@ -23,6 +23,11 @@ export function validateEnvironment(): void {
     }
   }
 
+  // Validate Field Vault Encryption Key
+  if (!process.env.APP_FIELD_ENCRYPTION_KEY?.trim() && !process.env.CREDENTIALS_ENCRYPTION_KEY?.trim()) {
+    missing.push("APP_FIELD_ENCRYPTION_KEY (or CREDENTIALS_ENCRYPTION_KEY)");
+  }
+
   if (missing.length > 0) {
     const errorMsg = `[FATAL] Missing required production environment variables: ${missing.join(", ")}. Please configure them in your environment.`;
     console.error(errorMsg);

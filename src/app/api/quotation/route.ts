@@ -2,8 +2,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { requireUserSession, AuthError } from "@/lib/auth-guard";
+import { checkRateLimit } from "@/lib/domains/validation";
 
 export async function POST(req: NextRequest) {
+  // ── Rate Limit Check ──────────────────────────────────────────────────────
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
+  const rate = checkRateLimit(`quote:submit:${ip}`, 10, 600000);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: `Too many quotation requests. Please wait ${rate.resetInSec} seconds before submitting again.` },
+      { status: 429 }
+    );
+  }
+
   // ── Env check ────────────────────────────────────────────────────────────
   if (!process.env.DATABASE_URL) {
     console.error("[quotation] DATABASE_URL is not set");
@@ -43,6 +54,29 @@ export async function POST(req: NextRequest) {
 
   if (!quoteName || !quoteEmail || !quotePhone || !cartItems?.length) {
     return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+  }
+
+  const cleanEmail = quoteEmail.trim().toLowerCase();
+  if (cleanEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    return NextResponse.json({ error: "Invalid email address format." }, { status: 400 });
+  }
+
+  if (quoteName.trim().length > 150 || quotePhone.trim().length > 50) {
+    return NextResponse.json({ error: "Name or phone number exceeds maximum length." }, { status: 400 });
+  }
+
+  if (cartItems.length > 50) {
+    return NextResponse.json({ error: "Cart exceeds item limit (50 max)." }, { status: 400 });
+  }
+
+  for (const item of cartItems) {
+    const unitPrice = parseFloat(String(item.price).replace(/[^0-9.-]/g, "")) || 0;
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+      return NextResponse.json({ error: "Invalid price detected on cart item." }, { status: 400 });
+    }
+    if (!Number.isInteger(item.quantity) || item.quantity <= 0 || item.quantity > 1000) {
+      return NextResponse.json({ error: "Invalid item quantity." }, { status: 400 });
+    }
   }
 
   const numericSubtotal = parseFloat(String(subtotalLKR || 0));

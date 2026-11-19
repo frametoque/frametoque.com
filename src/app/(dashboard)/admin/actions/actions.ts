@@ -1708,6 +1708,16 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
     `;
   }
 
+  const subtotalVal = parseFloat(invoiceData.subtotal || 0) || 0;
+  const discountVal = parseFloat(invoiceData.discount || 0) || 0;
+  const advanceVal  = parseFloat(invoiceData.advance || 0) || 0;
+  const taxRateVal  = parseFloat(invoiceData.taxRate || 0) || 0;
+  const taxAmountVal = subtotalVal * (taxRateVal / 100);
+  const totalVal    = parseFloat(invoiceData.total != null && invoiceData.total !== "" ? invoiceData.total : (subtotalVal + taxAmountVal - discountVal)) || 0;
+  const totalDueVal = invoiceData.totalDue != null && invoiceData.totalDue !== ""
+    ? (parseFloat(invoiceData.totalDue) || 0)
+    : Math.max(0, totalVal - advanceVal);
+
   const invoiceId = await generateUniqueInvoiceId();
   await sql`
   INSERT INTO invoices (
@@ -1717,22 +1727,24 @@ export async function createInvoice(invoiceData: any, lineItems: any[]) {
   ) VALUES (
     ${invoiceId}, ${invoiceData.userEmail || null},
     ${invoiceData.projectName}, ${invoiceData.date}, ${invoiceData.dueDate || null},
-    ${invoiceData.subtotal}, ${invoiceData.discount}, ${invoiceData.total}, ${invoiceData.advance}, ${invoiceData.totalDue},
+    ${subtotalVal}, ${discountVal}, ${totalVal}, ${advanceVal}, ${totalDueVal},
     ${invoiceData.workStatus}, ${invoiceData.paymentStatus}, ${invoiceData.currency}, ${invoiceData.category || null},
-    ${invoiceData.bankAccountId || null}, ${parseFloat(invoiceData.taxRate) || 0}, ${invoiceData.legalName || null}
+    ${invoiceData.bankAccountId ? parseInt(invoiceData.bankAccountId, 10) : null}, ${taxRateVal}, ${invoiceData.legalName || null}
   )
 `;
 
   for (const item of lineItems) {
     if (item.description) {
+      const quantity = parseFloat(item.quantity) || 0;
+      const price = parseFloat(item.rate) || 0;
       await sql`
         INSERT INTO invoice_items (invoice_id, description, quantity, price, total)
-        VALUES (${invoiceId}, ${item.description}, ${item.quantity}, ${item.rate}, ${item.quantity * item.rate})
+        VALUES (${invoiceId}, ${item.description}, ${quantity}, ${price}, ${quantity * price})
       `;
     }
   }
 
-  await logSystemAction(`Created invoice: "${invoiceData.projectName}" (${invoiceId}) for LKR ${invoiceData.total}`);
+  await logSystemAction(`Created invoice: "${invoiceData.projectName}" (${invoiceId}) for LKR ${totalVal}`);
   return { success: true, invoiceId };
 }
 
@@ -1757,12 +1769,12 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
     .filter((p: any) => !String(p.description || '').toLowerCase().startsWith('advance'))
     .reduce((sum: number, p: any) => sum + (parseFloat(p.amount) || 0), 0);
 
-  const subtotalVal = parseFloat(invoiceData.subtotal || 0);
-  const discountVal = parseFloat(invoiceData.discount || 0);
-  const advanceVal  = parseFloat(invoiceData.advance || 0);
-  const taxRateVal  = parseFloat(invoiceData.taxRate || 0);
+  const subtotalVal = parseFloat(invoiceData.subtotal || 0) || 0;
+  const discountVal = parseFloat(invoiceData.discount || 0) || 0;
+  const advanceVal  = parseFloat(invoiceData.advance || 0) || 0;
+  const taxRateVal  = parseFloat(invoiceData.taxRate || 0) || 0;
   const taxAmountVal = subtotalVal * (taxRateVal / 100);
-  const totalVal    = parseFloat(invoiceData.total || (subtotalVal + taxAmountVal - discountVal));
+  const totalVal    = parseFloat(invoiceData.total != null && invoiceData.total !== "" ? invoiceData.total : (subtotalVal + taxAmountVal - discountVal)) || 0;
   const calculatedTotalDue = Math.max(0, totalVal - advanceVal - nonAdvancePayments);
 
   await sql`
@@ -1771,17 +1783,17 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
     project_name = ${invoiceData.projectName},
     date = ${invoiceData.date},
     due_date = ${invoiceData.dueDate || null},
-    subtotal = ${invoiceData.subtotal},
-    discount = ${invoiceData.discount},
-    total = ${invoiceData.total},
-    advance = ${invoiceData.advance},
+    subtotal = ${subtotalVal},
+    discount = ${discountVal},
+    total = ${totalVal},
+    advance = ${advanceVal},
     total_due = ${calculatedTotalDue},
     work_status = ${invoiceData.workStatus},
     payment_status = ${invoiceData.paymentStatus},
     currency = ${invoiceData.currency},
     category = ${invoiceData.category || null},
-    bank_account_id = ${invoiceData.bankAccountId || null},
-    tax_rate = ${parseFloat(invoiceData.taxRate) || 0},
+    bank_account_id = ${invoiceData.bankAccountId ? parseInt(invoiceData.bankAccountId, 10) : null},
+    tax_rate = ${taxRateVal},
     legal_name = ${invoiceData.legalName || null}
   WHERE invoice_id = ${invoiceId}
 `;
@@ -1790,9 +1802,11 @@ export async function updateInvoice(invoiceId: string, invoiceData: any, lineIte
 
   for (const item of lineItems) {
     if (item.description) {
+      const quantity = parseFloat(item.quantity) || 0;
+      const price = parseFloat(item.rate) || 0;
       await sql`
         INSERT INTO invoice_items (invoice_id, description, quantity, price, total)
-        VALUES (${invoiceId}, ${item.description}, ${item.quantity}, ${item.rate}, ${item.quantity * item.rate})
+        VALUES (${invoiceId}, ${item.description}, ${quantity}, ${price}, ${quantity * price})
       `;
     }
   }
@@ -1916,9 +1930,12 @@ export async function getQuotations(startDate?: string, endDate?: string) {
 export async function createQuotation(data: any, lineItems: any[] = []) {
   await requireAdminSession();
 
-  const advance = data.advance || 0;
-  const discount = data.discount || 0;
-  const totalDue = data.totalDue ?? (data.amount - advance);
+  const amount = parseFloat(data.amount) || 0;
+  const advance = parseFloat(data.advance) || 0;
+  const discount = parseFloat(data.discount) || 0;
+  const totalDue = data.totalDue != null && data.totalDue !== ""
+    ? (parseFloat(data.totalDue) || 0)
+    : Math.max(0, amount - advance);
 
   let existingClient: any[] = [];
   if (data.clientId) {
@@ -1964,9 +1981,9 @@ export async function createQuotation(data: any, lineItems: any[] = []) {
       description, category, payment_method, invoice_id, client_id, receipt_url, status, bank_account_id, notes, legal_name, valid_until
     )
     VALUES (
-      ${nextId}, ${data.date}, ${data.amount}, ${advance}, ${totalDue}, ${discount},
+      ${nextId}, ${data.date}, ${amount}, ${advance}, ${totalDue}, ${discount},
       ${data.description}, ${data.category}, ${data.paymentMethod},
-      ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, 'draft', ${data.bankAccountId || null}, ${data.notes || null}, ${data.legalName || null}, ${data.validUntil || null}
+      ${data.invoiceId || null}, ${data.clientId || null}, ${data.receiptUrl || null}, 'draft', ${data.bankAccountId ? parseInt(data.bankAccountId, 10) : null}, ${data.notes || null}, ${data.legalName || null}, ${data.validUntil || null}
     )
     RETURNING id
   `;
@@ -1975,13 +1992,15 @@ export async function createQuotation(data: any, lineItems: any[] = []) {
 
   for (const item of lineItems) {
     if (item.description) {
+      const quantity = parseFloat(item.quantity) || 0;
+      const price = parseFloat(item.rate) || 0;
       await sql`
         INSERT INTO quotation_items (quotation_id, description, quantity, price, total)
-        VALUES (${quotationId}, ${item.description}, ${item.quantity}, ${item.rate}, ${item.quantity * item.rate})
+        VALUES (${quotationId}, ${item.description}, ${quantity}, ${price}, ${quantity * price})
       `;
     }
   }
-  await logSystemAction(`Created quotation for "${data.description || 'Quotation'}" (ID: ${quotationId}) for LKR ${data.amount}`);
+  await logSystemAction(`Created quotation for "${data.description || 'Quotation'}" (ID: ${quotationId}) for LKR ${amount}`);
 }
 
 // ─── REPLACE updateQuotation in actions.ts ───────────────────────────────────
@@ -1989,9 +2008,12 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
   await requireAdminSession();
 
   try {
-    const advance = data.advance || 0;
-    const discount = data.discount || 0;
-    const totalDue = data.totalDue ?? (data.amount - advance);
+    const amount = parseFloat(data.amount) || 0;
+    const advance = parseFloat(data.advance) || 0;
+    const discount = parseFloat(data.discount) || 0;
+    const totalDue = data.totalDue != null && data.totalDue !== ""
+      ? (parseFloat(data.totalDue) || 0)
+      : Math.max(0, amount - advance);
 
     let existingClient: any[] = [];
     if (data.clientId) {
@@ -2033,7 +2055,7 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
       UPDATE admin_quotations 
       SET 
         date          = ${data.date}, 
-        amount        = ${data.amount},
+        amount        = ${amount},
         advance       = ${advance},
         total_due     = ${totalDue},
         discount      = ${discount},
@@ -2043,7 +2065,7 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
         client_id     = ${data.clientId || null},
         invoice_id    = ${data.invoiceId || null}, 
         receipt_url   = ${data.receiptUrl || null},
-        bank_account_id = ${data.bankAccountId || null},
+        bank_account_id = ${data.bankAccountId ? parseInt(data.bankAccountId, 10) : null},
         notes         = ${data.notes || null},
         legal_name    = ${data.legalName || null},
         valid_until   = ${data.validUntil || null}
@@ -2054,9 +2076,11 @@ export async function updateQuotation(id: number, data: any, lineItems: any[] = 
 
     for (const item of lineItems) {
       if (item.description) {
+        const quantity = parseFloat(item.quantity) || 0;
+        const price = parseFloat(item.rate) || 0;
         await sql`
           INSERT INTO quotation_items (quotation_id, description, quantity, price, total)
-          VALUES (${id}, ${item.description}, ${item.quantity}, ${item.rate}, ${item.quantity * item.rate})
+          VALUES (${id}, ${item.description}, ${quantity}, ${price}, ${quantity * price})
         `;
       }
     }

@@ -4,10 +4,10 @@ import { fetchWithFallback, extractStorageKey, detectContentType, isAllowedStora
 export const dynamic = "force-dynamic";
 
 /**
- * Universal media route with automatic fallback from Vercel Blob to Cloudflare R2.
+ * Universal media route serving from Cloudflare R2 with legacy path support.
  * Can be accessed via:
  * 1. Path format: /api/media/admin/receipts/income/123-file.png
- * 2. Query format: /api/media?url=https://...blob.vercel-storage.com/...
+ * 2. Query format: /api/media?url=https://...
  */
 export async function GET(
   req: NextRequest,
@@ -49,7 +49,7 @@ export async function GET(
   } catch (error: any) {
     console.error("[Media Route Error]", error);
     return NextResponse.json(
-      { error: "Media not found on either Vercel Blob or Cloudflare R2", details: error.message },
+      { error: "Media not found on Cloudflare R2", details: error.message },
       { status: 404 }
     );
   }

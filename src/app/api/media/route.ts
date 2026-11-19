@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error("[Media Route Error]", error);
     return NextResponse.json(
-      { error: "Media not found on either Vercel Blob or Cloudflare R2", details: error.message },
+      { error: "Media not found on Cloudflare R2", details: error.message },
       { status: 404 }
     );
   }
