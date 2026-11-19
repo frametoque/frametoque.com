@@ -559,7 +559,6 @@ Could you please confirm equipment availability for these dates and send over th
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Kasun Perera or Red Dot Films"
                       value={quoteName}
                       onChange={(e) => setQuoteName(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-brand-500 focus:bg-white transition-colors"
@@ -574,7 +573,6 @@ Could you please confirm equipment availability for these dates and send over th
                       <input
                         type="email"
                         required
-                        placeholder="kasun@example.com"
                         value={quoteEmail}
                         onChange={(e) => setQuoteEmail(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-brand-500 focus:bg-white transition-colors"
@@ -587,7 +585,6 @@ Could you please confirm equipment availability for these dates and send over th
                       <input
                         type="tel"
                         required
-                        placeholder="+94 7X XXX XXXX"
                         value={quotePhone}
                         onChange={(e) => setQuotePhone(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-brand-500 focus:bg-white transition-colors"
