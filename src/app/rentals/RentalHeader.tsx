@@ -14,8 +14,7 @@ import {
   ChevronRight, 
   Film,
   LogIn,
-  ExternalLink,
-  LayoutDashboard
+  ExternalLink
 } from "lucide-react";
 import { useRentalKit } from "@/context/RentalKitContext";
 
@@ -190,14 +189,9 @@ export default function RentalHeader() {
                 <div className="px-6 pb-4">
                   <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white shadow-md border border-slate-700/60">
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center">
-                          <LayoutDashboard className="w-4 h-4" />
-                        </div>
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                          Client Portal
-                        </span>
-                      </div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                        Client Portal
+                      </span>
                       <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30">
                         Login
                       </span>

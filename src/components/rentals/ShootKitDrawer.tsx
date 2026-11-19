@@ -12,7 +12,6 @@ import {
   Calendar, 
   MessageCircle, 
   Camera, 
-  Film,
   Sparkles,
   ArrowRight,
   FileText
@@ -144,19 +143,14 @@ Could you please confirm equipment availability for these dates and send over th
             >
               {/* Drawer Header */}
               <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-sm">
-                    <Film className="w-4 h-4 sm:w-5 sm:h-5" />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm sm:text-base font-bold text-slate-900">Your Shoot Kit</h2>
+                    <span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-[11px] sm:text-xs font-bold">
+                      {itemCount} {itemCount === 1 ? "item" : "items"}
+                    </span>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-sm sm:text-base font-bold text-slate-900">Your Shoot Kit</h2>
-                      <span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-[11px] sm:text-xs font-bold">
-                        {itemCount} {itemCount === 1 ? "item" : "items"}
-                      </span>
-                    </div>
-                    <p className="text-[11px] sm:text-xs text-slate-500">Equipment Manifest &amp; Dates</p>
-                  </div>
+                  <p className="text-[11px] sm:text-xs text-slate-500">Equipment Manifest &amp; Dates</p>
                 </div>
 
                 <button
