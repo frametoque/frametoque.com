@@ -499,15 +499,7 @@ Could you please confirm equipment availability for these dates and send over th
 
             {/* Quotation Generation Section */}
             <div className="p-4 sm:p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">Generate Official Quotation</h3>
-                  <p className="text-xs text-slate-500">Download instant PDF quotation &amp; save to your portal</p>
-                </div>
-              </div>
+              <h3 className="text-sm font-bold text-slate-900">Generate quotation</h3>
 
               {quotationSuccess ? (
                 <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-3">
