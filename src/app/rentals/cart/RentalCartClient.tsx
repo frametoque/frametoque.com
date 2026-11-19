@@ -214,18 +214,13 @@ Could you please confirm equipment availability for these dates and send over th
         transition={{ duration: 0.35 }}
         className="mb-6 sm:mb-8 p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand-50 text-brand-600 border border-brand-100 flex items-center justify-center shrink-0">
-            <LogIn className="w-4 h-4" />
-          </div>
-          <div>
-            <p className="text-xs sm:text-sm font-bold text-slate-900">
-              Already have an active booking or quotation?
-            </p>
-            <p className="text-[11px] sm:text-xs text-slate-500">
-              Sign in to your Client Portal to review and download all your invoices, official quotations, and rental agreements.
-            </p>
-          </div>
+        <div>
+          <p className="text-xs sm:text-sm font-bold text-slate-900">
+            Already have an active booking or quotation?
+          </p>
+          <p className="text-[11px] sm:text-xs text-slate-500">
+            Sign in to your Client Portal to review and download all your invoices, official quotations, and rental agreements.
+          </p>
         </div>
         <a
           href="/dashboard"
