@@ -13,7 +13,6 @@ import {
   MessageCircle, 
   Camera, 
   ArrowRight, 
-  LogIn, 
   ExternalLink,
   AlertCircle,
   Loader2
@@ -520,7 +519,6 @@ Could you please confirm equipment availability for these dates and send over th
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors cursor-pointer"
                     >
-                      <LogIn className="w-3.5 h-3.5" />
                       <span>View in Client Portal</span>
                       <ExternalLink className="w-3 h-3 text-emerald-200" />
                     </a>
