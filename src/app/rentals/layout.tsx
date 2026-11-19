@@ -11,23 +11,65 @@ import { RentalKitProvider } from "@/context/RentalKitContext";
 import ShootKitDrawer from "@/components/rentals/ShootKitDrawer";
 
 export const metadata: Metadata = {
-  title: "Equipment Rentals | Frametoque Digital Media",
-  description: "Rent professional cinema cameras, lenses, lighting, audio gear, and stabilization support in Sri Lanka. Check real-time shoot availability and book directly via WhatsApp.",
+  metadataBase: new URL("https://frametoque.com"),
+  title: {
+    default: "Camera & Equipment Rental Sri Lanka | Frametoque",
+    template: "%s | Frametoque Rentals",
+  },
+  description: "Rent professional cinema cameras, lenses, lighting, audio gear, and stabilization support in Colombo, Sri Lanka. Check real-time shoot availability and book directly via WhatsApp.",
   keywords: [
     "camera rental sri lanka",
-    "video equipment rental colombo",
+    "camera hire colombo",
+    "video equipment rental sri lanka",
     "lens rental sri lanka",
-    "sony fx3 rental",
+    "sony fx3 rental sri lanka",
+    "cinema camera rental colombo",
     "filmmaking gear rental",
     "frametoque rentals",
-    "production gear sri lanka"
+    "production gear sri lanka",
+    "aputure lighting hire colombo",
+    "wireless microphone rental colombo",
+    "gimbal rental sri lanka",
+    "audio gear hire colombo"
   ],
+  authors: [{ name: "Frametoque Digital Media", url: "https://frametoque.com" }],
+  creator: "Frametoque Digital Media",
+  publisher: "Frametoque Digital Media",
+  alternates: {
+    canonical: "https://frametoque.com/rentals",
+  },
   openGraph: {
-    title: "Equipment Rentals | Frametoque Digital Media",
-    description: "Rent professional cinema cameras, lenses, lighting, audio gear, and accessories in Sri Lanka.",
+    title: "Camera & Equipment Rental Sri Lanka | Frametoque",
+    description: "Rent professional cinema cameras, lenses, lighting, audio gear, and accessories in Colombo, Sri Lanka. Live date availability.",
     url: "https://frametoque.com/rentals",
     siteName: "Frametoque Rentals",
+    locale: "en_LK",
     type: "website",
+    images: [
+      {
+        url: "https://frametoque.com/logos/ft/name-logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Frametoque Equipment Rentals Sri Lanka",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Camera & Equipment Rental Sri Lanka | Frametoque",
+    description: "Rent professional cinema cameras, lenses, lighting, and audio equipment in Colombo, Sri Lanka.",
+    images: ["https://frametoque.com/logos/ft/name-logo.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 

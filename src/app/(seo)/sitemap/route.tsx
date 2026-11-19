@@ -1,3 +1,7 @@
+import { getPublicRentals } from "@/app/actions/rentals-public";
+
+export const dynamic = "force-dynamic";
+
 export const GET = async () => {
   const baseUrl = "https://frametoque.com";
 
@@ -7,6 +11,10 @@ export const GET = async () => {
     { slug: "projects", priority: "0.8", changefreq: "monthly" },
     { slug: "contact", priority: "0.8", changefreq: "monthly" },
     { slug: "services", priority: "0.9", changefreq: "weekly" },
+    { slug: "rentals", priority: "1.0", changefreq: "daily" },
+    { slug: "rentals/contact", priority: "0.8", changefreq: "monthly" },
+    { slug: "rentals/faq", priority: "0.8", changefreq: "monthly" },
+    { slug: "rentals/terms", priority: "0.6", changefreq: "monthly" },
   ];
 
   const serviceCategories = [
@@ -96,6 +104,20 @@ export const GET = async () => {
       priority: "0.7",
     });
   });
+
+  // Dynamic Rentals Gear Products
+  try {
+    const rentalProducts = await getPublicRentals();
+    rentalProducts.forEach((product) => {
+      urls.push({
+        loc: `${baseUrl}/rentals/${product.slug || product.id}`,
+        changefreq: "weekly",
+        priority: "0.8",
+      });
+    });
+  } catch (err) {
+    console.error("Failed to load rental items for sitemap:", err);
+  }
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
