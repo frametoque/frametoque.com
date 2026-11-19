@@ -116,6 +116,7 @@ export default async function RentalsLayout({
                     <li><Link href="/rentals?category=Lens" className="hover:text-brand-600 transition-colors">Lens</Link></li>
                     <li><Link href="/rentals?category=Lighting" className="hover:text-brand-600 transition-colors">Lighting</Link></li>
                     <li><Link href="/rentals?category=Audio" className="hover:text-brand-600 transition-colors">Audio</Link></li>
+                    <li><Link href="/rentals?category=Mounts%20%26%20Tripods" className="hover:text-brand-600 transition-colors">Mounts &amp; Tripods</Link></li>
                     <li><Link href="/rentals?category=Accessories" className="hover:text-brand-600 transition-colors">Accessories</Link></li>
                   </>
                 )}

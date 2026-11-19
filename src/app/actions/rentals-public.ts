@@ -2,6 +2,7 @@
 
 import sql from "@/lib/db";
 import { slugify, isUUID } from "@/lib/slugify";
+import { normalizeRentalCategory } from "@/lib/categories";
 
 export interface PublicRentalProduct {
   id: string;
@@ -76,11 +77,18 @@ export async function getPublicRentals(params?: {
         parsedImages.unshift(r.image_url);
       }
 
+      const rawCategory = r.category || "Equipment";
+      const normalizedCategory = rawCategory
+        .split(",")
+        .map((c: string) => normalizeRentalCategory(c))
+        .filter((c: string, idx: number, arr: string[]) => arr.indexOf(c) === idx)
+        .join(", ");
+
       return {
         id: String(r.id),
         slug: slugify(r.item_name) || String(r.id),
         item_name: r.item_name,
-        category: r.category || "Equipment",
+        category: normalizedCategory,
         daily_rate: parseFloat(r.rental_price_per_day || "0"),
         image_url: r.image_url || parsedImages[0] || null,
         images: parsedImages,
@@ -93,9 +101,19 @@ export async function getPublicRentals(params?: {
     });
 
     if (params?.category && params.category !== "All") {
-      const targetCat = params.category.toLowerCase().trim();
+      const targetCat = normalizeRentalCategory(params.category).toLowerCase().trim();
       filtered = filtered.filter((item: any) => {
-        const itemCats = item.category.toLowerCase().split(",").map((c: string) => c.trim());
+        const itemCats = item.category
+          .toLowerCase()
+          .split(",")
+          .map((c: string) => normalizeRentalCategory(c).toLowerCase().trim());
+        if (targetCat === "mounts & tripods") {
+          return (
+            itemCats.includes("mounts & tripods") ||
+            item.category.toLowerCase().includes("mount") ||
+            item.category.toLowerCase().includes("tripod")
+          );
+        }
         return itemCats.some((c: string) => c === targetCat || c.includes(targetCat) || targetCat.includes(c));
       });
     }
@@ -220,7 +238,13 @@ export async function getPublicRentalItemById(idOrSlug: string): Promise<{
       id: String(r.id),
       slug: slugify(r.item_name) || String(r.id),
       item_name: r.item_name,
-      category: r.category || "Equipment",
+      category: r.category
+        ? r.category
+            .split(",")
+            .map((c: string) => normalizeRentalCategory(c))
+            .filter((c: string, idx: number, arr: string[]) => arr.indexOf(c) === idx)
+            .join(", ")
+        : "Equipment",
       daily_rate: parseFloat(r.rental_price_per_day || "0"),
       image_url: r.image_url || parsedImages[0] || null,
       images: parsedImages,
@@ -370,8 +394,12 @@ export async function getPublicRentalCategories(): Promise<{ category: string; c
 
     rows.forEach((r: any) => {
       const rawCat = r.category || "Equipment";
-      const parts = rawCat.split(",").map((c: string) => c.trim()).filter(Boolean);
-      parts.forEach((cat: string) => {
+      const parts = rawCat
+        .split(",")
+        .map((c: string) => normalizeRentalCategory(c))
+        .filter(Boolean);
+      const uniqueParts = Array.from(new Set(parts));
+      uniqueParts.forEach((cat: string) => {
         catMap.set(cat, (catMap.get(cat) || 0) + parseInt(r.count, 10));
       });
     });

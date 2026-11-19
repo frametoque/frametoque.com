@@ -23,7 +23,7 @@ const parseCategories = (catStr: string | null | undefined): string[] => {
 };
 
 const DEFAULT_INVENTORY_CATEGORIES = [
-  "Camera", "Lens", "Lighting", "Audio", "Drone", "Gimbal", "Accessories", "Equipment"
+  "Camera", "Lens", "Lighting", "Audio", "Drone", "Gimbal", "Mounts & Tripods", "Accessories", "Equipment"
 ];
 
 const formatLKR = (amount: number) =>
@@ -457,7 +457,22 @@ export default function InventoryPage() {
     const set = new Set<string>();
     (data as any[] || []).forEach((item: any) => {
       if (item.category && item.category !== 'To Buy') {
-        parseCategories(item.category).forEach((c: string) => set.add(c));
+        parseCategories(item.category).forEach((c: string) => {
+          const lower = c.toLowerCase().trim();
+          if (
+            lower === "mounts" ||
+            lower === "mount" ||
+            lower === "tripod" ||
+            lower === "tripods" ||
+            lower === "mounts & tripod" ||
+            lower === "mounts & tripods" ||
+            lower === "tripods & mounts"
+          ) {
+            set.add("Mounts & Tripods");
+          } else {
+            set.add(c.trim());
+          }
+        });
       }
     });
     return Array.from(set).sort();

@@ -1193,7 +1193,7 @@ export default function RentalsPage() {
                         className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 mb-2"
                       />
                       <div className="flex flex-wrap gap-1.5">
-                        {["Camera", "Lens", "Lighting", "Audio", "Drone", "Gimbal", "Tripod", "Monitor", "Accessories"].map((cat) => (
+                        {["Camera", "Lens", "Lighting", "Audio", "Drone", "Gimbal", "Mounts & Tripods", "Monitor", "Accessories"].map((cat) => (
                           <button
                             key={cat}
                             type="button"

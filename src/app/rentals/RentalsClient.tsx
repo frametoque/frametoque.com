@@ -14,6 +14,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import type { PublicRentalProduct } from "../actions/rentals-public";
+import { normalizeRentalCategory } from "@/lib/categories";
 
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat("en-LK", {
@@ -50,9 +51,18 @@ export default function RentalsClient({ initialProducts, categories, initialCate
 
     // Category filter
     if (selectedCategory !== "All") {
-      const targetCat = selectedCategory.toLowerCase();
+      const targetCat = normalizeRentalCategory(selectedCategory).toLowerCase().trim();
       list = list.filter((item) => {
-        const itemCats = item.category.toLowerCase().split(",").map((c) => c.trim());
+        const itemCats = item.category
+          .split(",")
+          .map((c) => normalizeRentalCategory(c).toLowerCase().trim());
+        if (targetCat === "mounts & tripods") {
+          return (
+            itemCats.includes("mounts & tripods") ||
+            item.category.toLowerCase().includes("mount") ||
+            item.category.toLowerCase().includes("tripod")
+          );
+        }
         return itemCats.some((c) => c === targetCat || c.includes(targetCat) || targetCat.includes(c));
       });
     }
@@ -64,6 +74,7 @@ export default function RentalsClient({ initialProducts, categories, initialCate
         (item) =>
           item.item_name.toLowerCase().includes(q) ||
           item.category.toLowerCase().includes(q) ||
+          normalizeRentalCategory(item.category).toLowerCase().includes(q) ||
           (item.description && item.description.toLowerCase().includes(q))
       );
     }
@@ -83,18 +94,25 @@ export default function RentalsClient({ initialProducts, categories, initialCate
   const categoryTabs = useMemo(() => {
     const tabs = [{ label: "All", value: "All" }];
     
-    const standardCategories = ["Camera", "Lens", "Lighting", "Audio", "Drone", "Gimbal", "Accessories"];
+    const standardCategories = ["Camera", "Lens", "Lighting", "Audio", "Drone", "Gimbal", "Mounts & Tripods", "Accessories"];
     const foundSet = new Set<string>();
 
     initialProducts.forEach((item) => {
       item.category.split(",").forEach((cat) => {
-        const trimmed = cat.trim();
+        const trimmed = normalizeRentalCategory(cat);
         if (trimmed) foundSet.add(trimmed);
       });
     });
 
     standardCategories.forEach((sc) => {
-      if (initialProducts.some((p) => p.category.toLowerCase().includes(sc.toLowerCase()))) {
+      const scNorm = normalizeRentalCategory(sc).toLowerCase();
+      if (initialProducts.some((p) => {
+        const pCats = p.category.split(",").map((c) => normalizeRentalCategory(c).toLowerCase());
+        return (
+          pCats.includes(scNorm) ||
+          ((p.category.toLowerCase().includes("mount") || p.category.toLowerCase().includes("tripod")) && scNorm === "mounts & tripods")
+        );
+      })) {
         tabs.push({ label: sc, value: sc });
         foundSet.delete(sc);
       }
