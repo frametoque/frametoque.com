@@ -213,17 +213,17 @@ Could you please confirm equipment availability for these dates and send over th
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="mb-6 sm:mb-8 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-700"
+        className="mb-6 sm:mb-8 p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand-50 text-brand-600 border border-brand-100 flex items-center justify-center shrink-0">
             <LogIn className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-xs sm:text-sm font-semibold text-slate-100">
+            <p className="text-xs sm:text-sm font-bold text-slate-900">
               Already have an active booking or quotation?
             </p>
-            <p className="text-[11px] sm:text-xs text-slate-300">
+            <p className="text-[11px] sm:text-xs text-slate-500">
               Sign in to your Client Portal to review and download all your invoices, official quotations, and rental agreements.
             </p>
           </div>
@@ -235,7 +235,7 @@ Could you please confirm equipment availability for these dates and send over th
           className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-all shadow-xs shrink-0 self-start sm:self-auto cursor-pointer"
         >
           <span>Client Login</span>
-          <ExternalLink className="w-3.5 h-3.5" />
+          <ExternalLink className="w-3.5 h-3.5 text-white/80" />
         </a>
       </motion.div>
 
