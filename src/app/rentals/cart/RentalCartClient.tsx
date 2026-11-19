@@ -632,7 +632,7 @@ Could you please confirm equipment availability for these dates and send over th
                     ) : (
                       <>
                         <FileText className="w-4 h-4 text-brand-400" />
-                        <span>Download Official Quotation PDF</span>
+                        <span>Download Quotation</span>
                         <Download className="w-3.5 h-3.5 text-slate-400" />
                       </>
                     )}

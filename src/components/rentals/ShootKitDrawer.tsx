@@ -367,7 +367,7 @@ Could you please confirm equipment availability for these dates and send over th
                     className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-800 font-bold text-xs shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
                   >
                     <FileText className="w-3.5 h-3.5 text-brand-600" />
-                    <span>Generate Official Quotation PDF</span>
+                    <span>Download Quotation</span>
                     <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
                   </Link>
 
