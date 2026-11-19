@@ -435,17 +435,6 @@ export default function ProductDetailsClient({
                   {isInKit(product.id) ? "In Bag (Click to View Bag)" : "+ Add to Bag (Bundle Multiple Items)"}
                 </span>
               </button>
-
-              {/* Advance Payment Note */}
-              <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-950 space-y-1">
-                <p className="font-bold text-amber-900 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
-                  <span>Advance Payment Required:</span>
-                </p>
-                <p className="leading-relaxed text-[10.5px] text-amber-900/90">
-                  You must pay half (50%) advance to confirm booking. Advance payment is non-refundable and not valid for another booking.
-                </p>
-              </div>
             </div>
 
             {/* Phone Call Option */}
