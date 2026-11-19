@@ -102,18 +102,20 @@ Could you please confirm equipment availability for these dates and send over th
             <button
               type="button"
               onClick={openKit}
-              className="flex items-center gap-3 pl-4 pr-5 py-3.5 rounded-full bg-slate-900 hover:bg-brand-600 text-white shadow-2xl border border-white/15 transition-all cursor-pointer active:scale-95 group"
+              className="flex items-center gap-3 pl-3.5 pr-5 py-3 rounded-full bg-white hover:bg-slate-50 text-slate-900 shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_36px_rgba(0,0,0,0.16)] border border-slate-200/90 hover:border-slate-300 transition-all cursor-pointer active:scale-95 group"
             >
-              <div className="w-7 h-7 rounded-full bg-brand-500 group-hover:bg-white group-hover:text-brand-600 text-white flex items-center justify-center font-black text-xs transition-colors">
+              <div className="w-7 h-7 rounded-full bg-brand-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
                 {itemCount}
               </div>
               <div className="text-left">
-                <span className="text-xs font-bold block leading-none">View Shoot Bag</span>
-                <span className="text-[10px] text-slate-300 group-hover:text-brand-100 font-medium">
+                <span className="text-xs font-bold text-slate-900 group-hover:text-brand-600 block leading-none transition-colors">
+                  View Shoot Bag
+                </span>
+                <span className="text-[11px] text-slate-500 font-medium">
                   {formatLKR(dailySubtotal)}/day
                 </span>
               </div>
-              <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-white group-hover:translate-x-0.5 transition-all ml-1" />
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-brand-600 group-hover:translate-x-0.5 transition-all ml-1" />
             </button>
           </motion.div>
         )}
