@@ -51,7 +51,7 @@ export default async function RentalsPage({
         "@id": "https://frametoque.com/rentals#store",
         name: "Frametoque Rentals Sri Lanka",
         url: "https://frametoque.com/rentals",
-        telephone: "+94702771361",
+        telephone: "+94701901461",
         email: "info@frametoque.com",
         priceRange: "LKR",
         image: "https://frametoque.com/logos/ft/name-logo.png",

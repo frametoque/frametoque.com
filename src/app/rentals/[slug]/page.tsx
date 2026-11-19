@@ -117,7 +117,7 @@ export default async function RentalProductPage({ params }: PageProps) {
           seller: {
             "@type": "LocalBusiness",
             name: "Frametoque Rentals Sri Lanka",
-            telephone: "+94702771361",
+            telephone: "+94701901461",
           },
         },
       },

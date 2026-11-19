@@ -27,7 +27,7 @@ export default function CartClient() {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [targetWa, setTargetWa] = useState("94702771361");
+  const [targetWa, setTargetWa] = useState("94701901461");
 
   // Quotation form state
   const [quoteName, setQuoteName] = useState("");
@@ -457,8 +457,8 @@ if (success) {
                     <label className="text-xs font-semibold text-slate-300">Send order to:</label>
                     <div className="flex flex-col sm:flex-row gap-4 pt-1">
                       <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
-                        <input type="radio" name="targetWa" value="94702771361" checked={targetWa === "94702771361"} onChange={(e) => setTargetWa(e.target.value)} className="accent-brand-500" />
-                        +94 70 277 1361
+                        <input type="radio" name="targetWa" value="94701901461" checked={targetWa === "94701901461"} onChange={(e) => setTargetWa(e.target.value)} className="accent-brand-500" />
+                        +94 70 190 1461
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
                         <input type="radio" name="targetWa" value="94758609356" checked={targetWa === "94758609356"} onChange={(e) => setTargetWa(e.target.value)} className="accent-brand-500" />

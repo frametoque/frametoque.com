@@ -126,11 +126,11 @@ export default async function RentalsLayout({
               </Link>
               <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
                 <Phone className="w-3.5 h-3.5 text-brand-600" />
-                <span>+94 70 277 1361</span>
+                <span>+94 70 190 1461</span>
               </div>
               <div className="pt-1">
                 <a
-                  href="https://wa.me/94702771361?text=Hi%20Frametoque%20Team%2C%20I'm%20inquiring%20about%20equipment%20rentals."
+                  href="https://wa.me/94701901461?text=Hi%20Frametoque%20Team%2C%20I'm%20inquiring%20about%20equipment%20rentals."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer"

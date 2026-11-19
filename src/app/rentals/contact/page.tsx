@@ -5,13 +5,13 @@ export const metadata: Metadata = {
   title: {
     absolute: "Contact Us | Frametoque Rentals",
   },
-  description: "Get in touch with the Frametoque camera and equipment rental desk in Colombo, Sri Lanka. WhatsApp hotline +94 70 277 1361, gear pickup location, and registration info.",
+  description: "Get in touch with the Frametoque camera and equipment rental desk in Colombo, Sri Lanka. WhatsApp hotline +94 70 190 1461, gear pickup location, and registration info.",
   alternates: {
     canonical: "https://frametoque.com/rentals/contact",
   },
   openGraph: {
     title: "Contact Us | Frametoque Rentals",
-    description: "WhatsApp hotline +94 70 277 1361, phone numbers, operating hours, and equipment pickup in Piliyandala, Colombo.",
+    description: "WhatsApp hotline +94 70 190 1461, phone numbers, operating hours, and equipment pickup in Piliyandala, Colombo.",
     url: "https://frametoque.com/rentals/contact",
     siteName: "Frametoque Rentals",
     type: "website",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Contact Us | Frametoque Rentals",
-    description: "WhatsApp hotline +94 70 277 1361. Daily camera and cinema gear hire.",
+    description: "WhatsApp hotline +94 70 190 1461. Daily camera and cinema gear hire.",
   },
   keywords: [
     "contact camera rental sri lanka",
@@ -45,7 +45,7 @@ const contactJsonLd = {
       "@id": "https://frametoque.com/rentals#store",
       name: "Frametoque Rentals Sri Lanka",
       url: "https://frametoque.com/rentals",
-      telephone: "+94702771361",
+      telephone: "+94701901461",
       email: "info@frametoque.com",
       address: {
         "@type": "PostalAddress",

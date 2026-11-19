@@ -60,7 +60,7 @@ export default function ShootKitDrawer() {
 
   // WhatsApp Pre-filled message builder for multi-item Bag
   const buildWhatsAppKitUrl = () => {
-    const phone = "94702771361";
+    const phone = "94701901461";
     const isSingleDay = startDate === endDate || !endDate;
     const dateStr = isSingleDay ? startDate : `${startDate} to ${endDate}`;
 

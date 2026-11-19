@@ -55,7 +55,7 @@ export default function RentalCartClient() {
 
   // WhatsApp Kit Message Builder
   const buildWhatsAppKitUrl = () => {
-    const phone = "94702771361";
+    const phone = "94701901461";
     const isSingleDay = startDate === endDate || !endDate;
     const dateStr = isSingleDay ? startDate : `${startDate} to ${endDate}`;
 

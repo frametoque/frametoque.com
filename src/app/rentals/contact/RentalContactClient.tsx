@@ -50,12 +50,12 @@ export default function RentalContactClient() {
                 <div>
                   <h3 className="font-bold text-slate-900 text-xs">WhatsApp</h3>
                   <a
-                    href="https://wa.me/94702771361?text=Hi%20Frametoque%20Team%2C%20I'm%20inquiring%20about%20gear%20rental."
+                    href="https://wa.me/94701901461?text=Hi%20Frametoque%20Team%2C%20I'm%20inquiring%20about%20gear%20rental."
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-slate-900 hover:text-blue-600 hover:underline text-sm font-semibold"
                   >
-                    +94 70 277 1361
+                    +94 70 190 1461
                   </a>
                 </div>
               </div>
@@ -67,7 +67,7 @@ export default function RentalContactClient() {
                 <div>
                   <h3 className="font-bold text-slate-900 text-xs">Hotlines</h3>
                   <div className="space-y-0.5 text-xs text-slate-700">
-                    <p>+94 70 277 1361</p>
+                    <p>+94 70 190 1461</p>
                     <p>+94 75 860 9356</p>
                   </div>
                 </div>
@@ -112,7 +112,7 @@ export default function RentalContactClient() {
 
             <div className="pt-2">
               <a
-                href="https://wa.me/94702771361?text=Hi%20Frametoque%2C%20I'd%20like%20to%20speak%20to%20a%20camera%20technician."
+                href="https://wa.me/94701901461?text=Hi%20Frametoque%2C%20I'd%20like%20to%20speak%20to%20a%20camera%20technician."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-sm active:scale-98"

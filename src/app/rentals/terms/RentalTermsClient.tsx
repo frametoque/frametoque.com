@@ -192,7 +192,7 @@ export default function RentalTermsClient() {
 
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <a
-            href="https://wa.me/94702771361?text=Hi%20Frametoque%2C%20I%20have%20a%20question%20regarding%20rental%20terms."
+            href="https://wa.me/94701901461?text=Hi%20Frametoque%2C%20I%20have%20a%20question%20regarding%20rental%20terms."
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors shadow-xs"

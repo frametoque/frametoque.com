@@ -2,7 +2,7 @@ import { AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Alert() {
-  const phoneNumber = "+94702771361";
+  const phoneNumber = "+94701901461";
   const whatsappLink = `https://wa.me/${phoneNumber.replace(/\D/g, '')}`;
   
   return (

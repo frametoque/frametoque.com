@@ -199,7 +199,7 @@ export default function RentalHeader() {
                 </a>
 
                 <a
-                  href="https://wa.me/94702771361?text=Hi%20Frametoque%20Team%2C%20I'm%20inquiring%20about%20equipment%20rentals."
+                  href="https://wa.me/94701901461?text=Hi%20Frametoque%20Team%2C%20I'm%20inquiring%20about%20equipment%20rentals."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold shadow-sm transition-all"
@@ -211,7 +211,7 @@ export default function RentalHeader() {
                 <div className="space-y-1.5 text-xs text-slate-500 pt-1">
                   <div className="flex items-center gap-2">
                     <Phone className="w-3.5 h-3.5 text-slate-400" />
-                    <span>+94 70 277 1361</span>
+                    <span>+94 70 190 1461</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />

@@ -112,7 +112,7 @@ export default function ProductDetailsClient({
 
   // WhatsApp Pre-filled message builder
   const buildWhatsAppUrl = (isAvailableBooking: boolean) => {
-    const phone = "94702771361";
+    const phone = "94701901461";
     const effectiveEnd = isMultiDay ? endDate || startDate : startDate;
     const days = availabilityResult?.totalDays || 1;
     const total = availabilityResult?.estimatedTotal || product.daily_rate;
@@ -441,11 +441,11 @@ export default function ProductDetailsClient({
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
               <span>Have immediate questions?</span>
               <a
-                href="tel:+94702771361"
+                href="tel:+94701901461"
                 className="font-bold text-slate-900 hover:text-brand-600 flex items-center gap-1 transition-colors"
               >
                 <Phone className="w-3.5 h-3.5 text-brand-600" />
-                <span>+94 70 277 1361</span>
+                <span>+94 70 190 1461</span>
               </a>
             </div>
 

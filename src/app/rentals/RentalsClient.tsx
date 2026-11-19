@@ -296,7 +296,7 @@ export default function RentalsClient({ initialProducts, categories, initialCate
                 Reset Filters
               </button>
               <a
-                href="https://wa.me/94702771361?text=Hi%20Frametoque%2C%20I'm%20looking%20for%20specific%20equipment%20not%20listed%20in%20your%20rentals%20catalog."
+                href="https://wa.me/94701901461?text=Hi%20Frametoque%2C%20I'm%20looking%20for%20specific%20equipment%20not%20listed%20in%20your%20rentals%20catalog."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition-colors"

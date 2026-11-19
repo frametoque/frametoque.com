@@ -171,7 +171,7 @@ export default function ContactPage() {
               </Link>
 
               <Link
-                href="https://wa.me/94702771361"
+                href="https://wa.me/94701901461"
                 target="_blank"
                 className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group"
               >
@@ -183,7 +183,7 @@ export default function ContactPage() {
                     WhatsApp (Primary)
                   </p>
                   <p className="text-sm text-slate-200 group-hover:text-brand-400 transition-colors">
-                    +94 70 277 1361
+                    +94 70 190 1461
                   </p>
                 </div>
               </Link>

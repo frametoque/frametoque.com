@@ -84,7 +84,7 @@ const FAQ_SECTIONS: Section[] = [
       },
       {
         q: "What happens if I experience technical issues on set?",
-        a: "Our technical team is on standby during your shoot. Message or call our hotline (+94 70 277 1361) and our camera technicians will troubleshoot with you immediately.",
+        a: "Our technical team is on standby during your shoot. Message or call our hotline (+94 70 190 1461) and our camera technicians will troubleshoot with you immediately.",
       },
       {
         q: "What happens in case of accidental damage or theft?",
@@ -220,7 +220,7 @@ export default function RentalFAQClient() {
 
         <div className="flex flex-wrap items-center justify-center gap-3 shrink-0">
           <a
-            href="https://wa.me/94702771361?text=Hi%20Frametoque%2C%20I%20have%20a%20question%20about%20equipment%20rentals."
+            href="https://wa.me/94701901461?text=Hi%20Frametoque%2C%20I%20have%20a%20question%20about%20equipment%20rentals."
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white text-xs sm:text-sm font-bold shadow-md transition-all active:scale-95"
