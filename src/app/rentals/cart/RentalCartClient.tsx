@@ -13,7 +13,6 @@ import {
   MessageCircle, 
   Camera, 
   ArrowRight, 
-  CheckCircle2, 
   LogIn, 
   ExternalLink,
   AlertCircle,
@@ -498,14 +497,11 @@ Could you please confirm equipment availability for these dates and send over th
 
               {quotationSuccess ? (
                 <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-3">
-                  <div className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="text-xs font-bold text-emerald-900">Quotation Generated &amp; Downloaded!</h4>
-                      <p className="text-[11px] text-emerald-700 mt-0.5 leading-relaxed">
-                        Reference: <strong>QT-{String(generatedQuoteId).padStart(4, "0")}</strong>. Your official quotation PDF was automatically generated.
-                      </p>
-                    </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-emerald-900">Quotation Generated &amp; Downloaded!</h4>
+                    <p className="text-[11px] text-emerald-700 mt-0.5 leading-relaxed">
+                      Reference: <strong>QT-{String(generatedQuoteId).padStart(4, "0")}</strong>. Your official quotation PDF was automatically generated.
+                    </p>
                   </div>
 
                   <div className="pt-2 flex flex-col sm:flex-row gap-2">
