@@ -8,7 +8,6 @@ import {
   Camera, 
   MessageCircle, 
   X, 
-  Images as ImagesIcon,
   ArrowRight,
   Plus,
   Check,
@@ -326,14 +325,6 @@ export default function RentalsClient({ initialProducts, categories, initialCate
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
                           <Camera className="w-8 h-8" />
-                        </div>
-                      )}
-
-                      {/* Multiple Photos Indicator */}
-                      {product.images.length > 1 && (
-                        <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-black/60 text-white backdrop-blur-md flex items-center gap-1 pointer-events-none">
-                          <ImagesIcon className="w-3 h-3" />
-                          <span>{product.images.length}</span>
                         </div>
                       )}
                     </div>
