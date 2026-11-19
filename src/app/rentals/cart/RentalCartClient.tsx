@@ -107,7 +107,7 @@ Could you please confirm equipment availability for these dates and send over th
       const mappedCartItems = items.map((item) => ({
         id: item.id,
         serviceId: item.slug,
-        serviceTitle: item.item_name,
+        serviceTitle: `Rent | ${item.item_name}`,
         tier: `${item.category} (${totalDays} Shoot Day${totalDays > 1 ? "s" : ""}: ${dateLabel})`,
         duration: `${totalDays} Day${totalDays > 1 ? "s" : ""}`,
         quantity: item.quantity,

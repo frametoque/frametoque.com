@@ -281,7 +281,8 @@ export async function POST(req: NextRequest) {
     if (body.projectName?.trim()) {
       projectDescription = body.projectName.trim();
     } else if (isRentalOrder) {
-      const rentalTitles = cartItems.map((i) => i.serviceTitle.trim()).filter(Boolean);
+      const cleanTitle = (t: string) => t.replace(/^Rent\s*\|\s*/i, "").trim();
+      const rentalTitles = cartItems.map((i) => cleanTitle(i.serviceTitle)).filter(Boolean);
       if (rentalTitles.length === 1) {
         projectDescription = `Equipment Rental - ${rentalTitles[0]}`;
       } else if (rentalTitles.length === 2) {
@@ -345,6 +346,12 @@ export async function POST(req: NextRequest) {
         parseFloat(String(item.price).replace(/[^0-9.-]/g, "")) || 0;
       const lineTotal = unitPrice * item.quantity;
 
+      let itemTitle = item.serviceTitle.trim();
+      const isRental = item.categorySlug === "rentals" || item.categorySlug === "rental";
+      if (isRental && !itemTitle.startsWith("Rent |")) {
+        itemTitle = `Rent | ${itemTitle}`;
+      }
+
       await sql`
         INSERT INTO quotation_items (
           quotation_id,
@@ -354,7 +361,7 @@ export async function POST(req: NextRequest) {
           total
         ) VALUES (
           ${quotationId},
-          ${`${item.serviceTitle}\n(${item.tier})`},
+          ${`${itemTitle}\n(${item.tier})`},
           ${item.quantity},
           ${unitPrice},
           ${lineTotal}
