@@ -481,15 +481,10 @@ Could you please confirm equipment availability for these dates and send over th
                   </span>
                 </div>
 
-                <div className="pt-3 border-t border-slate-200 flex items-baseline justify-between">
-                  <div>
-                    <span className="text-base font-extrabold text-slate-900 block">
-                      Estimated Rental Total
-                    </span>
-                    <span className="text-[11px] text-slate-400">
-                      Excludes refundable security deposit
-                    </span>
-                  </div>
+                <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
+                  <span className="text-base font-extrabold text-slate-900">
+                    Estimated Rental Total
+                  </span>
                   <span className="text-2xl font-black text-brand-600">
                     {formatLKR(estimatedTotal)}
                   </span>

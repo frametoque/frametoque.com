@@ -336,15 +336,10 @@ Could you please confirm equipment availability for these dates and send over th
                         {totalDays} {totalDays === 1 ? "day" : "days"}
                       </span>
                     </div>
-                    <div className="pt-2 border-t border-slate-200 flex items-baseline justify-between">
-                      <div>
-                        <span className="text-sm font-extrabold text-slate-900 block">
-                          Estimated Total
-                        </span>
-                        <span className="text-[10px] text-slate-500">
-                          Excludes refundable deposit
-                        </span>
-                      </div>
+                    <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
+                      <span className="text-sm font-extrabold text-slate-900">
+                        Estimated Total
+                      </span>
                       <span className="text-2xl font-black text-slate-900">
                         {formatLKR(estimatedTotal)}
                       </span>
