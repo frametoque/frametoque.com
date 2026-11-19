@@ -22,7 +22,7 @@ export default function RentalContactClient() {
         className="text-center max-w-2xl mx-auto space-y-4"
       >
         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Contact Our Equipment Rental Desk
+          Contact Us
         </h1>
         
         {/* Important Note */}
