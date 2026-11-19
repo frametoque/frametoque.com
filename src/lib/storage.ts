@@ -271,8 +271,6 @@ export async function putBlob(
   const baseUrl = getR2PublicBaseUrl();
   const r2Url = baseUrl ? `${baseUrl}/${cleanKey}` : cleanKey;
 
-  console.info(`[Storage] Successfully uploaded "${cleanKey}" to Cloudflare R2`);
-
   return {
     url: r2Url,
     downloadUrl: r2Url,
@@ -298,7 +296,6 @@ export async function deleteBlob(urlOrPath: string): Promise<void> {
           Key: key,
         })
       );
-      console.info(`[Storage] Deleted "${key}" from Cloudflare R2`);
     } catch (err) {
       console.warn("[Storage Warning] Cloudflare R2 delete failed:", err);
     }
