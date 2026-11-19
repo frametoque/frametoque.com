@@ -60,7 +60,7 @@ export default async function RentalsLayout({
           {children}
         </main>
 
-        {/* Shoot Bag Slide-Over Drawer */}
+        {/* Bag Slide-Over Drawer */}
         <ShootKitDrawer />
 
         {/* Light Theme Public Footer */}

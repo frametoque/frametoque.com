@@ -290,7 +290,7 @@ export async function POST(req: NextRequest) {
       } else if (rentalTitles.length > 2) {
         projectDescription = `Equipment Rental - ${rentalTitles[0]} (+${rentalTitles.length - 1} more items)`;
       } else {
-        projectDescription = "Equipment Rental - Shoot Bag";
+        projectDescription = "Equipment Rental - Bag";
       }
     } else {
       projectDescription = `Quotation #${String(nextId).padStart(4, "0")}`;

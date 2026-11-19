@@ -411,7 +411,7 @@ export default function ProductDetailsClient({
                 </span>
               </a>
 
-              {/* Add to Multi-Item Shoot Bag Button */}
+              {/* Add to Multi-Item Bag Button */}
               <button
                 type="button"
                 onClick={() => {
@@ -432,7 +432,7 @@ export default function ProductDetailsClient({
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>
-                  {isInKit(product.id) ? "In Shoot Bag (Click to View Bag)" : "+ Add to Shoot Bag (Bundle Multiple Items)"}
+                  {isInKit(product.id) ? "In Bag (Click to View Bag)" : "+ Add to Bag (Bundle Multiple Items)"}
                 </span>
               </button>
 

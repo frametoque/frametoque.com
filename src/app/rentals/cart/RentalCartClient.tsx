@@ -67,7 +67,7 @@ export default function RentalCartClient() {
     const text = 
 `Hi Frametoque Team,
 
-I'd like to check availability and reserve the following *Shoot Bag*:
+I'd like to check availability and reserve the following *Bag*:
 
 📅 *Shoot Date(s):* ${dateStr} (${totalDays} day${totalDays > 1 ? "s" : ""})
 
@@ -93,14 +93,14 @@ Could you please confirm equipment availability for these dates and send over th
     }
 
     if (items.length === 0) {
-      setQuotationError("Your Shoot Bag is empty. Please add items to request a quotation.");
+      setQuotationError("Your Bag is empty. Please add items to request a quotation.");
       return;
     }
 
     setQuotationSubmitting(true);
 
     try {
-      // Map Shoot Bag items to the cart items format expected by /api/quotation
+      // Map Bag items to the cart items format expected by /api/quotation
       const dateLabel = startDate === endDate || !endDate ? startDate : `${startDate} to ${endDate}`;
       const mappedCartItems = items.map((item) => ({
         id: item.id,
@@ -122,7 +122,7 @@ Could you please confirm equipment availability for these dates and send over th
           ? `Equipment Rental - ${rentalTitles[0]} & ${rentalTitles[1]}`
           : rentalTitles.length > 2
           ? `Equipment Rental - ${rentalTitles[0]} (+${rentalTitles.length - 1} more items)`
-          : "Equipment Rental - Shoot Bag";
+          : "Equipment Rental - Bag";
 
       const res = await fetch("/api/quotation", {
         method: "POST",
@@ -198,7 +198,7 @@ Could you please confirm equipment availability for these dates and send over th
         if (!q.client_name) q.client_name = quoteName.trim();
         if (!q.email) q.email = quoteEmail.trim();
         if (!q.phone) q.phone = quotePhone.trim();
-        if (!q.description) q.description = "Equipment Rental - Shoot Bag";
+        if (!q.description) q.description = "Equipment Rental - Bag";
 
         const { generateQuotationPDF } = await import("@/app/(dashboard)/dashboard/quotation/QuotationDocument");
         const pdfBytes = await generateQuotationPDF(q);
@@ -253,20 +253,20 @@ Could you please confirm equipment availability for these dates and send over th
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8"
       >
         <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-          Your Shoot Bag
+          Your Bag
         </h1>
 
         {itemCount > 0 && (
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
-              {itemCount} {itemCount === 1 ? "Item" : "Items"} in Shoot Bag
+              {itemCount} {itemCount === 1 ? "Item" : "Items"} in Bag
             </span>
             <button
               type="button"
               onClick={clearKit}
               className="text-xs font-medium text-slate-500 hover:text-rose-600 transition-colors cursor-pointer"
             >
-              Clear Shoot Bag
+              Clear Bag
             </button>
           </div>
         )}
@@ -284,9 +284,9 @@ Could you please confirm equipment availability for these dates and send over th
             <Camera className="w-10 h-10" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-xl font-bold text-slate-900">Your Shoot Bag is empty</h2>
+            <h2 className="text-xl font-bold text-slate-900">Your Bag is empty</h2>
             <p className="text-sm text-slate-500">
-              You haven&apos;t added any cinema cameras, lenses, or equipment to your shoot bag yet.
+              You haven&apos;t added any cinema cameras, lenses, or equipment to your bag yet.
             </p>
           </div>
           <Link
@@ -600,7 +600,7 @@ Could you please confirm equipment availability for these dates and send over th
                       className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                     >
                       <MessageCircle className="w-4 h-4 shrink-0" />
-                      <span>Reserve Shoot Bag via WhatsApp</span>
+                      <span>Reserve Bag via WhatsApp</span>
                     </a>
                   </div>
                 </form>

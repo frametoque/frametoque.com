@@ -58,7 +58,7 @@ export default function ShootKitDrawer() {
 
   const todayStr = new Date().toISOString().split("T")[0];
 
-  // WhatsApp Pre-filled message builder for multi-item Shoot Bag
+  // WhatsApp Pre-filled message builder for multi-item Bag
   const buildWhatsAppKitUrl = () => {
     const phone = "94702771361";
     const isSingleDay = startDate === endDate || !endDate;
@@ -72,7 +72,7 @@ export default function ShootKitDrawer() {
     const text = 
 `Hi Frametoque Team,
 
-I'd like to check availability and reserve the following *Shoot Bag*:
+I'd like to check availability and reserve the following *Bag*:
 
 📅 *Shoot Date(s):* ${dateStr} (${totalDays} day${totalDays > 1 ? "s" : ""})
 
@@ -89,7 +89,7 @@ Could you please confirm equipment availability for these dates and send over th
 
   return (
     <>
-      {/* Floating Shoot Bag Button (shows when items are in kit and drawer is closed) */}
+      {/* Floating Bag Button (shows when items are in kit and drawer is closed) */}
       <AnimatePresence>
         {!isOpen && itemCount > 0 && (
           <motion.div
@@ -109,7 +109,7 @@ Could you please confirm equipment availability for these dates and send over th
               </div>
               <div className="text-left">
                 <span className="text-xs font-bold text-slate-900 group-hover:text-brand-600 block leading-none transition-colors">
-                  View Shoot Bag
+                  View Bag
                 </span>
                 <span className="text-[11px] text-slate-500 font-medium">
                   {formatLKR(dailySubtotal)}/day
@@ -146,7 +146,7 @@ Could you please confirm equipment availability for these dates and send over th
               {/* Drawer Header */}
               <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900">Your Shoot Bag</h2>
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900">Your Bag</h2>
                   <span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-[11px] sm:text-xs font-bold">
                     {itemCount} {itemCount === 1 ? "item" : "items"}
                   </span>
@@ -170,7 +170,7 @@ Could you please confirm equipment availability for these dates and send over th
                       <Camera className="w-8 h-8" />
                     </div>
                     <div className="space-y-1.5 max-w-xs">
-                      <h3 className="text-base font-bold text-slate-900">Your Shoot Bag is empty</h3>
+                      <h3 className="text-base font-bold text-slate-900">Your Bag is empty</h3>
                       <p className="text-xs text-slate-500 leading-relaxed">
                         Explore our gear catalog and add cameras, lenses, lighting, and mounts to bundle them into a single reservation.
                       </p>
@@ -354,7 +354,7 @@ Could you please confirm equipment availability for these dates and send over th
                     className="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer"
                   >
                     <MessageCircle className="w-4 h-4 shrink-0" />
-                    <span>Reserve Shoot Bag via WhatsApp</span>
+                    <span>Reserve Bag via WhatsApp</span>
                   </a>
 
                   {/* Quotation & Manifest Page Link */}

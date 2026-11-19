@@ -69,7 +69,7 @@ export default function RentalHeader() {
             </Link>
           </div>
 
-          {/* Right Corner: Client Portal, Shoot Bag Trigger & Hamburger Menu Button */}
+          {/* Right Corner: Client Portal, Bag Trigger & Hamburger Menu Button */}
           <div className="flex items-center gap-2">
             <a
               href="/dashboard"
@@ -90,10 +90,10 @@ export default function RentalHeader() {
                   ? "bg-brand-600 text-white border-brand-600 hover:bg-brand-500 shadow-sm"
                   : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
               }`}
-              aria-label="Open Shoot Bag"
+              aria-label="Open Bag"
             >
               <ShoppingBag className="w-4 h-4 shrink-0" />
-              <span>Shoot Bag</span>
+              <span>Bag</span>
               {itemCount > 0 && (
                 <span className="px-1.5 py-0.2 rounded-full text-[11px] font-extrabold bg-white text-brand-600">
                   {itemCount}
