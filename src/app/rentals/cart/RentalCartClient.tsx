@@ -579,46 +579,38 @@ Could you please confirm equipment availability for these dates and send over th
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={quotationSubmitting}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
-                  >
-                    {quotationSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Generating Quotation PDF...</span>
-                      </>
-                    ) : (
-                      <>
-                        <FileText className="w-4 h-4 text-brand-400" />
-                        <span>Download Quotation</span>
-                        <Download className="w-3.5 h-3.5 text-slate-400" />
-                      </>
-                    )}
-                  </button>
+                  <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 pt-1">
+                    <button
+                      type="submit"
+                      disabled={quotationSubmitting}
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                    >
+                      {quotationSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Generating Quotation PDF...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-4 h-4 text-brand-400" />
+                          <span>Download Quotation</span>
+                          <Download className="w-3.5 h-3.5 text-slate-400" />
+                        </>
+                      )}
+                    </button>
+
+                    <a
+                      href={buildWhatsAppKitUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                    >
+                      <MessageCircle className="w-4 h-4 shrink-0" />
+                      <span>Reserve Shoot Bag via WhatsApp</span>
+                    </a>
+                  </div>
                 </form>
               )}
-            </div>
-
-            {/* Direct WhatsApp Booking Option */}
-            <div className="p-4 sm:p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-emerald-600" />
-                <h3 className="text-sm font-bold text-slate-900">Direct WhatsApp Reservation</h3>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Connect instantly with our rental desk to confirm dates, check serial availability, and coordinate pickup or delivery.
-              </p>
-              <a
-                href={buildWhatsAppKitUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs transition-all active:scale-[0.98] cursor-pointer"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>Reserve Shoot Bag via WhatsApp</span>
-              </a>
             </div>
           </motion.div>
         </div>
