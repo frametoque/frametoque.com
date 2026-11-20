@@ -11,6 +11,7 @@ import localFont from "next/font/local";
 import UmamiScript from "@/components/UmamiScript";
 
 import SmoothScroll from "@/components/SmoothScroll";
+import SessionKeepAlive from "@/components/auth/SessionKeepAlive";
 
 
 const bricolage = localFont({
@@ -183,6 +184,7 @@ export default function RootLayout({ children }) {
         className={`${bricolage.variable} ${dmMono.variable} antialiased`}
       >
         <ClerkProvider>
+          <SessionKeepAlive />
           <CartProvider>
             <SWRegister />
             <SmoothScroll />

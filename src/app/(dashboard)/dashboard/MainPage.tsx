@@ -54,10 +54,14 @@ export default function DashboardHome() {
   const primaryProjectName = plannerProjects[0]?.name;
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      router.push("/login");
-    }
-  }, [isLoaded, isSignedIn, router]);
+    if (!isLoaded || isSignedIn) return;
+    const timer = setTimeout(() => {
+      if (isLoaded && !isSignedIn) {
+        window.location.replace("/login?redirect_url=" + encodeURIComponent(window.location.pathname + window.location.search));
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [isLoaded, isSignedIn]);
 
   useEffect(() => {
     if (!user) return;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSignIn, useUser, useSignUp } from "@clerk/nextjs";
+import { useSignIn, useUser, useSignUp, useAuth, SignOutButton } from "@clerk/nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -17,6 +17,7 @@ export default function CustomLogin() {
   const { isLoaded, signIn, setActive } = useSignIn();
   const { isSignedIn, isLoaded: userLoaded } = useUser();
   const { signUp, setActive: setSignUpActive } = useSignUp();
+  const { getToken } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -42,20 +43,73 @@ export default function CustomLogin() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (userLoaded && isSignedIn) {
-      const checkAndRedirect = async () => {
-        try {
-          const response = await fetch("/api/auth/check-role");
-          const data = await response.json();
-          const redirectPath = data.isAdmin ? "/admin" : "/dashboard";
-          router.replace(redirectPath);
-        } catch (err) {
-          router.replace("/dashboard");
+    if (!userLoaded || !isSignedIn) return;
+
+    let isMounted = true;
+    const checkAndRedirect = async () => {
+      // Loop protection: avoid rapid repeated redirects
+      const now = Date.now();
+      const lastRedirect = typeof window !== "undefined" ? sessionStorage.getItem("ft_last_login_redirect") : null;
+      const redirectCount = parseInt((typeof window !== "undefined" ? sessionStorage.getItem("ft_redirect_count") : null) || "0", 10);
+
+      if (lastRedirect && now - parseInt(lastRedirect, 10) < 6000 && redirectCount >= 3) {
+        console.warn("[login] Rapid redirect loop detected. Halting auto-redirect to let user interact.");
+        return;
+      }
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("ft_last_login_redirect", now.toString());
+        sessionStorage.setItem("ft_redirect_count", (redirectCount + 1).toString());
+      }
+
+      try {
+        // Ensure Clerk session token is freshly synced into cookies before redirecting
+        if (typeof getToken === "function") {
+          await getToken({ skipCache: true }).catch(() => {});
         }
-      };
-      checkAndRedirect();
-    }
-  }, [userLoaded, isSignedIn, router]);
+
+        const redirectParam = searchParams.get("redirect_url");
+
+        const response = await fetch("/api/auth/check-role", { cache: "no-store" });
+        const data = await response.json();
+
+        let destination = "/dashboard";
+        if (
+          redirectParam &&
+          redirectParam.startsWith("/") &&
+          !redirectParam.startsWith("//") &&
+          !redirectParam.startsWith("/login")
+        ) {
+          if (redirectParam.startsWith("/admin") && !data.isAdmin) {
+            destination = "/dashboard";
+          } else {
+            destination = redirectParam;
+          }
+        } else {
+          destination = data.isAdmin ? "/admin" : "/dashboard";
+        }
+
+        if (typeof window !== "undefined") {
+          setTimeout(() => {
+            sessionStorage.removeItem("ft_redirect_count");
+          }, 3000);
+        }
+
+        if (isMounted) {
+          window.location.replace(destination);
+        }
+      } catch (err) {
+        if (isMounted) {
+          window.location.replace("/dashboard");
+        }
+      }
+    };
+
+    checkAndRedirect();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userLoaded, isSignedIn, searchParams, getToken]);
 
   const clearMessages = () => {
     setErrorMsg("");
@@ -139,15 +193,28 @@ export default function CustomLogin() {
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         
-        await new Promise(resolve => setTimeout(resolve, 200));
+        if (typeof getToken === "function") {
+          await getToken({ skipCache: true }).catch(() => {});
+        }
         
         try {
-          const response = await fetch("/api/auth/check-role");
+          const redirectParam = searchParams.get("redirect_url");
+          const response = await fetch("/api/auth/check-role", { cache: "no-store" });
           const data = await response.json();
-          const redirectPath = data.isAdmin ? "/admin" : "/dashboard";
-          router.replace(redirectPath);
+          let destination = "/dashboard";
+          if (
+            redirectParam &&
+            redirectParam.startsWith("/") &&
+            !redirectParam.startsWith("//") &&
+            !redirectParam.startsWith("/login")
+          ) {
+            destination = redirectParam.startsWith("/admin") && !data.isAdmin ? "/dashboard" : redirectParam;
+          } else {
+            destination = data.isAdmin ? "/admin" : "/dashboard";
+          }
+          window.location.replace(destination);
         } catch (err) {
-          router.replace("/dashboard");
+          window.location.replace("/dashboard");
         }
       }
     } catch (err) {
@@ -180,7 +247,10 @@ export default function CustomLogin() {
         setStep("verify");
       } else if (result.status === "complete") {
         await setSignUpActive({ session: result.createdSessionId });
-        router.replace("/dashboard");
+        if (typeof getToken === "function") {
+          await getToken({ skipCache: true }).catch(() => {});
+        }
+        window.location.replace("/dashboard");
       }
     } catch (err) {
       setErrorMsg(err?.errors?.[0]?.message || "Registration failed. Please try again.");
@@ -198,7 +268,10 @@ export default function CustomLogin() {
       const result = await signUp.attemptEmailAddressVerification({ code });
       if (result.status === "complete") {
         await setSignUpActive({ session: result.createdSessionId });
-        router.replace("/dashboard");
+        if (typeof getToken === "function") {
+          await getToken({ skipCache: true }).catch(() => {});
+        }
+        window.location.replace("/dashboard");
       }
     } catch {
       setErrorMsg("Invalid or expired code. Please try again.");
@@ -242,7 +315,10 @@ export default function CustomLogin() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.replace("/dashboard");
+        if (typeof getToken === "function") {
+          await getToken({ skipCache: true }).catch(() => {});
+        }
+        window.location.replace("/dashboard");
       }
     } catch (err) {
       setErrorMsg(err?.errors?.[0]?.message || "Reset failed. Check your code and try again.");
@@ -253,10 +329,33 @@ export default function CustomLogin() {
 
   if (userLoaded && isSignedIn) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+        <div className="text-center max-w-sm">
           <div className="w-12 h-12 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-400 text-sm">Redirecting…</p>
+          <p className="text-slate-300 text-sm font-medium">Redirecting to your dashboard…</p>
+          <p className="text-slate-500 text-xs mt-2">If you are not redirected automatically, click below.</p>
+          <div className="mt-5 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  sessionStorage.removeItem("ft_redirect_count");
+                }
+                window.location.replace("/dashboard");
+              }}
+              className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-semibold transition shadow-lg shadow-brand-500/25 cursor-pointer"
+            >
+              Continue to Dashboard
+            </button>
+            <SignOutButton redirectUrl="/login">
+              <button
+                type="button"
+                className="text-slate-400 hover:text-white text-xs underline mt-2 transition cursor-pointer"
+              >
+                Sign out / Switch account
+              </button>
+            </SignOutButton>
+          </div>
         </div>
       </div>
     );
