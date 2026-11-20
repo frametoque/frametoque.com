@@ -83,7 +83,10 @@ export default function FeaturedEquipment({
               isDark ? "text-white" : "text-slate-900"
             }`}
           >
-            Featured Equipment
+            Equipment{" "}
+            <span className="bg-gradient-to-b from-brand-400 to-brand-600 bg-clip-text text-transparent">
+              Rentals
+            </span>
           </h2>
         </motion.div>
 
@@ -157,6 +160,8 @@ export default function FeaturedEquipment({
                 >
                   <Link
                     href={`/rentals/${product.slug || product.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={`group rounded-3xl overflow-hidden flex flex-col justify-between transition-all duration-300 h-full ${
                       isDark
                         ? "bg-white/[0.04] border border-white/[0.08] hover:border-brand-500/40 hover:shadow-2xl hover:shadow-brand-500/10"
@@ -165,7 +170,7 @@ export default function FeaturedEquipment({
                   >
                   {/* Image */}
                   <div>
-                    <div className="relative aspect-[4/3] overflow-hidden">
+                    <div className="relative aspect-square overflow-hidden">
                       {displayImage ? (
                         <img
                           src={displayImage}
@@ -271,6 +276,8 @@ export default function FeaturedEquipment({
         <div className="text-center mt-12">
           <Link
             href="/rentals"
+            target="_blank"
+            rel="noopener noreferrer"
             className={`inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-semibold transition-all duration-300 shadow-lg group/cta ${
               isDark
                 ? "bg-gradient-to-r from-brand-600 to-brand-500 text-white hover:from-brand-500 hover:to-brand-400 hover:shadow-brand-500/30"

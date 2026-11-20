@@ -27,13 +27,11 @@ export const metadata = {
 
 import HomeClient from "./home/page";
 import FeaturedEquipmentServer from "@/components/FeaturedEquipmentServer";
-import BrowseFeaturedServer from "@/components/BrowseFeaturedServer";
 
 export default function Page() {
   return (
     <HomeClient
       featuredEquipment={<FeaturedEquipmentServer variant="dark" />}
-      browseFeatured={<BrowseFeaturedServer />}
     />
   );
 }

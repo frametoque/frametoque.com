@@ -15,10 +15,8 @@ import StudioPromo from "@/components/FTStudio";
 
 export default function HomeClient({
   featuredEquipment,
-  browseFeatured,
 }: {
   featuredEquipment?: ReactNode;
-  browseFeatured?: ReactNode;
 }) {
   const [scrolled, setScrolled] = useState(false);
 
@@ -35,8 +33,6 @@ export default function HomeClient({
       <Navbar scrolled={scrolled} />
       <Hero />
       <ServicesHome />
-      {/* Browse Featured Cameras — horizontal scroll row */}
-      {browseFeatured}
       <ProjectsHome />
       {/* Awesome Equipment — full category grid */}
       {featuredEquipment}
