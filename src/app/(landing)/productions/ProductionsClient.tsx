@@ -110,10 +110,10 @@ export default function ProductionsClient({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900/60 to-black border border-white/10 p-8 sm:p-12 lg:p-16 flex flex-col md:flex-row items-center justify-between gap-8 hover:border-sky-500/30 transition-colors shadow-2xl"
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900/60 to-black border border-white/10 p-8 sm:p-12 lg:p-16 flex flex-col md:flex-row items-center justify-between gap-8 hover:border-red-500/30 transition-colors shadow-2xl"
           >
             <div className="max-w-xl">
-              <span className="text-xs font-bold uppercase tracking-wider text-brand-400 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 inline-block mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-red-400 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 inline-block mb-3">
                 Frametoque Rentals
               </span>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">

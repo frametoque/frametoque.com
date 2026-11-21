@@ -91,7 +91,7 @@ export default async function RentalsLayout({
   return (
     <RentalKitProvider>
       <div 
-        className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-brand-500 selection:text-white"
+        className="rental-theme min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-brand-500 selection:text-white"
         style={{ colorScheme: "light" }}
       >
         {/* Light Theme Public Header with Hamburger Side Menu */}

@@ -44,7 +44,7 @@ export default function RentalContactClient() {
 
             <div className="space-y-4 text-xs sm:text-sm">
               <div className="flex items-start gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 mt-0.5">
                   <MessageCircle className="w-5 h-5" />
                 </div>
                 <div>
@@ -53,7 +53,7 @@ export default function RentalContactClient() {
                     href="https://wa.me/94701901461?text=Hi%20Frametoque%20Team%2C%20I'm%20inquiring%20about%20gear%20rental."
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-slate-900 hover:text-blue-600 hover:underline text-sm font-semibold"
+                    className="text-slate-900 hover:text-brand-600 hover:underline text-sm font-semibold"
                   >
                     +94 70 190 1461
                   </a>
@@ -61,7 +61,7 @@ export default function RentalContactClient() {
               </div>
 
               <div className="flex items-start gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 mt-0.5">
                   <Phone className="w-5 h-5" />
                 </div>
                 <div>
@@ -74,19 +74,19 @@ export default function RentalContactClient() {
               </div>
 
               <div className="flex items-start gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 mt-0.5">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-xs">Email</h3>
-                  <a href="mailto:rentals@frametoque.com" className="text-slate-900 hover:text-blue-600 hover:underline text-xs">
+                  <a href="mailto:rentals@frametoque.com" className="text-slate-900 hover:text-brand-600 hover:underline text-xs">
                     rentals@frametoque.com
                   </a>
                 </div>
               </div>
 
               <div className="flex items-start gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 mt-0.5">
                   <Clock className="w-5 h-5" />
                 </div>
                 <div>
@@ -98,7 +98,7 @@ export default function RentalContactClient() {
               </div>
 
               <div className="flex items-start gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 mt-0.5">
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div>

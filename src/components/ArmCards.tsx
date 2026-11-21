@@ -236,7 +236,7 @@ export default function ArmCards() {
         >
           {/* Subtle Ambient Background Glows */}
           <div className="absolute top-0 left-0 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-          <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-red-500/10 blur-3xl pointer-events-none" />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/10 relative z-10">
             {/* Left Side: Framebooks */}
@@ -281,7 +281,7 @@ export default function ArmCards() {
                 <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-1">
                   Frametoque Rentals
                 </h3>
-                <p className="text-xs sm:text-sm font-semibold text-sky-400 mb-5">
+                <p className="text-xs sm:text-sm font-semibold text-red-400 mb-5">
                   Equipment Rentals by Frametoque Productions
                 </p>
 
@@ -294,7 +294,7 @@ export default function ArmCards() {
                       rel="noopener noreferrer"
                       className="group/item flex items-center gap-2 text-xs text-gray-300 hover:text-white px-3 py-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 transition-colors"
                     >
-                      <g.icon className="w-3.5 h-3.5 text-sky-400 shrink-0 group-hover/item:text-sky-300 transition-colors" />
+                      <g.icon className="w-3.5 h-3.5 text-red-400 shrink-0 group-hover/item:text-red-300 transition-colors" />
                       <span className="truncate">{g.name}</span>
                     </Link>
                   ))}
@@ -306,7 +306,7 @@ export default function ArmCards() {
                   href="/rentals"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center px-6 py-2.5 rounded-full text-white font-bold text-xs sm:text-sm transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 shadow-sky-500/25"
+                  className="inline-flex items-center justify-center px-6 py-2.5 rounded-full text-white font-bold text-xs sm:text-sm transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-red-500/25"
                 >
                   <span>Browse Rentals Catalog</span>
                   <ArrowRight className="ml-1.5 w-4 h-4" />
