@@ -73,11 +73,11 @@ const cardVariants: Variants = {
 
 export default function ProductionsWhatWeDo() {
   return (
-    <section className="py-24 px-6 lg:px-16 border-t border-white/5 bg-slate-950/60 relative overflow-hidden">
+    <section className="py-24 px-6 lg:px-12 xl:px-16 border-t border-white/5 bg-slate-950/60 relative overflow-hidden">
       {/* Background ambient lighting */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-brand-500/10 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="max-w-[1480px] mx-auto relative z-10">
         {/* Section Header with smooth entrance */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -111,15 +111,15 @@ export default function ProductionsWhatWeDo() {
               <motion.div
                 key={cap.title}
                 variants={cardVariants}
-                className="group relative flex flex-col justify-start overflow-hidden rounded-2xl bg-[#0a0a0a] bg-opacity-80 backdrop-blur-md border border-white/5 p-8 transition-all duration-500 hover:-translate-y-1 hover:border-white/10"
+                className="group relative flex flex-col justify-start overflow-hidden rounded-2xl bg-[#0a0a0a] bg-opacity-80 backdrop-blur-md border border-white/5 p-6 xl:p-7 transition-all duration-500 hover:-translate-y-1 hover:border-white/10"
               >
                 {/* Top part / Icon */}
-                <div className="mb-6 flex items-center justify-between">
-                  <Icon className="h-10 w-10 text-brand-500 border-none transition-colors duration-500 group-hover:text-brand-400" />
+                <div className="mb-5 flex items-center justify-between">
+                  <Icon className="h-9 w-9 xl:h-10 xl:w-10 text-brand-500 border-none transition-colors duration-500 group-hover:text-brand-400 shrink-0" />
 
                   <div className="opacity-0 -translate-x-4 transition-all duration-500 group-hover:translate-x-0 group-hover:opacity-100">
                     <svg
-                      className="w-6 h-6 text-brand-500"
+                      className="w-5 h-5 text-brand-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -136,10 +136,10 @@ export default function ProductionsWhatWeDo() {
 
                 {/* Content */}
                 <div>
-                  <h3 className="mb-3 text-xl font-bold tracking-tight text-white/90 transition-colors group-hover:text-white">
+                  <h3 className="mb-2.5 text-lg xl:text-xl font-bold tracking-tight text-white/90 transition-colors group-hover:text-white">
                     {cap.title}
                   </h3>
-                  <p className="text-sm leading-relaxed text-gray-400 transition-colors group-hover:text-gray-300">
+                  <p className="text-xs xl:text-sm leading-relaxed text-gray-400 transition-colors group-hover:text-gray-300">
                     {cap.description}
                   </p>
                 </div>
