@@ -50,7 +50,6 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       dbStatus,
-      blobStatus: "Migrated to R2",
       r2Status,
       activeStorage: r2Status === "Connected" ? "Cloudflare R2" : "None",
       env: process.env.NODE_ENV || "development",

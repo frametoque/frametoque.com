@@ -1,4 +1,5 @@
 import sql from "@/lib/db";
+import { resolveMediaUrl } from "@/lib/storage";
 
 const TABLE_MAP: Record<string, string> = {
   "web-dev":        "services_webdev",
@@ -126,7 +127,7 @@ export async function getServiceCards(categorySlug: string, arm?: string): Promi
       title: row.title,
       desc:  row.overview,
       price,
-      img:   row.hero_image || "/services/eventpulse.png",
+      img:   resolveMediaUrl(row.hero_image) || "/services/eventpulse.png",
       link:  `${armPrefix}/${categorySlug}/${row.service_id}`,
     };
   });

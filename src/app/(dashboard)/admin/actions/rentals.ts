@@ -5,7 +5,7 @@ import { requireAdminSession } from "@/lib/auth-guard";
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 import { createInvoice, createIncome } from "./actions";
-import { putBlob } from "@/lib/storage";
+import { uploadToR2 } from "@/lib/storage";
 import { encryptField, decryptField, generateBlindIndex } from "@/lib/crypto-vault";
 
 let _rentalsSchemaPromise: Promise<void> | null = null;
@@ -422,8 +422,8 @@ export async function uploadRentalEquipmentImage(formData: FormData): Promise<st
 
   const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
   const filename = `admin/rentals/equipment/${Date.now()}-${safeName}`;
-  const blob = await putBlob(filename, file, { access: "public" });
-  return blob.url;
+  const uploaded = await uploadToR2(filename, file, { access: "public" });
+  return uploaded.url;
 }
 
 export async function uploadMultipleRentalEquipmentImages(formData: FormData): Promise<string[]> {
@@ -437,8 +437,8 @@ export async function uploadMultipleRentalEquipmentImages(formData: FormData): P
     if (file && typeof file === "object" && file.size > 0) {
       const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
       const filename = `admin/rentals/equipment/${Date.now()}-${Math.random().toString(36).substring(2, 7)}-${safeName}`;
-      const blob = await putBlob(filename, file, { access: "public" });
-      urls.push(blob.url);
+      const uploaded = await uploadToR2(filename, file, { access: "public" });
+      urls.push(uploaded.url);
     }
   }
   return urls;

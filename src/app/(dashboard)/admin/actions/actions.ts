@@ -3,7 +3,7 @@
 import sql from "@/lib/db";
 import { clerkClient, auth } from "@clerk/nextjs/server";
 import { requireAdminSession, requireUserSession } from "@/lib/auth-guard";
-import { putBlob, deleteBlob } from '@/lib/storage';
+import { uploadToR2, deleteFromR2 } from '@/lib/storage';
 import { logSystemAction } from "@/lib/logger";
 import { getGravatarUrl } from "@/lib/gravatar";
 import { reactivateDomainAfterRenewalPayment } from "./domains-shared";
@@ -34,12 +34,12 @@ export async function uploadReceipt(formData: FormData, type: 'income' | 'expens
 
   try {
     const filename = `admin/receipts/${type}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-    const blob = await putBlob(filename, file, {
+    const uploaded = await uploadToR2(filename, file, {
       access: 'public',
     });
     
     await logSystemAction(`Uploaded ${type} receipt: "${file.name}"`);
-    return blob.url;
+    return uploaded.url;
   } catch (err: any) {
     await logSystemAction(`Upload Error: Failed to upload ${type} receipt: "${file.name}" - ${err.message || String(err)}`);
     throw err;
@@ -2487,11 +2487,11 @@ export async function submitBankSlip(invoiceId: string, slipBase64: string, amou
       const fileExtension = mimeType.split('/')[1].split('+')[0] || 'png';
       const binary = Buffer.from(base64Data, 'base64');
       const filename = `admin/bank-slips/${Date.now()}-${invoiceId}.${fileExtension}`;
-      const blob = await putBlob(filename, binary, {
+      const uploaded = await uploadToR2(filename, binary, {
         access: 'public',
         contentType: mimeType,
       });
-      bankSlipUrl = blob.url;
+      bankSlipUrl = uploaded.url;
     }
 
     await sql`
@@ -2627,9 +2627,9 @@ export async function declineBankSlip(invoiceId: string, slipId?: string | numbe
     const slipUrl = slip.slip_url;
     if (slipUrl) {
       try {
-        await deleteBlob(slipUrl);
-      } catch (blobErr) {
-        console.warn("Failed to delete slip image from storage:", blobErr);
+        await deleteFromR2(slipUrl);
+      } catch (storageErr) {
+        console.warn("Failed to delete slip image from storage:", storageErr);
       }
     }
 
@@ -2751,11 +2751,11 @@ export async function adminUploadPaymentSlip(invoiceId: string, slipBase64: stri
       const fileExtension = mimeType.split('/')[1].split('+')[0] || 'png';
       const binary = Buffer.from(base64Data, 'base64');
       const filename = `admin/payment-slips/${Date.now()}-${invoiceId}.${fileExtension}`;
-      const blob = await putBlob(filename, binary, {
+      const uploaded = await uploadToR2(filename, binary, {
         access: 'public',
         contentType: mimeType,
       });
-      slipUrl = blob.url;
+      slipUrl = uploaded.url;
     }
 
     // Insert the slip with 'approved' status and mark as admin-uploaded
@@ -2799,11 +2799,11 @@ export async function submitPaymentSlip(invoiceId: string, amount: number, slipB
       const fileExtension = mimeType.split('/')[1].split('+')[0] || 'png';
       const binary = Buffer.from(base64Data, 'base64');
       const filename = `admin/payment-slips/${Date.now()}-${invoiceId}.${fileExtension}`;
-      const blob = await putBlob(filename, binary, {
+      const uploaded = await uploadToR2(filename, binary, {
         access: 'public',
         contentType: mimeType,
       });
-      slipUrl = blob.url;
+      slipUrl = uploaded.url;
     }
 
     await sql`

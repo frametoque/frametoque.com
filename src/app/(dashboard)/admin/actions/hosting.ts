@@ -4,7 +4,7 @@ import { requireAdminSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
-import { putBlob } from "@/lib/storage";
+import { uploadToR2 } from "@/lib/storage";
 
 export interface HostingOrder {
   id: number;
@@ -193,8 +193,8 @@ export async function uploadProviderInvoice(formData: FormData): Promise<string>
 
   try {
     const filename = `admin/hosting-invoices/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-    const blob = await putBlob(filename, file, { access: 'public' });
-    return blob.url;
+    const uploaded = await uploadToR2(filename, file, { access: 'public' });
+    return uploaded.url;
   } catch (err: any) {
     console.error('Failed to upload hosting provider invoice:', err);
     throw err;
@@ -219,8 +219,8 @@ export async function uploadRenewalInvoiceForHosting(formData: FormData): Promis
 
   try {
     const filename = `admin/hosting-renewal-invoices/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-    const blob = await putBlob(filename, file, { access: 'public' });
-    return blob.url;
+    const uploaded = await uploadToR2(filename, file, { access: 'public' });
+    return uploaded.url;
   } catch (err: any) {
     console.error('Failed to upload hosting renewal invoice:', err);
     throw err;

@@ -4,7 +4,7 @@ import { requireAdminSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
-import { putBlob, fetchWithFallback } from "@/lib/storage";
+import { uploadToR2, fetchWithFallback } from "@/lib/storage";
 import { Readable } from "stream";
 
 export async function processDueScheduledPosts() {
@@ -67,8 +67,8 @@ export async function uploadSocialMedia(formData: FormData) {
 
   const file = formData.get("file") as File;
   const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-  const blob = await putBlob(`social/${Date.now()}-${safeName}`, file, { access: 'public' });
-  return blob.url;
+  const uploaded = await uploadToR2(`social/${Date.now()}-${safeName}`, file, { access: 'public' });
+  return uploaded.url;
 }
 
 export async function getSocialPosts() {

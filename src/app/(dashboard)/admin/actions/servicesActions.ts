@@ -5,7 +5,7 @@ import { requireAdminSession } from "@/lib/auth-guard";
 import sql from "@/lib/db";
 import { promises as fs } from "fs";
 import path from "path";
-import { putBlob } from "@/lib/storage";
+import { uploadToR2 } from "@/lib/storage";
 import { TABLE_MAP } from "@/lib/services";
 
 /**
@@ -229,9 +229,9 @@ export async function uploadServiceCover(formData: FormData): Promise<string> {
   }
 
   const filename = `uploads/services/${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
-  const blob = await putBlob(filename, file, {
+  const uploaded = await uploadToR2(filename, file, {
     access: "public",
   });
 
-  return blob.url;
+  return uploaded.url;
 }

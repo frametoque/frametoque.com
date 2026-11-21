@@ -5,7 +5,7 @@ import { requireAdminSession } from "@/lib/auth-guard";
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
 import { generateUniqueInvoiceId } from "./actions";
-import { putBlob } from '@/lib/storage';
+import { uploadToR2 } from '@/lib/storage';
 import { ensureDomainTables } from "@/lib/domains/migration";
 import { getDomainProvider } from "@/lib/domains/provider";
 import { logDomainAudit, getDomainAuditLogs } from "@/lib/domains/audit";
@@ -19,10 +19,10 @@ export async function uploadProviderInvoice(formData: FormData): Promise<string>
   }
   try {
     const filename = `admin/provider-invoices/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-    const blob = await putBlob(filename, file, {
+    const uploaded = await uploadToR2(filename, file, {
       access: 'public',
     });
-    return blob.url;
+    return uploaded.url;
   } catch (err: any) {
     console.error("Failed to upload provider invoice:", err);
     throw err;
@@ -112,8 +112,8 @@ export async function uploadRenewalInvoiceForDomain(formData: FormData): Promise
   if (!file) throw new Error('No file uploaded');
   try {
     const filename = `admin/renewal-invoices/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-    const blob = await putBlob(filename, file, { access: 'public' });
-    return blob.url;
+    const uploaded = await uploadToR2(filename, file, { access: 'public' });
+    return uploaded.url;
   } catch (err: any) {
     console.error('Failed to upload renewal invoice:', err);
     throw err;

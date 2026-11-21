@@ -267,9 +267,10 @@ export default function ArmCards() {
                   href="https://books.frametoque.com"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Learn more about Framebooks ERP"
                   className="inline-flex items-center justify-center px-6 py-2.5 rounded-full text-white font-bold text-xs sm:text-sm transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 shadow-emerald-500/25"
                 >
-                  <span>Learn More</span>
+                  <span>Explore Framebooks</span>
                   <ArrowRight className="ml-1.5 w-4 h-4" />
                 </a>
               </div>

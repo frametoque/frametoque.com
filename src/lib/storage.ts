@@ -64,13 +64,6 @@ export function isR2Configured(): boolean {
   );
 }
 
-/**
- * Checks if Vercel Blob is configured (deprecated: project migrated entirely to Cloudflare R2).
- */
-export function isVercelBlobConfigured(): boolean {
-  return false;
-}
-
 let s3ClientInstance: S3Client | null = null;
 
 /**
@@ -237,7 +230,7 @@ async function toBuffer(body: File | Blob | Buffer | Uint8Array | string): Promi
 /**
  * Uploads an object directly to Cloudflare R2 preserving exact file structure.
  */
-export async function putBlob(
+export async function uploadToR2(
   pathname: string,
   body: File | Blob | Buffer | Uint8Array | string,
   options?: StorageUploadOptions
@@ -280,10 +273,13 @@ export async function putBlob(
   };
 }
 
+// Alias for compatibility
+export const uploadFile = uploadToR2;
+
 /**
  * Deletes an object from Cloudflare R2.
  */
-export async function deleteBlob(urlOrPath: string): Promise<void> {
+export async function deleteFromR2(urlOrPath: string): Promise<void> {
   const key = extractStorageKey(urlOrPath);
   if (!key) return;
 
@@ -302,8 +298,11 @@ export async function deleteBlob(urlOrPath: string): Promise<void> {
   }
 }
 
+// Alias for compatibility
+export const deleteFile = deleteFromR2;
+
 /**
- * Translates any legacy storage / blob URL into the equivalent Cloudflare R2 URL.
+ * Translates any storage URL or path into the Cloudflare R2 URL.
  */
 export function getEquivalentR2Url(urlOrPath: string): string | null {
   const baseUrl = getR2PublicBaseUrl();
@@ -315,7 +314,6 @@ export function getEquivalentR2Url(urlOrPath: string): string | null {
 
 /**
  * Downloads / fetches a file directly from Cloudflare R2 (or public R2 CDN).
- * Also automatically translates legacy Vercel Blob URLs to their R2 equivalents.
  */
 export async function fetchWithFallback(urlOrKey: string, init?: RequestInit): Promise<Response> {
   const key = extractStorageKey(urlOrKey);

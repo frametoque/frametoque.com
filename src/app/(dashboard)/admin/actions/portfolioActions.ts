@@ -7,7 +7,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
 import { imageSize } from "image-size";
-import { putBlob, deleteBlob } from "@/lib/storage";
+import { uploadToR2, deleteFromR2 } from "@/lib/storage";
 import { headers } from "next/headers";
 
 // Mapping category slugs to table names
@@ -218,7 +218,7 @@ export async function deletePortfolioItem(categorySlug: string, id: number) {
     // 2. Delete photo file from storage CDN if it's a remote URL
     if (src && src.startsWith("http")) {
       try {
-        await deleteBlob(src);
+        await deleteFromR2(src);
       } catch (err: any) {
         console.error(`Failed to delete storage CDN file ${src}:`, err);
       }
@@ -258,7 +258,7 @@ export async function deletePortfolioItem(categorySlug: string, id: number) {
     if (rows.length > 0) {
       const url = rows[0].image_path || rows[0].src;
       if (url && url.startsWith("http")) {
-        await deleteBlob(url);
+        await deleteFromR2(url);
       }
     }
   } catch (err) {
@@ -383,11 +383,11 @@ export async function uploadPortfolioMedia(formData: FormData, categorySlug?: st
     ? `projects/web/${Date.now()}-${cleanFilename}`
     : `uploads/portfolio/${Date.now()}-${cleanFilename}`;
 
-  const blob = await putBlob(filename, file, {
+  const uploaded = await uploadToR2(filename, file, {
     access: "public",
   });
 
-  return blob.url;
+  return uploaded.url;
 }
 
 /**
@@ -413,14 +413,14 @@ export async function uploadPortfolioMediaFromUrl(url: string): Promise<string> 
     throw new Error(`Failed to download image: ${response.statusText}`);
   }
 
-  const blob = await response.blob();
+  const fileBlob = await response.blob();
   const filename = `projects/web/${Date.now()}-screenshot.png`;
 
-  const uploadedBlob = await putBlob(filename, blob, {
+  const uploaded = await uploadToR2(filename, fileBlob, {
     access: "public",
   });
 
-  return uploadedBlob.url;
+  return uploaded.url;
 }
 
 /**
@@ -453,7 +453,7 @@ export async function uploadPortfolioMediaWithDimensions(
     filename = `uploads/portfolio/${hash.slice(0, 12)}-${safeFilename}`;
   }
 
-  const blob = await putBlob(filename, buffer, {
+  const uploaded = await uploadToR2(filename, buffer, {
     access: "public",
   });
 
@@ -469,7 +469,7 @@ export async function uploadPortfolioMediaWithDimensions(
     console.error("Failed to parse image dimensions, using defaults:", err);
   }
 
-  return { url: blob.url, width, height, hash, filename: originalFilename };
+  return { url: uploaded.url, width, height, hash, filename: originalFilename };
 }
 
 /**
@@ -542,10 +542,10 @@ export async function createBatchPortfolioPhotos(
     });
 
     if (match) {
-      // Delete old CDN blob file if a new file URL was uploaded to replace it
+      // Delete old CDN file if a new file URL was uploaded to replace it
       if (match.src && match.src !== photo.src && match.src.startsWith("http")) {
         try {
-          await deleteBlob(match.src);
+          await deleteFromR2(match.src);
         } catch (err) {
           console.error(`Failed to delete replaced file ${match.src}:`, err);
         }
@@ -654,7 +654,7 @@ export async function cleanDuplicatesFromEvent(eventName: string): Promise<{ kep
   for (const photo of toDelete) {
     if (photo.src && photo.src.startsWith("http")) {
       try {
-        await deleteBlob(photo.src);
+        await deleteFromR2(photo.src);
       } catch (err) {
         console.error(`Deduplication: Failed to delete file ${photo.src}:`, err);
       }

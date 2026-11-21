@@ -4,7 +4,7 @@ import { requireAdminSession } from "@/lib/auth-guard";
 
 import sql from "@/lib/db";
 import { logSystemAction } from "@/lib/logger";
-import { putBlob } from "@/lib/storage";
+import { uploadToR2 } from "@/lib/storage";
 
 let _inventorySchemaPromise: Promise<void> | null = null;
 async function ensureInventorySchema(): Promise<void> {
@@ -238,6 +238,6 @@ export async function uploadInventoryDocument(formData: FormData): Promise<strin
   const file = formData.get('file') as File;
   if (!file) throw new Error("No file uploaded");
   const filename = `admin/inventory/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-  const blob = await putBlob(filename, file, { access: 'public' });
-  return blob.url;
+  const uploaded = await uploadToR2(filename, file, { access: 'public' });
+  return uploaded.url;
 }
