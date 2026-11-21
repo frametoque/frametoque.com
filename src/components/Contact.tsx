@@ -156,7 +156,7 @@ export default function ContactPage() {
 
       <main className="min-h-screen relative overflow-hidden">
         {/* Hero Section */}
-        <section className="relative pt-36 pb-20 sm:pt-44 sm:pb-28 px-6 lg:px-16 overflow-hidden">
+        <section className="relative pt-36 pb-16 sm:pt-44 sm:pb-20 px-6 lg:px-16 overflow-hidden">
           {/* Ambient Glow Background */}
           <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] sm:w-[900px] h-[400px] bg-brand-500/15 blur-[120px] rounded-full" />

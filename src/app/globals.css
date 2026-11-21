@@ -15,17 +15,17 @@
 }
 
 .rental-theme {
-  --color-brand-50: #FEF2F2;
-  --color-brand-100: #FEE2E2;
-  --color-brand-200: #FECACA;
-  --color-brand-300: #FCA5A5;
-  --color-brand-400: #F87171;
-  --color-brand-500: #EF4444;
-  --color-brand-600: #DC2626;
-  --color-brand-700: #B91C1C;
-  --color-brand-800: #991B1B;
-  --color-brand-900: #7F1D1D;
-  --color-brand-950: #450A0A;
+  --color-brand-50: #FAF5FF;
+  --color-brand-100: #F3E8FF;
+  --color-brand-200: #E9D5FF;
+  --color-brand-300: #D8B4FE;
+  --color-brand-400: #C084FC;
+  --color-brand-500: #A855F7;
+  --color-brand-600: #9333EA;
+  --color-brand-700: #7E22CE;
+  --color-brand-800: #6B21A8;
+  --color-brand-900: #581C87;
+  --color-brand-950: #2E1065;
 }
 
 

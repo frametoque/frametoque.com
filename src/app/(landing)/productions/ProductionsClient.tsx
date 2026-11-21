@@ -3,12 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import GallerySection from "@/components/projects/GallerySection";
 import ProductionsWhatWeDo from "@/components/productions/ProductionsWhatWeDo";
-import RentalCatalogMockup from "@/components/rentals/RentalCatalogMockup";
 import type { PhotographyEvent, VideoProject } from "@/lib/workdata";
 
 interface ProductionsClientProps {
@@ -73,29 +72,20 @@ export default function ProductionsClient({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3 flex-wrap"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3"
           >
             <Link
               href="/productions/services/photo-video"
-              className="w-full sm:w-auto inline-flex items-center justify-center px-5 sm:px-6 py-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white font-medium text-xs sm:text-sm transition-all duration-300 hover:border-brand-500/30"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-5 sm:px-6 py-2.5 rounded-full bg-brand-500/5 border border-brand-500/50 hover:bg-brand-500/15 hover:border-brand-400 text-brand-400 hover:text-brand-300 font-semibold text-xs sm:text-sm transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm"
             >
               Explore Services & Pricing
               <ArrowRight className="ml-1.5 w-3.5 h-3.5" />
             </Link>
             <Link
               href="#work"
-              className="w-full sm:w-auto inline-flex items-center justify-center px-5 sm:px-6 py-2.5 rounded-full bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 text-white font-semibold text-xs sm:text-sm transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-brand-500/20"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-5 sm:px-6 py-2.5 rounded-full bg-white/5 border border-white/20 hover:bg-white/10 hover:border-white/40 text-white font-semibold text-xs sm:text-sm transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm"
             >
               View Portfolio
-            </Link>
-            <Link
-              href="/rentals"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto inline-flex items-center justify-center px-5 sm:px-6 py-2.5 rounded-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-semibold text-xs sm:text-sm transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-red-500/20"
-            >
-              Browse Equipment Rental Catalogue
-              <ArrowRight className="ml-1.5 w-3.5 h-3.5" />
             </Link>
           </motion.div>
         </motion.div>
@@ -112,65 +102,7 @@ export default function ProductionsClient({
         eventProductionUrls={eventProductionUrls}
       />
 
-      {/* Rentals Showcase Section (Frametoque Rentals) */}
-      <section id="rentals" className="py-24 px-6 lg:px-16 border-t border-white/5 relative bg-gradient-to-b from-black via-slate-950/80 to-black">
-        <div className="max-w-6xl mx-auto">
-          {/* Section Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="text-center max-w-3xl mx-auto mb-16"
-          >
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
-              <span className="block text-white">Frametoque Rentals</span>
-              <span className="block bg-gradient-to-r from-red-400 via-rose-400 to-red-500 bg-clip-text text-transparent mt-1">
-                Cinema Cameras, Lenses & Production Gear Hire
-              </span>
-            </h2>
-          </motion.div>
 
-          {/* Main Rental Showcase Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 35 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-950/30 via-slate-900/60 to-black border border-red-500/20 p-8 sm:p-12 lg:p-16 shadow-2xl"
-          >
-            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-red-500/10 blur-3xl pointer-events-none" />
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
-              <div className="lg:col-span-5 space-y-6">
-                <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                  Need cinema gear for your shoot? We've got you covered.
-                </h3>
-
-                <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
-                  Rent high-end cinema bodies, prime glass, wireless microphones, and studio lighting in Colombo. Every piece of equipment is maintained, cleaned, and production-tested before handoff.
-                </p>
-
-                <div className="pt-2 flex flex-wrap items-center gap-4">
-                  <Link
-                    href="/rentals"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-red-500/25"
-                  >
-                    <span>Browse Equipment</span>
-                    <ExternalLink className="ml-2 w-4 h-4" />
-                  </Link>
-                </div>
-              </div>
-
-              <div className="lg:col-span-7 flex justify-center">
-                <RentalCatalogMockup />
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="py-20 px-6 lg:px-16 border-t border-white/5 text-center bg-black relative">

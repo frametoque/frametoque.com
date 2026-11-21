@@ -181,10 +181,6 @@ export default async function RentalsLayout({
                 <li><Link href="/rentals/terms" className="hover:text-brand-600 transition-colors">Terms &amp; Rental Conditions</Link></li>
                 <li><Link href="/rentals/contact" className="hover:text-brand-600 transition-colors">Rental Desk &amp; Inquiries</Link></li>
                 <li><a href="mailto:rentals@frametoque.com" className="hover:text-brand-600 transition-colors font-mono">rentals@frametoque.com</a></li>
-                <li className="pt-2 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">Frametoque Arms</li>
-                <li><Link href="/digital" className="hover:text-brand-600 transition-colors">Frametoque Digital</Link></li>
-                <li><Link href="/productions" className="hover:text-brand-600 transition-colors">Frametoque Productions</Link></li>
-                <li><a href="https://books.frametoque.com" target="_blank" rel="noopener noreferrer" className="hover:text-brand-600 transition-colors">Framebooks ERP ↗</a></li>
               </ul>
             </div>
 
