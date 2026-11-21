@@ -32,8 +32,12 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 flex items-center justify-between px-6 lg:px-16 py-3 ${
-        scrolled ? "bg-black/60 backdrop-blur-md shadow-2xl" : "bg-transparent"
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 flex items-center justify-between px-6 lg:px-16 py-3 ${
+        mobileMenuIsOpen
+          ? "bg-black shadow-2xl"
+          : scrolled
+          ? "bg-black/60 backdrop-blur-md shadow-2xl"
+          : "bg-transparent"
       }`}
     >
       <div className="flex items-center gap-2 group cursor-pointer z-50 w-[160px] sm:w-[190px]">
@@ -138,11 +142,7 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-            className={`absolute top-full left-0 right-0 border-t border-white/20 lg:hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden ${
-              scrolled
-                ? "bg-black/90 backdrop-blur-3xl shadow-2xl"
-                : "bg-black/80 backdrop-blur-3xl shadow-2xl"
-            }`}
+            className="absolute top-full left-0 right-0 border-t border-white/10 lg:hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden bg-black shadow-2xl"
           >
             <motion.div
               initial={{ y: -10, opacity: 0 }}

@@ -302,9 +302,11 @@ let websiteContent: {
 };
 
 const GROQ_MODELS = [
+  'qwen/qwen3.8-27b',
+  'openai/gpt-oss-120b',
+  'openai/gpt-oss-20b',
+  'llama-3.3-70b-versatile',
   'llama-3.1-8b-instant',
-  'llama3-8b-8192',
-  'gemma2-9b-it',
 ];
 
 // Function to crawl web
@@ -397,6 +399,12 @@ const getClientFocusedResponse = (userMessage: string): string => {
   }
   if (lowerMsg.includes('video') || lowerMsg.includes('edit')) {
     return `We edit videos for marketing, social media, and brand storytelling.`;
+  }
+  if (lowerMsg.includes('arm') || lowerMsg.includes('division') || lowerMsg.includes('structure')) {
+    return `Frametoque operates across two primary operational arms: **Frametoque Digital** (Web & Software Development, UX/UI, SaaS) and **Frametoque Productions** (Cinematic Video, Photography, and Cinema Equipment Rentals).`;
+  }
+  if (lowerMsg.includes('rental') || lowerMsg.includes('equipment') || lowerMsg.includes('camera') || lowerMsg.includes('gear')) {
+    return `We offer cinema cameras, lenses, lighting, and audio equipment hire through Frametoque Rentals: [Browse Equipment](${FRAME_TOQUE_URLS.rentals})`;
   }
   if (lowerMsg.includes('about') || lowerMsg.includes('who are you')) {
     return `Frametoque is a creative agency working with brands on design, websites, and video content.`;
