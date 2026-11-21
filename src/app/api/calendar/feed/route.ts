@@ -19,11 +19,13 @@ function isTokenValid(providedToken: string | null | undefined): boolean {
   if (process.env.CRON_SECRET?.trim()) {
     validTokens.push(process.env.CRON_SECRET.trim());
   }
-  const derivedToken = crypto
-    .createHmac("sha256", process.env.CLERK_SECRET_KEY || "ft-calendar-feed-secret")
-    .update("frametoque-calendar-feed-token")
-    .digest("hex");
-  validTokens.push(derivedToken);
+  if (process.env.CLERK_SECRET_KEY?.trim()) {
+    const derivedToken = crypto
+      .createHmac("sha256", process.env.CLERK_SECRET_KEY.trim())
+      .update("frametoque-calendar-feed-token")
+      .digest("hex");
+    validTokens.push(derivedToken);
+  }
 
   for (const expected of validTokens) {
     if (cleanProvided.length === expected.length) {

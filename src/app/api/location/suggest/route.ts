@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/domains/validation";
 
 export async function GET(request: Request) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const rate = checkRateLimit(`loc:suggest:${ip}`, 45, 60000); // 45 per min
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "127.0.0.1";
+  const rate = checkRateLimit(`loc:suggest:${ip}`, 30, 60000); // 30 per min
   if (!rate.allowed) {
-    return NextResponse.json([]);
+    return NextResponse.json({ error: "Too many requests. Please slow down." }, { status: 429 });
   }
 
   const { searchParams } = new URL(request.url);

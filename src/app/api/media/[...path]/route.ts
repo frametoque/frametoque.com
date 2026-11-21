@@ -1,7 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchWithFallback, extractStorageKey, detectContentType, isAllowedStorageUrl } from "@/lib/storage";
+import { getSessionUser } from "@/lib/auth-guard";
 
 export const dynamic = "force-dynamic";
+
+const SENSITIVE_PATH_PATTERNS = [
+  /receipts?\//i,
+  /payment[_-]slips?\//i,
+  /agreements?\//i,
+  /kyc\//i,
+  /id[_-]cards?\//i,
+  /utility[_-]bills?\//i,
+  /credentials?\//i,
+  /passwords?\//i,
+];
+
+function isSensitiveMedia(key: string): boolean {
+  return SENSITIVE_PATH_PATTERNS.some((pattern) => pattern.test(key));
+}
 
 /**
  * Universal media route serving from Cloudflare R2 with legacy path support.
@@ -35,15 +51,28 @@ export async function GET(
       );
     }
 
-    const response = await fetchWithFallback(target);
     const key = extractStorageKey(target);
+    const isSensitive = isSensitiveMedia(key);
+
+    if (isSensitive) {
+      const session = await getSessionUser();
+      if (!session || !session.userId) {
+        return NextResponse.json({ error: "Unauthorized: Authentication required to access private documents" }, { status: 401 });
+      }
+    }
+
+    const response = await fetchWithFallback(target);
     const contentType = response.headers.get("Content-Type") || detectContentType(key);
+
+    const cacheHeader = isSensitive
+      ? "private, no-cache, no-store, max-age=0, must-revalidate"
+      : "public, max-age=31536000, immutable";
 
     return new NextResponse(response.body, {
       status: 200,
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cache-Control": cacheHeader,
       },
     });
   } catch (error: any) {

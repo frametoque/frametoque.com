@@ -54,5 +54,12 @@
     "eslint": "^9.39.5",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "brace-expansion": ">=1.1.18",
+      "undici": ">=7.29.1",
+      "joi": ">=17.13.6"
+    }
   }
 }
