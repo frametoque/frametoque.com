@@ -10,7 +10,6 @@ import Testimonials from "@/components/Testimonials";
 import WhyChooseUs from "@/components/WhyChooseUs";
 import Clients from "@/components/Clients";
 import Footer from "@/components/Footer";
-import StudioPromo from "@/components/FTStudio";
 
 export default function HomeClient() {
   const [scrolled, setScrolled] = useState(false);
@@ -29,7 +28,6 @@ export default function HomeClient() {
       <Hero />
       <ArmCards />
       <ProjectsHome />
-      {/* <StudioPromo /> */}
       <Testimonials />
       <Clients />
       <WhyChooseUs />
