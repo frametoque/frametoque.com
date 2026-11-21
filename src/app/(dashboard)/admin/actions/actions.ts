@@ -491,7 +491,7 @@ export async function createClient(data: { name: string; email?: string | null; 
   try {
     await sql`
       INSERT INTO admin_clients (id, full_name, email, company, phone, phone_encrypted, phone_bidx, address, address_encrypted, active, legal_name)
-      VALUES (${clientId}, ${data.name}, ${emailToSave}, ${data.company || null}, ${data.phone || null}, ${encPhone}, ${bidxPhone}, ${addressToSave}, ${encAddress}, true, ${legalNameToSave})
+      VALUES (${clientId}, ${data.name}, ${emailToSave}, ${data.company || null}, null, ${encPhone}, ${bidxPhone}, null, ${encAddress}, true, ${legalNameToSave})
     `;
   } catch {
     await sql`
@@ -546,10 +546,10 @@ export async function updateClient(clientId: string, data: { name?: string; emai
         full_name = COALESCE(${data.name  || null}, full_name),
         email   = ${newEmail},
         company = ${data.company !== undefined ? data.company : null},
-        phone   = ${data.phone   ?? null},
+        phone   = null,
         phone_encrypted = ${encPhone !== undefined ? encPhone : null},
         phone_bidx = ${bidxPhone !== undefined ? bidxPhone : null},
-        address = ${addressToSave !== undefined ? addressToSave : null},
+        address = null,
         address_encrypted = ${encAddress !== undefined ? encAddress : null},
         legal_name = ${legalNameToSave !== undefined ? legalNameToSave : null}
       WHERE id = ${clientId}

@@ -94,7 +94,7 @@ export async function createAccount(data: { name: string; type: string; bankName
     const bidx = data.accountNumber ? generateBlindIndex(data.accountNumber, "bank_account") : null;
     await sql`
       INSERT INTO admin_accounts (name, type, bank_name, account_number, account_number_encrypted, account_number_bidx, branch, initial_balance, is_company_account)
-      VALUES (${data.name}, ${data.type}, ${data.bankName || null}, ${data.accountNumber || null}, ${encAccount}, ${bidx}, ${data.branch || null}, ${data.initialBalance || 0}, ${data.isCompanyAccount !== false})
+      VALUES (${data.name}, ${data.type}, ${data.bankName || null}, null, ${encAccount}, ${bidx}, ${data.branch || null}, ${data.initialBalance || 0}, ${data.isCompanyAccount !== false})
     `;
   } catch {
     await sql`
@@ -113,7 +113,7 @@ export async function updateAccount(id: number, data: { name: string; type: stri
     const bidx = data.accountNumber ? generateBlindIndex(data.accountNumber, "bank_account") : null;
     await sql`
       UPDATE admin_accounts 
-      SET name = ${data.name}, type = ${data.type}, bank_name = ${data.bankName || null}, account_number = ${data.accountNumber || null}, account_number_encrypted = ${encAccount}, account_number_bidx = ${bidx}, branch = ${data.branch || null}, is_company_account = ${data.isCompanyAccount !== false}
+      SET name = ${data.name}, type = ${data.type}, bank_name = ${data.bankName || null}, account_number = null, account_number_encrypted = ${encAccount}, account_number_bidx = ${bidx}, branch = ${data.branch || null}, is_company_account = ${data.isCompanyAccount !== false}
       WHERE id = ${id}
     `;
   } catch {

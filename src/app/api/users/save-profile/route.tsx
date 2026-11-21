@@ -60,12 +60,12 @@ export async function POST(request: Request) {
           SET
             email               = ${email},
             full_name           = ${fullName || ''},
-            phone               = ${phone    || null},
+            phone               = null,
             phone_encrypted     = ${encPhone},
             phone_bidx          = ${bidxPhone},
             company             = ${company  || null},
             website             = ${website  || null},
-            address             = ${address  || null},
+            address             = null,
             address_encrypted   = ${encAddress},
             updated_at          = NOW()
           WHERE clerk_id = ${clerkId}
@@ -115,12 +115,12 @@ export async function POST(request: Request) {
             SET
               clerk_id          = ${clerkId},
               full_name         = COALESCE(NULLIF(full_name, ''), ${fullName || ''}),
-              phone             = COALESCE(phone,             ${phone   || null}),
+              phone             = null,
               phone_encrypted   = COALESCE(phone_encrypted,   ${encPhone}),
               phone_bidx        = COALESCE(phone_bidx,        ${bidxPhone}),
               company           = COALESCE(company,           ${company || null}),
               website           = COALESCE(website,           ${website || null}),
-              address           = COALESCE(address,           ${address || null}),
+              address           = null,
               address_encrypted = COALESCE(address_encrypted, ${encAddress}),
               updated_at        = NOW()
             WHERE LOWER(email) = LOWER(${email})
@@ -171,12 +171,12 @@ export async function POST(request: Request) {
               ${clerkId},
               ${email},
               ${fullName || email},
-              ${phone   || null},
+              null,
               ${encPhone},
               ${bidxPhone},
               ${company || null},
               ${website || null},
-              ${address || null},
+              null,
               ${encAddress},
               true,
               NOW(),
