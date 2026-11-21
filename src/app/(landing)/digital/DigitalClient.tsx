@@ -129,7 +129,7 @@ export default function DigitalClient({
             <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
               <span className="block text-white">Meet Framebooks</span>
               <span className="block bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-400 bg-clip-text text-transparent mt-1">
-                Cloud ERP & Business Accounting
+                Cloud ERP & Business Accounting Software
               </span>
             </h2>
           </motion.div>
