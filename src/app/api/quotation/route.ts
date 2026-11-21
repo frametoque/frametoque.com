@@ -246,6 +246,8 @@ export async function POST(req: NextRequest) {
         return "Video editing";
       case "photo-video":
         return "Photography, Videography";
+      case "event-productions":
+        return "Event productions";
       case "rentals":
       case "rental":
         return "Rentals";

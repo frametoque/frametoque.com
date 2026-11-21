@@ -16,6 +16,7 @@ const TABLE_MAP: Record<string, string> = {
   "graphic-design": "work_graphics",
   "video-editing": "work_videoediting",
   "videography": "work_videography",
+  "event-productions": "work_eventproductions",
   "photography": "work_photography"
 };
 
@@ -33,6 +34,17 @@ export async function getPortfolioByCategory(categorySlug: string) {
        ORDER BY e.sort_order ASC, p.sort_order ASC, p.id ASC`
     );
     return rows;
+  }
+
+  if (categorySlug === "event-productions") {
+    await sql.unsafe(`
+      CREATE TABLE IF NOT EXISTS work_eventproductions (
+        id SERIAL PRIMARY KEY,
+        url TEXT NOT NULL,
+        sort_order INTEGER DEFAULT 1,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
   }
 
   const table = TABLE_MAP[categorySlug];
@@ -76,7 +88,7 @@ export async function createPortfolioItem(categorySlug: string, data: any) {
        VALUES ($1, 1)`,
       [data.image_path]
     );
-  } else if (categorySlug === "video-editing" || categorySlug === "videography") {
+  } else if (categorySlug === "video-editing" || categorySlug === "videography" || categorySlug === "event-productions") {
     await sql.unsafe(`UPDATE ${table} SET sort_order = sort_order + 1`);
     await sql.unsafe(
       `INSERT INTO ${table} (url, sort_order)
@@ -155,7 +167,7 @@ export async function updatePortfolioItem(categorySlug: string, id: number, data
        WHERE id = $2`,
       [data.image_path, id]
     );
-  } else if (categorySlug === "video-editing" || categorySlug === "videography") {
+  } else if (categorySlug === "video-editing" || categorySlug === "videography" || categorySlug === "event-productions") {
     await sql.unsafe(
       `UPDATE ${table}
        SET url = $1

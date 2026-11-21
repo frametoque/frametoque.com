@@ -81,13 +81,19 @@ const CUSTOM_CARD_COPY: Record<string, { title: string; desc: string; bullets: s
     desc: "Don't see the exact service you need? We offer custom photography & videography solutions for your unique requirements.",
     bullets: ["Custom photography sessions", "Custom videography shoots"],
   },
+  "event-productions": {
+    title: "Need Something Special?",
+    desc: "Planning a major live event, concert, or festival? We build custom multi-cam, staging, and media production packages.",
+    bullets: ["Custom live production setups", "Complete event media coverage"],
+  },
 };
 
 interface Props {
   categorySlug: string;
+  arm?: "digital" | "productions";
 }
 
-export default function ServicesSub({ categorySlug }: Props) {
+export default function ServicesSub({ categorySlug, arm }: Props) {
   const [currency, setCurrency] = useState("LKR");
   const [prices, setPrices] = useState<ServiceCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,7 +103,8 @@ export default function ServicesSub({ categorySlug }: Props) {
   // Fetch cards from API route
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/services/cards?category=${categorySlug}`, { cache: "no-store" })
+    const armParam = arm ? `&arm=${arm}` : "";
+    fetch(`/api/services/cards?category=${categorySlug}${armParam}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data: ServiceCard[]) => {
         setPrices(data);
@@ -205,13 +212,25 @@ export default function ServicesSub({ categorySlug }: Props) {
                 </div>
               </div>
 
-              <Link
-                href={cat.link}
-                className="mt-auto w-full py-3 px-4 rounded-3xl bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/20 hover:from-brand-500/20 hover:to-brand-600/20 hover:border-brand-500/30 transition-all duration-300 flex items-center justify-center group/btn"
-              >
-                <span className="font-medium">View Packages</span>
-                <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-              </Link>
+              {(() => {
+                let resolvedLink = cat.link;
+                if (categorySlug === "web-dev" || categorySlug === "graphic-design" || categorySlug === "video-editing") {
+                  resolvedLink = `/digital/services/${categorySlug}/${cat.key}`;
+                } else if (categorySlug === "photo-video" || categorySlug === "event-productions") {
+                  resolvedLink = `/productions/services/${categorySlug}/${cat.key}`;
+                } else if (categorySlug === "saas-products") {
+                  resolvedLink = "/digital#saas";
+                }
+                return (
+                  <Link
+                    href={resolvedLink}
+                    className="mt-auto w-full py-3 px-4 rounded-3xl bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/20 hover:from-brand-500/20 hover:to-brand-600/20 hover:border-brand-500/30 transition-all duration-300 flex items-center justify-center group/btn"
+                  >
+                    <span className="font-medium">View Packages</span>
+                    <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                  </Link>
+                );
+              })()}
             </div>
           </motion.div>
         ))}

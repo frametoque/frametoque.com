@@ -90,6 +90,19 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const safeArray = (val: any): Package[] => {
+    if (Array.isArray(val)) return val;
+    if (typeof val === "string") {
+      try {
+        const parsed = JSON.parse(val);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
   // Fetch service data from API
   useEffect(() => {
     setLoading(true);
@@ -97,12 +110,13 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
       .then((r) => r.json())
       .then((row: ServiceRow) => {
         setData(row);
-        setConvertedPackages(row.packages ?? []);
+        const pkgs = safeArray(row?.packages);
+        setConvertedPackages(pkgs);
         setLoading(false);
 
         const saved = localStorage.getItem("preferred_currency") || "LKR";
         if (saved === "USD") {
-          convertPricesToUSD(row.packages ?? []).then((converted) => {
+          convertPricesToUSD(pkgs).then((converted) => {
             setConvertedPackages(converted);
             setCurrency("USD");
           });
@@ -111,7 +125,7 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
       .catch(() => setLoading(false));
   }, [serviceType, categorySlug]);
 
-  const originalPackages = useMemo(() => data?.packages ?? [], [data]);
+  const originalPackages = useMemo(() => safeArray(data?.packages), [data]);
 
   useEffect(() => {
     if (originalPackages.length === 0) return;
@@ -151,8 +165,9 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
     }, 2000);
   };
 
-  const displayPackages = convertedPackages.length > 0 ? convertedPackages : originalPackages;
-  const hasYearlyPackages = displayPackages.some(p => p.price_yearly);
+  const safeConverted = useMemo(() => safeArray(convertedPackages), [convertedPackages]);
+  const displayPackages = safeConverted.length > 0 ? safeConverted : originalPackages;
+  const hasYearlyPackages = Array.isArray(displayPackages) && displayPackages.some((p) => Boolean(p?.price_yearly));
 
   if (loading) {
     return (
@@ -196,7 +211,11 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
       <div>
         {/* Hero Section */}
         <section className="relative overflow-hidden pt-24 pb-16 px-4 sm:px-6 lg:px-8">
-          <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-transparent to-transparent" />
+          {/* Ambient Glow Background */}
+          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] sm:w-[900px] h-[400px] bg-brand-500/15 blur-[120px] rounded-full" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(22,159,228,0.2),rgba(0,0,0,0))]" />
+          </div>
           <div className="relative max-w-7xl mx-auto">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div className="space-y-8">

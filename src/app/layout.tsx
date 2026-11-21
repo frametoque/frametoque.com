@@ -47,10 +47,55 @@ export const metadata = {
   metadataBase: new URL("https://frametoque.com"),
 
   title: {
-    default: "Frametoque Digital Media"
+    default: "Frametoque Digital Productions",
+    template: "%s | Frametoque Digital Productions",
   },
   description:
-    "Frametoque Digital Media is a creative media company focused on web development, video production, and digital storytelling.",
+    "Frametoque Digital Productions is a creative engineering and media production company comprising two core arms: Frametoque Digital (including Framebooks Cloud ERP) and Frametoque Productions (including Frametoque Rentals).",
+
+  keywords: [
+    "Frametoque",
+    "Frametoque Digital Productions",
+    "Frametoque Digital",
+    "Frametoque Productions",
+    "Frametoque Rentals",
+    "Framebooks",
+    "Web Development Sri Lanka",
+    "UI/UX Design Agency",
+    "Graphic Design Colombo",
+    "Video Editing Sri Lanka",
+    "Animations and VFX",
+    "Photography Colombo",
+    "Cinematography Sri Lanka",
+    "Drone Cinematography",
+    "Camera Equipment Rental Sri Lanka",
+  ],
+
+  authors: [{ name: "Frametoque Digital Productions", url: "https://frametoque.com" }],
+  creator: "Frametoque Digital Productions",
+  publisher: "Frametoque Digital Productions",
+
+  formatDetection: {
+    email: true,
+    address: true,
+    telephone: true,
+  },
+
+  alternates: {
+    canonical: "https://frametoque.com",
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 
   icons: {
     icon: [
@@ -72,35 +117,37 @@ export const metadata = {
   },
 
   openGraph: {
-    title: "Frametoque Digital Media",
+    title: "Frametoque Digital Productions",
     description:
-      "Turning ideas into powerful digital visuals through web, video, and creative media.",
-    keywords: ['Frametoque', 'Digital Media', 'Creative Services', 'Web Development', 'Graphic Design', 'Video Editing', 'Photography', 'Videography'],
+      "Turning ideas into powerful digital experiences through web engineering, creative video production, camera rental, and cloud software.",
     url: "https://frametoque.com",
-    siteName: "Frametoque",
+    siteName: "Frametoque Digital Productions",
+    locale: "en_LK",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Frametoque Digital Media",
+        alt: "Frametoque Digital Productions",
       },
     ],
     type: "website",
   },
-    twitter: {
+  twitter: {
     card: "summary_large_image",
-    title: "Frametoque Digital Media",
-    description: "Turning ideas into powerful digital visuals through web, video, and creative media.",
+    title: "Frametoque Digital Productions",
+    description: "Turning ideas into powerful digital experiences through web engineering, creative video production, camera rental, and cloud software.",
     images: ["https://frametoque.com/og-image.png"],
+    site: "@Frametoque",
+    creator: "@Frametoque",
   },
 };
 
 const localBusiness = {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
-  "name": "Frametoque Digital Media",
-  "description": "graphic design, Video editing, photography, videography & web development",
+  "name": "Frametoque Digital Productions",
+  "description": "Graphic design, video editing, photography, videography, camera rentals & web engineering",
   "address": {
     "@type": "PostalAddress",
     "addressLocality": "Colombo",
@@ -108,7 +155,88 @@ const localBusiness = {
   },
   "url": "https://frametoque.com",
   "serviceArea": "Sri Lanka"
-}
+};
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Frametoque Digital Productions",
+  url: "https://frametoque.com",
+  logo: "https://frametoque.com/logos/ft/logo-main.png",
+  sameAs: [
+    "https://instagram.com/frame.toque",
+    "https://linkedin.com/company/frametoque",
+    "https://facebook.com/frametoque",
+    "https://youtube.com/@Frametoque",
+  ],
+  department: [
+    {
+      "@type": "Organization",
+      name: "Frametoque Digital",
+      url: "https://frametoque.com/digital",
+      description: "Web development, UI/UX engineering, graphic design, and proprietary cloud software products including Framebooks",
+    },
+    {
+      "@type": "Organization",
+      name: "Frametoque Productions",
+      url: "https://frametoque.com/productions",
+      description: "Cinematography, photography, videography, and post-production",
+    },
+    {
+      "@type": "Organization",
+      name: "Frametoque Rentals",
+      url: "https://frametoque.com/rentals",
+      description: "Cinema camera, lens, lighting, and audio gear hire",
+    },
+  ],
+  founder: [
+    {
+      "@type": "Person",
+      name: "Kavinu Pasandul",
+      jobTitle: "Co-Founder & Chief Executive Officer",
+      sameAs: [
+        "https://www.linkedin.com/in/kavinudigitalworks/",
+        "https://www.instagram.com/skingod.frrr/"
+      ]
+    },
+    {
+      "@type": "Person",
+      name: "Tharul Bandara",
+      jobTitle: "Co-Founder & Chief Executive Officer",
+      sameAs: [
+        "https://www.instagram.com/bandara.tharul/"
+      ]
+    }
+  ],
+  employee: [
+    {
+      "@type": "Person",
+      name: "Nelitha Priyawansha",
+      jobTitle: "Chief Technology Officer",
+      sameAs: [
+        "https://linkedin.com/in/itsnelitha",
+        "https://github.com/itsnelitha"
+      ]
+    },
+    {
+      "@type": "Person",
+      name: "Sadaka Parami",
+      jobTitle: "Head of Engineering",
+      sameAs: [
+        "https://github.com/Sadaka-Wijerathna",
+        "https://www.instagram.com/sadaka.wijerathna/"
+      ]
+    },
+    {
+      "@type": "Person",
+      name: "Dasindu Nimnal",
+      jobTitle: "Head of Media",
+      sameAs: [
+        "https://www.instagram.com/dazuu.jay/"
+      ]
+    }
+  ]
+};
 
 export default function RootLayout({ children }) {
   
@@ -117,65 +245,9 @@ export default function RootLayout({ children }) {
       <head>
         <Script
           type="application/ld+json"
+          id="schema-org"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              name: "Frametoque Digital Media",
-              url: "https://frametoque.com",
-              logo: "https://frametoque.com/logos/ft/logo-main.png",
-              sameAs: [
-                "https://instagram.com/frame.toque",
-                "https://linkedin.com/company/frametoque",
-              ],
-              founder: [
-                {
-                  "@type": "Person",
-                  name: "Kavinu Pasandul",
-                  jobTitle: "Co-Founder & Chief Executive Officer",
-                  sameAs: [
-                    "https://www.linkedin.com/in/kavinudigitalworks/",
-                    "https://www.instagram.com/skingod.frrr/"
-                  ]
-                },
-                {
-                  "@type": "Person",
-                  name: "Tharul Bandara",
-                  jobTitle: "Co-Founder & Chief Executive Officer",
-                  sameAs: [
-                    "https://www.instagram.com/bandara.tharul/"
-                  ]
-                }
-              ],
-              employee: [
-                {
-                  "@type": "Person",
-                  name: "Nelitha Priyawansha",
-                  jobTitle: "Chief Technology Officer",
-                  sameAs: [
-                    "https://linkedin.com/in/itsnelitha",
-                    "https://github.com/itsnelitha"
-                  ]
-                },
-                {
-                  "@type": "Person",
-                  name: "Sadaka Parami",
-                  jobTitle: "Head of Engineering",
-                  sameAs: [
-                    "https://github.com/Sadaka-Wijerathna",
-                    "https://www.instagram.com/sadaka.wijerathna/"
-                  ]
-                },
-                {
-                  "@type": "Person",
-                  name: "Dasindu Nimnal",
-                  jobTitle: "Head of Media",
-                  sameAs: [
-                    "https://www.instagram.com/dazuu.jay/"
-                  ]
-                }
-              ]
-            }),
+            __html: JSON.stringify([organizationSchema, localBusiness]),
           }}
         />
       </head>

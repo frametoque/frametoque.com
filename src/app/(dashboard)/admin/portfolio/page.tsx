@@ -92,10 +92,10 @@ async function runWithConcurrency<T, R>(
 const CATEGORIES = [
   { slug: "photography", name: "Photography" },
   { slug: "videography", name: "Videography" },
+  { slug: "event-productions", name: "Event Productions" },
   { slug: "video-editing", name: "Video Editing" },
   { slug: "graphic-design", name: "Graphic Design" },
   { slug: "web-dev", name: "Web Development" },
-
 ];
 
 const defaultForm = {
@@ -670,7 +670,7 @@ export default function PortfolioAdminPage() {
       if (!formData.domain.trim()) return alert("Domain name is required.");
     } else if (activeCategory === "graphic-design") {
       if (!formData.image_path.trim()) return alert("Image path or YouTube Video link is required.");
-    } else if (activeCategory === "video-editing" || activeCategory === "videography") {
+    } else if (activeCategory === "video-editing" || activeCategory === "videography" || activeCategory === "event-productions") {
       if (!formData.url.trim()) return alert("Video URL is required.");
     }
     // Photography uses its own handleSaveNewPhotoEvent — skip here
@@ -896,7 +896,7 @@ export default function PortfolioAdminPage() {
                       <th className="p-4 font-medium">Media Source</th>
                     </>
                   )}
-                  {(activeCategory === "video-editing" || activeCategory === "videography") && (
+                  {(activeCategory === "video-editing" || activeCategory === "videography" || activeCategory === "event-productions") && (
                     <>
                       <th className="p-4 font-medium">Thumbnail</th>
                       <th className="p-4 font-medium">Details & Link</th>
@@ -1071,8 +1071,8 @@ export default function PortfolioAdminPage() {
                       </>
                     )}
 
-                    {/* VIDEO EDITING & VIDEOGRAPHY */}
-                    {(activeCategory === "video-editing" || activeCategory === "videography") && (
+                    {/* VIDEO EDITING, VIDEOGRAPHY & EVENT PRODUCTIONS */}
+                    {(activeCategory === "video-editing" || activeCategory === "videography" || activeCategory === "event-productions") && (
                       <>
                         <td className="p-4">
                           <div className="w-20 h-12 rounded-lg overflow-hidden bg-slate-900 border border-white/10 flex-shrink-0 flex items-center justify-center">
@@ -1386,8 +1386,8 @@ export default function PortfolioAdminPage() {
                 </div>
               )}
 
-              {/* ADAPTIVE FORM: VIDEO EDITING & VIDEOGRAPHY */}
-              {(activeCategory === "video-editing" || activeCategory === "videography") && (
+              {/* ADAPTIVE FORM: VIDEO EDITING, VIDEOGRAPHY & EVENT PRODUCTIONS */}
+              {(activeCategory === "video-editing" || activeCategory === "videography" || activeCategory === "event-productions") && (
                 <div className="max-w-md mx-auto space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">YouTube URL / Share Link *</label>

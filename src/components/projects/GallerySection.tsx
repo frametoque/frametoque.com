@@ -16,18 +16,32 @@ import { WebDevelopingGallery } from "./WebDevelopingGallery";
 
 import { type PhotographyEvent, type VideoProject, type WebDevImage, type SiteDetails } from "../../lib/workdata";
 
-const TABS = [
+const DIGITAL_WORK_TABS = [
+  { label: "Web Development", value: "web-dev" },
+  { label: "Graphic Design", value: "graphic-design" },
+  { label: "Video Editing", value: "video-editing" },
+];
+
+const PRODUCTIONS_WORK_TABS = [
   { label: "Photography", value: "photography" },
   { label: "Videography", value: "videography" },
+  { label: "Event Productions", value: "event-productions" },
+];
+
+const ALL_WORK_TABS = [
+  { label: "Photography", value: "photography" },
+  { label: "Videography", value: "videography" },
+  { label: "Event Productions", value: "event-productions" },
+  { label: "Web Development", value: "web-dev" },
+  { label: "Graphic Design", value: "graphic-design" },
   { label: "Video Editing", value: "video-editing" },
-  { label: "Graphic Designing", value: "graphic-design" },
-  { label: "Web Developing", value: "web-dev" },
 ];
 
 function getHeroForTab(tab: string): string {
   switch (tab) {
     case "photography":      return "/projects/photography-cover.jpg";
     case "videography":      return "/projects/videography-cover.jpg";
+    case "event-productions": return "/projects/videography-cover.jpg";
     case "graphic-design":   return "/projects/graphic-design-cover.jpg";
     case "video-editing":    return "/projects/vid-edit-cover.jpg";
     case "web-dev":          return "/projects/web-dev-cover.jpg";
@@ -69,7 +83,7 @@ function SingleHeroImage({
 function ProjectHero({ activeTab }: { activeTab: string }) {
   return (
     <section className="relative h-[40vh] md:h-[35vh] w-full bg-black overflow-hidden flex items-center justify-center">
-      {TABS.map((t) => (
+      {ALL_WORK_TABS.map((t) => (
         <SingleHeroImage
           key={t.value}
           tab={t.value}
@@ -85,35 +99,59 @@ function ProjectHero({ activeTab }: { activeTab: string }) {
 
 interface GallerySectionProps {
   initialTab?: string;
-  photographyEvents: PhotographyEvent[]; 
-  graphicImages: string[];
-  videographyUrls: VideoProject[];  
-  videoEditingUrls: VideoProject[];
-  webProjects: WebDevImage[];      
-  webDetailsMap: Record<string, SiteDetails>; 
+  arm?: "digital" | "productions";
+  showHero?: boolean;
+  photographyEvents?: PhotographyEvent[]; 
+  graphicImages?: string[];
+  videographyUrls?: VideoProject[];  
+  videoEditingUrls?: VideoProject[];
+  eventProductionUrls?: VideoProject[];
+  webProjects?: WebDevImage[];      
+  webDetailsMap?: Record<string, SiteDetails>; 
 }
 
 const GallerySection = ({
-  initialTab = "photography",
-  photographyEvents,
-  graphicImages,
-  videographyUrls,
-  videoEditingUrls,
-  webProjects,
-  webDetailsMap,
+  initialTab,
+  arm,
+  showHero = !arm,
+  photographyEvents = [],
+  graphicImages = [],
+  videographyUrls = [],
+  videoEditingUrls = [],
+  eventProductionUrls = [],
+  webProjects = [],
+  webDetailsMap = {},
 }: GallerySectionProps) => {
 
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const defaultTab = arm === "digital" ? "web-dev" : "photography";
+  const [activeTab, setActiveTab] = useState(initialTab || defaultTab);
   const [lightboxIndex, setLightboxIndex] = useState(-1);
+
+  const isDigital = arm === "digital";
+  const isProductions = arm === "productions";
+
+  const availableTabs = isDigital
+    ? DIGITAL_WORK_TABS
+    : isProductions
+    ? PRODUCTIONS_WORK_TABS
+    : ALL_WORK_TABS;
+
+  const basePath = isDigital
+    ? "/digital/work"
+    : isProductions
+    ? "/productions/work"
+    : "/projects";
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setLightboxIndex(-1);
-    router.push(`/projects/${tab}`);
+    if (showHero) {
+      router.push(`${basePath}/${tab}`);
+    }
   };
 
-  const activeLabel = TABS.find((t) => t.value === activeTab)?.label ?? "";
+  const activeLabel = availableTabs.find((t) => t.value === activeTab)?.label ?? "";
 
   const lightboxSlides =
     activeTab === "photography"
@@ -124,23 +162,25 @@ const GallerySection = ({
 
   return (
     <>
-      <ProjectHero activeTab={activeTab} />
+      {showHero && <ProjectHero activeTab={activeTab} />}
 
-      <section className="py-24 px-4 bg-black text-white">
-        <div className="text-center mb-10 sm:mb-14">
-          <h2 className="text-5xl sm:text-4xl md:text-4xl lg:text-6xl font-black mb-4 sm:mb-6 tracking-tight">
-            <span className="bg-gradient-to-b from-brand-400 to-brand-600 bg-clip-text text-transparent">
-              {activeLabel.split(" ")[0]}
+      <section id="work" className="py-24 px-4 sm:px-6 lg:px-8 bg-black text-white border-t border-white/5 relative">
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
+          <span className="text-xs font-bold uppercase tracking-widest text-brand-400 px-3.5 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 inline-block mb-4">
+            Portfolio
+          </span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 tracking-tight">
+            <span className="text-white">What We </span>
+            <span className="bg-gradient-to-r from-brand-300 via-brand-400 to-brand-500 bg-clip-text text-transparent">
+              Did
             </span>
-            {activeLabel.split(" ").length > 1 && (
-              <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
-                {" "}{activeLabel.split(" ").slice(1).join(" ")}
-              </span>
-            )}
           </h2>
-          <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
-            Explore our diverse portfolio of cinematic and beautiful{" "}
-            {activeLabel.toLowerCase()} captures.
+          <p className="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+            {arm === "digital"
+              ? "Explore live production web architectures, responsive corporate sites, and visual brand identity systems crafted by Frametoque Digital."
+              : arm === "productions"
+              ? "Explore our commercial photography, broadcast-grade videography, and post-production showreels crafted by Frametoque Productions."
+              : `Explore our diverse portfolio of cinematic and beautiful ${activeLabel.toLowerCase()} captures.`}
           </p>
         </div>
 
@@ -148,12 +188,12 @@ const GallerySection = ({
           <div className="flex justify-center">
             {/* Mobile: Wrapped */}
             <div className="flex sm:hidden flex-wrap gap-2 w-full pb-2 px-4">
-              {TABS.map((tab) => (
+              {availableTabs.map((tab) => (
                 <button
                   key={tab.value}
                   onClick={() => handleTabChange(tab.value)}
                   className={`
-                    flex-1 min-w-[calc(50%-4px)] max-w-[calc(50%-4px)] px-3 py-2.5 rounded-full text-xs font-medium transition-all duration-300 text-center
+                    flex-1 min-w-[calc(50%-4px)] max-w-[calc(50%-4px)] px-3 py-2.5 rounded-full text-xs font-medium transition-all duration-300 text-center cursor-pointer
                     ${activeTab === tab.value
                       ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30"
                       : "text-gray-400 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10"
@@ -167,18 +207,18 @@ const GallerySection = ({
 
             {/* Desktop: Centered pill row */}
             <div className="hidden sm:inline-flex p-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-              {TABS.map((tab) => (
+              {availableTabs.map((tab) => (
                 <button
                   key={tab.value}
                   onClick={() => handleTabChange(tab.value)}
                   className={`
-                    relative whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300
+                    relative whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 cursor-pointer
                     ${activeTab === tab.value ? "text-white" : "text-gray-400 hover:text-white"}
                   `}
                 >
                   {activeTab === tab.value && (
                     <motion.div
-                      layoutId="activeTab"
+                      layoutId={`activeTab-${arm || "all"}`}
                       className="absolute inset-0 bg-gradient-to-br from-brand-400 via-brand-500 to-brand-600 rounded-full shadow-lg shadow-brand-500/30"
                       transition={{ type: "spring", stiffness: 500, damping: 35 }}
                     />
@@ -205,7 +245,10 @@ const GallerySection = ({
               <GraphicDesignGallery images={graphicImages} onOpen={setLightboxIndex} />
             )}
             {activeTab === "videography"   && <VideographyGallery urls={videographyUrls} />}
-            {activeTab === "video-editing" && <VideoEditingGallery urls={videoEditingUrls} />}
+            {activeTab === "event-productions" && (
+              <VideographyGallery urls={eventProductionUrls && eventProductionUrls.length > 0 ? eventProductionUrls : videographyUrls} />
+            )}
+            {activeTab === "video-editing" && <VideoEditingGallery urls={videoEditingUrls} arm={arm} />}
             {activeTab === "web-dev"       && <WebDevelopingGallery projects={webProjects} detailsMap={webDetailsMap} />}
           </motion.div>
         </AnimatePresence>

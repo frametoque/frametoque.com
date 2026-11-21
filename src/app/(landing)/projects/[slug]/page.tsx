@@ -2,12 +2,13 @@ import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import GallerySection from "@/components/projects/GallerySection";
-import { getPhotography, getGraphics, getVideography, getVideoEditing, getWebProjects } from "@/lib/workdata";
+import { getPhotography, getGraphics, getVideography, getVideoEditing, getEventProductions, getWebProjects } from "@/lib/workdata";
 import { Metadata } from "next";
 
 const titles: Record<string, string> = {
   photography: "Photography Projects",
   videography: "Videography Projects",
+  "event-productions": "Event Productions Projects",
   "graphic-design": "Graphic Design Projects",
   "video-editing": "Video Editing Projects",
   "web-dev": "Web Development Projects",
@@ -53,6 +54,7 @@ export async function generateMetadata({
 const VALID_SLUGS = [
   "photography",
   "videography",
+  "event-productions",
   "graphic-design",
   "video-editing",
   "web-dev",
@@ -74,12 +76,14 @@ const [
   graphicImages,
   videographyUrls,
   videoEditingUrls,
+  eventProductionUrls,
   { projects: webProjects, detailsMap: webDetailsMap }, 
 ] = await Promise.all([
   getPhotography(),
   getGraphics(),
   getVideography(),
   getVideoEditing(),
+  getEventProductions(),
   getWebProjects(),
 ]);
 
@@ -92,6 +96,7 @@ const [
         graphicImages={graphicImages}
         videographyUrls={videographyUrls}
         videoEditingUrls={videoEditingUrls}
+        eventProductionUrls={eventProductionUrls}
         webProjects={webProjects}
         webDetailsMap={webDetailsMap} 
       />

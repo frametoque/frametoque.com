@@ -18,6 +18,7 @@ import {
   Loader2
 } from "lucide-react";
 import { useRentalKit } from "@/context/RentalKitContext";
+import { CONTACT } from "@/config/contact";
 
 const formatLKR = (amount: number) =>
   new Intl.NumberFormat("en-LK", {
@@ -55,7 +56,7 @@ export default function RentalCartClient() {
 
   // WhatsApp Kit Message Builder
   const buildWhatsAppKitUrl = () => {
-    const phone = "94701901461";
+    const phone = CONTACT.whatsapp.rentals.number;
     const isSingleDay = startDate === endDate || !endDate;
     const dateStr = isSingleDay ? startDate : `${startDate} to ${endDate}`;
 

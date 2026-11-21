@@ -1,17 +1,17 @@
 export const metadata = {
-  title: "Login | Frametoque",
+  title: "Login",
   description: "Log in to your Frametoque account to manage your dashboard, track services, and access your projects securely.",
   openGraph: {
-    title: "Login | Frametoque Digital Media",
+    title: "Login | Frametoque Digital Productions",
     description: "Log in to your Frametoque account to manage your dashboard, track services, and access your projects securely.",
     url: "https://frametoque.com/login", 
-    siteName: "Frametoque",
+    siteName: "Frametoque Digital Productions",
     images: [
       {
         url: "https://frametoque.com/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Frametoque",
+        alt: "Frametoque Digital Productions",
       },
     ],
     type: "website",
@@ -19,8 +19,8 @@ export const metadata = {
 
     twitter: {
     card: "summary_large_image",
-    title: "Login | Frametoque Digital Media",
-    description: "Explore our range of services...",
+    title: "Login | Frametoque Digital Productions",
+    description: "Log in to your Frametoque account to manage your dashboard, track services, and access your projects securely.",
     images: ["https://frametoque.com/og-image.png"],
   },
 };

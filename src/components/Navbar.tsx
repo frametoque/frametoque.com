@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useUser } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCart } from "@/context/CartContext";
+import BrandLogo from "@/components/BrandLogo";
 
 const protectImage = (e) => e.preventDefault();
 
@@ -22,9 +23,9 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
   }, []);
 
   const links = [
-    { href: "/projects", label: "Work" },
-    { href: "/services", label: "Services" },
-    { href: "/rentals", label: "Rentals" },
+    { href: "/digital", label: "Digital" },
+    { href: "/productions", label: "Productions" },
+    { href: "/careers", label: "Careers" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];
@@ -35,34 +36,19 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
         scrolled ? "bg-black/60 backdrop-blur-md shadow-2xl" : "bg-transparent"
       }`}
     >
-      <div className="flex items-center gap-2 group cursor-pointer z-50 w-[180px] sm:w-[220px]">
-        <Link href="/">
-          <Image
-            src="/logos/ft/name-logo.png"
-            alt="Frametoque"
-            width={200}
-            height={40}
-            onContextMenu={protectImage}
-            onDragStart={protectImage}
-            loading="eager"
-            priority={true}
-            className="h-auto transition-all duration-300 w-28 sm:w-36"
-          />
-        </Link>
+      <div className="flex items-center gap-2 group cursor-pointer z-50 w-[160px] sm:w-[190px]">
+        <BrandLogo brand="parent" priority={true} size="sm" />
       </div>
 
-      <div className="hidden md:flex flex-1 items-center justify-center gap-2">
+      <div className="hidden lg:flex flex-1 items-center justify-center gap-1.5 xl:gap-2">
         {links.map((link) => {
-          const isActive =
-            link.href === "/services"
-              ? pathname === "/services" || pathname.startsWith("/services/")
-              : pathname === link.href || pathname.startsWith(`${link.href}/`);
+          const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
 
           return (
             <Link
               key={link.href}
               href={link.href}
-              className={`relative px-5 py-1.5 text-sm font-medium transition-all duration-300 rounded-full group overflow-hidden ${
+              className={`relative px-4 py-1.5 text-sm font-medium transition-all duration-300 rounded-full group overflow-hidden ${
                 isActive
                   ? "text-white bg-white/10 shadow-inner drop-shadow-md"
                   : "text-white drop-shadow-md hover:bg-white/10"
@@ -75,19 +61,19 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
       </div>
 
       {/* Desktop CTA */}
-      <div className="hidden md:flex items-center justify-end gap-4 w-[180px] sm:w-[220px]">
-        <Link
-          href="/cart"
-          className="relative p-2 text-white hover:bg-white/10 rounded-full transition-all duration-300 hover:scale-105 active:scale-95"
-          title="Shopping Cart"
-        >
-          <ShoppingCart className="w-5 h-5" />
-          {mounted && cartCount > 0 && (
+      <div className="hidden lg:flex items-center justify-end gap-4 w-[160px] sm:w-[190px]">
+        {mounted && cartCount > 0 && (
+          <Link
+            href="/cart"
+            className="relative p-2 text-white hover:bg-white/10 rounded-full transition-all duration-300 hover:scale-105 active:scale-95"
+            title="Shopping Cart"
+          >
+            <ShoppingCart className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 bg-brand-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
               {cartCount}
             </span>
-          )}
-        </Link>
+          </Link>
+        )}
         {!isLoaded ? null : isSignedIn ? (
           <Link
             href="/dashboard"
@@ -106,19 +92,19 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
       </div>
 
       {/* Mobile Cart & menu button */}
-      <div className="flex items-center gap-2 md:hidden z-50">
-        <Link
-          href="/cart"
-          className="relative p-2 text-white hover:bg-white/10 rounded-full transition-all duration-300"
-          title="Shopping Cart"
-        >
-          <ShoppingCart className="w-6 h-6" />
-          {mounted && cartCount > 0 && (
+      <div className="flex items-center gap-2 lg:hidden z-50">
+        {mounted && cartCount > 0 && (
+          <Link
+            href="/cart"
+            className="relative p-2 text-white hover:bg-white/10 rounded-full transition-all duration-300"
+            title="Shopping Cart"
+          >
+            <ShoppingCart className="w-6 h-6" />
             <span className="absolute -top-1 -right-1 bg-brand-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
               {cartCount}
             </span>
-          )}
-        </Link>
+          </Link>
+        )}
         <button
           aria-label="Toggle Menu"
           className="p-2 text-white drop-shadow-md transition-colors rounded-full hover:bg-white/10"
@@ -152,7 +138,7 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-            className={`absolute top-full left-0 right-0 border-t border-white/20 md:hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden ${
+            className={`absolute top-full left-0 right-0 border-t border-white/20 lg:hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden ${
               scrolled
                 ? "bg-black/90 backdrop-blur-3xl shadow-2xl"
                 : "bg-black/80 backdrop-blur-3xl shadow-2xl"
@@ -166,12 +152,7 @@ export default function Navbar({ scrolled }: { scrolled: boolean }) {
               className="flex flex-col space-y-2 pt-4 pb-6 px-6"
             >
               {links.map((link, i) => {
-                const isActive =
-                  link.href === "/services"
-                    ? pathname === "/services" ||
-                      pathname.startsWith("/services/")
-                    : pathname === link.href ||
-                      pathname.startsWith(`${link.href}/`);
+                const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
 
                 return (
                   <motion.div

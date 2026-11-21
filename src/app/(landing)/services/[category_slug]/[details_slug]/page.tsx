@@ -28,7 +28,7 @@ export async function generateMetadata({
 
   if (!meta) {
     return {
-      title: "Service Not Found | Frametoque",
+      title: "Service Not Found",
       description: "The requested service page could not be found.",
     };
   }
@@ -37,10 +37,10 @@ export async function generateMetadata({
   const description = meta.description || "Explore our premium digital services at Frametoque.";
 
   return {
-    title: `${meta.title} | Frametoque`,
+    title: meta.title,
     description,
     openGraph: {
-      title: `${meta.title} | Frametoque`,
+      title: `${meta.title} | Frametoque Digital Productions`,
       description,
       url: `https://frametoque.com/services/${category_slug}/${details_slug}`,
       siteName: "Frametoque",

@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 const testimonials = [
   {
@@ -9,7 +12,6 @@ const testimonials = [
     content:
       "It was a great experience working with this video editing team. Very professional, creative, and responsive throughout the project. They clearly understood the vision and delivered high-quality results on time. Highly recommended for anyone looking for reliable video editing services.",
   },
-
 ];
 
 export default function Testimonials() {
@@ -18,11 +20,15 @@ export default function Testimonials() {
       id="testimonials"
       className="py-24 sm:py-32 px-6 sm:px-10 lg:px-16 relative bg-black overflow-hidden"
     >
-      {/* Subtle background glow removed */}
-
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="flex flex-col lg:flex-row items-center lg:items-start gap-12 lg:gap-20">
-          <div className="lg:w-1/2 w-full text-center lg:text-left">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:w-1/2 w-full text-center lg:text-left"
+          >
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-[1.1] tracking-tight">
               <span className="bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent block">
                 What Clients&nbsp;
@@ -36,13 +42,20 @@ export default function Testimonials() {
               creators grow with stunning designs, fast websites, and cinematic
               videos.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="lg:w-1/2 w-full">
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:w-1/2 w-full"
+          >
             <div className="grid gap-6 sm:gap-8">
               {testimonials.map((testimonial, key) => (
-                <div
+                <motion.div
                   key={key}
+                  whileHover={{ y: -4, transition: { duration: 0.25 } }}
                   className="group relative bg-white/[0.03] backdrop-blur-md border border-white/10 p-6 sm:p-8 rounded-2xl hover:border-brand-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-brand-500/10"
                 >
                   <div className="flex items-start gap-4 sm:gap-6">
@@ -79,10 +92,10 @@ export default function Testimonials() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

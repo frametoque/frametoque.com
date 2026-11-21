@@ -55,6 +55,7 @@ import {
   Landmark,
   Terminal,
   ArrowLeft,
+  UserCheck,
 } from "lucide-react";
 
 // Framer Motion spring config for sidebar width
@@ -183,12 +184,13 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
   const isRentalDetail = pathname.startsWith("/admin/rentals/") && !pathname.endsWith("/edit") && pathname !== "/admin/rentals/new";
   const isRentalNew = pathname === "/admin/rentals/new";
   const isSystemLogs = pathname === "/admin/system-logs";
+  const isCareers = pathname === "/admin/careers" || pathname.startsWith("/admin/careers");
   const isWorkspaceProject = pathname.startsWith("/admin/workspace/project/");
   const [workspaceProjectInfo, setWorkspaceProjectInfo] = useState<{ name: string; client: string; hasPlanner?: boolean } | null>(null);
   const [workspaceProjectTab, setWorkspaceProjectTab] = useState<string>("planner");
   const [rentalEditInfo, setRentalEditInfo] = useState<{ rental_code: string; item_name: string } | null>(null);
-  const hideSelector = isServices || isPortfolio || isWorkspace || isWorkspaceProject || isWebServices || isInvoiceDetail || isSocialMedia || isDashboard || isAccounts || isCreateOrEdit || isSystemLogs || isRentalDetail;
-  const hasCustomAction = isInvoiceDetail || isSocialMedia || isWorkspace || (isWorkspaceProject && Boolean(workspaceProjectInfo?.hasPlanner)) || isAccounts || isSystemLogs;
+  const hideSelector = isServices || isPortfolio || isWorkspace || isWorkspaceProject || isWebServices || isInvoiceDetail || isSocialMedia || isDashboard || isAccounts || isCreateOrEdit || isSystemLogs || isRentalDetail || isCareers;
+  const hasCustomAction = isInvoiceDetail || isSocialMedia || isWorkspace || (isWorkspaceProject && Boolean(workspaceProjectInfo?.hasPlanner)) || isAccounts || isSystemLogs || isCareers;
   const { dateRange: analyticsDateRange, setDateRange: setAnalyticsDateRange } = useAnalyticsDateRange();
   const { dateRange, startDate, endDate, setDateRange, setStartDate, setEndDate } = useAdminDateRange();
   const [currentTime, setCurrentTime] = useState("");
@@ -319,6 +321,7 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
     if (path.startsWith("/admin/accounts")) return "Accounts";
     if (path.startsWith("/admin/reports")) return "Reports";
     if (path.startsWith("/admin/portfolio")) return "Portfolio";
+    if (path.startsWith("/admin/careers")) return "Careers";
     if (path.startsWith("/admin/services")) return "Services";
     if (path.startsWith("/admin/settings")) return "Settings";
     if (path === "/admin/agreements/new") return "New Agreement";
@@ -563,6 +566,24 @@ const Header = ({ user, isLoaded, setMobileMenuOpen }) => {
                     className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 text-white rounded-3xl transition-colors cursor-pointer font-medium"
                   >
                     Refresh
+                  </button>
+                </div>
+              ) : isCareers ? (
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/careers"
+                    target="_blank"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 text-xs font-semibold transition-colors"
+                  >
+                    <span>Live View</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("careers:open-new"))}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-semibold transition-colors active:scale-95 duration-200 cursor-pointer text-xs shadow-lg shadow-brand-500/20 whitespace-nowrap"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Post New Role</span>
                   </button>
                 </div>
               ) : null}
@@ -858,9 +879,10 @@ const Sidebar = ({
     { name: "Rentals", href: "/admin/rentals", icon: ShoppingCart },
     { name: "Web Services", href: "/admin/web-services/domains", icon: Globe },
 
-    // Showcase & Content (Kept as last 3 items)
+    // Showcase & Content
     { name: "Services", href: "/admin/services", icon: Briefcase, divider: true },
     { name: "Portfolio", href: "/admin/portfolio", icon: Layers },
+    { name: "Careers", href: "/admin/careers", icon: UserCheck },
     { name: "Social Media", href: "/admin/social-media", icon: Megaphone },
   ];
 

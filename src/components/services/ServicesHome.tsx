@@ -85,7 +85,7 @@ export default function Features() {
             return (
               <div
                 key={key}
-                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-[#0a0a0a] bg-opacity-80 backdrop-blur-md border border-white/5 p-8 transition-all duration-500 hover:-translate-y-1 hover:border-white/10"
+                className="group relative flex flex-col justify-start overflow-hidden rounded-2xl bg-[#0a0a0a] bg-opacity-80 backdrop-blur-md border border-white/5 p-8 transition-all duration-500 hover:-translate-y-1 hover:border-white/10"
               >
                 {/* Top part / Icon */}
                 <div className="mb-6 flex items-center justify-between">

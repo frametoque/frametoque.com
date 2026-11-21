@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, X, Maximize2, Minimize2, Bot, User, MessageSquare, Zap, Cpu, Sparkles } from "lucide-react";
+import { Send, X, Maximize2, Minimize2, Bot, User, MessageSquare, Cpu, Sparkles } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
 
@@ -16,13 +16,24 @@ export default function AIChatbot() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior,
+      });
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    scrollToBottom("smooth");
+  }, [messages, loading]);
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => scrollToBottom("auto"), 50);
+    }
+  }, [open]);
 
 
   const whatsappConfig = {
@@ -177,7 +188,7 @@ export default function AIChatbot() {
             {/* Message Streams */}
             <div
               ref={messagesContainerRef}
-              className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide overscroll-contain z-10"
+              className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-4 overscroll-contain z-10 custom-scrollbar touch-pan-y"
             >
               {messages.map((m, i) => (
                 <div key={i} className={`flex gap-4 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
@@ -265,16 +276,6 @@ export default function AIChatbot() {
                     <Send className="w-4.5 h-4.5 text-white relative z-10" />
                   </button>
                 </div>
-              </div>
-              
-              <div className="mt-4 flex items-center justify-between px-2">
-                 <div className="flex items-center gap-1.5">
-                    <Zap className="w-3 h-3 text-brand-400" />
-                    <span className="text-[10px] text-white/60 font-black uppercase tracking-widest leading-none">Hyper-Fast Processing</span>
-                 </div>
-                 <div className="flex gap-4">
-                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest font-mono leading-none">ID: TQ-911-RS</span>
-                 </div>
               </div>
             </div>
           </div>

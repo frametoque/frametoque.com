@@ -1,27 +1,47 @@
-export const metadata = {
-  title: "Contact",
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: {
+    absolute: "Contact Frametoque | Inquiries & Booking",
+  },
   description:
-    "Get in touch with Frametoque for inquiries about our web development, graphic design, and video editing services. We're here to help your brand shine.",
-    openGraph: {
-    title: "Contact | Frametoque Digital Media",
-    description: "Get in touch with Frametoque for inquiries about our web development, graphic design, and video editing services. We're here to help your brand shine.",
-    url: "https://frametoque.com/contact", 
-    siteName: "Frametoque",
+    "Get in touch with Frametoque Digital Productions. Reach out for web development, software engineering, commercial media productions, camera gear rentals, or careers.",
+  alternates: {
+    canonical: "https://frametoque.com/contact",
+  },
+  keywords: [
+    "Contact Frametoque",
+    "Frametoque Phone Number",
+    "Hire Web Developer Sri Lanka",
+    "Book Videographer Colombo",
+    "Frametoque Location Colombo",
+    "Frametoque Email",
+  ],
+  openGraph: {
+    title: "Contact Frametoque | Inquiries & Booking",
+    description:
+      "Departmental directory and direct contact details for Frametoque Digital Productions.",
+    url: "https://frametoque.com/contact",
+    siteName: "Frametoque Digital Productions",
+    locale: "en_LK",
     images: [
       {
         url: "https://frametoque.com/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Frametoque",
+        alt: "Contact Frametoque Digital Productions",
       },
     ],
     type: "website",
   },
-    twitter: {
+  twitter: {
     card: "summary_large_image",
-    title: "Contact | Frametoque Digital Media",
-    description: "Get in touch with Frametoque for inquiries about our web development, graphic design, and video editing services. We're here to help your brand shine.",
+    title: "Contact Frametoque | Inquiries & Booking",
+    description:
+      "Departmental directory and direct contact details for Frametoque Digital Productions.",
     images: ["https://frametoque.com/og-image.png"],
+    site: "@Frametoque",
+    creator: "@Frametoque",
   },
 };
 

@@ -79,8 +79,8 @@ export default function RentalContactClient() {
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-xs">Email</h3>
-                  <a href="mailto:info@frametoque.com" className="text-slate-900 hover:text-blue-600 hover:underline text-xs">
-                    info@frametoque.com
+                  <a href="mailto:rentals@frametoque.com" className="text-slate-900 hover:text-blue-600 hover:underline text-xs">
+                    rentals@frametoque.com
                   </a>
                 </div>
               </div>

@@ -3,6 +3,7 @@
 import { Facebook, Instagram, Linkedin, Mail, Music2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 interface Founder {
   name: string;
@@ -80,26 +81,40 @@ const FounderSpotlight = () => {
 
   return (
     <div className="grid md:grid-cols-3 gap-8 lg:gap-12 items-center">
-     <div className="space-y-6 text-right">
-  <div>
-    <h2 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-      {founders[0].name}
-    </h2>
-    <p className="text-gray-400 text-base leading-relaxed mt-4 italic">
-      {founders[0].expertise}
-    </p>
-    <p className="text-gray-400 text-sm leading-relaxed mt-4">
-      {founders[0].description}
-    </p>
-  </div>
-  <div className="flex justify-end">
-    {renderSocials(founders[0].social)}
-  </div>
-</div>
+      {/* Left Side: Founder 1 */}
+      <motion.div
+        initial={{ opacity: 0, x: -30 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="space-y-6 text-right"
+      >
+        <div>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+            {founders[0].name}
+          </h2>
+          <p className="text-gray-400 text-base leading-relaxed mt-4 italic">
+            {founders[0].expertise}
+          </p>
+          <p className="text-gray-400 text-sm leading-relaxed mt-4">
+            {founders[0].description}
+          </p>
+        </div>
+        <div className="flex justify-end">
+          {renderSocials(founders[0].social)}
+        </div>
+      </motion.div>
 
-      <div className="relative group max-w-md mx-auto md:mx-0">
-        <div className="relative overflow-hidden rounded-2xl aspect-square sm:aspect-square md:aspect-square">
-           <Image
+      {/* Center Image */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="relative group max-w-md mx-auto md:mx-0"
+      >
+        <div className="relative overflow-hidden rounded-2xl aspect-square sm:aspect-square md:aspect-square border border-white/10 shadow-2xl">
+          <Image
             src={sharedImage}
             alt="'Founders Spotlight'"
             width={640}
@@ -109,10 +124,16 @@ const FounderSpotlight = () => {
             onDragStart={protectImage}
           />
         </div>
- 
-      </div>
+      </motion.div>
+
       {/* Right Side: Founder 2 */}
-      <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, x: 30 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="space-y-6"
+      >
         <div>
           <h2 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
             {founders[1].name}
@@ -125,7 +146,7 @@ const FounderSpotlight = () => {
           </p>
         </div>
         {renderSocials(founders[1].social)}
-      </div>
+      </motion.div>
     </div>
   );
 };

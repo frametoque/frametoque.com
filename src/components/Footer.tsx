@@ -1,174 +1,328 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
 import {
   Linkedin,
   Mail,
   Instagram,
   Youtube,
-  MessageCircle,
   Facebook,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
+import { CONTACT } from "@/config/contact";
+import { SOCIALS } from "@/config/social";
+import { motion } from "framer-motion";
 
-const footerLinks = {
-  Company: ["About", "Work", "Rentals", "Contact"],
-  Legal: ["Privacy", "Terms", "Cookies"],
-};
-const urls = [
-  "https://instagram.com/frame.toque",
-  "https://facebook.com/frametoque",
-  "https://www.linkedin.com/company/frametoque/",
-  "https://youtube.com/@Frametoque",
-  "https://tiktok.com/@frame.toque",
-  "https://t.me/frametoque",
-  "mailto:info@frametoque.com",
-];
-
-const TikTok = () => (
+const TikTok = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg
     role="img"
     viewBox="0 0 24 24"
     xmlns="http://www.w3.org/2000/svg"
-    className="w-5 h-5"
+    className={className}
+    fill="currentColor"
   >
     <title>TikTok</title>
     <path
       d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"
-      fill="currentColor"
     />
   </svg>
 );
 
-const Telegram = () => (
-  <svg
-    role="img"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-    className="w-5 h-5"
-  >
-    <title>Telegram</title>
-    <path
-      d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"
-      fill="currentColor"
-    />
-  </svg>
-);
+interface FooterLink {
+  label: string;
+  href: string;
+  isExternal?: boolean;
+}
 
-export default function Footer() {
+interface FooterSection {
+  title: string;
+  links: FooterLink[];
+}
+
+const footerSections: FooterSection[] = [
+  {
+    title: "Digital",
+    links: [
+      { label: "Overview", href: "/digital" },
+      { label: "Web Development", href: "/digital/services/web-dev" },
+      { label: "Graphic Design", href: "/digital/services/graphic-design" },
+      { label: "Video Editing", href: "/digital/services/video-editing" },
+      { label: "Portfolio", href: "/digital#work" },
+    ],
+  },
+  {
+    title: "Productions",
+    links: [
+      { label: "Overview", href: "/productions" },
+      { label: "Photography & Videography", href: "/productions/services/photo-video" },
+      { label: "Event Productions", href: "/productions/services/event-productions" },
+      { label: "Portfolio", href: "/productions#work" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { label: "About Us", href: "/about" },
+      { label: "Careers", href: "/careers" },
+      { label: "Contact", href: "/contact" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Privacy", href: "/privacy" },
+      { label: "Terms", href: "/terms" },
+      { label: "Cookies", href: "/cookies" },
+    ],
+  },
+];
+
+interface FooterProps {
+  arm?: "parent" | "digital" | "productions" | "rental" | "framebooks";
+}
+
+export default function Footer({ arm = "parent" }: FooterProps = {}) {
+  const [activePopover, setActivePopover] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setActivePopover(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const isDividedArm = arm === "digital" || arm === "productions";
+
+  // Channel definitions
+  const dividedChannels = [
+    {
+      name: "Instagram",
+      Icon: Instagram,
+      iconClass: "w-[17px] h-[17px]",
+      digitalUrl: "https://instagram.com/frametoque.digital",
+      productionsUrl: "https://instagram.com/frametoque.productions",
+    },
+    {
+      name: "Facebook",
+      Icon: Facebook,
+      iconClass: "w-[17px] h-[17px]",
+      digitalUrl: "https://facebook.com/frametoque.digital",
+      productionsUrl: "https://facebook.com/frametoque.productions",
+    },
+    {
+      name: "TikTok",
+      Icon: TikTok,
+      iconClass: "w-[15px] h-[15px]",
+      digitalUrl: "https://tiktok.com/@frametoque.digital",
+      productionsUrl: "https://tiktok.com/@frametoque.productions",
+    },
+  ];
+
+  const singleChannels = [
+    {
+      name: "LinkedIn",
+      Icon: Linkedin,
+      iconClass: "w-[17px] h-[17px]",
+      url: "https://www.linkedin.com/company/frametoque/",
+    },
+    {
+      name: "YouTube",
+      Icon: Youtube,
+      iconClass: "w-[18px] h-[18px]",
+      url: "https://youtube.com/@Frametoque",
+    },
+    {
+      name: "Mail",
+      Icon: Mail,
+      iconClass: "w-[17px] h-[17px]",
+      url: `mailto:${CONTACT.emails.general}`,
+    },
+  ];
+
   return (
     <footer className="bg-black backdrop-blur-xl border-t border-white/5 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-8 gap-6 sm:gap-8 lg:gap-12 mb-10 sm:mb-12">
-          <div className="col-span-1 sm:col-span-4 lg:col-span-2 text-center sm:text-left">
-            <div className="flex items-center justify-center sm:justify-start space-x-2 mb-3 sm:mb-4">
-              <Image
-                src="/logos/ft/name-logo.png"
-                alt="Frametoque"
-                width={200}
-                height={40}
-                className="w-32 h-auto sm:w-48"
-              />
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.1 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative z-10"
+      >
+        
+        {/* Top Section: Brand Info + Multi-Column Links */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mb-12 sm:mb-16">
+          
+          {/* Brand & Address Column */}
+          <div className="lg:col-span-4 text-center sm:text-left space-y-4">
+            <div className="flex items-center justify-center sm:justify-start">
+              <BrandLogo brand="parent" />
             </div>
-            <p className="text-gray-400 mb-4 sm:mb-6 max-w-sm mx-auto sm:mx-0 text-sm sm:text-base">
+
+            <p className="text-gray-400 max-w-sm mx-auto sm:mx-0 text-sm leading-relaxed">
               <Link
-                href="https://share.google/8O9paXxs7VBKoAZlR"
+                href={CONTACT.address.googleMapsUrl}
                 aria-label="Google Maps"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-brand-400 transition inline-block py-2"
+                className="hover:text-brand-400 transition inline-block py-1"
               >
-                35, Kopiwaththa Road, Piliyandala, Sri Lanka{" "}
+                {CONTACT.address.full}
               </Link>
               <br />
               <span className="whitespace-nowrap">
-                <Link
-                  href="tel:+94701901461"
+                <a
+                  href={CONTACT.phones.primary.tel}
                   aria-label="Telephone"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-brand-400 transition inline-block py-2"
+                  className="hover:text-brand-400 transition inline-block py-1"
                 >
-                  +94 70 190 1461
-                </Link>
+                  {CONTACT.phones.primary.display}
+                </a>
                 <span className="mx-2 text-gray-600">|</span>
-                <Link
-                  href="tel:+94758609356"
+                <a
+                  href={CONTACT.phones.secondary.tel}
                   aria-label="Telephone"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-brand-400 transition inline-block py-2"
+                  className="hover:text-brand-400 transition inline-block py-1"
                 >
-                  +94 75 860 9356
-                </Link>
+                  {CONTACT.phones.secondary.display}
+                </a>
               </span>
             </p>
-            <div className="flex justify-center space-x-2">
-              {[
-                Instagram,
-                Facebook,
-                Linkedin,
-                Youtube,
-                TikTok,
-                Telegram,
-                Mail,
-              ].map((Icon, idx) => (
-                <Link
-                  aria-label="Connect With Us"
-                  key={idx}
-                  href={urls[idx]}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-1.5 bg-white/5 backdrop-blur-md rounded-md hover:bg-white/20 transition duration-300 flex items-center justify-center"
-                >
-                  <Icon className="w-5 h-5 text-white" />
-                </Link>
-              ))}
+
+            {/* Tagline */}
+            <div className="pt-2">
+              <p className="text-gray-400 text-xs">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-400 via-[#3ec3ec] to-brand-400 font-semibold">
+                  Your brand deserves better visuals.
+                </span>{" "}
+                We make brands look serious.
+              </p>
             </div>
           </div>
 
-          <div className="sm:col-span-4 lg:col-span-6">
-            <div className="grid grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12">
-              {Object.entries(footerLinks).map(([category, links]) => (
-                <div key={category}>
-                  <h3 className="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">
-                    {category}
-                  </h3>
-                  <ul className="space-y-2 sm:space-y-3">
-                    {links.map((link) => (
-                      <li key={link}>
-                        <Link
-                          href={`/${link.toLowerCase()}`}
-                          className="text-gray-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm"
-                        >
-                          {link}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-
-              <div>
-                <h3 className="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">
-                  Reg No:
+          {/* Nav Links Columns */}
+          <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
+            {footerSections.map((sec) => (
+              <div key={sec.title}>
+                <h3 className="font-semibold text-white mb-3 text-xs sm:text-sm uppercase tracking-wider text-brand-300">
+                  {sec.title}
                 </h3>
-                <p className="text-gray-300 text-xs sm:text-sm max-w-xs">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-400 via-[#3ec3ec] to-brand-400 font-semibold">
-                    Your brand deserves better visuals.
-                  </span>{" "}
-                  We make brands look serious.
-                </p>
+                <ul className="space-y-2">
+                  {sec.links.map((link) => (
+                    <li key={link.label}>
+                      <Link
+                        href={link.href}
+                        target={link.isExternal ? "_blank" : undefined}
+                        rel={link.isExternal ? "noopener noreferrer" : undefined}
+                        className="text-gray-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm block"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                {sec.title === "Legal" && (
+                  <div className="mt-4 pt-3 border-t border-white/10 text-xs">
+                    <span className="text-gray-500">Reg No:</span>{" "}
+                    <span className="text-gray-400 whitespace-nowrap block sm:inline">
+                      {CONTACT.businessRegNo || "PV XXXXXXXX"}
+                    </span>
+                  </div>
+                )}
               </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        <div className="pt-6 sm:pt-8 border-t border-slate-800">
-          <div className="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
-            <p className="text-gray-400 text-xs sm:text-sm">
-              © {new Date().getFullYear()} Frametoque Digital Media. All rights
-              reserved.
+        {/* Centered Social Channels Strip */}
+        <div ref={containerRef} className="flex justify-center items-center gap-2.5 mb-10 sm:mb-12">
+          {/* Divided Channels (Instagram, Facebook, TikTok) */}
+          {dividedChannels.map(({ name, Icon, iconClass, digitalUrl, productionsUrl }) => {
+            if (isDividedArm) {
+              const url = arm === "digital" ? digitalUrl : productionsUrl;
+              return (
+                <a
+                  key={name}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${arm === "digital" ? "Digital" : "Productions"} ${name}`}
+                  className="w-10 h-10 bg-white/5 border border-white/10 rounded-xl hover:bg-white/15 hover:border-brand-500/40 transition duration-300 flex items-center justify-center text-gray-300 hover:text-white"
+                >
+                  <Icon className={iconClass} />
+                </a>
+              );
+            }
+
+            // Parent Collective: Show popover to choose between Digital & Productions
+            const isOpen = activePopover === name;
+            return (
+              <div key={name} className="relative group/social">
+                <button
+                  type="button"
+                  onClick={() => setActivePopover(isOpen ? null : name)}
+                  aria-label={`${name} channels`}
+                  className="w-10 h-10 bg-white/5 border border-white/10 rounded-xl hover:bg-white/15 hover:border-brand-500/40 transition duration-300 flex items-center justify-center text-gray-300 hover:text-white cursor-pointer"
+                >
+                  <Icon className={iconClass} />
+                </button>
+
+                {/* Popover on hover/click */}
+                <div
+                  className={`absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 p-1.5 rounded-xl bg-black/95 border border-white/15 shadow-2xl backdrop-blur-md whitespace-nowrap text-xs transition-all duration-200 ${
+                    isOpen
+                      ? "opacity-100 pointer-events-auto scale-100"
+                      : "opacity-0 pointer-events-none scale-95 group-hover/social:opacity-100 group-hover/social:pointer-events-auto group-hover/social:scale-100"
+                  }`}
+                >
+                  <a
+                    href={productionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-white text-gray-300 transition-colors font-medium"
+                  >
+                    Productions
+                  </a>
+                  <span className="text-gray-600">|</span>
+                  <a
+                    href={digitalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-brand-500 hover:text-white text-gray-300 transition-colors font-medium"
+                  >
+                    Digital
+                  </a>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Single Platforms (LinkedIn, YouTube, Mail) */}
+          {singleChannels.map(({ name, Icon, iconClass, url }) => (
+            <a
+              key={name}
+              href={url}
+              target={url.startsWith("http") ? "_blank" : undefined}
+              rel={url.startsWith("http") ? "noopener noreferrer" : undefined}
+              aria-label={name}
+              className="w-10 h-10 bg-white/5 border border-white/10 rounded-xl hover:bg-white/15 hover:border-brand-500/40 transition duration-300 flex items-center justify-center text-gray-300 hover:text-white"
+            >
+              <Icon className={iconClass} />
+            </a>
+          ))}
+        </div>
+
+        {/* Bottom Legal & Copyright Bar */}
+        <div className="pt-8 border-t border-white/5">
+          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+            <p className="text-gray-500 text-xs sm:text-sm">
+              © {new Date().getFullYear()} Frametoque Digital Productions. All rights reserved.
             </p>
-            <div className="flex items-center space-x-4 sm:space-x-6 text-xs sm:text-sm">
+            <div className="flex items-center space-x-6 text-xs sm:text-sm">
               <Link
                 href="/privacy"
                 className="text-gray-400 hover:text-white transition-colors duration-200"
@@ -190,7 +344,8 @@ export default function Footer() {
             </div>
           </div>
         </div>
-      </div>
+
+      </motion.div>
     </footer>
   );
 }

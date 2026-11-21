@@ -9,6 +9,31 @@ import { putBlob } from "@/lib/storage";
 import { TABLE_MAP } from "@/lib/services";
 
 /**
+ * Helper to ensure the arm column exists in service tables
+ */
+async function ensureArmColumn(table: string) {
+  try {
+    await sql.unsafe(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS arm VARCHAR(50) DEFAULT 'both'`);
+  } catch (err) {
+    console.error(`ensureArmColumn error on ${table}:`, err);
+  }
+}
+
+function safeParseArray<T = any>(val: any): T[] {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+/**
  * Fetch all services for a specific category
  */
 export async function getServicesByCategory(categorySlug: string) {
@@ -19,9 +44,17 @@ export async function getServicesByCategory(categorySlug: string) {
     throw new Error(`Invalid category: ${categorySlug}`);
   }
 
+  await ensureArmColumn(table);
+
   // sql is used as the standard query format in this codebase
   const rows = await sql.unsafe(`SELECT * FROM ${table} ORDER BY sort_order ASC, id ASC`);
-  return rows;
+  return rows.map((r: any) => ({
+    ...r,
+    features: safeParseArray(r.features),
+    packages: safeParseArray(r.packages),
+    process: safeParseArray(r.process),
+    technologies: safeParseArray(r.technologies),
+  }));
 }
 
 /**
@@ -35,25 +68,38 @@ export async function createService(categorySlug: string, data: any) {
     throw new Error(`Invalid category: ${categorySlug}`);
   }
 
+  await ensureArmColumn(table);
+
+  const arm = data.arm || (
+    data.is_digital && data.is_production
+      ? 'both'
+      : data.is_digital
+      ? 'digital'
+      : data.is_production
+      ? 'production'
+      : 'both'
+  );
+
   // Shift existing elements up by 1 to make space for the new one at index 1
   await sql.unsafe(`UPDATE ${table} SET sort_order = sort_order + 1`);
 
   await sql.unsafe(
-    `INSERT INTO ${table} (service_id, title, description, overview, hero_image, features, packages, process, technologies, created_at, updated_at, sort_order, monthly_price, yearly_price, demo_url)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), 1, $10, $11, $12)`,
+    `INSERT INTO ${table} (service_id, title, description, overview, hero_image, features, packages, process, technologies, created_at, updated_at, sort_order, monthly_price, yearly_price, demo_url, arm)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), 1, $10, $11, $12, $13)`,
     [
       data.service_id,
       data.title,
       data.description,
       data.overview,
       data.hero_image,
-      JSON.stringify(data.features),
-      JSON.stringify(data.packages),
-      JSON.stringify(data.process),
-      JSON.stringify(data.technologies),
+      sql.json(safeParseArray(data.features) as any),
+      sql.json(safeParseArray(data.packages) as any),
+      sql.json(safeParseArray(data.process) as any),
+      sql.json(safeParseArray(data.technologies) as any),
       data.monthly_price || null,
       data.yearly_price || null,
-      data.demo_url || null
+      data.demo_url || null,
+      arm
     ]
   );
 }
@@ -69,25 +115,38 @@ export async function updateService(categorySlug: string, id: number, data: any)
     throw new Error(`Invalid category: ${categorySlug}`);
   }
 
+  await ensureArmColumn(table);
+
+  const arm = data.arm || (
+    data.is_digital && data.is_production
+      ? 'both'
+      : data.is_digital
+      ? 'digital'
+      : data.is_production
+      ? 'production'
+      : 'both'
+  );
+
   await sql.unsafe(
     `UPDATE ${table}
      SET service_id = $1, title = $2, description = $3, overview = $4, hero_image = $5,
          features = $6, packages = $7, process = $8, technologies = $9, updated_at = NOW(),
-         monthly_price = $10, yearly_price = $11, demo_url = $12
-     WHERE id = $13`,
+         monthly_price = $10, yearly_price = $11, demo_url = $12, arm = $13
+     WHERE id = $14`,
     [
       data.service_id,
       data.title,
       data.description,
       data.overview,
       data.hero_image,
-      JSON.stringify(data.features),
-      JSON.stringify(data.packages),
-      JSON.stringify(data.process),
-      JSON.stringify(data.technologies),
+      sql.json(safeParseArray(data.features) as any),
+      sql.json(safeParseArray(data.packages) as any),
+      sql.json(safeParseArray(data.process) as any),
+      sql.json(safeParseArray(data.technologies) as any),
       data.monthly_price || null,
       data.yearly_price || null,
       data.demo_url || null,
+      arm,
       id
     ]
   );

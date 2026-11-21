@@ -6,17 +6,17 @@ export const revalidate = 60; // revalidate every 60 seconds
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Camera & Equipment Rental Sri Lanka | Frametoque Rentals",
+    absolute: "Camera & Equipment Rental Sri Lanka | Frametoque Rental",
   },
   description: "Rent professional cinema cameras, Sony FX series, cine lenses, lighting kits, and audio gear in Colombo, Sri Lanka. Check real-time shoot date availability and book directly.",
   alternates: {
     canonical: "https://frametoque.com/rentals",
   },
   openGraph: {
-    title: "Camera & Equipment Rental Sri Lanka | Frametoque Rentals",
+    title: "Camera & Equipment Rental Sri Lanka | Frametoque Rental",
     description: "Rent professional cinema cameras, cine lenses, lighting kits, and audio gear in Colombo, Sri Lanka. Real-time availability.",
     url: "https://frametoque.com/rentals",
-    siteName: "Frametoque Rentals",
+    siteName: "Frametoque Rental",
     type: "website",
   },
   keywords: [
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     "video production gear colombo",
     "lighting equipment rental sri lanka",
     "audio gear rental sri lanka",
-    "frametoque rentals",
+    "frametoque rental",
   ],
 };
 
@@ -49,10 +49,10 @@ export default async function RentalsPage({
       {
         "@type": "LocalBusiness",
         "@id": "https://frametoque.com/rentals#store",
-        name: "Frametoque Rentals Sri Lanka",
+        name: "Frametoque Rental Sri Lanka",
         url: "https://frametoque.com/rentals",
         telephone: "+94701901461",
-        email: "info@frametoque.com",
+        email: "rentals@frametoque.com",
         priceRange: "LKR",
         image: "https://frametoque.com/logos/ft/name-logo.png",
         address: {

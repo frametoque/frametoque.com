@@ -3,7 +3,7 @@ import RentalCartClient from "./RentalCartClient";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Your Bag & Quotation | Frametoque Rentals",
+    absolute: "Your Bag & Quotation | Frametoque Rental",
   },
   description: "Review your equipment rental manifest, calculate multi-day shoot rates, generate official PDF quotations, and book gear directly in Sri Lanka.",
   alternates: {

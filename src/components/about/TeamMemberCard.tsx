@@ -8,12 +8,12 @@ interface TeamMemberCardProps {
   name: string;
   role: string;
   workingRole?: string;
-  expertise: string;
+  expertise?: string;
   social: Record<string, string>;
   accentColor?: "brand-400" | "brand-500" | "none";
 }
 const protectImage = (e) => e.preventDefault();
-const TeamMemberCard = ({ image, name, role, workingRole, expertise, social, accentColor = "brand-500" }: TeamMemberCardProps) => {
+const TeamMemberCard = ({ image, name, role, workingRole, social, accentColor = "brand-500" }: TeamMemberCardProps) => {
   const accentClasses = {
     "brand-400": "bg-brand-400",
     "brand-500": "bg-brand-500",
@@ -48,8 +48,7 @@ const TeamMemberCard = ({ image, name, role, workingRole, expertise, social, acc
       </div>
       <div className="p-5 flex flex-col flex-grow">
         <h3 className="text-lg font-bold text-white mb-1 group-hover:text-brand-400 transition-colors tracking-tight">{name}</h3>
-        {workingRole && <p className="text-brand-400 text-[10px] uppercase tracking-wider mb-2 font-semibold">{workingRole}</p>}
-        <p className="text-gray-400 text-xs mb-4 line-clamp-2 italic h-8">"{expertise}"</p>
+        {workingRole && <p className="text-brand-400 text-[10px] uppercase tracking-wider mb-4 font-semibold">{workingRole}</p>}
         
         <div className="mt-auto flex flex-wrap gap-2">
             {social?.linkedin && (

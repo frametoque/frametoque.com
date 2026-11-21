@@ -1,10 +1,9 @@
 "use client";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import ServicesHome from "@/components/services/ServicesHome";
-import SoftwareWeUse from "@/components/SoftwareWeUse";
+import ArmCards from "@/components/ArmCards";
 import ProjectsHome from "@/components/ProjectsHome";
 import Collab from "@/components/Collab";
 import Testimonials from "@/components/Testimonials";
@@ -13,11 +12,7 @@ import Clients from "@/components/Clients";
 import Footer from "@/components/Footer";
 import StudioPromo from "@/components/FTStudio";
 
-export default function HomeClient({
-  featuredEquipment,
-}: {
-  featuredEquipment?: ReactNode;
-}) {
+export default function HomeClient() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -32,12 +27,9 @@ export default function HomeClient({
     <main className="min-h-screen bg-black text-white overflow-hidden">
       <Navbar scrolled={scrolled} />
       <Hero />
-      <ServicesHome />
+      <ArmCards />
       <ProjectsHome />
-      {/* Awesome Equipment — full category grid */}
-      {featuredEquipment}
       {/* <StudioPromo /> */}
-      <SoftwareWeUse />
       <Testimonials />
       <Clients />
       <WhyChooseUs />

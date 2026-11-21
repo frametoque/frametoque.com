@@ -3,23 +3,23 @@ import RentalTermsClient from "./RentalTermsClient";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Rental Terms & Conditions | Frametoque Rentals",
+    absolute: "Rental Terms & Conditions | Frametoque Rental",
   },
-  description: "Standard terms and conditions for camera and production equipment hire from Frametoque Rentals Sri Lanka. Advance deposit, inspection, liability, and care policies.",
+  description: "Standard terms and conditions for camera and production equipment hire from Frametoque Rental Sri Lanka. Advance deposit, inspection, liability, and care policies.",
   alternates: {
     canonical: "https://frametoque.com/rentals/terms",
   },
   openGraph: {
-    title: "Rental Terms & Conditions | Frametoque Rentals",
-    description: "Equipment hire policies, advance payment guidelines, inspection protocols, and liability agreements from Frametoque Rentals Sri Lanka.",
+    title: "Rental Terms & Conditions | Frametoque Rental",
+    description: "Equipment hire policies, advance payment guidelines, inspection protocols, and liability agreements from Frametoque Rental Sri Lanka.",
     url: "https://frametoque.com/rentals/terms",
-    siteName: "Frametoque Rentals",
+    siteName: "Frametoque Rental",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Rental Terms & Conditions | Frametoque Rentals",
-    description: "Official equipment hire agreement and policies from Frametoque Rentals Sri Lanka.",
+    title: "Rental Terms & Conditions | Frametoque Rental",
+    description: "Official equipment hire agreement and policies from Frametoque Rental Sri Lanka.",
   },
   keywords: [
     "camera rental terms sri lanka",

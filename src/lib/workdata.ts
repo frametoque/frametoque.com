@@ -64,6 +64,23 @@ export async function getVideoEditing(): Promise<VideoProject[]> {
   return rows.map((r) => ({ url: r.url as string }));
 }
 
+export async function getEventProductions(): Promise<VideoProject[]> {
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS work_eventproductions (
+        id SERIAL PRIMARY KEY,
+        url TEXT NOT NULL,
+        sort_order INTEGER DEFAULT 1,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    const rows = await sql`SELECT url FROM work_eventproductions ORDER BY sort_order ASC, id ASC`;
+    return rows.map((r) => ({ url: r.url as string }));
+  } catch {
+    return [];
+  }
+}
+
 export async function getWebProjects(): Promise<{
   projects: WebDevImage[];
   detailsMap: Record<string, SiteDetails>;

@@ -4,7 +4,8 @@ import { Metadata } from "next";
 import Services from "@/components/services/Services";
 
 const titles: Record<string, string> = {
-  "photo-video": "Photography & Videograhy Services",
+  "photo-video": "Photography & Videography Services",
+  "event-productions": "Event Productions Services",
   "graphic-design": "Graphic Design Services",
   "video-editing": "Video Editing Services",
   "web-dev": "Web Development Services",

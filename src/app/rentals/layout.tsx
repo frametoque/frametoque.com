@@ -13,8 +13,8 @@ import ShootKitDrawer from "@/components/rentals/ShootKitDrawer";
 export const metadata: Metadata = {
   metadataBase: new URL("https://frametoque.com"),
   title: {
-    default: "Camera & Equipment Rental Sri Lanka | Frametoque Rentals",
-    template: "%s | Frametoque Rentals",
+    default: "Camera & Equipment Rental Sri Lanka | Frametoque Rental",
+    template: "%s | Frametoque Rental",
   },
   description: "Rent professional cinema cameras, lenses, lighting, audio gear, and stabilization support in Colombo, Sri Lanka. Check real-time shoot availability and book directly via WhatsApp.",
   keywords: [
@@ -25,24 +25,24 @@ export const metadata: Metadata = {
     "sony fx3 rental sri lanka",
     "cinema camera rental colombo",
     "filmmaking gear rental",
-    "frametoque rentals",
+    "frametoque rental",
     "production gear sri lanka",
     "aputure lighting hire colombo",
     "wireless microphone rental colombo",
     "gimbal rental sri lanka",
     "audio gear hire colombo"
   ],
-  authors: [{ name: "Frametoque Digital Media", url: "https://frametoque.com" }],
-  creator: "Frametoque Digital Media",
-  publisher: "Frametoque Digital Media",
+  authors: [{ name: "Frametoque Digital Productions", url: "https://frametoque.com" }],
+  creator: "Frametoque Digital Productions",
+  publisher: "Frametoque Digital Productions",
   alternates: {
     canonical: "https://frametoque.com/rentals",
   },
   openGraph: {
-    title: "Camera & Equipment Rental Sri Lanka | Frametoque Rentals",
+    title: "Camera & Equipment Rental Sri Lanka | Frametoque Rental",
     description: "Rent professional cinema cameras, lenses, lighting, audio gear, and accessories in Colombo, Sri Lanka. Live date availability.",
     url: "https://frametoque.com/rentals",
-    siteName: "Frametoque Rentals",
+    siteName: "Frametoque Rental",
     locale: "en_LK",
     type: "website",
     images: [
@@ -50,13 +50,13 @@ export const metadata: Metadata = {
         url: "https://frametoque.com/logos/ft/name-logo.png",
         width: 1200,
         height: 630,
-        alt: "Frametoque Rentals Sri Lanka",
+        alt: "Frametoque Rental Sri Lanka",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Camera & Equipment Rental Sri Lanka | Frametoque Rentals",
+    title: "Camera & Equipment Rental Sri Lanka | Frametoque Rental",
     description: "Rent professional cinema cameras, lenses, lighting, and audio equipment in Colombo, Sri Lanka.",
     images: ["https://frametoque.com/logos/ft/name-logo.png"],
   },
@@ -174,13 +174,17 @@ export default async function RentalsLayout({
             {/* Company Links */}
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">
-                Rentals Info
+                Rental Info
               </h4>
               <ul className="space-y-2 text-xs text-slate-600">
                 <li><Link href="/rentals/faq" className="hover:text-brand-600 transition-colors">Frequently Asked Questions</Link></li>
-                <li><Link href="/rentals/terms" className="hover:text-brand-600 transition-colors">Terms & Rental Conditions</Link></li>
-                <li><Link href="/rentals/contact" className="hover:text-brand-600 transition-colors">Contact & Inquiry</Link></li>
-                <li><Link href="/about" className="hover:text-brand-600 transition-colors">About Frametoque</Link></li>
+                <li><Link href="/rentals/terms" className="hover:text-brand-600 transition-colors">Terms &amp; Rental Conditions</Link></li>
+                <li><Link href="/rentals/contact" className="hover:text-brand-600 transition-colors">Rental Desk &amp; Inquiries</Link></li>
+                <li><a href="mailto:rentals@frametoque.com" className="hover:text-brand-600 transition-colors font-mono">rentals@frametoque.com</a></li>
+                <li className="pt-2 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">Frametoque Arms</li>
+                <li><Link href="/digital" className="hover:text-brand-600 transition-colors">Frametoque Digital</Link></li>
+                <li><Link href="/productions" className="hover:text-brand-600 transition-colors">Frametoque Productions</Link></li>
+                <li><a href="https://books.frametoque.com" target="_blank" rel="noopener noreferrer" className="hover:text-brand-600 transition-colors">Framebooks ERP ↗</a></li>
               </ul>
             </div>
 
@@ -191,18 +195,19 @@ export default async function RentalsLayout({
               </h4>
               <p className="text-xs text-slate-500 leading-relaxed">
                 Open Daily: 8:00 AM – 9:00 PM<br />
-                Pickup &amp; Dropoff by appointment at: 35, Kopiwaththa Road, Piliyandala.
+                Pickup &amp; Dropoff by appointment at:<br />
+                35, Kopiwaththa Road, Piliyandala.
               </p>
             </div>
 
           </div>
 
           <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-            <p>&copy; {new Date().getFullYear()} Frametoque Digital Media. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Frametoque Digital Productions. All rights reserved.</p>
             <div className="flex items-center gap-6">
               <Link href="/rentals/faq" className="hover:text-slate-800 transition-colors">FAQ</Link>
               <Link href="/rentals/terms" className="hover:text-slate-800 transition-colors">Terms of Service</Link>
-              <Link href="/" className="hover:text-brand-600 transition-colors">Main Site</Link>
+              <Link href="/" className="hover:text-brand-600 transition-colors">Parent Company</Link>
             </div>
           </div>
         </div>

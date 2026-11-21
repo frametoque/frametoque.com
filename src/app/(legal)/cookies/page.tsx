@@ -1,25 +1,31 @@
-export const metadata = {
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
   title: "Cookie Policy",
   description:
     "Read the cookie policy for Frametoque, explaining how we use cookies and similar technologies on our website.",
-    openGraph: {
-    title: "Cookie Policy | Frametoque Digital Media",
+  alternates: {
+    canonical: "https://frametoque.com/cookies",
+  },
+  openGraph: {
+    title: "Cookie Policy | Frametoque Digital Productions",
     description: "Read the cookie policy for Frametoque, explaining how we use cookies and similar technologies on our website.",
     url: "https://frametoque.com/cookies", 
-    siteName: "Frametoque",
+    siteName: "Frametoque Digital Productions",
+    locale: "en_LK",
     images: [
       {
         url: "https://frametoque.com/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Frametoque",
+        alt: "Frametoque Cookie Policy",
       },
     ],
     type: "website",
   },
-    twitter: {
+  twitter: {
     card: "summary_large_image",
-    title: "Cookie Policy | Frametoque Digital Media",
+    title: "Cookie Policy | Frametoque Digital Productions",
     description: "Read the cookie policy for Frametoque, explaining how we use cookies and similar technologies on our website.",
     images: ["https://frametoque.com/og-image.png"],
   },

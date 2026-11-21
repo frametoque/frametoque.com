@@ -50,21 +50,131 @@ const nextConfig = {
   poweredByHeader: false,
   async redirects() {
     return [
+      // Direct 1-hop redirects for legacy work/projects
       {
         source: '/work',
-        destination: '/projects',
+        destination: '/productions/work/photography',
         permanent: true,
       },
       {
         source: "/projects",
-        destination: "/projects/photography",
+        destination: "/productions/work/photography",
         permanent: true,
       },
       {
-        source: "/services",
-        destination: "/services/photo-video",
+        source: "/projects/photography",
+        destination: "/productions/work/photography",
         permanent: true,
       },
+      {
+        source: "/projects/videography",
+        destination: "/productions/work/videography",
+        permanent: true,
+      },
+      {
+        source: "/projects/video-editing",
+        destination: "/productions/work/video-editing",
+        permanent: true,
+      },
+      {
+        source: "/projects/web-dev",
+        destination: "/digital/work/web-dev",
+        permanent: true,
+      },
+      {
+        source: "/projects/graphic-design",
+        destination: "/digital/work/graphic-design",
+        permanent: true,
+      },
+      // Direct 1-hop redirects for legacy services
+      {
+        source: "/services",
+        destination: "/digital",
+        permanent: true,
+      },
+      {
+        source: "/services/web-dev",
+        destination: "/digital/services/web-dev",
+        permanent: true,
+      },
+      {
+        source: "/services/web-dev/:slug",
+        destination: "/digital/services/web-dev/:slug",
+        permanent: true,
+      },
+      {
+        source: "/services/graphic-design",
+        destination: "/digital/services/graphic-design",
+        permanent: true,
+      },
+      {
+        source: "/services/graphic-design/:slug",
+        destination: "/digital/services/graphic-design/:slug",
+        permanent: true,
+      },
+      {
+        source: "/services/photo-video",
+        destination: "/productions/services/photo-video",
+        permanent: true,
+      },
+      {
+        source: "/services/photo-video/:slug",
+        destination: "/productions/services/photo-video/:slug",
+        permanent: true,
+      },
+      {
+        source: "/services/video-editing",
+        destination: "/productions/services/video-editing",
+        permanent: true,
+      },
+      {
+        source: "/services/video-editing/:slug",
+        destination: "/productions/services/video-editing/:slug",
+        permanent: true,
+      },
+      {
+        source: "/services/saas-products",
+        destination: "/digital#saas",
+        permanent: true,
+      },
+      {
+        source: "/services/saas-products/:slug",
+        destination: "/digital#saas",
+        permanent: true,
+      },
+      {
+        source: "/services/domain/:path*",
+        destination: "/digital",
+        permanent: true,
+      },
+      // Framebooks redirects to Digital SaaS section
+      {
+        source: "/framebooks",
+        destination: "/digital#saas",
+        permanent: true,
+      },
+      {
+        source: "/framebooks/:path*",
+        destination: "/digital#saas",
+        permanent: true,
+      },
+      {
+        source: "/accrue",
+        destination: "/digital#saas",
+        permanent: true,
+      },
+      {
+        source: "/accrue/:path*",
+        destination: "/digital#saas",
+        permanent: true,
+      },
+      // Duplicate home route
+      {
+        source: "/home",
+        destination: "/",
+        permanent: true,
+      },
+      // Rentals legacy redirects
       {
         source: "/rent",
         destination: "/rentals",

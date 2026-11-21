@@ -43,9 +43,23 @@ import {
   reorderServicesBatch
 } from "../actions/servicesActions";
 
+const toArray = <T = any>(val: any): T[] => {
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
 // Map slugs to human readable categories
 const CATEGORIES = [
   { slug: "photo-video", name: "Photography & Videography" },
+  { slug: "event-productions", name: "Event Productions" },
   { slug: "graphic-design", name: "Graphic Design" },
   { slug: "video-editing", name: "Video Editing" },
   { slug: "web-dev", name: "Web Development" },
@@ -84,6 +98,8 @@ const defaultServiceForm = {
   description: "",
   overview: "",
   hero_image: "",
+  is_digital: true,
+  is_production: true,
   technologies: [] as string[],
   features: [] as { icon: string; title: string; description: string }[],
   process: [] as { step: number; title: string; description: string }[],
@@ -349,8 +365,15 @@ export default function ServicesAdminPage() {
   // --- Save / Create Flow ---
   const openNew = () => {
     setEditingId(null);
+    const isDigitalCat = activeCategory === "web-dev" || activeCategory === "graphic-design";
+    const isProdCat = activeCategory === "photo-video" || activeCategory === "event-productions";
+    const is_digital = isProdCat ? false : true;
+    const is_production = isDigitalCat ? false : true;
+
     setFormData({
       ...defaultServiceForm,
+      is_digital,
+      is_production,
       hero_image: "/services/eventpulse.png" // Default fallback
     });
     setFormTab("general");
@@ -359,16 +382,22 @@ export default function ServicesAdminPage() {
 
   const openEdit = (service: any) => {
     setEditingId(service.id);
+    const arm = service.arm || "both";
+    const is_digital = arm === "digital" || arm === "both";
+    const is_production = arm === "production" || arm === "productions" || arm === "both";
+
     setFormData({
       service_id: service.service_id || "",
       title: service.title || "",
       description: service.description || "",
       overview: service.overview || "",
       hero_image: service.hero_image || "/services/eventpulse.png",
-      technologies: Array.isArray(service.technologies) ? service.technologies : [],
-      features: Array.isArray(service.features) ? service.features : [],
-      process: Array.isArray(service.process) ? service.process : [],
-      packages: Array.isArray(service.packages) ? service.packages : [],
+      is_digital,
+      is_production,
+      technologies: toArray(service.technologies),
+      features: toArray(service.features),
+      process: toArray(service.process),
+      packages: toArray(service.packages),
       monthly_price: service.monthly_price || "",
       yearly_price: service.yearly_price || "",
       demo_url: service.demo_url || ""
@@ -388,6 +417,10 @@ export default function ServicesAdminPage() {
     }
     if (!formData.overview.trim()) {
       alert("Service overview is required.");
+      return;
+    }
+    if (!formData.is_digital && !formData.is_production) {
+      alert("Please select at least one operational arm (Frametoque Digital or Frametoque Productions).");
       return;
     }
 
@@ -561,7 +594,25 @@ export default function ServicesAdminPage() {
                             </div>
                             <div>
                               <p className="font-semibold text-white text-sm">{service.title}</p>
-                              <span className="text-[10px] text-brand-400 font-mono">{service.service_id}</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] text-brand-400 font-mono">{service.service_id}</span>
+                                <span className="text-[10px] text-gray-600">•</span>
+                                {(!service.arm || service.arm === "both") && (
+                                  <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded">
+                                    Digital & Productions
+                                  </span>
+                                )}
+                                {service.arm === "digital" && (
+                                  <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded">
+                                    Digital
+                                  </span>
+                                )}
+                                {(service.arm === "production" || service.arm === "productions") && (
+                                  <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded">
+                                    Productions
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -569,15 +620,18 @@ export default function ServicesAdminPage() {
                           {service.overview}
                         </td>
                         <td className="p-4 hidden sm:table-cell text-sm text-gray-300">
-                          {service.packages?.[0] ? (
-                            <span className="font-semibold text-white">LKR {service.packages[0].price}</span>
-                          ) : (
-                            <span className="text-gray-600">—</span>
-                          )}
+                          {(() => {
+                            const pkgs = toArray(service.packages);
+                            return pkgs[0]?.price ? (
+                              <span className="font-semibold text-white">LKR {pkgs[0].price}</span>
+                            ) : (
+                              <span className="text-gray-600">—</span>
+                            );
+                          })()}
                         </td>
                         <td className="p-4 text-sm text-gray-300 text-center">
                           <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-full text-xs">
-                            {service.packages?.length || 0}
+                            {toArray(service.packages).length}
                           </span>
                         </td>
                         <td className="p-4 text-right">
@@ -697,6 +751,34 @@ export default function ServicesAdminPage() {
                         placeholder="e.g. Enterprise Web Applications"
                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                        Operational Arm(s) *
+                      </label>
+                      <div className="flex flex-wrap gap-4 p-3 bg-white/5 border border-white/10 rounded-2xl">
+                        <label className="flex items-center gap-2.5 text-sm cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={formData.is_digital}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, is_digital: e.target.checked }))}
+                            className="w-4 h-4 rounded accent-brand-500 bg-white/10 border-white/20 cursor-pointer"
+                          />
+                          <span className="font-medium text-white">Frametoque Digital</span>
+                        </label>
+                        <label className="flex items-center gap-2.5 text-sm cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={formData.is_production}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, is_production: e.target.checked }))}
+                            className="w-4 h-4 rounded accent-brand-500 bg-white/10 border-white/20 cursor-pointer"
+                          />
+                          <span className="font-medium text-white">Frametoque Productions</span>
+                        </label>
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-1.5">
+                        Select whether this service appears under Frametoque Digital, Frametoque Productions, or both.
+                      </p>
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Globe, Youtube, Eye, ExternalLink, X, Camera } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 type ProjectType = "video" | "web" | "graphic" | "photography";
 
@@ -358,8 +359,14 @@ export default function ProjectsHome() {
   return (
     <section className="py-16 px-6 sm:px-10 lg:px-16 bg-[#030303] text-white relative overflow-hidden">
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl sm:text-3xl md:text-4xl lg:text-6xl font-black mb-6 tracking-tight">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-4xl sm:text-3xl md:text-4xl lg:text-6xl font-black tracking-tight">
             <span className="bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">
               Featured&nbsp;
             </span>
@@ -367,13 +374,14 @@ export default function ProjectsHome() {
               Projects
             </span>
           </h2>
-          <p className="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed font-medium">
-            Explore our diverse portfolio of digital products and cinematic experiences, categorized by expertise.
-          </p>
-        </div>
+        </motion.div>
 
         {/* ── DESKTOP (lg+) ── */}
-        <div
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="hidden lg:grid gap-2 mb-12 max-w-6xl mx-auto"
           style={{
             gridTemplateColumns: "repeat(4, 1fr)",
@@ -395,7 +403,7 @@ export default function ProjectsHome() {
               <CardInner project={p} />
             </CardWrap>
           ))}
-        </div>
+        </motion.div>
 
         {/* ── TABLET (sm → lg) ── */}
         <div className="hidden sm:flex lg:hidden flex-col gap-3 mb-12 max-w-2xl mx-auto">

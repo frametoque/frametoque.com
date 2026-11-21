@@ -1,11 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Mail, Instagram, Linkedin, Youtube, Facebook } from "lucide-react";
+import {
+  Mail,
+  Instagram,
+  Linkedin,
+  Youtube,
+  Facebook,
+  Phone,
+  MapPin,
+  ExternalLink,
+} from "lucide-react";
+import { CONTACT } from "@/config/contact";
 
 const TikTok = () => (
   <svg
@@ -22,22 +32,7 @@ const TikTok = () => (
   </svg>
 );
 
-const Telegram = () => (
-  <svg
-    role="img"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-    className="w-5 h-5"
-  >
-    <title>Telegram</title>
-    <path
-      d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"
-      fill="currentColor"
-    />
-  </svg>
-);
-
-const WhatsApp = ({ className = "" }) => (
+const WhatsApp = ({ className = "" }: { className?: string }) => (
   <svg
     role="img"
     viewBox="0 0 24 24"
@@ -51,16 +46,43 @@ const WhatsApp = ({ className = "" }) => (
 );
 
 const socialLinks = [
+  // Instagram (Productions & Digital)
   {
-    href: "https://www.facebook.com/Frametoque/",
-    icon: <Facebook className="w-5 h-5" />,
-    label: "Facebook",
-  },
-  {
-    href: "https://instagram.com/frame.toque",
+    href: "https://instagram.com/frametoque.productions",
     icon: <Instagram className="w-5 h-5" />,
-    label: "Instagram",
+    label: "Productions (Instagram)",
   },
+  {
+    href: "https://instagram.com/frametoque.digital",
+    icon: <Instagram className="w-5 h-5" />,
+    label: "Digital (Instagram)",
+  },
+
+  // Facebook (Productions & Digital)
+  {
+    href: "https://facebook.com/frametoque.productions",
+    icon: <Facebook className="w-5 h-5" />,
+    label: "Productions (Facebook)",
+  },
+  {
+    href: "https://facebook.com/frametoque.digital",
+    icon: <Facebook className="w-5 h-5" />,
+    label: "Digital (Facebook)",
+  },
+
+  // TikTok (Productions & Digital)
+  {
+    href: "https://tiktok.com/@frametoque.productions",
+    icon: <TikTok />,
+    label: "Productions (TikTok)",
+  },
+  {
+    href: "https://tiktok.com/@frametoque.digital",
+    icon: <TikTok />,
+    label: "Digital (TikTok)",
+  },
+
+  // Single platforms
   {
     href: "https://www.linkedin.com/company/frametoque/",
     icon: <Linkedin className="w-5 h-5" />,
@@ -71,30 +93,51 @@ const socialLinks = [
     icon: <Youtube className="w-5 h-5" />,
     label: "YouTube",
   },
+];
+
+const departments = [
   {
-    href: "https://tiktok.com/@frame.toque",
-    icon: <TikTok />,
-    label: "TikTok",
+    role: "General Inquiries",
+    email: CONTACT.emails.general,
   },
-  { href: "https://t.me/Frametoque", icon: <Telegram />, label: "Telegram" },
+  {
+    role: "Frametoque Digital",
+    email: CONTACT.emails.digital,
+  },
+  {
+    role: "Frametoque Productions",
+    email: CONTACT.emails.productions,
+  },
+  {
+    role: "Frametoque Rentals",
+    email: CONTACT.emails.rentals,
+  },
+  {
+    role: "Careers",
+    email: CONTACT.emails.careers,
+  },
+  {
+    role: "Marketing & Partnerships",
+    email: CONTACT.emails.marketing,
+  },
 ];
 
 const faqs = [
   {
     q: "How fast do you reply?",
-    a: "Usually within a few hours unless we are deep in a project.",
+    a: "Usually within a few hours during business hours. For urgent equipment rentals or shoot inquiries, WhatsApp is the fastest channel.",
   },
   {
-    q: "What services do you offer?",
-    a: "Web dev, graphic, branding, short-form content, and more.",
+    q: "How do I choose between Digital and Productions?",
+    a: "Frametoque Digital handles web development, apps, digital design, and video editing. Frametoque Productions handles photography, cinematic videography, and event production packages. For cross-discipline projects, our teams collaborate seamlessly.",
   },
   {
-    q: "Do you take urgent projects?",
-    a: "Yep — just DM us or WhatsApp us with your deadline.",
+    q: "How do equipment rentals work?",
+    a: "Explore our live gear catalog under /rentals, add items to your cart, and complete your reservation via WhatsApp with our rental desk. Verification is fast and secure.",
   },
   {
     q: "Can we collaborate long-term?",
-    a: "Absolutely. Many of our clients stick with us for ongoing work.",
+    a: "Absolutely. Many of our corporate clients maintain ongoing monthly retainers for digital engineering, video content creation, or SaaS tooling.",
   },
 ];
 
@@ -112,146 +155,243 @@ export default function ContactPage() {
       <Navbar scrolled={true} />
 
       <main className="min-h-screen relative overflow-hidden">
-        <section className="relative h-[40vh] md:h-[35vh] w-full bg-black overflow-hidden flex items-center justify-center">
-          <Image
-            src="/images/team/banner ft.png"
-            alt="Contact Hero"
-            fill
-            priority
-            className="absolute inset-0 w-full h-full object-cover opacity-60 scale-100"
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black z-20 pointer-events-none" />
-        </section>
+        {/* Hero Section */}
+        <section className="relative pt-36 pb-20 sm:pt-44 sm:pb-28 px-6 lg:px-16 overflow-hidden">
+          {/* Ambient Glow Background */}
+          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] sm:w-[900px] h-[400px] bg-brand-500/15 blur-[120px] rounded-full" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(22,159,228,0.2),rgba(0,0,0,0))]" />
+          </div>
 
-        <section className="py-24 px-6 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl sm:text-6xl lg:text-5xl font-black mb-6 tracking-tight">
-              <span className="bg-gradient-to-b from-brand-400 to-brand-600 bg-clip-text text-transparent">
-                Contact
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-5xl mx-auto text-center relative z-10"
+          >
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight mb-5">
+              <span className="bg-gradient-to-b from-white via-white to-gray-400 bg-clip-text text-transparent">
+                Get in{" "}
               </span>
-              <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
-                {" "}
-                Us
+              <span className="bg-gradient-to-r from-brand-300 via-brand-400 to-brand-500 bg-clip-text text-transparent">
+                Touch.
               </span>
             </h1>
 
-            <p className="text-slate-300 text-lg leading-relaxed text-center sm:text-left max-w-2xl mx-auto">
-              Hit us up anytime, we are always down to build something iconic
-              with you.
+            <p className="text-gray-400 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+              Connect directly with our specialized teams across Digital, Productions, and Rentals. We are ready to build something iconic together.
             </p>
-          </div>
+          </motion.div>
         </section>
 
-        <section className="max-w-4xl mx-auto px-6 pb-20 space-y-10">
-          {/* Direct contact */}
-          <div className="space-y-4">
-            <div className="border-l-2 border-brand-500/60 pl-6 mb-8">
-              <h2 className="text-xl font-semibold">
-                <span className="text-brand-400">Reach Us Directly</span>
-              </h2>
-            </div>
+        <section className="max-w-5xl mx-auto px-6 pb-20 space-y-16">
+          {/* Quick Direct Lines */}
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              className="border-l-2 border-brand-500/60 pl-6"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wider text-brand-400">Direct Lines & Address</p>
+              <h2 className="text-2xl font-bold text-white">Call or WhatsApp</h2>
+            </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link
-                href="mailto:info@frametoque.com"
-                className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group"
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.5, delay: 0, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className="p-2 rounded-xl bg-brand-500/10 group-hover:bg-brand-500/20 transition-colors">
-                  <Mail className="w-5 h-5 text-brand-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 mb-0.5 uppercase tracking-wider">
-                    Email
-                  </p>
-                  <p className="text-sm text-slate-200 group-hover:text-brand-400 transition-colors">
-                    info@frametoque.com
-                  </p>
-                </div>
-              </Link>
+                <Link
+                  href={CONTACT.whatsapp.general.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group h-full"
+                >
+                  <div className="p-3 rounded-xl bg-brand-500/10 group-hover:bg-brand-500/20 transition-colors">
+                    <WhatsApp className="text-brand-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 mb-0.5 uppercase tracking-wider">
+                      WhatsApp (Primary)
+                    </p>
+                    <p className="text-sm font-semibold text-slate-200 group-hover:text-brand-400 transition-colors">
+                      {CONTACT.whatsapp.general.display}
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
 
-              <Link
-                href="https://wa.me/94701901461"
-                target="_blank"
-                className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group"
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className="p-2 rounded-xl bg-brand-500/10 group-hover:bg-brand-500/20 transition-colors">
-                  <WhatsApp className="text-brand-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 mb-0.5 uppercase tracking-wider">
-                    WhatsApp (Primary)
-                  </p>
-                  <p className="text-sm text-slate-200 group-hover:text-brand-400 transition-colors">
-                    +94 70 190 1461
-                  </p>
-                </div>
-              </Link>
+                <Link
+                  href={CONTACT.phones.secondary.tel}
+                  className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group h-full"
+                >
+                  <div className="p-3 rounded-xl bg-brand-500/10 group-hover:bg-brand-500/20 transition-colors">
+                    <Phone className="w-5 h-5 text-brand-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 mb-0.5 uppercase tracking-wider">
+                      Secondary Line
+                    </p>
+                    <p className="text-sm font-semibold text-slate-200 group-hover:text-brand-400 transition-colors">
+                      {CONTACT.phones.secondary.display}
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
 
-              <Link
-                href="https://wa.me/94758609356"
-                target="_blank"
-                className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group"
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className="p-2 rounded-xl bg-brand-500/10 group-hover:bg-brand-500/20 transition-colors">
-                  <WhatsApp className="text-brand-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 mb-0.5 uppercase tracking-wider">
-                    WhatsApp (Secondary)
-                  </p>
-                  <p className="text-sm text-slate-200 group-hover:text-brand-400 transition-colors">
-                    +94 75 860 9356
-                  </p>
-                </div>
-              </Link>
+                <Link
+                  href={CONTACT.address.googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl px-6 py-5 transition-all duration-200 group h-full"
+                >
+                  <div className="p-3 rounded-xl bg-brand-500/10 group-hover:bg-brand-500/20 transition-colors">
+                    <MapPin className="w-5 h-5 text-brand-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-slate-400 mb-0.5 uppercase tracking-wider flex items-center gap-1">
+                      Address <ExternalLink className="w-3 h-3 text-slate-500" />
+                    </p>
+                    <p className="text-xs font-semibold text-slate-200 truncate group-hover:text-brand-400 transition-colors">
+                      {CONTACT.address.full}
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="border-l-2 border-brand-500/60 pl-6 mb-8">
-              <h2 className="text-xl font-semibold">
-                <span className="text-brand-400">Social Media</span>
-              </h2>
+          {/* Department Directory */}
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              className="border-l-2 border-brand-500/60 pl-6"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wider text-brand-400">Department Directory</p>
+              <h2 className="text-2xl font-bold text-white">Reach the Right Team Directly</h2>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {departments.map((dept, index) => (
+                <motion.div
+                  key={dept.email + dept.role}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.5, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <Link
+                    href={`mailto:${dept.email}`}
+                    className="flex flex-col justify-between bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-2xl p-6 transition-all duration-200 group h-full"
+                  >
+                    <div className="space-y-3">
+                      <div className="w-9 h-9 rounded-xl bg-brand-500/10 group-hover:bg-brand-500/20 transition-colors flex items-center justify-center">
+                        <Mail className="w-4 h-4 text-brand-400" />
+                      </div>
+                      <h3 className="text-base font-semibold text-white group-hover:text-brand-300 transition-colors">
+                        {dept.role}
+                      </h3>
+                    </div>
+                    <div className="mt-4">
+                      <span className="text-xs font-medium text-brand-400 group-hover:text-brand-300 transition-colors">
+                        {dept.email}
+                      </span>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
             </div>
+          </div>
+
+          {/* Socials */}
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              className="border-l-2 border-brand-500/60 pl-6"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wider text-brand-400">Social Channels</p>
+              <h2 className="text-2xl font-bold text-white">Follow Our Work</h2>
+            </motion.div>
 
             <div className="flex flex-wrap justify-center gap-3">
-              {socialLinks.map((item) => (
-                <Link
+              {socialLinks.map((item, index) => (
+                <motion.div
                   key={item.label}
-                  href={item.href}
-                  aria-label={item.label}
-                  target="_blank"
-                  className="flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-xl px-4 py-3.5 transition-all duration-200 group w-[calc(50%-6px)] sm:w-[calc(25%-9px)]"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.45, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                  className="w-[calc(50%-6px)] sm:w-[calc(25%-9px)]"
                 >
-                  <span className="text-slate-400 group-hover:text-brand-400 transition-colors">
-                    {item.icon}
-                  </span>
-                  <span className="text-sm text-slate-300 group-hover:text-white transition-colors">
-                    {item.label}
-                  </span>
-                </Link>
+                  <Link
+                    href={item.href}
+                    aria-label={item.label}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-500/40 rounded-xl px-4 py-3.5 transition-all duration-200 group w-full"
+                  >
+                    <span className="text-slate-400 group-hover:text-brand-400 transition-colors">
+                      {item.icon}
+                    </span>
+                    <span className="text-sm text-slate-300 group-hover:text-white transition-colors truncate">
+                      {item.label}
+                    </span>
+                  </Link>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
 
+        {/* FAQs */}
         <section className="bg-[#111111] py-24 border-y border-white/5">
           <div className="max-w-4xl mx-auto px-6">
-            <div className="flex flex-col gap-6 mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="flex flex-col gap-4 mb-16"
+            >
               <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
                 Frequently Asked{" "}
                 <span className="text-brand-500">Questions</span>
               </h2>
               <p className="text-gray-400 text-sm md:text-base leading-relaxed max-w-2xl">
-                Quick answers to the things people ask us most.
+                Quick answers across Frametoque Digital, Frametoque Productions, Frametoque Rentals, and Framebooks.
               </p>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {faqs.map((faq, i) => (
-                <div
+                <motion.div
                   key={i}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.5, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
                   className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-2 hover:border-brand-500/30 transition-colors"
                 >
                   <h3 className="font-semibold text-white text-base">
@@ -260,7 +400,7 @@ export default function ContactPage() {
                   <p className="text-slate-400 text-sm leading-relaxed">
                     {faq.a}
                   </p>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>

@@ -8,7 +8,11 @@ Disallow: /admin/*
 Disallow: /dashboard
 Disallow: /dashboard/*
 Disallow: /api/*
+Disallow: /login
+Disallow: /sso-callback
+Disallow: /forbidden
 
+Sitemap: https://frametoque.com/sitemap.xml
 Sitemap: https://frametoque.com/sitemap
   `.trim();
 

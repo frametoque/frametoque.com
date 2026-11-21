@@ -5,66 +5,6 @@ export const dynamic = "force-dynamic";
 export const GET = async () => {
   const baseUrl = "https://frametoque.com";
 
-  const staticPages = [
-    { slug: "", priority: "1.0", changefreq: "weekly" },
-    { slug: "about", priority: "0.8", changefreq: "monthly" },
-    { slug: "projects", priority: "0.8", changefreq: "monthly" },
-    { slug: "contact", priority: "0.8", changefreq: "monthly" },
-    { slug: "services", priority: "0.9", changefreq: "weekly" },
-    { slug: "rentals", priority: "1.0", changefreq: "daily" },
-    { slug: "rentals/contact", priority: "0.8", changefreq: "monthly" },
-    { slug: "rentals/faq", priority: "0.8", changefreq: "monthly" },
-    { slug: "rentals/terms", priority: "0.6", changefreq: "monthly" },
-  ];
-
-  const serviceCategories = [
-    "web-dev",
-    "graphic-design",
-    "video-editing",
-    "photo-video",
-    "saas-products",
-  ];
-
-  const projectCategories = [
-    "web-dev",
-    "graphic-design",
-    "video-editing",
-    "photography",
-    "videography",
-  ];
-
-  const servicesData = [
-    { id: "portfolio-websites", category: "web-dev" },
-    { id: "business-websites", category: "web-dev" },
-    { id: "ecommerce-websites", category: "web-dev" },
-    { id: "learning-platforms", category: "web-dev" },
-    { id: "media-websites", category: "web-dev" },
-    { id: "booking-systems", category: "web-dev" },
-    { id: "education-websites", category: "web-dev" },
-
-    { id: "short-form-video-editing", category: "video-editing" },
-    { id: "long-form-video-editing", category: "video-editing" },
-    { id: "social-media-video-editing", category: "video-editing" },
-    { id: "motion-graphic-and-annimation", category: "video-editing" },
-    { id: "corporate-and-business-videos", category: "video-editing" },
-    { id: "content-creator-video-editing", category: "video-editing" },
-
-    { id: "basic-photography", category: "photo-video" },
-    { id: "basic-videography", category: "photo-video" },
-    { id: "standard-photo-video", category: "photo-video" },
-    { id: "extended-event-package", category: "photo-video" },
-    { id: "premium-cinematic-package", category: "photo-video" },
-    { id: "ultimate-production-package", category: "photo-video" },
-
-    { id: "logo-design", category: "graphic-design" },
-    { id: "socialmedia-post-design", category: "graphic-design" },
-    { id: "promotional-design", category: "graphic-design" },
-    { id: "stationery-design", category: "graphic-design" },
-    { id: "webgraphic", category: "graphic-design" },
-
-    { id: "accounting-inventory-system", category: "saas-products" },
-  ];
-
   type UrlEntry = {
     loc: string;
     changefreq: string;
@@ -73,33 +13,91 @@ export const GET = async () => {
 
   const urls: UrlEntry[] = [];
 
+  const staticPages = [
+    { slug: "", priority: "1.0", changefreq: "weekly" },
+    { slug: "digital", priority: "0.9", changefreq: "weekly" },
+    { slug: "productions", priority: "0.9", changefreq: "weekly" },
+    { slug: "rentals", priority: "1.0", changefreq: "daily" },
+    { slug: "about", priority: "0.8", changefreq: "monthly" },
+    { slug: "contact", priority: "0.8", changefreq: "monthly" },
+    { slug: "careers", priority: "0.8", changefreq: "weekly" },
+    { slug: "privacy", priority: "0.5", changefreq: "yearly" },
+    { slug: "terms", priority: "0.5", changefreq: "yearly" },
+    { slug: "cookies", priority: "0.5", changefreq: "yearly" },
+    { slug: "rentals/contact", priority: "0.8", changefreq: "monthly" },
+    { slug: "rentals/faq", priority: "0.8", changefreq: "monthly" },
+    { slug: "rentals/terms", priority: "0.6", changefreq: "monthly" },
+  ];
+
   staticPages.forEach(({ slug, priority, changefreq }) => {
     urls.push({
-      loc: `${baseUrl}/${slug}`,
+      loc: slug ? `${baseUrl}/${slug}` : baseUrl,
       changefreq,
       priority,
     });
   });
 
-  serviceCategories.forEach((cat) => {
+  // Digital Arm Routes
+  const digitalServiceCategories = ["web-dev", "graphic-design"];
+  digitalServiceCategories.forEach((cat) => {
     urls.push({
-      loc: `${baseUrl}/services/${cat}`,
+      loc: `${baseUrl}/digital/services/${cat}`,
       changefreq: "weekly",
       priority: "0.9",
     });
   });
 
-  projectCategories.forEach((cat) => {
+  const digitalServicesDetail = [
+    { id: "portfolio-websites", category: "web-dev" },
+    { id: "business-websites", category: "web-dev" },
+    { id: "ecommerce-websites", category: "web-dev" },
+    { id: "learning-platforms", category: "web-dev" },
+    { id: "media-websites", category: "web-dev" },
+    { id: "booking-systems", category: "web-dev" },
+    { id: "education-websites", category: "web-dev" },
+    { id: "logo-design", category: "graphic-design" },
+    { id: "socialmedia-post-design", category: "graphic-design" },
+    { id: "promotional-design", category: "graphic-design" },
+    { id: "stationery-design", category: "graphic-design" },
+    { id: "webgraphic", category: "graphic-design" },
+  ];
+
+  digitalServicesDetail.forEach((service) => {
     urls.push({
-      loc: `${baseUrl}/projects/${cat}`,
+      loc: `${baseUrl}/digital/services/${service.category}/${service.id}`,
       changefreq: "monthly",
       priority: "0.7",
     });
   });
 
-  servicesData.forEach((service) => {
+  // Productions Arm Routes
+  const productionsServiceCategories = ["photo-video", "event-productions", "video-editing"];
+  productionsServiceCategories.forEach((cat) => {
     urls.push({
-      loc: `${baseUrl}/services/${service.category}/${service.id}`,
+      loc: `${baseUrl}/productions/services/${cat}`,
+      changefreq: "weekly",
+      priority: "0.9",
+    });
+  });
+
+  const productionsServicesDetail = [
+    { id: "basic-photography", category: "photo-video" },
+    { id: "basic-videography", category: "photo-video" },
+    { id: "standard-photo-video", category: "photo-video" },
+    { id: "extended-event-package", category: "event-productions" },
+    { id: "premium-cinematic-package", category: "event-productions" },
+    { id: "ultimate-production-package", category: "event-productions" },
+    { id: "short-form-video-editing", category: "video-editing" },
+    { id: "long-form-video-editing", category: "video-editing" },
+    { id: "social-media-video-editing", category: "video-editing" },
+    { id: "motion-graphic-and-annimation", category: "video-editing" },
+    { id: "corporate-and-business-videos", category: "video-editing" },
+    { id: "content-creator-video-editing", category: "video-editing" },
+  ];
+
+  productionsServicesDetail.forEach((service) => {
+    urls.push({
+      loc: `${baseUrl}/productions/services/${service.category}/${service.id}`,
       changefreq: "monthly",
       priority: "0.7",
     });

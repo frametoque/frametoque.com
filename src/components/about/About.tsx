@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FounderSpotlight from "@/components/about/FounderSpotlight";
 import TeamMemberCard from "@/components/about/TeamMemberCard";
-import Image from "next/image";
 
 export default function AboutUs() {
   const [scrolled, setScrolled] = useState(false);
@@ -91,61 +91,93 @@ export default function AboutUs() {
       <Navbar scrolled={true} />
       
       <main className="min-h-screen relative overflow-hidden">
-        <section className="relative h-[40vh] md:h-[35vh] w-full bg-black overflow-hidden flex items-center justify-center">
-          <Image
-            src="/images/team/banner ft.png"
-            alt="About Us Hero"
-            fill
-            priority
-            className="absolute inset-0 w-full h-full object-cover opacity-60 scale-100"
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black z-20 pointer-events-none" />
-        </section>
+        {/* Hero Section */}
+        <section className="relative pt-36 pb-20 sm:pt-44 sm:pb-28 px-6 lg:px-16 overflow-hidden">
+          {/* Ambient Glow Background */}
+          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] sm:w-[900px] h-[400px] bg-brand-500/15 blur-[120px] rounded-full" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(22,159,228,0.2),rgba(0,0,0,0))]" />
+          </div>
 
-        {/* Hero / Header Section */}
-        <section className="py-24 px-6 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-
-            <h1 className="text-5xl sm:text-6xl lg:text-5xl font-black mb-12 tracking-tight">
-              <span className="bg-gradient-to-b from-brand-400 to-brand-600 bg-clip-text text-transparent">
-                About
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-5xl mx-auto text-center relative z-10"
+          >
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight mb-5">
+              <span className="bg-gradient-to-b from-white via-white to-gray-400 bg-clip-text text-transparent">
+                About{" "}
               </span>
-              <span className="bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
-                {" "}Us
+              <span className="bg-gradient-to-r from-brand-300 via-brand-400 to-brand-500 bg-clip-text text-transparent">
+                Frametoque.
               </span>
             </h1>
 
-            <div className="space-y-12 text-left">
-
-            <p className="text-slate-300 text-lg leading-relaxed text-center sm:text-left">
-              Frametoque first started in Sri Lanka during our school days through media units and small creative projects.
-              What began as simple school-level media work and fun experiments with cameras and code has now grown into a creative studio making modern digital experiences.
+            <p className="text-gray-400 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+              One creative collective across two core arms. Born in Sri Lanka from school media units and curious experiments with cameras and code, Frametoque has grown from student creative projects into a modern technology and production house crafting high-impact digital experiences.
             </p>
+          </motion.div>
+        </section>
 
-            <div className="border-l-2 border-brand-500/60 pl-6 space-y-2">
-              <h2 className="text-xl font-semibold text-white">
-                <span className="text-brand-400">Our Vision</span>
-              </h2>
-              <p className="text-slate-400 leading-relaxed">
-                To grow into one of Sri Lanka’s leading creative teams that helps brands
-                stand out. We want to mix creativity and technology to build fresh,
-                powerful digital stories.
-              </p>
-            </div>
+        {/* Story & Structure Section */}
+        <section className="py-20 px-6 lg:px-16 border-t border-white/5 bg-slate-950/60 relative">
+          <div className="max-w-4xl mx-auto">
+            <div className="space-y-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                  className="border-l-2 border-brand-500/60 pl-6 space-y-2"
+                >
+                  <h2 className="text-xl font-semibold text-white">
+                    <span className="text-brand-400">Our Vision</span>
+                  </h2>
+                  <p className="text-slate-400 leading-relaxed text-sm sm:text-base">
+                    To grow into one of Sri Lanka’s leading creative teams that helps brands
+                    stand out. We want to mix creativity and technology to build fresh,
+                    powerful digital stories.
+                  </p>
+                </motion.div>
 
-            <div className="border-l-2 border-brand-500/60 pl-6 space-y-2">
-              <h2 className="text-xl font-semibold text-white">
-                <span className="text-brand-400">Our Mission</span>
-              </h2>
-              <p className="text-slate-400 leading-relaxed">
-                To create real and meaningful experiences through design, video, and code.
-                Our goal is to help brands connect with people in a way that
-                feels honest, modern, and unforgettable.
-              </p>
-            </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 0.55, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+                  className="border-l-2 border-brand-500/60 pl-6 space-y-2"
+                >
+                  <h2 className="text-xl font-semibold text-white">
+                    <span className="text-brand-400">Our Mission</span>
+                  </h2>
+                  <p className="text-slate-400 leading-relaxed text-sm sm:text-base">
+                    To create real and meaningful experiences through design, video, and code.
+                    Our goal is to help brands connect with people in a way that
+                    feels honest, modern, and unforgettable.
+                  </p>
+                </motion.div>
+              </div>
 
-
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.55, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                className="border-l-2 border-brand-500/60 pl-6 space-y-4 pt-4"
+              >
+                <h2 className="text-xl font-semibold text-white">
+                  <span className="text-brand-400">Our Structure</span>
+                </h2>
+                <p className="text-slate-400 leading-relaxed text-sm sm:text-base">
+                  Frametoque Digital Productions operates as a unified group with two core operational arms and their dedicated sub-arms:
+                </p>
+                <ul className="space-y-2.5 text-sm sm:text-base text-slate-300">
+                  <li><strong className="text-white">Frametoque Digital:</strong> Full-stack web application development, brand identity systems, video editing & VFX, and digital marketing, with <em>Framebooks</em> as its proprietary cloud ERP and accounting sub-arm.</li>
+                  <li><strong className="text-white">Frametoque Productions:</strong> Cinematic videography, event photography, commercial shoots, and live event productions, with <em>Frametoque Rentals</em> as its dedicated cinema gear and equipment hire sub-arm.</li>
+                </ul>
+              </motion.div>
             </div>
           </div>
         </section>
@@ -157,7 +189,13 @@ export default function AboutUs() {
 
         <section className="bg-[#111111] py-24 border-y border-white/5">
           <div className="max-w-6xl mx-auto px-6">
-            <div className="flex flex-col gap-6 mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="flex flex-col gap-6 mb-16"
+            >
               <div className="max-w-4xl">
                 <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
                   The Minds Behind <span className="text-brand-500">The Magic</span>
@@ -166,15 +204,22 @@ export default function AboutUs() {
               <p className="text-gray-400 text-sm md:text-base leading-relaxed max-w-2xl">
                 A diverse group of designers, developers, and creators dedicated to pushing the boundaries of digital excellence.
               </p>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {teamMembers.map((member, index) => (
-                <TeamMemberCard
+                <motion.div
                   key={member.name}
-                  {...member}
-                  accentColor={index % 2 === 0 ? "brand-500" : "brand-400"}
-                />
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.5, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <TeamMemberCard
+                    {...member}
+                    accentColor={index % 2 === 0 ? "brand-500" : "brand-400"}
+                  />
+                </motion.div>
               ))}
             </div>
           </div>
