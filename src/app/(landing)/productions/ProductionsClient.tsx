@@ -72,7 +72,7 @@ export default function ProductionsClient({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 flex-wrap"
           >
             <Link
               href="/productions/services/photo-video"
@@ -86,6 +86,15 @@ export default function ProductionsClient({
               className="w-full sm:w-auto inline-flex items-center justify-center px-5 sm:px-6 py-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white font-medium text-xs sm:text-sm transition-all duration-300 hover:border-brand-500/30"
             >
               View Portfolio
+            </Link>
+            <Link
+              href="/rentals"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-5 sm:px-6 py-2.5 rounded-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-semibold text-xs sm:text-sm transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-red-500/20"
+            >
+              Browse Equipment Rental Catalogue
+              <ArrowRight className="ml-1.5 w-3.5 h-3.5" />
             </Link>
           </motion.div>
         </motion.div>
