@@ -160,6 +160,59 @@ function YouTubeVideoTitle({ url }: { url: string }) {
   return <span className="font-semibold text-white text-sm block leading-relaxed">{title}</span>;
 }
 
+function SuggestedFrameItem({
+  frame,
+  onSelect,
+  disabled
+}: {
+  frame: { name: string; url: string };
+  onSelect: (url: string) => void;
+  disabled: boolean;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(frame.url)}
+      disabled={disabled || failed}
+      className="group flex flex-col bg-white/5 border border-white/10 hover:border-brand-500/50 rounded-xl overflow-hidden text-left transition-all p-1.5 focus:outline-none disabled:opacity-50 cursor-pointer"
+    >
+      <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden bg-slate-900 border border-white/5 flex items-center justify-center">
+        {!loaded && !failed && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-10 gap-2">
+            <Loader2 className="w-5 h-5 text-brand-400 animate-spin" />
+            <span className="text-[9px] text-white/40 font-mono">Rendering...</span>
+          </div>
+        )}
+        {failed ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-white/40 p-2 text-center">
+            <span className="text-[10px]">Unavailable</span>
+          </div>
+        ) : (
+          <img
+            src={frame.url}
+            alt={frame.name}
+            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+              loaded ? "opacity-100" : "opacity-0"
+            }`}
+            loading="lazy"
+            onLoad={() => setLoaded(true)}
+            onError={() => setFailed(true)}
+          />
+        )}
+        {loaded && !failed && (
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <span className="text-[10px] bg-brand-600 text-white font-bold px-2 py-0.5 rounded-full">Apply</span>
+          </div>
+        )}
+      </div>
+      <span className="text-[10px] text-gray-300 font-semibold mt-1.5 px-1 truncate block">{frame.name}</span>
+    </button>
+  );
+}
+
 export default function PortfolioAdminPage() {
   const [activeCategory, setActiveCategory] = useState("photography");
 
@@ -340,26 +393,27 @@ export default function PortfolioAdminPage() {
     setGeneratingScreenshots(true);
     try {
       const encoded = encodeURIComponent(cleanUrl);
+      const timestamp = Date.now();
       const frames = [
         {
           name: "1s Delay (Desktop 16:9)",
-          url: `/api/admin/screenshot?url=${encoded}&delay=1000`
+          url: `/api/admin/screenshot?url=${encoded}&delay=1000&t=${timestamp}`
         },
         {
           name: "2s Delay (Desktop 16:9)",
-          url: `/api/admin/screenshot?url=${encoded}&delay=2000`
+          url: `/api/admin/screenshot?url=${encoded}&delay=2000&t=${timestamp}`
         },
         {
           name: "3s Delay (Desktop 16:9)",
-          url: `/api/admin/screenshot?url=${encoded}&delay=3000`
+          url: `/api/admin/screenshot?url=${encoded}&delay=3000&t=${timestamp}`
         },
         {
           name: "4s Delay (Desktop 16:9)",
-          url: `/api/admin/screenshot?url=${encoded}&delay=4000`
+          url: `/api/admin/screenshot?url=${encoded}&delay=4000&t=${timestamp}`
         },
         {
           name: "5s Delay (Desktop 16:9)",
-          url: `/api/admin/screenshot?url=${encoded}&delay=5000`
+          url: `/api/admin/screenshot?url=${encoded}&delay=5000&t=${timestamp}`
         }
       ];
       setSuggestedScreenshots(frames);
@@ -1293,26 +1347,12 @@ export default function PortfolioAdminPage() {
                       <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Suggested Viewport Frames (Click one to select)</label>
                       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                         {suggestedScreenshots.map((frame, idx) => (
-                          <button
+                          <SuggestedFrameItem
                             key={idx}
-                            type="button"
-                            onClick={() => handleSelectScreenshot(frame.url)}
+                            frame={frame}
+                            onSelect={handleSelectScreenshot}
                             disabled={uploadingImage}
-                            className="group flex flex-col bg-white/5 border border-white/10 hover:border-brand-500/50 rounded-xl overflow-hidden text-left transition-all p-1.5 focus:outline-none disabled:opacity-50 cursor-pointer"
-                          >
-                            <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden bg-slate-900 border border-white/5 flex items-center justify-center">
-                              <img
-                                src={frame.url}
-                                alt={frame.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                loading="lazy"
-                              />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <span className="text-[10px] bg-brand-600 text-white font-bold px-2 py-0.5 rounded-full">Apply</span>
-                              </div>
-                            </div>
-                            <span className="text-[10px] text-gray-300 font-semibold mt-1.5 px-1 truncate block">{frame.name}</span>
-                          </button>
+                          />
                         ))}
                       </div>
                     </div>

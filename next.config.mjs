@@ -6,7 +6,7 @@ const cspHeader = `
   img-src 'self' data: blob: https:;
   media-src 'self' https://*.public.blob.vercel-storage.com https://*.r2.dev https://*.cloudflarestorage.com data: blob:;
   connect-src 'self' https: wss: https://*.clerk.accounts.dev https://clerk.frametoque.com https://api.payments.lk https://api.cloudflare.com https://photon.komoot.io https://open.er-api.com https://api.open-meteo.com;
-  frame-src 'self' https://challenges.cloudflare.com https://*.youtube.com https://www.youtube.com;
+  frame-src 'self' https: http: https://challenges.cloudflare.com https://*.youtube.com https://www.youtube.com;
   frame-ancestors 'self';
   form-action 'self';
   base-uri 'self';

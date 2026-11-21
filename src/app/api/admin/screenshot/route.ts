@@ -53,10 +53,17 @@ function getLocalChromePath(): string | undefined {
 }
 
 export async function GET(req: NextRequest) {
-  try {
-    await requireAdminSession();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized: Admin access required" }, { status: 403 });
+  const internalSecret = req.headers.get("x-internal-secret");
+  const isInternal = Boolean(
+    internalSecret && process.env.CRON_SECRET && internalSecret === process.env.CRON_SECRET
+  );
+
+  if (!isInternal) {
+    try {
+      await requireAdminSession();
+    } catch {
+      return NextResponse.json({ error: "Unauthorized: Admin access required" }, { status: 403 });
+    }
   }
 
   const { searchParams } = new URL(req.url);
@@ -86,37 +93,31 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Malformed URL" }, { status: 400 });
   }
 
-  // 1. Preferred portable approach: lightweight external capture adapter
-  // Avoids launching 500MB headless browser instances on serverless / shared hosting
+  // 1. If custom internal screenshot service is configured, use it first
   const customServiceUrl = process.env.SCREENSHOT_SERVICE_URL;
-  const externalCaptureUrl = customServiceUrl
-    ? `${customServiceUrl}?url=${encodeURIComponent(formattedUrl)}&width=${width}&height=${height}`
-    : `https://s0.wp.com/mshots/v1/${encodeURIComponent(formattedUrl)}?w=${Math.min(width, 1440)}&h=${Math.min(height, 900)}`;
-
-  try {
-    const extRes = await fetch(externalCaptureUrl, {
-      headers: {
-        "User-Agent": "FrametoqueBot/1.0",
-      },
-      next: { revalidate: 3600 },
-    });
-    if (extRes.ok) {
-      const imgBuffer = await extRes.arrayBuffer();
-      const contentType = extRes.headers.get("content-type") || "image/jpeg";
-      if (imgBuffer.byteLength > 1000) {
-        return new NextResponse(imgBuffer, {
-          headers: {
-            "Content-Type": contentType,
-            "Cache-Control": "public, max-age=3600, s-maxage=86400",
-          },
-        });
+  if (customServiceUrl) {
+    try {
+      const extRes = await fetch(
+        `${customServiceUrl}?url=${encodeURIComponent(formattedUrl)}&width=${width}&height=${height}&delay=${delayMs}`,
+        { headers: { "User-Agent": "FrametoqueBot/1.0" } }
+      );
+      if (extRes.ok) {
+        const imgBuffer = await extRes.arrayBuffer();
+        if (imgBuffer.byteLength > 1000) {
+          return new NextResponse(imgBuffer, {
+            headers: {
+              "Content-Type": extRes.headers.get("content-type") || "image/png",
+              "Cache-Control": "public, max-age=3600, s-maxage=86400",
+            },
+          });
+        }
       }
+    } catch (err) {
+      console.warn("Custom screenshot service failed, falling back to Puppeteer/external:", err);
     }
-  } catch (extErr) {
-    console.warn("External screenshot capture fallback triggered:", extErr);
   }
 
-  // 2. Optional local puppeteer-core fallback if specifically enabled and available
+  // 2. High-fidelity capture via Puppeteer (local Chrome on macOS/Linux or Sparticuz on serverless)
   let browser: any = null;
   try {
     const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL;
@@ -147,6 +148,7 @@ export async function GET(req: NextRequest) {
           args: [
             "--no-sandbox",
             "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
             "--disable-blink-features=AutomationControlled",
             `--window-size=${width},${height}`,
           ],
@@ -162,7 +164,7 @@ export async function GET(req: NextRequest) {
       );
       await page.goto(formattedUrl, { waitUntil: "domcontentloaded", timeout: 15000 });
       if (delayMs > 0) {
-        await new Promise((resolve) => setTimeout(resolve, Math.min(delayMs, 3000)));
+        await new Promise((resolve) => setTimeout(resolve, Math.min(delayMs, 5000)));
       }
       const screenshotBuffer = await page.screenshot({ type: "png", fullPage: false });
       await browser.close();
@@ -175,22 +177,53 @@ export async function GET(req: NextRequest) {
         },
       });
     }
-
-    return NextResponse.json(
-      { error: "Screenshot generation completed via fallback or unavailable on this host" },
-      { status: 502 }
-    );
-  } catch (error: any) {
+  } catch (puppeteerErr) {
     if (browser) {
       try {
         await browser.close();
-      } catch (closeErr) {
+      } catch {
         // ignore
       }
     }
-    return NextResponse.json(
-      { error: error?.message || "Failed to capture screenshot" },
-      { status: 500 }
-    );
+    console.warn("Puppeteer capture failed or unavailable, falling back to clean cloud capture:", puppeteerErr);
   }
+
+  // 3. Clean cloud screenshot providers (NO WordPress / wp.com branding)
+  const waitSeconds = Math.min(Math.max(Math.round(delayMs / 1000), 1), 6);
+  const externalCaptureUrls = [
+    // Thum.io supports delay via /wait/<seconds> and renders clean Chromium viewports
+    `https://image.thum.io/get/width/${Math.min(width, 1440)}/crop/900/wait/${waitSeconds}/noanimate/${formattedUrl}`,
+    // Microlink cloud browser adapter
+    `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url`,
+  ];
+
+  for (const captureUrl of externalCaptureUrls) {
+    try {
+      const extRes = await fetch(captureUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; FrametoqueBot/1.0)",
+        },
+        next: { revalidate: 3600 },
+      });
+      if (extRes.ok) {
+        const imgBuffer = await extRes.arrayBuffer();
+        const contentType = extRes.headers.get("content-type") || "image/png";
+        if (imgBuffer.byteLength > 2000) {
+          return new NextResponse(imgBuffer, {
+            headers: {
+              "Content-Type": contentType,
+              "Cache-Control": "public, max-age=3600, s-maxage=86400",
+            },
+          });
+        }
+      }
+    } catch (extErr) {
+      console.warn(`External capture failed for ${captureUrl}:`, extErr);
+    }
+  }
+
+  return NextResponse.json(
+    { error: "Failed to generate screenshot from available renderers" },
+    { status: 502 }
+  );
 }

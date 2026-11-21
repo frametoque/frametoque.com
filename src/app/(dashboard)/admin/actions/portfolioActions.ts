@@ -401,14 +401,25 @@ export async function uploadPortfolioMediaFromUrl(url: string): Promise<string> 
   }
 
   let fetchUrl = url;
+  const requestHeaders: Record<string, string> = {};
+
   if (url.startsWith("/")) {
     const headersList = await headers();
     const host = headersList.get("host") || "localhost:3000";
-    const protocol = host.includes("localhost") ? "http" : "https";
+    const protocol = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
     fetchUrl = `${protocol}://${host}${url}`;
+
+    const cookie = headersList.get("cookie");
+    if (cookie) {
+      requestHeaders["cookie"] = cookie;
+    }
+
+    if (process.env.CRON_SECRET) {
+      requestHeaders["x-internal-secret"] = process.env.CRON_SECRET;
+    }
   }
 
-  const response = await fetch(fetchUrl);
+  const response = await fetch(fetchUrl, { headers: requestHeaders });
   if (!response.ok) {
     throw new Error(`Failed to download image: ${response.statusText}`);
   }

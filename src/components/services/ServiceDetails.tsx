@@ -641,6 +641,7 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
             techs: data.technologies || [],
             url: data.demo_url || "",
             domain: "",
+            image: data.hero_image || undefined,
           }}
           onClose={() => setIsDemoOpen(false)}
         />

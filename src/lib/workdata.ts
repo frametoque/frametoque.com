@@ -26,6 +26,7 @@ export interface SiteDetails {
   description: string;
   techs: string[];
   url: string;
+  image?: string;
 }
 
 export async function getPhotography(): Promise<PhotographyEvent[]> {
@@ -101,6 +102,7 @@ export async function getWebProjects(): Promise<{
         description: r.description as string,
         techs: r.techs as string[],
         url: r.url as string,
+        image: r.image_path as string,
       },
     ])
   );
