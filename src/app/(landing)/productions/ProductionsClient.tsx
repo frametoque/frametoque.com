@@ -3,11 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ExternalLink } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import GallerySection from "@/components/projects/GallerySection";
 import ProductionsWhatWeDo from "@/components/productions/ProductionsWhatWeDo";
+import RentalCatalogMockup from "@/components/rentals/RentalCatalogMockup";
 import type { PhotographyEvent, VideoProject } from "@/lib/workdata";
 
 interface ProductionsClientProps {
@@ -111,34 +112,62 @@ export default function ProductionsClient({
         eventProductionUrls={eventProductionUrls}
       />
 
-      {/* Cross link to Rental */}
-      <section className="py-20 px-6 lg:px-16 border-t border-white/5 relative">
+      {/* Rentals Showcase Section (Frametoque Rentals) */}
+      <section id="rentals" className="py-24 px-6 lg:px-16 border-t border-white/5 relative bg-gradient-to-b from-black via-slate-950/80 to-black">
         <div className="max-w-6xl mx-auto">
+          {/* Section Header */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900/60 to-black border border-white/10 p-8 sm:p-12 lg:p-16 flex flex-col md:flex-row items-center justify-between gap-8 hover:border-red-500/30 transition-colors shadow-2xl"
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="text-center max-w-3xl mx-auto mb-16"
           >
-            <div className="max-w-xl">
-              <span className="text-xs font-bold uppercase tracking-wider text-red-400 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 inline-block mb-3">
-                Frametoque Rentals
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
+              <span className="block text-white">Frametoque Rentals</span>
+              <span className="block bg-gradient-to-r from-red-400 via-rose-400 to-red-500 bg-clip-text text-transparent mt-1">
+                Cinema Cameras, Lenses & Production Gear Hire
               </span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                Need Cinema Gear for Your Own Production?
-              </h2>
-            </div>
+            </h2>
+          </motion.div>
 
-            <Link
-              href="/rentals"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center px-8 py-3.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-100 transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 shadow-lg shadow-white/10"
-            >
-              Browse Equipment
-              <ArrowRight className="ml-2 w-4 h-4" />
-            </Link>
+          {/* Main Rental Showcase Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 35 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-950/30 via-slate-900/60 to-black border border-red-500/20 p-8 sm:p-12 lg:p-16 shadow-2xl"
+          >
+            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-red-500/10 blur-3xl pointer-events-none" />
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
+              <div className="lg:col-span-5 space-y-6">
+                <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                  Need cinema gear for your shoot? We've got you covered.
+                </h3>
+
+                <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
+                  Rent high-end cinema bodies, prime glass, wireless microphones, and studio lighting in Colombo. Every piece of equipment is maintained, cleaned, and production-tested before handoff.
+                </p>
+
+                <div className="pt-2 flex flex-wrap items-center gap-4">
+                  <Link
+                    href="/rentals"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-red-500/25"
+                  >
+                    <span>Browse Equipment</span>
+                    <ExternalLink className="ml-2 w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+
+              <div className="lg:col-span-7 flex justify-center">
+                <RentalCatalogMockup />
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
