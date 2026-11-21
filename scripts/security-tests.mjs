@@ -179,6 +179,29 @@ runTest("CryptoVault: Blind index context separation prevents cross-field collis
   assert.notStrictEqual(phoneIdx, bankIdx, "Identical digits in different contexts must yield distinct blind indexes");
 });
 
+// 12. Media Route: Sensitive Document Classification
+runTest("Storage: Sensitive path patterns identify receipts, payment slips, and agreements", () => {
+  const SENSITIVE_PATTERNS = [
+    /receipts?\//i,
+    /payment[_-]slips?\//i,
+    /agreements?\//i,
+    /kyc\//i,
+    /id[_-]cards?\//i,
+    /utility[_-]bills?\//i,
+    /credentials?\//i,
+    /passwords?\//i,
+  ];
+  function isSensitive(key) {
+    return SENSITIVE_PATTERNS.some((pattern) => pattern.test(key));
+  }
+
+  assert(isSensitive("admin/receipts/income/123-file.png"), "Receipts must be classified as sensitive");
+  assert(isSensitive("invoices/payment-slips/slip-42.jpg"), "Payment slips must be classified as sensitive");
+  assert(isSensitive("agreements/client-signed.pdf"), "Agreements must be classified as sensitive");
+  assert(!isSensitive("images/clients/logo/ds.png"), "Public client logos must not be sensitive");
+  assert(!isSensitive("portfolio/photo-1.webp"), "Public portfolio photos must not be sensitive");
+});
+
 console.log("\n-------------------------------------------------");
 console.log(`Results: ${passedTests} / ${totalTests} tests passed.`);
 console.log("-------------------------------------------------");
