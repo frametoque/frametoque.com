@@ -67,7 +67,7 @@ function GalleryImage({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.05 }}
-      className="break-inside-avoid mb-4 cursor-pointer group relative overflow-hidden bg-neutral-900 min-h-[200px]"
+      className="break-inside-avoid mb-4 cursor-pointer group relative overflow-hidden bg-neutral-900 min-h-[200px] rounded-xl"
       onClick={onClick}
     >
       <AnimatePresence>

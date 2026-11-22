@@ -237,3 +237,16 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:focus {
 :root {
   color-scheme: dark;
 }
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.5s infinite linear;
+}
