@@ -86,7 +86,7 @@ export default function DigitalClient({
               href="/digital/services/web-dev"
               className="w-full sm:w-auto inline-flex items-center justify-center px-5 sm:px-6 py-2.5 rounded-full bg-brand-500/5 border border-brand-500/50 hover:bg-brand-500/15 hover:border-brand-400 text-brand-400 hover:text-brand-300 font-semibold text-xs sm:text-sm transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm"
             >
-              Explore Services & Pricing
+              Explore Packages & Pricing
               <ArrowRight className="ml-1.5 w-3.5 h-3.5" />
             </Link>
             <Link
@@ -129,6 +129,9 @@ export default function DigitalClient({
                 Cloud ERP & Business Accounting Software
               </span>
             </h2>
+            <p className="text-gray-400 text-sm sm:text-base mt-4 font-medium tracking-wide">
+              Made by <span className="text-white font-semibold">Frametoque Digital</span>
+            </p>
           </motion.div>
 
           {/* Main SaaS Card */}

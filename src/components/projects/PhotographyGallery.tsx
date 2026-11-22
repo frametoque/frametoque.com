@@ -38,7 +38,7 @@ export function GalleryImage({
         className={`w-full h-auto transition-all duration-700 group-hover:scale-105 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
-        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
       />
 
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
@@ -60,7 +60,7 @@ export function PhotographyGallery({
   let globalIndex = 0;
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 flex flex-col gap-24 pb-20">
+    <div className="max-w-[1680px] mx-auto px-2 sm:px-4 lg:px-6 flex flex-col gap-24 pb-20">
       {events.map((event, eventIdx) => {
         const startIndex = globalIndex;
         globalIndex += event.images.length;
@@ -86,13 +86,10 @@ export function PhotographyGallery({
                 {event.name}
               </h3>
               <div className="flex-1 h-px bg-gradient-to-r from-white/20 to-transparent" />
-              <span className="text-xs font-bold tracking-[0.2em] uppercase text-white/60">
-                {event.images.length} Captures
-              </span>
             </div>
 
             {/* Single Unified Masonry Grid */}
-            <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
+            <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
               {event.images.map((img, localIndex) => {
                 const isExtra = localIndex >= INITIAL_LIMIT;
 

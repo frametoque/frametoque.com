@@ -94,7 +94,7 @@ function GalleryImage({
         className={`w-full h-auto transition-all duration-1000 group-hover:scale-105 ${
           isLoaded ? "opacity-100 blur-0" : "opacity-0 blur-xl scale-110"
         }`}
-        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
       />
 
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
@@ -193,7 +193,7 @@ function GalleryVideo({
                 }`}
                 onLoad={() => setIsThumbLoaded(true)}
                 onError={handleError}
-                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
               />
             </div>
             {/* Play Button Overlay */}
@@ -207,7 +207,7 @@ function GalleryVideo({
           </>
         ) : (
           <iframe
-            src={`https://www.youtube.com/embed/${id}?autoplay=1&controls=1&rel=0&modestbranding=1&playsinline=1`}
+            src={`https://www.youtube.com/embed/${id}?autoplay=1&controls=0&rel=0&modestbranding=1&playsinline=1`}
             title="YouTube video player"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
@@ -258,7 +258,7 @@ function VideoModal({
   }, [onClose]);
 
   if (!id) return null;
-  const embedUrl = `https://www.youtube.com/embed/${id}?autoplay=1&controls=1&rel=0&modestbranding=1&playsinline=1${
+  const embedUrl = `https://www.youtube.com/embed/${id}?autoplay=1&controls=0&rel=0&modestbranding=1&playsinline=1${
     startTime > 0 ? `&start=${Math.floor(startTime)}` : ""
   }`;
 
@@ -326,7 +326,7 @@ export function GraphicDesignGallery({
 
   return (
     <>
-      <div className="max-w-7xl mx-auto columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 px-4 overflow-hidden">
+      <div className="max-w-[1680px] mx-auto columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4 px-2 sm:px-4 lg:px-6 overflow-hidden">
         {images.map((src, i) =>
           isYouTubeUrl(src) ? (
             <GalleryVideo

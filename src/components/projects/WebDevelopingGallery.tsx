@@ -372,8 +372,8 @@ export function WebDevelopingGallery({
 
   return (
     <>
-      {/* Two Websites per Row Grid with 4:3 Desktop + Natural 9:16 Mobile */}
-      <div className="max-w-[1400px] mx-auto px-2 sm:px-4 grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5">
+      {/* Websites Grid with 4:3 Desktop + Natural 9:16 Mobile (3 websites per row on desktop) */}
+      <div className="max-w-[1680px] mx-auto px-2 sm:px-4 lg:px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-4.5">
         {projectRows.map((row) => {
           return (
             <div
@@ -392,11 +392,11 @@ export function WebDevelopingGallery({
                     alt={`${row.title} Desktop View`}
                     fill
                     className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
-                    sizes="(max-width: 1024px) 100vw, 40vw"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 45vw, 25vw"
                   />
 
                   {/* Hover Reveal Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4 sm:p-5 flex flex-col justify-between z-30">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-3 sm:p-4 flex flex-col justify-between z-30">
                     <div className="flex justify-between items-start">
                       <span className="px-2.5 py-1 rounded-full bg-white/10 text-white/90 text-[10px] font-bold tracking-wider uppercase backdrop-blur-md flex items-center gap-1.5">
                         <Monitor className="w-3 h-3 text-brand-400" />
@@ -405,15 +405,15 @@ export function WebDevelopingGallery({
                     </div>
 
                     <div>
-                      <h3 className="text-base sm:text-lg font-bold text-white mb-0.5 line-clamp-1 drop-shadow-md">
+                      <h3 className="text-sm sm:text-base font-bold text-white mb-0.5 line-clamp-1 drop-shadow-md">
                         {row.title}
                       </h3>
-                      <p className="text-xs text-brand-300/90 font-medium mb-2.5 truncate">
+                      <p className="text-[11px] sm:text-xs text-brand-300/90 font-medium mb-2 truncate">
                         {row.domain}
                       </p>
 
-                      <div className="flex items-center gap-2 pt-0.5">
-                        <span className="inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold text-white bg-brand-500 hover:bg-brand-600 transition-colors shadow-md">
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        <span className="inline-flex items-center justify-center gap-1.5 py-1 sm:py-1.5 px-2.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold text-white bg-brand-500 hover:bg-brand-600 transition-colors shadow-md">
                           <Eye className="w-3.5 h-3.5" />
                           <span>View Details</span>
                         </span>
@@ -423,10 +423,10 @@ export function WebDevelopingGallery({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors backdrop-blur-md"
+                          className="p-1 sm:p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors backdrop-blur-md"
                           title="Open Live Website"
                         >
-                          <ArrowUpRight className="w-4 h-4" />
+                          <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </a>
                       </div>
                     </div>
@@ -444,11 +444,11 @@ export function WebDevelopingGallery({
                       alt={`${row.title} Mobile View`}
                       fill
                       className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
-                      sizes="(max-width: 1024px) 40vw, 15vw"
+                      sizes="(max-width: 1024px) 20vw, 12vw"
                     />
 
                     {/* Hover Reveal Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-3 sm:p-4 flex flex-col justify-between z-30">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-2.5 sm:p-3 flex flex-col justify-between z-30">
                       <div className="flex justify-between items-start">
                         <span className="px-2 py-0.5 rounded-full bg-white/10 text-white/90 text-[9px] font-bold tracking-wider uppercase backdrop-blur-md flex items-center gap-1">
                           <Smartphone className="w-2.5 h-2.5 text-cyan-400" />
@@ -457,16 +457,16 @@ export function WebDevelopingGallery({
                       </div>
 
                       <div>
-                        <h3 className="text-sm sm:text-base font-bold text-white mb-0.5 line-clamp-1 drop-shadow-md">
+                        <h3 className="text-xs sm:text-sm font-bold text-white mb-0.5 line-clamp-1 drop-shadow-md">
                           {row.title}
                         </h3>
-                        <p className="text-[11px] text-cyan-300/90 font-medium mb-2 truncate">
-                          Mobile View
+                        <p className="text-[10px] text-cyan-300/90 font-medium mb-1.5 truncate">
+                          {row.domain}
                         </p>
 
-                        <div className="flex items-center gap-1.5 pt-0.5">
-                          <span className="inline-flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors shadow-md flex-1">
-                            <Eye className="w-3 h-3" />
+                        <div className="flex items-center gap-1 pt-0.5">
+                          <span className="inline-flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors shadow-md flex-1">
+                            <Eye className="w-2.5 h-2.5" />
                             <span>View</span>
                           </span>
 
@@ -475,10 +475,10 @@ export function WebDevelopingGallery({
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors backdrop-blur-md"
+                            className="p-1 sm:p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors backdrop-blur-md"
                             title="Open Live Website"
                           >
-                            <ArrowUpRight className="w-3.5 h-3.5" />
+                            <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                           </a>
                         </div>
                       </div>

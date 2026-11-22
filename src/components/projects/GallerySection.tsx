@@ -7,6 +7,7 @@ import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
 import Image from "next/image";
+import { Share2, Check } from "lucide-react";
 
 import { PhotographyGallery } from "./PhotographyGallery";
 import { GraphicDesignGallery } from "./GraphicDesignGallery";
@@ -149,6 +150,7 @@ const GallerySection = ({
   const defaultTab = arm === "digital" ? "web-dev" : "photography";
   const [activeTab, setActiveTab] = useState(initialTab || defaultTab);
   const [lightboxIndex, setLightboxIndex] = useState(-1);
+  const [copied, setCopied] = useState(false);
 
   const isDigital = arm === "digital";
   const isProductions = arm === "productions";
@@ -216,6 +218,41 @@ const GallerySection = ({
     }
   };
 
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://frametoque.com";
+    const shareUrl = `${origin}${basePath}/${activeTab}`;
+    const title = TAB_TITLES[activeTab] || "Frametoque Portfolio";
+    const text = TAB_DESCRIPTIONS[activeTab] || `Explore our ${activeLabel} portfolio`;
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          text,
+          url: shareUrl,
+        });
+        return;
+      } catch (err: any) {
+        if (err?.name === "AbortError") {
+          return;
+        }
+      }
+    }
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+    }
+  };
+
   const activeLabel = availableTabs.find((t) => t.value === activeTab)?.label ?? "";
 
   const lightboxSlides =
@@ -269,10 +306,34 @@ const GallerySection = ({
                   {tab.label}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={handleShare}
+                className={`
+                  flex-1 min-w-[calc(50%-4px)] max-w-[calc(50%-4px)] px-3 py-2.5 rounded-full text-xs font-medium transition-all duration-300 text-center cursor-pointer flex items-center justify-center gap-1.5
+                  ${copied
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                    : "text-gray-400 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10"
+                  }
+                `}
+                title="Share link to this tab"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span>Share</span>
+                  </>
+                )}
+              </button>
             </div>
 
             {/* Desktop: Centered pill row */}
-            <div className="hidden sm:inline-flex p-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+            <div className="hidden sm:inline-flex items-center p-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
               {availableTabs.map((tab) => (
                 <button
                   type="button"
@@ -293,6 +354,62 @@ const GallerySection = ({
                   <span className="relative z-10">{tab.label}</span>
                 </button>
               ))}
+
+              <div className="w-px h-5 bg-white/10 mx-1.5" />
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className={`
+                    relative flex items-center justify-center w-9 h-9 rounded-full transition-all duration-300 cursor-pointer group
+                    ${copied
+                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                      : "text-gray-400 hover:text-white hover:bg-white/10"
+                    }
+                  `}
+                  title="Share direct link to this tab"
+                  aria-label="Share direct link to this tab"
+                >
+                  <AnimatePresence mode="wait" initial={false}>
+                    {copied ? (
+                      <motion.div
+                        key="check"
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.5, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <Check className="w-4 h-4 text-emerald-400" />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="share"
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.5, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <Share2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </button>
+
+                <AnimatePresence>
+                  {copied && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: -42, scale: 1 }}
+                      exit={{ opacity: 0, y: -32, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-50 whitespace-nowrap px-2.5 py-1 rounded-md bg-neutral-900 border border-white/10 text-[11px] font-medium text-emerald-400 shadow-xl shadow-black/50"
+                    >
+                      Link copied!
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </div>

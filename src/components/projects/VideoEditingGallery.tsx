@@ -87,14 +87,14 @@ function VideoCard({ project, index, onExpand, isAnyModalOpen, activeInlineIndex
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      style={{
-        gridColumn: `span ${isShort ? 1 : 2} / span ${isShort ? 1 : 2}`,
-        gridRow: `span ${isShort ? 2 : 1} / span ${isShort ? 2 : 1}`,
-      }}
-      className="relative cursor-pointer group overflow-hidden bg-neutral-900 rounded-xl"
+      className={`relative cursor-pointer group overflow-hidden bg-neutral-900 rounded-xl w-full self-start ${
+        isShort
+          ? "col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-2 aspect-[9/16]"
+          : "col-span-2 sm:col-span-2 md:col-span-3 lg:col-span-3 aspect-video"
+      }`}
       onClick={!isPlaying ? handleStartPlay : undefined}
     >
-      <div className={isShort ? "aspect-[9/16]" : "aspect-video"}>
+      <div className="w-full h-full relative overflow-hidden">
         {!isPlaying ? (
           <>
             <div className="absolute inset-0 z-10">
@@ -124,7 +124,7 @@ function VideoCard({ project, index, onExpand, isAnyModalOpen, activeInlineIndex
           </>
         ) : (
           <iframe
-            src={`https://www.youtube.com/embed/${id}?autoplay=1&controls=1&rel=0&modestbranding=1&playsinline=1`}
+            src={`https://www.youtube.com/embed/${id}?autoplay=1&controls=0&rel=0&modestbranding=1&playsinline=1`}
             title={project.title || "YouTube video player"}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
@@ -166,7 +166,7 @@ function VideoModal({ url, startTime = 0, onClose }: any) {
   }, [onClose]);
 
   if (!id) return null;
-  const embedUrl = `https://www.youtube.com/embed/${id}?autoplay=1&controls=1&rel=0&modestbranding=1&playsinline=1${
+  const embedUrl = `https://www.youtube.com/embed/${id}?autoplay=1&controls=0&rel=0&modestbranding=1&playsinline=1${
     startTime > 0 ? `&start=${Math.floor(startTime)}` : ""
   }`;
 
@@ -236,7 +236,7 @@ export function VideoEditingGallery({
 
   return (
     <>
-      <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-6 gap-4 auto-rows-min">
+      <div className="max-w-[1680px] mx-auto px-2 sm:px-4 lg:px-6 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-4 items-start">
         {displayedProjects.map((project, i) => ( 
           <VideoCard
             key={i}

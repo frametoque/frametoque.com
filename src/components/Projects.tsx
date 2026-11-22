@@ -421,7 +421,7 @@ export default function ProjectsComponent() {
                     popupVideo.url
                       .replace("watch?v=", "embed/")
                       .replace("youtu.be/", "youtube.com/embed/") +
-                    "?autoplay=1&controls=1&modestbranding=1&rel=0"
+                    "?autoplay=1&controls=0&modestbranding=1&rel=0"
                   }
                   title={popupVideo.title}
                   className="absolute inset-0 w-full h-full"
