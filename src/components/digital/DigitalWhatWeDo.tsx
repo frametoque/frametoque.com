@@ -45,7 +45,7 @@ export const digitalCapabilities = [
   },
   {
     icon: Megaphone,
-    title: "Digital Marketing & Social Media Management",
+    title: "Digital Marketing",
     description:
       "Data-driven social media growth, targeted campaigns, content strategy, and brand visibility that drive real engagement.",
     href: "/contact",

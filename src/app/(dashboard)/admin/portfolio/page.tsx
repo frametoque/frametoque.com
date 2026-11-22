@@ -20,7 +20,9 @@ import {
   ChevronUp,
   ChevronDown,
   GripVertical,
-  ArrowUpDown
+  ArrowUpDown,
+  Monitor,
+  Smartphone
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -101,9 +103,9 @@ const CATEGORIES = [
 const defaultForm = {
   domain: "",
   image_path: "",
+  mobile_image_path: "",
   title: "",
   description: "",
-  techs: [] as string[],
   url: "",
   event_name: "",
   src: "",
@@ -163,11 +165,13 @@ function YouTubeVideoTitle({ url }: { url: string }) {
 function SuggestedFrameItem({
   frame,
   onSelect,
-  disabled
+  disabled,
+  aspectRatio = "aspect-[16/10]"
 }: {
   frame: { name: string; url: string };
   onSelect: (url: string) => void;
   disabled: boolean;
+  aspectRatio?: string;
 }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -179,7 +183,7 @@ function SuggestedFrameItem({
       disabled={disabled || failed}
       className="group flex flex-col bg-white/5 border border-white/10 hover:border-brand-500/50 rounded-xl overflow-hidden text-left transition-all p-1.5 focus:outline-none disabled:opacity-50 cursor-pointer"
     >
-      <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden bg-slate-900 border border-white/5 flex items-center justify-center">
+      <div className={`relative ${aspectRatio} w-full rounded-lg overflow-hidden bg-slate-900 border border-white/5 flex items-center justify-center`}>
         {!loaded && !failed && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-10 gap-2">
             <Loader2 className="w-5 h-5 text-brand-400 animate-spin" />
@@ -226,13 +230,17 @@ export default function PortfolioAdminPage() {
 
   // Screenshot generation states
   const [generatingScreenshots, setGeneratingScreenshots] = useState(false);
+  const [screenshotTarget, setScreenshotTarget] = useState<"desktop" | "mobile">("desktop");
+  const [previewTab, setPreviewTab] = useState<"desktop" | "mobile">("desktop");
   const [suggestedScreenshots, setSuggestedScreenshots] = useState<{ name: string; url: string }[]>([]);
 
   // Upload/Saving states
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingMobileImage, setUploadingMobileImage] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mobileFileInputRef = useRef<HTMLInputElement>(null);
   const subFileInputRef = useRef<HTMLInputElement>(null);
   const photoDropInputRef = useRef<HTMLInputElement>(null);
 
@@ -379,7 +387,7 @@ export default function PortfolioAdminPage() {
     }
   }, [items, activeCategory]);
 
-  const handleGenerateScreenshots = () => {
+  const handleGenerateScreenshots = (target: "desktop" | "mobile" = "desktop") => {
     if (!formData.url.trim()) {
       alert("Please enter a valid URL Link first.");
       return;
@@ -390,30 +398,34 @@ export default function PortfolioAdminPage() {
       return;
     }
 
+    setScreenshotTarget(target);
     setGeneratingScreenshots(true);
     try {
       const encoded = encodeURIComponent(cleanUrl);
       const timestamp = Date.now();
+      const isMobile = target === "mobile";
+      const mobileParam = isMobile ? "&mobile=true&width=390&height=844" : "";
+      const labelPrefix = isMobile ? "Mobile (9:19.5)" : "Desktop (16:10)";
       const frames = [
         {
-          name: "1s Delay (Desktop 16:9)",
-          url: `/api/admin/screenshot?url=${encoded}&delay=1000&t=${timestamp}`
+          name: `1s Delay - ${labelPrefix}`,
+          url: `/api/admin/screenshot?url=${encoded}&delay=1000${mobileParam}&t=${timestamp}`
         },
         {
-          name: "2s Delay (Desktop 16:9)",
-          url: `/api/admin/screenshot?url=${encoded}&delay=2000&t=${timestamp}`
+          name: `2s Delay - ${labelPrefix}`,
+          url: `/api/admin/screenshot?url=${encoded}&delay=2000${mobileParam}&t=${timestamp}`
         },
         {
-          name: "3s Delay (Desktop 16:9)",
-          url: `/api/admin/screenshot?url=${encoded}&delay=3000&t=${timestamp}`
+          name: `3s Delay - ${labelPrefix}`,
+          url: `/api/admin/screenshot?url=${encoded}&delay=3000${mobileParam}&t=${timestamp}`
         },
         {
-          name: "4s Delay (Desktop 16:9)",
-          url: `/api/admin/screenshot?url=${encoded}&delay=4000&t=${timestamp}`
+          name: `4s Delay - ${labelPrefix}`,
+          url: `/api/admin/screenshot?url=${encoded}&delay=4000${mobileParam}&t=${timestamp}`
         },
         {
-          name: "5s Delay (Desktop 16:9)",
-          url: `/api/admin/screenshot?url=${encoded}&delay=5000&t=${timestamp}`
+          name: `5s Delay - ${labelPrefix}`,
+          url: `/api/admin/screenshot?url=${encoded}&delay=5000${mobileParam}&t=${timestamp}`
         }
       ];
       setSuggestedScreenshots(frames);
@@ -425,15 +437,49 @@ export default function PortfolioAdminPage() {
   };
 
   const handleSelectScreenshot = async (url: string) => {
-    setUploadingImage(true);
+    if (screenshotTarget === "mobile") {
+      setUploadingMobileImage(true);
+      try {
+        const cdnUrl = await uploadPortfolioMediaFromUrl(url, "projects/web/mobile");
+        setFormData((prev) => ({ ...prev, mobile_image_path: cdnUrl }));
+        setPreviewTab("mobile");
+      } catch (err) {
+        console.error("Mobile screenshot capture failed:", err);
+        alert("Failed to capture and upload mobile screenshot to CDN.");
+      } finally {
+        setUploadingMobileImage(false);
+      }
+    } else {
+      setUploadingImage(true);
+      try {
+        const cdnUrl = await uploadPortfolioMediaFromUrl(url, "projects/web");
+        setFormData((prev) => ({ ...prev, image_path: cdnUrl }));
+        setPreviewTab("desktop");
+      } catch (err) {
+        console.error("Desktop screenshot capture failed:", err);
+        alert("Failed to capture and download screenshot to CDN.");
+      } finally {
+        setUploadingImage(false);
+      }
+    }
+  };
+
+  const handleMobileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingMobileImage(true);
     try {
-      const localPath = await uploadPortfolioMediaFromUrl(url);
-      setFormData((prev) => ({ ...prev, image_path: localPath }));
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      const url = await uploadPortfolioMedia(uploadData, "web-dev");
+      setFormData((prev) => ({ ...prev, mobile_image_path: url }));
     } catch (err) {
-      console.error("Screenshot capture failed:", err);
-      alert("Failed to capture and download screenshot. Please upload a file manually.");
+      console.error("Mobile image upload failed:", err);
+      alert("Failed to upload mobile image.");
     } finally {
-      setUploadingImage(false);
+      setUploadingMobileImage(false);
+      if (mobileFileInputRef.current) mobileFileInputRef.current.value = "";
     }
   };
 
@@ -480,12 +526,6 @@ export default function PortfolioAdminPage() {
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Technologies comma separation helper (for web-dev)
-  const handleTechChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const list = e.target.value.split(",").map((tech) => tech.trim());
-    setFormData((prev) => ({ ...prev, techs: list }));
   };
 
   // Image upload with dimension calculations for photography events
@@ -690,10 +730,13 @@ export default function PortfolioAdminPage() {
     setSuggestedScreenshots([]);
     setPhotoNewEventName("");
     setPhotoStagedFiles([]);
+    setPreviewTab("desktop");
+    setScreenshotTarget("desktop");
     setFormData({
       ...defaultForm,
       src: "",
-      image_path: activeCategory === "web-dev" || activeCategory === "graphic-design" ? "/projects/web/default.png" : ""
+      image_path: activeCategory === "web-dev" || activeCategory === "graphic-design" ? "/projects/web/default.png" : "",
+      mobile_image_path: ""
     });
     setIsModalOpen(true);
   };
@@ -701,12 +744,14 @@ export default function PortfolioAdminPage() {
   const openEdit = (item: any) => {
     setEditingId(item.id);
     setSuggestedScreenshots([]);
+    setPreviewTab("desktop");
+    setScreenshotTarget("desktop");
     setFormData({
       domain: item.domain || "",
       image_path: item.image_path || "",
+      mobile_image_path: item.mobile_image_path || "",
       title: item.title || "",
       description: item.description || "",
-      techs: Array.isArray(item.techs) ? item.techs : [],
       url: item.url || "",
       event_name: item.event_name || "",
       src: item.src || "",
@@ -941,7 +986,6 @@ export default function PortfolioAdminPage() {
                     <>
                       <th className="p-4 font-medium">Project</th>
                       <th className="p-4 font-medium">Domain & Link</th>
-                      <th className="p-4 font-medium hidden md:table-cell">Technologies</th>
                     </>
                   )}
                   {activeCategory === "graphic-design" && (
@@ -1057,14 +1101,16 @@ export default function PortfolioAdminPage() {
                       <>
                         <td className="p-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-16 h-10 rounded-lg overflow-hidden bg-slate-900 border border-white/10 flex-shrink-0">
+                            <div className="w-16 h-10 rounded-lg overflow-hidden bg-slate-900 border border-white/10 flex-shrink-0 relative">
                               <img
                                 src={item.image_path || "/projects/web/default.png"}
                                 alt={item.title}
                                 className="w-full h-full object-cover"
                               />
                             </div>
-                            <span className="font-semibold text-white text-sm truncate max-w-xs">{item.title}</span>
+                            <div className="min-w-0">
+                              <span className="font-semibold text-white text-sm truncate max-w-xs block">{item.title}</span>
+                            </div>
                           </div>
                         </td>
                         <td className="p-4 text-sm">
@@ -1076,18 +1122,6 @@ export default function PortfolioAdminPage() {
                           ) : (
                             <span className="text-gray-400">{item.domain}</span>
                           )}
-                        </td>
-                        <td className="p-4 hidden md:table-cell">
-                          <div className="flex flex-wrap gap-1">
-                            {item.techs?.slice(0, 3).map((tech: string, idx: number) => (
-                              <span key={idx} className="text-[10px] bg-white/10 text-gray-300 px-2 py-0.5 rounded-full">
-                                {tech}
-                              </span>
-                            ))}
-                            {item.techs?.length > 3 && (
-                              <span className="text-[10px] text-gray-500">+{item.techs.length - 3}</span>
-                            )}
-                          </div>
                         </td>
                       </>
                     )}
@@ -1242,58 +1276,87 @@ export default function PortfolioAdminPage() {
                         name="title"
                         value={formData.title}
                         onChange={handleTextChange}
+                        placeholder="e.g. Personal Portfolio | Graphic Designer"
                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">URL Link / Website Address *</label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap sm:flex-nowrap gap-2">
                         <input
                           type="text"
                           name="url"
                           value={formData.url}
                           onChange={handleUrlInputChange}
-                          className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors"
+                          placeholder="https://example.com"
+                          className="flex-1 min-w-[160px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors"
                         />
                         <button
                           type="button"
-                          onClick={handleGenerateScreenshots}
+                          onClick={() => handleGenerateScreenshots("desktop")}
                           disabled={generatingScreenshots}
-                          className="px-4 bg-brand-600/10 hover:bg-brand-600 text-brand-400 hover:text-white border border-brand-500/20 rounded-2xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-50"
+                          className="px-3.5 py-2.5 bg-brand-600/10 hover:bg-brand-600 text-brand-400 hover:text-white border border-brand-500/20 rounded-2xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-50"
+                          title="Capture Desktop Viewport Frames"
                         >
-                          {generatingScreenshots ? (
+                          {generatingScreenshots && screenshotTarget === "desktop" ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           ) : (
                             <Camera className="w-3.5 h-3.5" />
                           )}
-                          Get Frames
+                          <span>Get Frames</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateScreenshots("mobile")}
+                          disabled={generatingScreenshots}
+                          className="px-3.5 py-2.5 bg-cyan-600/10 hover:bg-cyan-600 text-cyan-400 hover:text-white border border-cyan-500/20 rounded-2xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-50"
+                          title="Capture Mobile Smartphone Viewport Frames"
+                        >
+                          {generatingScreenshots && screenshotTarget === "mobile" ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Smartphone className="w-3.5 h-3.5" />
+                          )}
+                          <span>Mobile Frames</span>
                         </button>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Technologies (comma separated)</label>
-                      <input
-                        type="text"
-                        value={formData.techs.join(", ")}
-                        onChange={handleTechChange}
-                        placeholder="Next.js, Tailwind CSS, React"
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors"
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Project Description</label>
+                      <textarea
+                        name="description"
+                        value={formData.description}
+                        onChange={handleTextChange}
+                        placeholder="Details about project goals and deliverables..."
+                        rows={4}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors resize-none"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-5">
+                    {/* 1. Desktop Screenshot Section */}
                     <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Project Image Preview</label>
-                      <div className="border border-dashed border-white/20 rounded-2xl p-4 flex flex-col items-center justify-center space-y-4 bg-white/5 hover:border-brand-500/50 transition-colors relative min-h-[160px]">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="flex items-center gap-1.5 text-xs font-bold text-gray-300 uppercase tracking-wider">
+                          <Monitor className="w-3.5 h-3.5 text-brand-400" />
+                          <span>Desktop Screenshot *</span>
+                        </label>
+                        {formData.image_path && (
+                          <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-950/60 border border-emerald-800/50 rounded-full px-2 py-0.5">
+                            Attached
+                          </span>
+                        )}
+                      </div>
+                      <div className="border border-dashed border-white/20 rounded-2xl p-3 flex flex-col items-center justify-center space-y-3 bg-white/5 hover:border-brand-500/50 transition-colors relative min-h-[140px]">
                         {formData.image_path ? (
-                          <div className="w-full h-36 rounded-xl overflow-hidden relative group">
-                            <img src={formData.image_path} alt="Preview" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                          <div className="w-full h-32 rounded-xl overflow-hidden relative group">
+                            <img src={formData.image_path} alt="Desktop Preview" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
                               <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl text-xs font-semibold cursor-pointer"
+                                className="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold cursor-pointer"
                               >
                                 Change Image
                               </button>
@@ -1301,12 +1364,12 @@ export default function PortfolioAdminPage() {
                           </div>
                         ) : (
                           <>
-                            <UploadCloud className="w-10 h-10 text-gray-400" />
-                            <p className="text-xs text-gray-500">PNG or JPG up to 10MB</p>
+                            <UploadCloud className="w-8 h-8 text-gray-400" />
+                            <p className="text-[11px] text-gray-500">Desktop Screenshot (PNG or JPG up to 10MB)</p>
                             <button
                               type="button"
                               onClick={() => fileInputRef.current?.click()}
-                              className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl text-xs font-semibold cursor-pointer"
+                              className="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold cursor-pointer"
                             >
                               Browse Files
                             </button>
@@ -1316,7 +1379,7 @@ export default function PortfolioAdminPage() {
                         {uploadingImage && (
                           <div className="absolute inset-0 bg-black/75 rounded-2xl flex items-center justify-center gap-2">
                             <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
-                            <span className="text-xs">Uploading...</span>
+                            <span className="text-xs">Uploading to CDN...</span>
                           </div>
                         )}
                       </div>
@@ -1325,33 +1388,112 @@ export default function PortfolioAdminPage() {
                         name="image_path"
                         value={formData.image_path}
                         onChange={handleTextChange}
-                        placeholder="/projects/web/default.png"
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs focus:border-brand-500 outline-none text-gray-300 mt-2"
+                        placeholder="CDN: https://...r2.dev/projects/web/...png"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs focus:border-brand-500 outline-none text-gray-300 mt-2 font-mono"
                       />
                     </div>
+
+                    {/* 2. Mobile Screenshot Section (Below Desktop) */}
                     <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Project Description</label>
-                      <textarea
-                        name="description"
-                        value={formData.description}
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="flex items-center gap-1.5 text-xs font-bold text-gray-300 uppercase tracking-wider">
+                          <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Mobile Screenshot (Optional)</span>
+                        </label>
+                        {formData.mobile_image_path ? (
+                          <span className="text-[10px] text-cyan-400 font-semibold bg-cyan-950/60 border border-cyan-800/50 rounded-full px-2 py-0.5">
+                            Attached
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-gray-500">None</span>
+                        )}
+                      </div>
+                      <div className="border border-dashed border-white/20 rounded-2xl p-3 flex flex-col items-center justify-center space-y-3 bg-white/5 hover:border-cyan-500/50 transition-colors relative min-h-[140px]">
+                        {formData.mobile_image_path ? (
+                          <div className="h-32 aspect-[9/16] rounded-xl overflow-hidden relative group border border-white/10 shadow-lg">
+                            <img src={formData.mobile_image_path} alt="Mobile Preview" className="w-full h-full object-cover object-top" />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1.5 transition-opacity p-2">
+                              <button
+                                type="button"
+                                onClick={() => mobileFileInputRef.current?.click()}
+                                className="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-[11px] font-semibold cursor-pointer"
+                              >
+                                Change
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, mobile_image_path: "" }))}
+                                className="px-3 py-1 bg-red-600/80 hover:bg-red-600 text-white rounded-lg text-[11px] font-semibold cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <Smartphone className="w-8 h-8 text-cyan-400/60" />
+                            <p className="text-[11px] text-gray-500">Mobile Screenshot (Optional - PNG/JPG)</p>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleGenerateScreenshots("mobile")}
+                                disabled={generatingScreenshots}
+                                className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-semibold cursor-pointer flex items-center gap-1.5"
+                              >
+                                <Camera className="w-3.5 h-3.5" />
+                                <span>Get Frames</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => mobileFileInputRef.current?.click()}
+                                className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold cursor-pointer"
+                              >
+                                Browse
+                              </button>
+                            </div>
+                          </>
+                        )}
+                        <input type="file" ref={mobileFileInputRef} onChange={handleMobileImageUpload} accept="image/*" className="hidden" />
+                        {uploadingMobileImage && (
+                          <div className="absolute inset-0 bg-black/75 rounded-2xl flex items-center justify-center gap-2">
+                            <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
+                            <span className="text-xs">Uploading Mobile Screenshot to CDN...</span>
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        name="mobile_image_path"
+                        value={formData.mobile_image_path}
                         onChange={handleTextChange}
-                        placeholder="Details about project goals and deliverables..."
-                        rows={3}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-brand-500 outline-none transition-colors resize-none"
+                        placeholder="CDN: https://...r2.dev/projects/web/mobile/...png"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs focus:border-cyan-500 outline-none text-gray-300 mt-2 font-mono"
                       />
                     </div>
                   </div>
 
                   {suggestedScreenshots.length > 0 && (
                     <div className="col-span-1 md:col-span-2 border-t border-white/10 pt-6">
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Suggested Viewport Frames (Click one to select)</label>
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                          Suggested {screenshotTarget === "mobile" ? "Mobile Viewport" : "Desktop Viewport"} Frames (Click to upload to CDN)
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setSuggestedScreenshots([])}
+                          className="text-xs text-gray-500 hover:text-white cursor-pointer"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
                       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                         {suggestedScreenshots.map((frame, idx) => (
                           <SuggestedFrameItem
                             key={idx}
                             frame={frame}
                             onSelect={handleSelectScreenshot}
-                            disabled={uploadingImage}
+                            disabled={uploadingImage || uploadingMobileImage}
+                            aspectRatio={screenshotTarget === "mobile" ? "aspect-[9/16]" : "aspect-[16/10]"}
                           />
                         ))}
                       </div>

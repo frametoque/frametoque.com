@@ -69,8 +69,11 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const targetUrl = searchParams.get("url");
   const delayMs = parseInt(searchParams.get("delay") || "2000", 10);
-  const width = parseInt(searchParams.get("width") || "1920", 10);
-  const height = parseInt(searchParams.get("height") || "1080", 10);
+  const isMobile = searchParams.get("mobile") === "true";
+  const defaultWidth = isMobile ? 390 : 1920;
+  const defaultHeight = isMobile ? 844 : 1080;
+  const width = parseInt(searchParams.get("width") || String(defaultWidth), 10);
+  const height = parseInt(searchParams.get("height") || String(defaultHeight), 10);
 
   if (!targetUrl) {
     return NextResponse.json({ error: "Missing required 'url' parameter" }, { status: 400 });
@@ -159,9 +162,23 @@ export async function GET(req: NextRequest) {
 
     if (browser) {
       const page = await browser.newPage();
-      await page.setUserAgent(
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
-      );
+      if (isMobile) {
+        await page.setUserAgent(
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
+        );
+        await page.setViewport({
+          width,
+          height,
+          isMobile: true,
+          hasTouch: true,
+          deviceScaleFactor: 2,
+        });
+      } else {
+        await page.setUserAgent(
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+        );
+        await page.setViewport({ width, height, deviceScaleFactor: 1 });
+      }
       await page.goto(formattedUrl, { waitUntil: "domcontentloaded", timeout: 15000 });
       if (delayMs > 0) {
         await new Promise((resolve) => setTimeout(resolve, Math.min(delayMs, 5000)));
@@ -190,12 +207,15 @@ export async function GET(req: NextRequest) {
 
   // 3. Clean cloud screenshot providers (NO WordPress / wp.com branding)
   const waitSeconds = Math.min(Math.max(Math.round(delayMs / 1000), 1), 6);
-  const externalCaptureUrls = [
-    // Thum.io supports delay via /wait/<seconds> and renders clean Chromium viewports
-    `https://image.thum.io/get/width/${Math.min(width, 1440)}/crop/900/wait/${waitSeconds}/noanimate/${formattedUrl}`,
-    // Microlink cloud browser adapter
-    `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url`,
-  ];
+  const externalCaptureUrls = isMobile
+    ? [
+        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.isMobile=true&viewport.width=390&viewport.height=844&viewport.deviceScaleFactor=2`,
+        `https://image.thum.io/get/width/390/crop/844/wait/${waitSeconds}/noanimate/${formattedUrl}`,
+      ]
+    : [
+        `https://image.thum.io/get/width/${Math.min(width, 1440)}/crop/900/wait/${waitSeconds}/noanimate/${formattedUrl}`,
+        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url`,
+      ];
 
   for (const captureUrl of externalCaptureUrls) {
     try {

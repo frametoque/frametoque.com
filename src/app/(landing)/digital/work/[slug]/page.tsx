@@ -1,5 +1,10 @@
 import { redirect } from "next/navigation";
 
-export default function DigitalWorkSlugPage() {
-  redirect("/digital#work");
+export default async function DigitalWorkSlugPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  redirect(`/digital/${slug}`);
 }

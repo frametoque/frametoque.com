@@ -18,15 +18,16 @@ export interface VideoProject {
 export interface WebDevImage {
   image: string;
   domain: string;
+  mobile_image?: string;
 }
 
 export interface SiteDetails {
   domain: string;
   title: string;
   description: string;
-  techs: string[];
   url: string;
   image?: string;
+  mobile_image?: string;
 }
 
 export async function getPhotography(): Promise<PhotographyEvent[]> {
@@ -91,6 +92,7 @@ export async function getWebProjects(): Promise<{
   const projects: WebDevImage[] = rows.map((r) => ({
     image: r.image_path as string,
     domain: r.domain as string,
+    mobile_image: (r.mobile_image_path as string) || undefined,
   }));
 
   const detailsMap: Record<string, SiteDetails> = Object.fromEntries(
@@ -100,9 +102,9 @@ export async function getWebProjects(): Promise<{
         domain: r.domain as string,
         title: r.title as string,
         description: r.description as string,
-        techs: r.techs as string[],
         url: r.url as string,
         image: r.image_path as string,
+        mobile_image: (r.mobile_image_path as string) || undefined,
       },
     ])
   );

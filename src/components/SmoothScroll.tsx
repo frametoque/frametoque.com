@@ -30,8 +30,36 @@ export default function SmoothScroll() {
     };
   }, []);
 
-  // When pathname changes, smoothly scroll back to top immediately
+  const prevPathRef = useRef<string | null>(null);
+
   useEffect(() => {
+    const prev = prevPathRef.current;
+    prevPathRef.current = pathname;
+
+    // Skip scrolling on initial mount
+    if (!prev) return;
+
+    // Do NOT scroll to top when switching tabs within the same portfolio section
+    const isDigitalTabChange =
+      (prev === "/digital" || prev.startsWith("/digital/")) &&
+      (pathname === "/digital" || pathname.startsWith("/digital/")) &&
+      !prev.includes("/services") &&
+      !pathname.includes("/services");
+
+    const isProductionsTabChange =
+      (prev === "/productions" || prev.startsWith("/productions/")) &&
+      (pathname === "/productions" || pathname.startsWith("/productions/")) &&
+      !prev.includes("/services") &&
+      !pathname.includes("/services");
+
+    const isProjectsTabChange =
+      (prev === "/projects" || prev.startsWith("/projects/")) &&
+      (pathname === "/projects" || pathname.startsWith("/projects/"));
+
+    if (isDigitalTabChange || isProductionsTabChange || isProjectsTabChange) {
+      return;
+    }
+
     if (lenisRef.current) {
       lenisRef.current.scrollTo(0, { immediate: true });
     } else {

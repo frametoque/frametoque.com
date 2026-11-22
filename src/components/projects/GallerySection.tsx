@@ -37,6 +37,28 @@ const ALL_WORK_TABS = [
   { label: "Video Editing", value: "video-editing" },
 ];
 
+const TAB_TITLES: Record<string, string> = {
+  // Digital
+  "web-dev": "Web Development Portfolio | Frametoque Digital",
+  "graphic-design": "Graphic Design Portfolio | Frametoque Digital",
+  "video-editing": "Video Editing & Motion Design Portfolio | Frametoque Digital",
+  // Productions
+  "photography": "Commercial & Event Photography Portfolio | Frametoque Productions",
+  "videography": "Cinematic Videography Portfolio | Frametoque Productions",
+  "event-productions": "Live Event Productions Portfolio | Frametoque Productions",
+};
+
+const TAB_DESCRIPTIONS: Record<string, string> = {
+  // Digital
+  "web-dev": "Explore production web architectures, responsive web apps, and modern high-converting websites by Frametoque Digital.",
+  "graphic-design": "Explore creative brand identities, commercial posters, and visual communication designs crafted by Frametoque Digital.",
+  "video-editing": "Explore cinematic video reels, motion graphics, and high-energy short visual edits produced by Frametoque Digital.",
+  // Productions
+  "photography": "Explore commercial, event, concert, and portrait photography captures by Frametoque Productions.",
+  "videography": "Explore cinematic aftermovies, corporate commercials, and broadcast-grade videography by Frametoque Productions.",
+  "event-productions": "Explore concert stage setups, live streaming, multi-camera broadcasting, and full-scale event productions by Frametoque Productions.",
+};
+
 function getHeroForTab(tab: string): string {
   switch (tab) {
     case "photography":      return "/projects/photography-cover.jpg";
@@ -138,16 +160,59 @@ const GallerySection = ({
     : ALL_WORK_TABS;
 
   const basePath = isDigital
-    ? "/digital/work"
+    ? "/digital"
     : isProductions
-    ? "/productions/work"
+    ? "/productions"
     : "/projects";
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const title = TAB_TITLES[activeTab];
+    if (title) {
+      document.title = title;
+    }
+    const desc = TAB_DESCRIPTIONS[activeTab];
+    if (desc) {
+      const descMeta = document.querySelector('meta[name="description"]');
+      if (descMeta) descMeta.setAttribute("content", desc);
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) ogTitle.setAttribute("content", title);
+      const ogDesc = document.querySelector('meta[property="og:description"]');
+      if (ogDesc) ogDesc.setAttribute("content", desc);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window !== "undefined") {
+        const pathSegments = window.location.pathname.split("/").filter(Boolean);
+        const lastSegment = pathSegments[pathSegments.length - 1];
+        if (availableTabs.some((t) => t.value === lastSegment)) {
+          setActiveTab(lastSegment);
+        }
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [availableTabs]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setLightboxIndex(-1);
-    if (showHero) {
-      router.push(`${basePath}/${tab}`);
+    if (typeof window !== "undefined") {
+      const targetUrl = `${basePath}/${tab}`;
+      if (window.location.pathname !== targetUrl) {
+        window.history.pushState({ tab }, "", targetUrl);
+      }
+      if (TAB_TITLES[tab]) {
+        document.title = TAB_TITLES[tab];
+      }
     }
   };
 
@@ -190,6 +255,7 @@ const GallerySection = ({
             <div className="flex sm:hidden flex-wrap gap-2 w-full pb-2 px-4">
               {availableTabs.map((tab) => (
                 <button
+                  type="button"
                   key={tab.value}
                   onClick={() => handleTabChange(tab.value)}
                   className={`
@@ -209,6 +275,7 @@ const GallerySection = ({
             <div className="hidden sm:inline-flex p-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
               {availableTabs.map((tab) => (
                 <button
+                  type="button"
                   key={tab.value}
                   onClick={() => handleTabChange(tab.value)}
                   className={`

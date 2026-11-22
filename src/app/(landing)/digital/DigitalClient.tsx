@@ -18,6 +18,7 @@ interface DigitalClientProps {
   webProjects: WebDevImage[];
   webDetailsMap: Record<string, SiteDetails>;
   videoEditingUrls: VideoProject[];
+  initialTab?: string;
 }
 
 export default function DigitalClient({
@@ -26,6 +27,7 @@ export default function DigitalClient({
   webProjects,
   webDetailsMap,
   videoEditingUrls,
+  initialTab,
 }: DigitalClientProps) {
   return (
     <main className="min-h-screen bg-black text-white selection:bg-brand-500 selection:text-white">
@@ -103,6 +105,7 @@ export default function DigitalClient({
       {/* Featured Digital Work Section with Tabs */}
       <GallerySection
         arm="digital"
+        initialTab={initialTab}
         graphicImages={graphicImages}
         webProjects={webProjects}
         webDetailsMap={webDetailsMap}

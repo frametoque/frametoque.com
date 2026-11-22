@@ -135,7 +135,7 @@ export function ServiceDemoPopup({
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Open demo in new tab"
-                className="w-full max-w-4xl flex items-center justify-between gap-2 px-4 py-1.5 rounded-xl bg-[#0d0d0d] hover:bg-[#161616] text-xs text-white/60 hover:text-white font-mono truncate shadow-inner shadow-black transition-colors"
+                className="w-full max-w-4xl flex items-center justify-between gap-2 px-4 py-1.5 rounded-xl bg-[#0d0d0d] hover:bg-[#161616] text-xs text-white/60 hover:text-white font-medium truncate shadow-inner shadow-black transition-colors"
               >
                 <div className="flex items-center gap-2 truncate">
                   <Globe className="w-3.5 h-3.5 shrink-0 text-brand-400" />
@@ -266,24 +266,6 @@ export function ServiceDemoPopup({
             <p className="text-gray-400/90 text-sm leading-relaxed mb-8 font-medium">
               {site.description}
             </p>
-
-            {site.techs && site.techs.filter(t => t.trim().length > 0).length > 0 && (
-              <div className="mb-8">
-                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4">
-                  Technologies
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {site.techs.filter(t => t.trim().length > 0).map((tech) => (
-                    <span
-                      key={tech}
-                      className="px-3 py-1.5 rounded-md bg-white/5 border border-white/5 text-white/80 text-[12px] font-medium hover:bg-white/10 hover:border-white/10 transition-all duration-300 shadow-sm"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           <motion.a

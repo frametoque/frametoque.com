@@ -638,7 +638,6 @@ export default function ServiceDataPage({ serviceType, categorySlug }: Props) {
           site={{
             title: data.title,
             description: data.description || data.overview || "",
-            techs: data.technologies || [],
             url: data.demo_url || "",
             domain: "",
             image: data.hero_image || undefined,

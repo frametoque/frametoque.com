@@ -70,14 +70,14 @@ export async function createPortfolioItem(categorySlug: string, data: any) {
   if (categorySlug === "web-dev") {
     await sql.unsafe(`UPDATE work_web SET sort_order = sort_order + 1`);
     await sql.unsafe(
-      `INSERT INTO work_web (domain, image_path, title, description, techs, url, sort_order)
+      `INSERT INTO work_web (domain, image_path, mobile_image_path, title, description, url, sort_order)
        VALUES ($1, $2, $3, $4, $5, $6, 1)`,
       [
         data.domain,
         data.image_path,
+        data.mobile_image_path || null,
         data.title,
         data.description,
-        data.techs || [],
         data.url
       ]
     );
@@ -148,15 +148,15 @@ export async function updatePortfolioItem(categorySlug: string, id: number, data
   if (categorySlug === "web-dev") {
     await sql.unsafe(
       `UPDATE work_web
-       SET domain = $1, image_path = $2, title = $3, description = $4, techs = $5, url = $6
+       SET domain = $1, image_path = $2, title = $3, description = $4, url = $5, mobile_image_path = $6
        WHERE id = $7`,
       [
         data.domain,
         data.image_path,
         data.title,
         data.description,
-        data.techs || [],
         data.url,
+        data.mobile_image_path || null,
         id
       ]
     );
@@ -393,7 +393,7 @@ export async function uploadPortfolioMedia(formData: FormData, categorySlug?: st
 /**
  * Download portfolio media files from an external URL or internal route and save them to Cloudflare R2
  */
-export async function uploadPortfolioMediaFromUrl(url: string): Promise<string> {
+export async function uploadPortfolioMediaFromUrl(url: string, folder: string = "projects/web"): Promise<string> {
   await requireAdminSession();
 
   if (!url) {
@@ -425,7 +425,7 @@ export async function uploadPortfolioMediaFromUrl(url: string): Promise<string> 
   }
 
   const fileBlob = await response.blob();
-  const filename = `projects/web/${Date.now()}-screenshot.png`;
+  const filename = `${folder}/${Date.now()}-screenshot.png`;
 
   const uploaded = await uploadToR2(filename, fileBlob, {
     access: "public",

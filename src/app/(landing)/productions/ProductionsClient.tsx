@@ -14,12 +14,14 @@ interface ProductionsClientProps {
   photographyEvents: PhotographyEvent[];
   videographyUrls: VideoProject[];
   eventProductionUrls: VideoProject[];
+  initialTab?: string;
 }
 
 export default function ProductionsClient({
   photographyEvents,
   videographyUrls,
   eventProductionUrls,
+  initialTab,
 }: ProductionsClientProps) {
   return (
     <main className="min-h-screen bg-black text-white selection:bg-brand-500 selection:text-white">
@@ -97,6 +99,7 @@ export default function ProductionsClient({
       {/* Media Portfolio Work with Tabs */}
       <GallerySection
         arm="productions"
+        initialTab={initialTab}
         photographyEvents={photographyEvents}
         videographyUrls={videographyUrls}
         eventProductionUrls={eventProductionUrls}
