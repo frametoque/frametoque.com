@@ -346,6 +346,13 @@ function WebProjectCard({
   onClick: () => void;
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (imgRef.current?.complete) {
+      setIsLoaded(true);
+    }
+  }, []);
 
   return (
     <motion.div
@@ -354,13 +361,13 @@ function WebProjectCard({
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.05 }}
       onClick={onClick}
-      className="relative aspect-[16/10] w-full min-w-0 group overflow-hidden rounded-lg sm:rounded-xl bg-neutral-900 border border-white/10 hover:border-brand-500/50 transition-all duration-300 shadow-md hover:shadow-2xl cursor-pointer"
+      className="relative aspect-[16/10] w-full min-w-0 group overflow-hidden rounded-xl bg-neutral-900 border border-white/10 hover:border-brand-500/50 transition-all duration-300 shadow-md hover:shadow-2xl cursor-pointer"
     >
       <AnimatePresence>
         {!isLoaded && (
           <motion.div
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-neutral-900 flex items-center justify-center z-10"
+            className="absolute inset-0 bg-neutral-900 flex items-center justify-center"
           >
             <div
               className="w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"
@@ -371,6 +378,7 @@ function WebProjectCard({
       </AnimatePresence>
 
       <Image
+        ref={imgRef}
         src={row.desktopImg}
         alt={`${row.title} Desktop View`}
         fill
@@ -383,11 +391,10 @@ function WebProjectCard({
       />
 
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 pointer-events-none" />
-      <div className="absolute inset-0 border border-white/0 group-hover:border-white/10 transition-colors duration-300 pointer-events-none" />
 
       {/* Hover Reveal Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4 sm:p-5 flex flex-col justify-end z-30">
-        <div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4 sm:p-5 flex flex-col justify-end z-30 pointer-events-none">
+        <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 ease-out pointer-events-auto">
           <h3 className="text-sm sm:text-base font-bold text-white mb-0.5 line-clamp-1 drop-shadow-md">
             {row.title}
           </h3>
