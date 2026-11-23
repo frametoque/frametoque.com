@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import useSWR from 'swr';
-import { TrendingUp, TrendingDown, DollarSign, Percent, Download, FileText, Calendar, Users, BookOpen, Search, ArrowUpRight, ArrowDownRight, Link as LinkIcon } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { TrendingUp, TrendingDown, DollarSign, Percent, Download, FileText, Calendar, Users, BookOpen, Search, ArrowUpRight, ArrowDownRight, Link as LinkIcon, Receipt } from "lucide-react";
 import { getReports, getClients } from "../actions/actions";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { useAdminDateRange } from "../context/AdminDateRangeContext";
 import WheelDatePicker from "../components/WheelDatePicker";
+import ReportsOverviewDashboard from "./ReportsOverviewDashboard";
 
 const formatLKR = (amount: number) => {
   return new Intl.NumberFormat('en-LK', {
@@ -192,32 +192,68 @@ export default function ReportsPage() {
       return matchesSearch;
     });
 
-  const stats = [
-    { label: "Total Income", value: formatLKR(data.totalIncome), icon: TrendingUp, color: "text-green-400", bg: "bg-green-400/10" },
-    { label: "Total Expenses", value: formatLKR(data.totalExpenses), icon: TrendingDown, color: "text-red-400", bg: "bg-red-400/10" },
-    { label: "Net Profit", value: formatLKR(data.netProfit), icon: DollarSign, color: "text-brand-400", bg: "bg-brand-400/10" },
-    { label: "Profit Margin", value: `${data.profitMargin}%`, icon: Percent, color: "text-blue-400", bg: "bg-blue-400/10" },
-  ];
+  const incomeEntriesCount = data.journalEntries?.filter((e: any) => e.type === "income").length || 0;
+  const expenseEntriesCount = data.journalEntries?.filter((e: any) => e.type === "expense").length || 0;
+  const expenseRatio = data.totalIncome > 0 ? ((data.totalExpenses / data.totalIncome) * 100).toFixed(1) : "0.0";
+  const avgIncome = incomeEntriesCount > 0 ? data.totalIncome / incomeEntriesCount : 0;
 
-  // Top 5 clients by revenue for the chart
-  const topClientsChart = [...clients]
-    .filter((c) => c.revenue > 0)
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 5)
-    .map((c) => ({ name: c.name, revenue: c.revenue }));
+  const stats = [
+    {
+      label: "Total Income",
+      value: formatLKR(data.totalIncome),
+      icon: TrendingUp,
+      color: "text-green-400",
+      bg: "bg-green-400/10",
+    },
+    {
+      label: "Total Expenses",
+      value: formatLKR(data.totalExpenses),
+      icon: TrendingDown,
+      color: "text-red-400",
+      bg: "bg-red-400/10",
+    },
+    {
+      label: "Net Profit",
+      value: formatLKR(data.netProfit),
+      icon: DollarSign,
+      color: "text-brand-400",
+      bg: "bg-brand-400/10",
+    },
+    {
+      label: "Profit Margin",
+      value: `${data.profitMargin}%`,
+      icon: Percent,
+      color: "text-blue-400",
+      bg: "bg-blue-400/10",
+    },
+    {
+      label: "Spending Ratio",
+      value: `${expenseRatio}%`,
+      icon: TrendingDown,
+      color: "text-red-400",
+      bg: "bg-red-400/10",
+    },
+    {
+      label: "Average Sale",
+      value: formatLKR(avgIncome),
+      icon: Receipt,
+      color: "text-brand-400",
+      bg: "bg-brand-400/10",
+    },
+  ];
 
   return (
     <div className="space-y-6 print:p-0 print:m-0">
-      {/* Stats Cards - Displayed on all tabs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Top Stat Cards Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {stats.map((stat, i) => (
-          <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-4 hover:bg-white/10 transition-colors">
-            <div className={`p-4 rounded-2xl ${stat.bg}`}>
-              <stat.icon className={`w-6 h-6 ${stat.color}`} />
+          <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 flex items-center gap-3.5 hover:bg-white/10 transition-colors">
+            <div className={`p-3.5 rounded-2xl ${stat.bg} shrink-0`}>
+              <stat.icon className={`w-5 h-5 ${stat.color}`} />
             </div>
-            <div>
-              <p className="text-gray-400 text-sm">{stat.label}</p>
-              <p className="text-2xl font-semibold">
+            <div className="min-w-0 flex-1">
+              <p className="text-gray-400 text-xs font-medium truncate">{stat.label}</p>
+              <p className="text-xl font-semibold mt-0.5 text-white truncate">
                 <AnimatedNumber value={stat.value} />
               </p>
             </div>
@@ -276,93 +312,15 @@ export default function ReportsPage() {
       </div>
 
       {activeTab === "overview" && (
-        <>
-
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Income Chart */}
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
-              <h2 className="text-xl font-semibold mb-6">Income by Service</h2>
-              <div style={{ height: Math.max(300, (data.incomeByService?.length || 0) * 45) }} className="w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.incomeByService} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-                    <XAxis type="number" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `LKR ${value / 1000}k`} />
-                    <YAxis dataKey="name" type="category" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} width={150} />
-                    <Tooltip
-                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                      contentStyle={{ backgroundColor: 'rgba(10,10,15,0.9)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px' }}
-                      itemStyle={{ color: '#fff' }}
-                      formatter={(value: any) => [formatLKR(value), 'Income']}
-                    />
-                    <Bar dataKey="value" fill="#4ade80" radius={[0, 4, 4, 0]} barSize={20} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Expenses Chart */}
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
-              <h2 className="text-xl font-semibold mb-6">Expenses Breakdown</h2>
-              <div style={{ height: Math.max(300, (data.expensesBreakdown?.length || 0) * 45) }} className="w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.expensesBreakdown} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-                    <XAxis type="number" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `LKR ${value / 1000}k`} />
-                    <YAxis dataKey="name" type="category" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} width={150} />
-                    <Tooltip
-                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                      contentStyle={{ backgroundColor: 'rgba(10,10,15,0.9)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px' }}
-                      itemStyle={{ color: '#fff' }}
-                      formatter={(value: any) => [formatLKR(value), 'Expense']}
-                    />
-                    <Bar dataKey="value" fill="#f87171" radius={[0, 4, 4, 0]} barSize={20} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          {/* Top Clients by Revenue Chart */}
-          {topClientsChart.length > 0 && (
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <h2 className="text-xl font-semibold">Top Clients by Revenue</h2>
-              </div>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={topClientsChart} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-                    <XAxis
-                      type="number"
-                      stroke="#9ca3af"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(value) => `LKR ${value / 1000}k`}
-                    />
-                    <YAxis
-                      dataKey="name"
-                      type="category"
-                      stroke="#9ca3af"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      width={100}
-                    />
-                    <Tooltip
-                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                      contentStyle={{ backgroundColor: 'rgba(10,10,15,0.9)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px' }}
-                      itemStyle={{ color: '#fff' }}
-                      formatter={(value: any) => [formatLKR(value), 'Revenue']}
-                    />
-                    <Bar dataKey="revenue" fill="#29B6F6" radius={[0, 4, 4, 0]} barSize={24} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
-        </>
+        <ReportsOverviewDashboard
+          data={data}
+          clients={clients}
+          accounts={accounts}
+          dateRange={dateRange}
+          startDate={startDate}
+          endDate={endDate}
+          formatLKR={formatLKR}
+        />
       )}
 
       {(activeTab === "general_ledger" || activeTab === "account_ledger") && (

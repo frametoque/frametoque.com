@@ -1833,7 +1833,7 @@ export async function getReports(startDate?: string, endDate?: string) {
       WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
     `,
     sql`
-      SELECT category as name, SUM(amount) as value
+      SELECT category as name, SUM(amount) as value, COUNT(*) as count
       FROM admin_expenses
       WHERE date >= ${start}::timestamp AND date <= (${end} || ' 23:59:59.999')::timestamp
       GROUP BY category
@@ -1852,16 +1852,20 @@ export async function getReports(startDate?: string, endDate?: string) {
   const netProfit = totalIncome - totalExpenses;
   const profitMargin = totalIncome > 0 ? ((netProfit / totalIncome) * 100).toFixed(1) : '0.0';
 
-  const serviceMap: Record<string, number> = {};
+  const serviceMap: Record<string, { value: number; count: number }> = {};
   for (const row of rawIncome) {
     const rawCategory = (row.category || 'Other').trim();
     const categoryName = rawCategory
       ? rawCategory.split(',').map((s: string) => s.trim()).filter(Boolean).join(' + ') || 'Other'
       : 'Other';
-    serviceMap[categoryName] = (serviceMap[categoryName] || 0) + parseFloat(row.amount);
+    if (!serviceMap[categoryName]) {
+      serviceMap[categoryName] = { value: 0, count: 0 };
+    }
+    serviceMap[categoryName].value += parseFloat(row.amount);
+    serviceMap[categoryName].count += 1;
   }
   const incomeByService = Object.entries(serviceMap)
-    .map(([name, value]) => ({ name, value }))
+    .map(([name, stat]) => ({ name, value: stat.value, count: stat.count }))
     .sort((a, b) => b.value - a.value);
 
   const journalEntries = journalEntriesRaw.map((r: any) => ({
@@ -1882,7 +1886,11 @@ export async function getReports(startDate?: string, endDate?: string) {
     netProfit,
     profitMargin,
     incomeByService,
-    expensesBreakdown: expensesBreakdown.map(r => ({ name: r.name || 'Other', value: parseFloat(r.value) })),
+    expensesBreakdown: expensesBreakdown.map(r => ({
+      name: r.name || 'Other',
+      value: parseFloat(r.value),
+      count: parseInt(r.count || '0', 10)
+    })),
     journalEntries
   };
 }
